@@ -30,11 +30,11 @@ Cash-on-delivery orders in Tunisian e-commerce get refused at a meaningful rate 
 7. One aggregate ROI stat for the demo close
 
 **Should-have (only after must-haves work end-to-end):**
-8. Drafted customer message per flag, with Edit/Send buttons (not auto-sent)
+8. Tiered-autonomy customer messaging — see §10 below for the settled design
 9. Impact dashboard (before/after refusal rate, estimated TND saved)
+10. WhatsApp chat-export ingestion as an alternate input path (see §11) — same pipeline, different parser
 
 **Nice-to-have (cut without guilt if behind schedule):**
-10. LLM-judge gate on the drafted message before "send"
 11. Filter/search in the queue
 
 **Explicitly out of scope — do not build:**
@@ -143,9 +143,33 @@ If asked in Q&A about limitations: state them plainly (synthetic data, not yet c
 
 ---
 
-## 9. Open items still needing a human before the pitch is final
+## 10. Customer messaging — settled design (tiered autonomy, judge-gated)
+
+Draft-only (human always clicks send) was rejected: it doesn't reduce seller workload enough to be the core value prop, since reviewing every drafted message doesn't scale past a handful of orders a day. Full unconditional autonomous send was also rejected: a probabilistic LLM judge is a risk *reduction*, not a safety guarantee, and shares blind spots with the generator by construction. Settled design:
+
+1. **Deterministic pre-filter** (not an LLM call): reject/flag any draft that mentions a price/discount not present in the order record, requests payment info, or falls outside the approved message templates. Cheap, fast, catches the worst-case failure modes before anything probabilistic is involved.
+2. **LLM judge** checks what survives step 1 for: grounding (only references facts in the order data/flags), tone/language match to the customer's register, no overreach, and that the ask is actionable.
+3. **Auto-send only when**: judge approves AND classifier confidence is high AND order value is below a threshold. This is where most orders should land — that's what actually delivers "seller works less," since most orders are unambiguous.
+4. **Falls back to draft-for-review** (human clicks send) when: judge rejects, OR confidence is low, OR order value is above the threshold. Keeps a human specifically on the cases where being wrong costs the most.
+5. **On judge rejection**: regenerate once with the rejection reason fed back in; if it fails again, fall back to a safe static template rather than looping indefinitely.
+
+**For the live demo specifically:** build and show the judge-gating mechanism working, but keep a human click on the actual "send" during the on-stage demo. Say so directly — "judge-gated for autonomous send; keeping a human click during this pilot phase." This is a stronger, more credible answer for judges than either extreme, and removes the worst live-demo failure mode (an autonomous message going out mid-demo if something breaks). This entire feature (steps 1-5, not just drafting) is should-have, not must-have — do not let it eat time from the risk queue + detail view.
+
+## 11. Ingestion — WhatsApp chat-export as an alternate path
+
+Shopify/WooCommerce-store integration was considered and dropped as the primary ingestion story: a meaningful share of actual Tunisian sellers take orders directly over WhatsApp/Instagram DMs rather than running a formal storefront, so a Shopify-first pitch targets a more sophisticated seller than the one this product is actually for. It's also a weaker differentiator — Shopify's app ecosystem likely already has fraud/risk-scoring apps, inviting the "isn't this solved already?" reaction from a judge.
+
+**What's actually buildable in the time available:** not a live WhatsApp Business API/webhook integration — that needs Meta business verification and days of review, not hours. Instead: parse a **WhatsApp chat export** (the `.txt` file exportable from any thread today) as an alternate input alongside CSV/paste. Same extraction pipeline, same classifier, only the parser changes (chat lines → order rows instead of CSV cells) — low cost to add once CSV ingest works, since nothing downstream changes.
+
+**State this precisely in the pitch:** "today — upload your WhatsApp export; next — live webhook integration." Do not imply a live API connection exists if it doesn't; that's the kind of overclaim that a direct question from a judge exposes immediately.
+
+---
+
+## 12. Open items still needing a human before the pitch is final
 
 - [ ] Verify the refusal-rate and COD-penetration numbers against one real source
 - [ ] Verify or drop the eGrow/SoukFlow competitor mentions
 - [ ] Decide final team roster and confirm via the Final Team Confirmation form (due 26 Sept)
 - [ ] Decide who owns the "feature freeze" enforcement at 15:30 on event day
+- [ ] Set the actual order-value threshold for auto-send vs fallback-to-review (§10)
+- [ ] Decide whether WhatsApp-export parsing (§11) is worth building given the ~4h15 time budget, or stays a pitch-only roadmap item
