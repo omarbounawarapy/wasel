@@ -32,7 +32,7 @@ Cash-on-delivery orders in Tunisian e-commerce get refused at a meaningful rate 
 **Should-have (only after must-haves work end-to-end):**
 8. Tiered-autonomy customer messaging — see §10 below for the settled design
 9. Impact dashboard (before/after refusal rate, estimated TND saved)
-10. WhatsApp chat-export ingestion as an alternate input path (see §11) — same pipeline, different parser
+10. Live WhatsApp ingestion via Meta's Cloud API sandbox/test number (see §11) — set up entirely pre-event; CSV/paste stays as the guaranteed fallback
 
 **Nice-to-have (cut without guilt if behind schedule):**
 11. Filter/search in the queue
@@ -155,13 +155,32 @@ Draft-only (human always clicks send) was rejected: it doesn't reduce seller wor
 
 **For the live demo specifically:** build and show the judge-gating mechanism working, but keep a human click on the actual "send" during the on-stage demo. Say so directly — "judge-gated for autonomous send; keeping a human click during this pilot phase." This is a stronger, more credible answer for judges than either extreme, and removes the worst live-demo failure mode (an autonomous message going out mid-demo if something breaks). This entire feature (steps 1-5, not just drafting) is should-have, not must-have — do not let it eat time from the risk queue + detail view.
 
-## 11. Ingestion — WhatsApp chat-export as an alternate path
+## 11. Ingestion — live WhatsApp via Meta Cloud API sandbox
 
-Shopify/WooCommerce-store integration was considered and dropped as the primary ingestion story: a meaningful share of actual Tunisian sellers take orders directly over WhatsApp/Instagram DMs rather than running a formal storefront, so a Shopify-first pitch targets a more sophisticated seller than the one this product is actually for. It's also a weaker differentiator — Shopify's app ecosystem likely already has fraud/risk-scoring apps, inviting the "isn't this solved already?" reaction from a judge.
+Shopify/WooCommerce-store integration was considered and dropped as the primary ingestion story: a meaningful share of actual Tunisian sellers take orders directly over WhatsApp/Instagram DMs rather than running a formal storefront, so a Shopify-first pitch targets a more sophisticated seller than the one this product is actually for. It's also a weaker differentiator — Shopify's app ecosystem likely already has fraud/risk-scoring apps.
 
-**What's actually buildable in the time available:** not a live WhatsApp Business API/webhook integration — that needs Meta business verification and days of review, not hours. Instead: parse a **WhatsApp chat export** (the `.txt` file exportable from any thread today) as an alternate input alongside CSV/paste. Same extraction pipeline, same classifier, only the parser changes (chat lines → order rows instead of CSV cells) — low cost to add once CSV ingest works, since nothing downstream changes.
+Copy-paste or chat-export ingestion was also rejected as the headline: it doesn't remove any seller work, which undercuts the core value prop. Scraping WhatsApp Web via a browser extension was rejected too (undocumented/obfuscated DOM, separate engineering surface, likely against WhatsApp's terms).
 
-**State this precisely in the pitch:** "today — upload your WhatsApp export; next — live webhook integration." Do not imply a live API connection exists if it doesn't; that's the kind of overclaim that a direct question from a judge exposes immediately.
+**Settled approach: Meta's WhatsApp Cloud API in test/sandbox mode.** A production, business-verified number isn't obtainable in time, but the developer sandbox is: create a Meta developer app, add the WhatsApp product, and Meta issues a test number immediately — no business verification needed at this tier. It sends and receives real messages via webhook. This is Meta's officially supported dev path, not a workaround.
+
+**Demo flow:** a team member (playing the customer) messages the sandbox number from their phone → Meta POSTs to our webhook → FastAPI parses the message body → same extraction + classifier pipeline → order appears in the risk queue. No copy-paste.
+
+**Setup (pre-event only, Montassar — must not touch live sprint blocks):**
+1. Meta developer account → create app → add WhatsApp product → note the test number and phone-number ID
+2. Register the "customer" phones as test recipients (sandbox limit: 5 numbers)
+3. Generate a long-lived token via a System User (the quick-start token expires in 24h — it would die before event day)
+4. Add `POST /webhook/whatsapp` (+ the `GET` verification handshake) to FastAPI; map the message payload to the same order shape CSV ingest produces
+5. Expose the backend on a public HTTPS URL (tunnel such as ngrok, or a real deployment) and verify the webhook in the Meta console
+6. End-to-end test: phone message → queue row, at least 5 times, before 26 Sept 22:00
+
+**Known risks:**
+- The public URL/tunnel is a live dependency during judging — if it drops, the webhook path dies. Test on the event venue's network if possible.
+- Only pre-registered numbers can message the sandbox; whoever plays "the customer" must be registered beforehand.
+- Tokens and tunnel URLs change — re-verify both on the morning of 27 Sept.
+
+**Fallback (non-negotiable):** CSV/paste ingest stays built and tested. If the webhook fails mid-demo, switch to it and say so on stage.
+
+**Pitch wording:** "Orders arrive from WhatsApp automatically — this is running on Meta's WhatsApp Cloud API in sandbox mode; production rollout needs business verification, which is our next step." Accurate, and still the strongest ingestion story available.
 
 ---
 
@@ -172,4 +191,4 @@ Shopify/WooCommerce-store integration was considered and dropped as the primary 
 - [ ] Decide final team roster and confirm via the Final Team Confirmation form (due 26 Sept)
 - [ ] Decide who owns the "feature freeze" enforcement at 15:30 on event day
 - [ ] Set the actual order-value threshold for auto-send vs fallback-to-review (§10)
-- [ ] Decide whether WhatsApp-export parsing (§11) is worth building given the ~4h15 time budget, or stays a pitch-only roadmap item
+- [ ] WhatsApp sandbox (§11) working end-to-end by 26 Sept 22:00 — if not, drop it to a pitch-only roadmap line and demo on CSV/paste
