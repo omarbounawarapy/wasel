@@ -19,6 +19,22 @@ MAX_WEBHOOK_BODY = 1024 * 1024                          # W-3
 webhook = APIRouter()
 
 
+class RedactVerifyToken(logging.Filter):
+    """uvicorn's access log prints the full query string; Meta's verify GET carries hub.verify_token in it."""
+
+    def filter(self, record: logging.LogRecord) -> bool:
+        args = record.args
+        if isinstance(args, tuple) and len(args) >= 3 and isinstance(args[2], str) and "hub." in args[2]:
+            record.args = (*args[:2], args[2].split("?", 1)[0] + "?<redacted>", *args[3:])
+        return True
+
+
+def install_log_redaction() -> None:
+    access = logging.getLogger("uvicorn.access")
+    if not any(isinstance(f, RedactVerifyToken) for f in access.filters):
+        access.addFilter(RedactVerifyToken())
+
+
 @webhook.get("/webhook/whatsapp")
 def verify(request: Request):
     challenge = wa.verify_challenge(request.query_params, request.app.state.core.settings.wa_verify_token)

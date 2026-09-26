@@ -254,6 +254,16 @@ def test_sender_phone_never_leaves_the_db(wa, caplog):
     assert SECRET not in caplog.text and VERIFY not in caplog.text
 
 
+def test_access_log_never_carries_the_verify_token(wa):
+    from app.api.routes_webhook import RedactVerifyToken
+    assert any(isinstance(f, RedactVerifyToken) for f in logging.getLogger("uvicorn.access").filters)
+    rec = logging.LogRecord("uvicorn.access", logging.INFO, "", 0, '%s - "%s %s HTTP/%s" %d',
+                            ("1.2.3.4:5", "GET", f"{URL}?hub.mode=subscribe&hub.verify_token={VERIFY}&hub.challenge=1",
+                             "1.1", 200), None)
+    RedactVerifyToken().filter(rec)
+    assert VERIFY not in rec.getMessage() and f"{URL}?<redacted>" in rec.getMessage()
+
+
 # ---------------------------------------------------------------- P7 fails closed (W-1)
 @pytest.mark.parametrize("mode,over", [
     ("public", WA),                                                  # every WA var set, still never mounted

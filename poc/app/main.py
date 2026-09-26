@@ -17,7 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import models as M
 from app.api.errors import ApiError
 from app.api.routes import admin, router
-from app.api.routes_webhook import webhook
+from app.api.routes_webhook import install_log_redaction, webhook
 from app.clock import Clock, SystemClock, utc_iso
 from app.db.cache import SqliteExtractionCache
 from app.db.conn import connect, create_schema, fresh_db
@@ -201,6 +201,7 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         app.include_router(admin)
     if settings.webhook_mounted:                        # 04 W-1: fail closed; public mode never mounts it
         app.include_router(webhook)
+        install_log_redaction()
     log.info("mode=%s webhook=%s wa_send=%s", settings.app_mode, "enabled" if settings.webhook_mounted else "disabled",
              settings.wa_send_effective)
     dist = ROOT / "web" / "dist"
