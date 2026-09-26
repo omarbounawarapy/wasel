@@ -719,8 +719,8 @@ Source of truth: `app/api/models.py`. The TypeScript below goes verbatim into `w
 - In `event` and `dev`, the header is ignored for filtering, and mutations are allowed on every row.
 
 **Body limits:**
-- Request body ≤ 256 KB.
-- Paste text ≤ 2,000 chars; simulate text ≤ 1,000 chars.
+- Request body ≤ 64 KB (the webhook alone reads up to 1 MiB, 04 W-3).
+- Paste text ≤ 2,000 chars; simulate text ≤ 600 chars; CSV ≤ 10 rows in public mode, 200 in event mode. (Canonical: 04 §2.)
 - CSV ≤ 200 rows.
 
 #### 4.1 Endpoints
@@ -1001,7 +1001,7 @@ export interface ResetResponse { reseeded_orders: number; purged_rows: number }
 | code | HTTP | when |
 |---|---|---|
 | `VALIDATION_ERROR` | 422 | body/query fails Pydantic, or `X-Visitor-Id` missing/malformed on a public mutation (FastAPI's default 422 is rewrapped into `ApiError`) |
-| `PAYLOAD_TOO_LARGE` | 413 | body > 256 KB, paste > 2,000, simulate > 1,000 chars, CSV > 200 rows |
+| `PAYLOAD_TOO_LARGE` | 413 | body > 64 KB (webhook > 1 MiB), paste > 2,000 chars, simulate > 600 chars, CSV > 10 rows (public) / 200 (event) |
 | `NOT_FOUND` | 404 | unknown id, or a row outside the visitor's visibility in public mode |
 | `INVALID_TRANSITION` | 409 | action/rescore not allowed from the current status; `details.allowed` lists the valid actions |
 | `SEEDED_READ_ONLY` | 409 | public mode, mutation on a row with `sandbox_id IS NULL` |
@@ -1043,7 +1043,8 @@ Always: `pending_rescore_at = now + debounce` (a newer message pushes it back), 
 
 | # | Condition | Next status |
 |---|---|---|
-| 1 | `result.is_order == False` | unchanged; no assessment row; event `extraction.not_order` |
+| 0 | `result.injection_suspected` | `needs_review`. An assessment row is **always** written (so the flag and chip persist), even if the model said `is_order=false`: 02 §5 step 9 has already forced `is_order=true`. Its `confirmation` is ignored (04 I-5) |
+| 1 | `result.is_order == False` (after the step-9 guard, so there's no order content and no injection hit) | unchanged; no assessment row; event `extraction.not_order` |
 | 2 | `confirmation == "declined"` | `cancelled` (action `cancelled`, score computed normally) |
 | 3 | `is_order_change` | `needs_review` |
 | 4 | `path == "rules"` or extraction invalid or `has_unsupported_media` | `needs_review` |
