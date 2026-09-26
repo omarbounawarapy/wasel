@@ -45,6 +45,7 @@ Rubric abbreviations: **P** Problem+value /20 · **F** Functional /20 · **AI** 
 | S-8 | Activity feed (`/api/events`, copy in `event_text.py`) | R ~1, T ~1 | Montassar | 0.75 | Sun 13:00 |
 | S-9 | Snapshot mode (DataSource `snapshot` + capture script + grey banner) | F ~2 (insurance) | Montassar | 0.5 | Sun 15:30; capture 16:48 |
 | S-10 | Tests 16 → 34 (U2 U4 U8 U9 U12 U13 U19 U20 U22, J2 J3 if G5, J15 if S-3, sandbox P0 ×5); fallback drill → `reports/fallback_drill.json` | T ~2 | all; Jesser leads | 1.5 | **D5 Sun 15:30**; shortfall listed under README "What this does not prove" |
+| S-11 | Text baseline classifier (TF-IDF char n-grams + logistic regression, 03 §14). **S-11a** (0.5 h): train on the synthetic rows, report `address_level` X/N on G1 as a "no LLM" baseline row + ML14. **S-11b** (0.5 h): disagreement check (`confidence=low`, never the score) + `address_level` in the rules fallback, behind `text_clf.enabled` + ML15. Added after the council | AI ~1.5, T ~0.5, F ~0.5 | Omar | 1.0 | S-11a: Sat 21:00 slot, ahead of S-7. S-11b: Sunday only if S-6 finishes early; else cut |
 
 ### Could / Won't
 
@@ -62,7 +63,7 @@ Rubric abbreviations: **P** Problem+value /20 · **F** Functional /20 · **AI** 
 | W-6 | Multi-order conversations (flag → review only) | Won't | — |
 | W-7 | Kredete award claim; eGrow/SoukFlow mentions; any refusal-rate or COD-share figure without an on-screen source | Won't | — |
 
-**Sunday cut order (first to go):** C-* → S-7 → S-10 beyond 20 tests → S-6 → S-9 → S-8 → S-2 → S-3 → S-4.
+**Sunday cut order (first to go):** C-* → S-7 → S-11b → S-10 beyond 20 tests → S-6 → S-9 → S-8 → S-2 → S-3 → S-4.
 **Never cut:** M-1 … M-18. For M-8 specifically: if the Gemini API itself turns out to be unusable (no free model, quota or region [VERIFY]), the code ships with recorded-fixture tests, stays out of the hosted chain, and the README gives the exact reason. It is not silently removed.
 
 ---
@@ -88,7 +89,7 @@ Rubric abbreviations: **P** Problem+value /20 · **F** Functional /20 · **AI** 
 | 19:00–20:00 | **M-8 Gemini Stage A** + U14 Gemini branch + recorded fixture → **G-Gem 20:00** |
 | 20:30–21:30 | C1 E4, README eval table numbers, merges |
 | 21:30–22:00 | Merges, support the safety take (backend watch), **G7 22:00** |
-| (21:00 only if green) | S-7 qwen bake-off, else skipped |
+| (21:00 only if green) | S-11a text baseline (0.5 h), then S-7 qwen bake-off only if S-11a is done; else both skipped |
 
 ### Saturday — Jesser (backend, messaging) · ~11.0 h (S-1 block 16:15–17:30 is the slack if G1/G5 fail)
 
@@ -233,7 +234,7 @@ If G4 fails at 16:00: Streamlit from 16:00 (`st.columns([2,3])`, `@st.fragment(r
 3. **How the AI is used.**
    - Pipeline: LLM extracts and quotes (verified) → XGBoost scores (6 monotone features) → rules decide → a human sends.
    - Provider chain: Groq `gpt-oss-120b` → `gpt-oss-20b` → Gemini → rules.
-   - Eval table: address level X/24, flag F1, invented-quote rate, 8/8 injection, tier agreement N/40 (synthetic holdout).
+   - Eval table: address level X/24, flag F1, invented-quote rate, 8/8 injection, tier agreement N/40 (synthetic holdout); plus the char n-gram baseline (no LLM) X/24 if S-11a shipped.
 4. **Testing and reliability.**
    - CI badge; N tests.
    - Five rows of the risk→test→result table.
