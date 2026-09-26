@@ -1,0 +1,9 @@
+tests/
+.venv/
+var/
+web/node_modules/
+.git/
+reports/junit.xml
+.pytest_cache/
+.ruff_cache/
+data/synth_v1.csv

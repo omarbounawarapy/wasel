@@ -301,3 +301,13 @@ def test_admin_reset_reseeds(dev):
     r = c.post("/api/admin/reset", headers={"X-Admin-Token": "x" * 24}).json()
     assert r["purged_rows"] == before and r["reseeded_orders"] == before - 1
     assert json.loads(json.dumps(r))
+
+
+def test_committed_mocks_match_api_models():
+    """C3: mocks/*.json validate against the Pydantic response models (regenerate with `make mocks`)."""
+    from pathlib import Path
+    root = Path(__file__).resolve().parents[2] / "mocks"
+    M.OrderListResponse.model_validate_json((root / "orders.json").read_text(encoding="utf-8"))
+    M.OrderDetailResponse.model_validate_json((root / "order_detail.json").read_text(encoding="utf-8"))
+    M.OrderDetailResponse.model_validate_json((root / "order_detail_ar.json").read_text(encoding="utf-8"))
+    M.HealthResponse.model_validate_json((root / "health.json").read_text(encoding="utf-8"))
