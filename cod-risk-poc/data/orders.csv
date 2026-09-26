@@ -1,0 +1,301 @@
+order_id,created_at,governorate,zone_tier,address_text,note_text,product_category,value_tnd,item_count,channel,is_first_order,prior_orders,prior_refusals,refused,latent_address_quality,latent_intent,latent_register
+ORD-1001,2026-08-28T20:26,Monastir,peri-urban,"Monastir, fi jihet el gare",khouya bech yestalem,fashion,134.1,1,facebook,0,2,1,1,1,third_party,derja_latin
+ORD-1002,2026-09-19T19:55,Tunis,peri-urban,"Hay Ennour, jenb el farmasia de nuit, Tunis",taille M,cosmetics,44.5,1,facebook,0,3,0,1,3,neutral,derja_latin
+ORD-1003,2026-08-23T11:24,Gafsa,remote,"Rue Ibn Khaldoun n°104, Cité Ettadhamen, Gafsa",si ça me plaît je garde,home,73.4,1,facebook,1,0,0,1,3,hesitant,fr
+ORD-1004,2026-08-09T11:47,Ben Arous,urban,ki twsel kalamni,el 7ares ya5ou el colis,cosmetics,35.9,3,facebook,1,0,0,1,0,third_party,derja_latin
+ORD-1005,2026-08-29T11:55,Tozeur,remote,"Avenue de la Liberté n°56, Cité El Amel, Tozeur","Merci, je suis disponible toute la journée.",home,35.2,1,facebook,1,0,0,0,3,confident,fr
+ORD-1006,2026-08-06T18:09,Tunis,urban,تونس,خويا باش يستلم,home,75.0,1,website,1,0,0,1,1,third_party,ar
+ORD-1007,2026-09-01T18:27,Sousse,urban,"Cité Ennasr 2, 9odem el mdrsa el ibtida2iya, Sousse","ya3tik essa7a, nestanna fih",electronics,209.8,1,instagram,0,5,0,0,3,confident,derja_latin
+ORD-1008,2026-09-20T10:02,Sfax,urban,"Nahj Mongi Slim n°46, Cité El Khadra, Sfax","taille M, kalamni 3al 44 738 299",electronics,241.4,1,instagram,1,0,0,0,3,neutral,derja_latin
+ORD-1009,2026-08-11T15:29,Sfax,urban,حي الزهور، قدام الجامع الكبير، صفاقس,,cosmetics,16.2,2,facebook,1,0,0,1,3,neutral,ar
+ORD-1010,2026-09-13T23:35,Jendouba,urban,"Cité Erriadh, Jendouba","3aslema, ena fi dar",cosmetics,64.8,4,facebook,0,3,0,0,2,confident,derja_latin
+ORD-1011,2026-08-31T19:38,Kairouan,peri-urban,ki twsel kalamni,,fashion,76.2,1,website,0,3,0,0,0,neutral,derja_latin
+ORD-1012,2026-07-31T19:04,Monastir,peri-urban,"Rue de Marseille n°57, Cité El Khadra, Monastir",mazal ma 5tartech el taille,cosmetics,104.8,1,instagram,1,0,0,1,3,hesitant,derja_latin
+ORD-1013,2026-09-08T19:21,Medenine,remote,"Nahj Mongi Slim n°107, Cité Ettadhamen, Djerba",je suis en voyage jusqu'à la semaine prochaine,fashion,61.7,1,website,0,3,0,0,3,reschedule,fr
+ORD-1014,2026-08-28T22:02,Ariana,urban,حي الرياض، أريانة,المقاس M,home,57.6,1,facebook,0,1,0,0,2,neutral,ar
+ORD-1015,2026-09-14T22:51,Kasserine,remote,حي الأمل، بحذا الصيدلية، القصرين,يعطيك الصحة، نستنى فيه,home,77.5,2,facebook,0,1,0,1,3,confident,ar
+ORD-1016,2026-07-26T10:42,Ariana,urban,,ab3athha ba3d jom3a,fashion,79.6,1,instagram,1,0,0,0,0,reschedule,derja_latin
+ORD-1017,2026-08-21T21:38,Sousse,urban,كي توصل كلمني,,electronics,257.7,4,facebook,1,0,0,1,0,neutral,ar
+ORD-1018,2026-08-12T15:35,Sfax,urban,"Nahj Mongi Slim n°71, Cité Erriadh, Sfax",,sports,79.1,1,facebook,1,0,0,0,3,neutral,fr
+ORD-1019,2026-09-11T04:15,Medenine,remote,"Cité Ennasr 2, 9odem jem3a el kbira, Medenine",taille M,home,48.8,1,instagram,0,4,0,1,3,neutral,derja_latin
+ORD-1020,2026-08-21T04:14,Sfax,remote,"Sfax, fi jihet el gare",,fashion,63.3,2,instagram,1,0,0,1,1,neutral,derja_latin
+ORD-1021,2026-09-12T12:33,Monastir,remote,"Monastir, fi jihet el gare",5aliha 3and el 3attar,cosmetics,29.2,2,facebook,0,3,0,0,1,third_party,derja_latin
+ORD-1022,2026-07-26T23:54,Kasserine,remote,"Rue Farhat Hached n°63, Cité Ennasr 2, Kasserine","3aslema, ena fi dar",fashion,45.9,1,facebook,0,3,0,1,3,confident,derja_latin
+ORD-1023,2026-08-02T19:55,Ariana,urban,"Hay Ennour, Ennasr","Merci barcha, dispo toute la journée",cosmetics,75.5,1,instagram,0,2,1,0,2,confident,derja_latin
+ORD-1024,2026-09-04T21:02,Ben Arous,peri-urban,بن عروس، كي توصل كلمني,,fashion,113.4,5,facebook,0,1,0,0,1,neutral,ar
+ORD-1025,2026-08-18T20:25,Tunis,peri-urban,"Cité Ettadhamen, Tunis",j'hésite encore entre deux tailles,fashion,49.6,2,website,0,1,0,0,2,hesitant,fr
+ORD-1026,2026-08-25T15:06,Bizerte,peri-urban,"Bizerte, quand vous arrivez, appelez",pas avant la semaine prochaine svp,electronics,443.2,1,facebook,0,2,1,1,1,reschedule,fr
+ORD-1027,2026-07-26T14:31,Jendouba,remote,حي الرياض، جندوبة,نشوف كان يعجبني,fashion,57.5,2,website,0,3,2,1,2,hesitant,ar
+ORD-1028,2026-08-25T20:28,Kasserine,remote,"Hay Ennour, 9odem el mdrsa el ibtida2iya, Kasserine","khouya bech yestalem, kalamni 3al 46 349 578",fashion,59.0,2,instagram,1,0,0,0,3,third_party,derja_latin
+ORD-1029,2026-07-31T19:53,Ben Arous,urban,كي توصل كلمني,مانيش متأكدة من المقاس,fashion,128.3,2,facebook,1,0,0,1,0,hesitant,ar
+ORD-1030,2026-07-28T08:16,Tataouine,remote,"Avenue de la Liberté n°11, Cité El Khadra, Tataouine",pas avant la semaine prochaine svp,cosmetics,64.8,1,facebook,1,0,0,1,3,reschedule,fr
+ORD-1031,2026-09-10T19:06,Tozeur,remote,شارع الحبيب بورقيبة عدد 1، حي النصر، توزر,,cosmetics,29.0,1,website,0,1,0,1,3,neutral,ar
+ORD-1032,2026-08-31T21:42,Sfax,urban,"Rue de Marseille n°102, Cité El Khadra, Sfax",,fashion,72.6,1,facebook,1,0,0,0,3,neutral,fr
+ORD-1033,2026-08-10T13:01,Ben Arous,urban,Ben Arous,"peut-être je le prends, je ne suis pas sûre de la taille",kids,67.2,1,facebook,0,1,0,0,1,hesitant,fr
+ORD-1034,2026-08-14T15:42,Nabeul,peri-urban,"Cité El Amel, Hammamet",,fashion,105.2,2,website,0,1,0,0,2,neutral,derja_latin
+ORD-1035,2026-08-22T18:48,Jendouba,remote,"Rue Ibn Khaldoun n°81, Cité El Amel, Jendouba",ab3athha ba3d jom3a,sports,101.8,2,facebook,0,3,1,1,3,reschedule,derja_latin
+ORD-1036,2026-08-25T22:59,Nabeul,peri-urban,"Cité El Khadra, Hammamet",taille M,fashion,175.5,1,facebook,1,0,0,1,2,neutral,derja_latin
+ORD-1037,2026-09-09T00:19,Sfax,urban,"Rue Tahar Haddad n°71, Cité Erriadh, Sfax","3aslema, ena fi dar",home,58.5,2,facebook,1,0,0,0,3,confident,derja_latin
+ORD-1038,2026-09-13T23:52,Kairouan,peri-urban,القيروان,خلّيها عند الجار,fashion,33.7,1,facebook,0,3,1,1,1,third_party,ar
+ORD-1039,2026-09-17T22:43,Sfax,urban,"Sfax, du côté de la gare","Je serai à la maison après 17h, merci",cosmetics,30.0,3,facebook,1,0,0,0,1,confident,fr
+ORD-1040,2026-07-26T12:02,Ariana,urban,"Rue de Marseille n°22, Cité El Khadra, Ariana","Merci barcha, dispo toute la journée",kids,57.3,1,facebook,1,0,0,0,3,confident,derja_latin
+ORD-1041,2026-08-16T03:37,Tunis,urban,"Cité El Khadra, La Marsa","Merci barcha, dispo toute la journée",electronics,127.6,1,instagram,0,2,1,0,2,confident,derja_latin
+ORD-1042,2026-09-20T18:57,Tozeur,urban,"Cité El Amel, Tozeur",taille M,kids,40.3,1,facebook,0,5,1,0,2,neutral,derja_latin
+ORD-1043,2026-08-06T15:08,Ariana,urban,نهج الطاهر الحداد عدد 104، حي النصر، أريانة,نكون في الدار الكل نهار,electronics,100.7,1,instagram,0,3,1,0,3,confident,ar
+ORD-1044,2026-07-30T19:50,Ben Arous,urban,"Avenue Habib Bourguiba n°82, Cité Erriadh, El Mourouj","pas avant la semaine prochaine svp, appelez-moi au 27 549 651",fashion,48.1,1,website,1,0,0,0,3,reschedule,fr
+ORD-1045,2026-09-07T23:34,Medenine,peri-urban,"Cité Ennasr 2, en face de l'école primaire, Medenine",ma mère va récupérer le colis,fashion,71.2,1,instagram,1,0,0,0,3,third_party,fr
+ORD-1046,2026-08-06T14:07,Tunis,urban,même adresse que la dernière fois,"pas avant la semaine prochaine svp, appelez-moi au 49 005 329",fashion,52.1,4,facebook,1,0,0,1,0,reschedule,fr
+ORD-1047,2026-08-10T00:03,Medenine,remote,حي الأمل، قدام الجامع الكبير، مدنين,خلّيها عند الجار,kids,32.6,1,instagram,0,4,1,0,3,third_party,ar
+ORD-1048,2026-08-14T22:38,Sfax,urban,Sfax,"c'est ma soeur qui va recevoir, appelez-moi au 59 985 698",home,75.6,1,website,0,5,0,0,1,third_party,fr
+ORD-1049,2026-08-10T13:23,Tunis,urban,حي الزهور، تونس,خلّيها عند الجار,cosmetics,34.9,2,facebook,1,0,0,0,2,third_party,ar
+ORD-1050,2026-08-21T23:55,Sfax,urban,"Hay Ennour, 9odem el mdrsa el ibtida2iya, Sfax","3aslema, ena fi dar, kalamni 3al 59 451 983",kids,31.7,1,website,1,0,0,0,3,confident,derja_latin
+ORD-1051,2026-08-11T01:44,Tunis,urban,Tunis,ken 3jebni nekhou,home,125.2,1,instagram,1,0,0,1,1,hesitant,derja_latin
+ORD-1052,2026-09-01T23:05,Tunis,urban,نهج الطاهر الحداد عدد 63، حي الرياض، تونس,,cosmetics,36.0,1,facebook,1,0,0,1,3,neutral,ar
+ORD-1053,2026-08-07T09:49,Nabeul,peri-urban,"Rue de Marseille n°49, Cité El Amel, Hammamet",manich mt2akda mel couleur,electronics,221.2,1,facebook,0,1,1,1,3,hesitant,derja_latin
+ORD-1054,2026-09-03T15:26,Sousse,urban,Sousse,Taille L svp,cosmetics,44.0,1,facebook,0,2,0,1,1,neutral,fr
+ORD-1055,2026-09-12T08:22,Tunis,urban,même adresse que la dernière fois,si ça me plaît je garde,fashion,72.3,2,facebook,1,0,0,1,0,hesitant,fr
+ORD-1056,2026-09-19T20:36,Ariana,urban,"Ennasr, fi jihet el gare","3aslema, ena fi dar",kids,40.3,1,instagram,1,0,0,0,1,confident,derja_latin
+ORD-1057,2026-09-20T21:02,Sfax,urban,"Rue Ibn Khaldoun n°58, Cité Erriadh, Sfax",couleur ka7la,fashion,78.2,2,facebook,0,4,0,0,3,neutral,derja_latin
+ORD-1058,2026-09-21T14:18,Tunis,peri-urban,نهج ابن خلدون عدد 72، حي الرياض، تونس,نشوف كان يعجبني,fashion,45.2,1,instagram,1,0,0,1,3,hesitant,ar
+ORD-1059,2026-08-18T12:41,Bizerte,peri-urban,,المقاس M,electronics,84.9,1,facebook,0,3,1,1,0,neutral,ar
+ORD-1060,2026-09-10T18:56,Tunis,urban,شارع الحبيب بورقيبة عدد 107، حي الأمل، تونس,راني مسافر، ابعثها بعد الجمعة,fashion,84.4,1,instagram,0,1,0,0,3,reschedule,ar
+ORD-1061,2026-09-13T23:30,Bizerte,peri-urban,حي الرياض، وراء البريد، بنزرت,مانيش متأكدة من المقاس,kids,48.9,1,instagram,0,1,1,0,3,hesitant,ar
+ORD-1062,2026-09-11T12:10,Jendouba,remote,"Cité El Khadra, 9odem el mdrsa el ibtida2iya, Jendouba",ken 3jebni nekhou,sports,69.8,2,website,1,0,0,1,3,hesitant,derja_latin
+ORD-1063,2026-09-21T01:53,Sidi Bouzid,remote,"Avenue Habib Bourguiba n°3, Cité Erriadh, Sidi Bouzid","Merci barcha, dispo toute la journée",cosmetics,59.6,1,instagram,1,0,0,1,3,confident,derja_latin
+ORD-1064,2026-08-25T22:38,Ariana,remote,حي الأمل، أريانة,,home,96.9,1,instagram,0,2,1,1,2,neutral,ar
+ORD-1065,2026-08-18T01:23,Tunis,urban,"Cité El Amel, Tunis",Taille L svp,kids,95.2,1,instagram,0,1,0,1,2,neutral,fr
+ORD-1066,2026-09-08T06:49,Monastir,peri-urban,Monastir,"Livraison rapide svp, merci, appelez-moi au 40 305 486",cosmetics,33.2,2,instagram,0,3,1,0,1,confident,fr
+ORD-1067,2026-08-25T18:23,Ariana,urban,نهج ابن خلدون عدد 11، حي التضامن، أريانة,المقاس M,sports,62.9,2,website,1,0,0,1,3,neutral,ar
+ORD-1068,2026-08-19T20:23,Ben Arous,urban,Ben Arous,"Je serai à la maison après 17h, merci",cosmetics,24.5,3,instagram,0,4,0,0,1,confident,fr
+ORD-1069,2026-08-17T06:25,Sfax,urban,,"Merci barcha, dispo toute la journée",fashion,46.4,1,facebook,1,0,0,1,0,confident,derja_latin
+ORD-1070,2026-09-17T20:20,Sfax,urban,"Cité El Khadra, jenb el farmasia de nuit, Sfax",taille M,kids,45.1,1,facebook,0,5,1,0,3,neutral,derja_latin
+ORD-1071,2026-08-13T03:25,Gabès,peri-urban,Gabès,"3aslema, ena fi dar",electronics,306.3,1,website,1,0,0,0,1,confident,derja_latin
+ORD-1072,2026-07-28T22:53,Monastir,peri-urban,"Hay Ennour, en face de l'école primaire, Monastir",c'est ma soeur qui va recevoir,home,77.6,3,facebook,1,0,0,1,3,third_party,fr
+ORD-1073,2026-08-30T22:02,Medenine,remote,"Cité El Khadra, derrière la poste, Djerba",appelez-moi au 53 969 078,electronics,210.3,1,website,0,2,0,0,3,neutral,fr
+ORD-1074,2026-08-02T23:48,Ben Arous,urban,"Hay Ennour, Ben Arous",taille M,fashion,47.9,2,instagram,0,1,0,0,2,neutral,derja_latin
+ORD-1075,2026-08-25T22:01,Sfax,urban,"Cité Erriadh, Sfax",khouya bech yestalem,kids,42.0,2,website,0,3,0,0,2,third_party,derja_latin
+ORD-1076,2026-09-11T20:25,Ben Arous,urban,même adresse que la dernière fois,"si ça me plaît je garde, appelez-moi au 29 835 841",cosmetics,21.2,1,website,1,0,0,1,0,hesitant,fr
+ORD-1077,2026-08-14T23:10,Tunis,urban,"Cité Erriadh, 7dhe el bousta, La Marsa","Merci barcha, dispo toute la journée",electronics,217.0,1,facebook,0,5,0,0,3,confident,derja_latin
+ORD-1078,2026-08-24T01:16,Bizerte,peri-urban,نهج المنجي سليم عدد 81، حي التضامن، بنزرت,مازلت نخمم فيه,kids,29.7,2,instagram,1,0,0,0,3,hesitant,ar
+ORD-1079,2026-09-02T18:58,Kairouan,peri-urban,"Cité Erriadh, Kairouan",nchawer rajli 9bal,fashion,48.1,1,facebook,1,0,0,1,2,hesitant,derja_latin
+ORD-1080,2026-09-04T20:51,Ariana,urban,"Cité El Khadra, Ennasr",Taille L svp,fashion,92.3,1,instagram,1,0,0,1,2,neutral,fr
+ORD-1081,2026-08-19T22:52,Jendouba,peri-urban,حي الزهور، جندوبة,المقاس M,kids,35.7,2,facebook,1,0,0,0,2,neutral,ar
+ORD-1082,2026-08-09T19:03,Ben Arous,urban,"Cité Ennasr 2, Ben Arous","3aslema, ena fi dar",electronics,499.2,1,instagram,1,0,0,0,2,confident,derja_latin
+ORD-1083,2026-07-28T12:58,Ben Arous,urban,,"Merci, je suis disponible toute la journée.",home,253.7,2,facebook,0,1,0,0,0,confident,fr
+ORD-1084,2026-08-30T00:38,Kasserine,remote,,,cosmetics,115.6,3,website,1,0,0,1,0,neutral,ar
+ORD-1085,2026-07-30T18:25,Ariana,peri-urban,"Rue Farhat Hached n°58, Cité Ettadhamen, Ariana",nchouf ken ynasebni,home,104.8,1,instagram,0,2,0,1,3,hesitant,derja_latin
+ORD-1086,2026-08-12T19:23,Kairouan,peri-urban,"Cité Ennasr 2, Kairouan",,cosmetics,47.4,1,facebook,0,5,0,0,2,neutral,fr
+ORD-1087,2026-09-16T05:35,Bizerte,remote,بنزرت,,home,44.7,1,instagram,1,0,0,1,1,neutral,ar
+ORD-1088,2026-07-29T09:02,Bizerte,peri-urban,حي الأمل، بنزرت,بارك الله فيك,fashion,39.4,1,instagram,0,4,2,1,2,confident,ar
+ORD-1089,2026-08-16T20:07,Tunis,urban,حي الزهور، تونس,,kids,18.3,1,website,0,3,0,0,2,neutral,ar
+ORD-1090,2026-08-20T21:39,Kairouan,peri-urban,"Cité Erriadh, Kairouan",,sports,85.6,1,website,0,2,1,1,2,neutral,fr
+ORD-1091,2026-08-14T20:15,Bizerte,urban,نهج المنجي سليم عدد 76، حي الرياض، بنزرت,موش توا، الجمعة الجاية,fashion,78.6,1,facebook,0,2,1,0,3,reschedule,ar
+ORD-1092,2026-08-13T15:24,Gafsa,remote,"Cité El Amel, Gafsa","Merci, je suis disponible toute la journée.",cosmetics,35.3,1,instagram,1,0,0,0,2,confident,fr
+ORD-1093,2026-09-16T18:12,Tunis,urban,"Cité El Khadra, Tunis",,fashion,82.9,1,facebook,1,0,0,0,2,neutral,derja_latin
+ORD-1094,2026-08-19T20:58,Gabès,peri-urban,"Rue des Oliviers n°60, Hay Ennour, Gabès","Merci, je suis disponible toute la journée.",kids,41.3,1,facebook,0,5,0,0,3,confident,fr
+ORD-1095,2026-08-12T20:09,Tunis,peri-urban,حي التضامن، قدام المدرسة الابتدائية، تونس,يعطيك الصحة، نستنى فيه,sports,111.8,2,facebook,1,0,0,0,3,confident,ar
+ORD-1096,2026-09-17T01:04,Ariana,remote,"Cité El Amel, Ennasr","Je serai à la maison après 17h, merci, appelez-moi au 26 231 203",home,140.0,1,website,0,3,1,0,2,confident,fr
+ORD-1097,2026-09-15T18:22,Sousse,urban,"Rue Farhat Hached n°39, Cité Erriadh, Sousse",ma mère va récupérer le colis,fashion,67.7,2,instagram,0,4,0,0,3,third_party,fr
+ORD-1098,2026-09-17T03:27,Bizerte,remote,حي التضامن، بنزرت,نكون في الدار الكل نهار,cosmetics,32.5,1,instagram,1,0,0,0,2,confident,ar
+ORD-1099,2026-07-26T22:13,Sidi Bouzid,remote,شارع الحبيب بورقيبة عدد 73، حي الرياض، سيدي بوزيد,خلّيها عند الجار,home,51.9,1,instagram,1,0,0,0,3,third_party,ar
+ORD-1100,2026-08-21T02:14,Medenine,remote,نهج فرحات حشاد عدد 101، حي الرياض، مدنين,راني مسافر، ابعثها بعد الجمعة,fashion,133.6,1,website,1,0,0,1,3,reschedule,ar
+ORD-1101,2026-09-10T19:24,Tozeur,remote,Tozeur,ken 3jebni nekhou,fashion,54.7,1,instagram,0,2,0,1,1,hesitant,derja_latin
+ORD-1102,2026-09-12T15:05,Tunis,urban,"Hay Ennour, Tunis",,fashion,105.4,1,instagram,0,2,1,1,2,neutral,fr
+ORD-1103,2026-08-13T04:00,Ben Arous,urban,"Cité Ennasr 2, El Mourouj","Merci barcha, dispo toute la journée",fashion,78.4,1,instagram,1,0,0,0,2,confident,derja_latin
+ORD-1104,2026-08-30T18:50,Ben Arous,remote,حي الزهور، بحذا الصيدلية، بن عروس,,kids,61.1,3,website,0,2,1,1,3,neutral,ar
+ORD-1105,2026-08-25T15:08,Nabeul,peri-urban,"Cité Ennasr 2, Hammamet",j'hésite encore entre deux tailles,cosmetics,33.1,1,instagram,1,0,0,1,2,hesitant,fr
+ORD-1106,2026-09-01T21:40,Tunis,peri-urban,"Cité El Amel, Tunis",c'est ma soeur qui va recevoir,sports,76.4,3,instagram,1,0,0,1,2,third_party,fr
+ORD-1107,2026-08-08T20:28,Nabeul,peri-urban,"Hay Ennour, derrière la poste, Nabeul",pas avant la semaine prochaine svp,fashion,25.5,1,facebook,1,0,0,0,3,reschedule,fr
+ORD-1108,2026-08-14T20:04,Tunis,urban,نهج الطاهر الحداد عدد 81، حي الأمل، تونس,"خويا باش يستلم, كلمني على 20 512 382",fashion,53.9,1,facebook,0,2,2,1,3,third_party,ar
+ORD-1109,2026-08-05T22:23,Ariana,urban,"Cité Erriadh, en face de l'école primaire, Ennasr",Taille L svp,cosmetics,49.8,2,facebook,0,2,0,0,3,neutral,fr
+ORD-1110,2026-08-02T03:20,Nabeul,peri-urban,"Rue de Marseille n°74, Cité Erriadh, Nabeul",je suis en voyage jusqu'à la semaine prochaine,electronics,321.7,1,instagram,1,0,0,1,3,reschedule,fr
+ORD-1111,2026-07-25T14:31,Sfax,urban,,,cosmetics,26.2,1,facebook,1,0,0,1,0,neutral,fr
+ORD-1112,2026-08-25T21:35,Sfax,peri-urban,"Cité Erriadh, Sfax",ken tnajmou t2akhrouha chwaya,fashion,89.0,1,instagram,0,1,0,1,2,reschedule,derja_latin
+ORD-1113,2026-08-22T21:55,Medenine,remote,حي التضامن، بحذا الصيدلية، مدنين,راني مسافر، ابعثها بعد الجمعة,home,61.5,1,website,1,0,0,1,3,reschedule,ar
+ORD-1114,2026-08-26T23:57,Nabeul,peri-urban,نابل,,electronics,174.9,4,facebook,0,1,0,0,1,neutral,ar
+ORD-1115,2026-09-12T21:05,Tunis,urban,La Marsa,couleur ka7la,fashion,88.2,1,instagram,1,0,0,1,1,neutral,derja_latin
+ORD-1116,2026-08-21T09:52,Ben Arous,urban,بن عروس,مانيش متأكدة من المقاس,cosmetics,37.1,1,instagram,1,0,0,1,1,hesitant,ar
+ORD-1117,2026-09-19T22:41,Gabès,urban,"Rue de Marseille n°7, Hay Ennour, Gabès",5aliha 3and el 3attar,fashion,35.3,1,website,1,0,0,0,3,third_party,derja_latin
+ORD-1118,2026-09-15T20:07,Sfax,urban,"Cité El Amel, en face de la mosquée, Sfax",si ça me plaît je garde,home,167.8,1,facebook,0,2,1,1,3,hesitant,fr
+ORD-1119,2026-08-22T19:55,Ben Arous,urban,"Cité El Khadra, Ben Arous","manich mt2akda mel couleur, kalamni 3al 22 196 565",fashion,27.9,1,instagram,0,3,0,0,2,hesitant,derja_latin
+ORD-1120,2026-07-28T12:50,Nabeul,peri-urban,Nabeul,"peut-être je le prends, je ne suis pas sûre de la taille",sports,69.1,1,instagram,0,1,0,1,1,hesitant,fr
+ORD-1121,2026-09-13T23:25,Tunis,urban,"Cité Ennasr 2, El Menzah",taille M,fashion,113.9,1,website,0,2,2,1,2,neutral,derja_latin
+ORD-1122,2026-09-17T20:15,Tunis,urban,"Rue de Marseille n°16, Cité Erriadh, El Menzah",,electronics,307.3,1,facebook,0,5,1,0,3,neutral,fr
+ORD-1123,2026-08-21T13:17,Tunis,urban,"Cité Erriadh, Tunis","ken tnajmou t2akhrouha chwaya, kalamni 3al 27 785 079",fashion,65.6,1,instagram,0,2,1,1,2,reschedule,derja_latin
+ORD-1124,2026-07-27T23:35,Bizerte,peri-urban,حي الرياض، قدام المدرسة الابتدائية، بنزرت,موش توا، الجمعة الجاية,fashion,98.0,3,facebook,1,0,0,1,3,reschedule,ar
+ORD-1125,2026-08-12T14:36,Tunis,urban,"Cité El Khadra, jenb el farmasia de nuit, La Marsa",taille M,sports,145.0,2,instagram,0,1,0,0,3,neutral,derja_latin
+ORD-1126,2026-08-27T04:15,Tunis,urban,"Rue Farhat Hached n°115, Hay Ennour, El Menzah","mech tawa, ba3d el 3id",sports,87.0,1,website,0,1,0,1,3,reschedule,derja_latin
+ORD-1127,2026-09-22T22:51,Medenine,remote,حي النصر، مدنين,اللون الأسود,electronics,291.1,1,instagram,0,2,2,1,2,neutral,ar
+ORD-1128,2026-08-01T11:05,Tunis,urban,حي الزهور، تونس,يعطيك الصحة، نستنى فيه,fashion,41.5,1,website,0,2,0,0,2,confident,ar
+ORD-1129,2026-08-09T21:06,Ariana,urban,"Cité El Khadra, Ariana",nchawer rajli 9bal,fashion,99.1,4,facebook,1,0,0,0,2,hesitant,derja_latin
+ORD-1130,2026-07-30T21:57,Tunis,peri-urban,,"Livraison rapide svp, merci",electronics,277.7,5,facebook,0,1,0,1,0,confident,fr
+ORD-1131,2026-08-24T22:03,Sousse,urban,"Cité El Amel, en face de la mosquée, Sousse",,fashion,142.0,1,instagram,1,0,0,1,3,neutral,fr
+ORD-1132,2026-09-20T09:51,Tataouine,remote,"Cité El Khadra, Tataouine","taille M, kalamni 3al 98 593 213",kids,37.0,1,facebook,1,0,0,0,2,neutral,derja_latin
+ORD-1133,2026-08-25T22:34,Nabeul,peri-urban,"Rue Ibn Khaldoun n°43, Cité Ettadhamen, Nabeul",taille M,sports,40.7,1,website,0,5,0,1,3,neutral,derja_latin
+ORD-1134,2026-07-29T22:23,Sidi Bouzid,remote,"Sidi Bouzid, 9rib mel centre",el 7ares ya5ou el colis,sports,81.5,1,website,0,2,0,1,1,third_party,derja_latin
+ORD-1135,2026-09-09T14:44,Kairouan,peri-urban,"Kairouan, quand vous arrivez, appelez",Taille L svp,sports,87.7,1,facebook,1,0,0,0,1,neutral,fr
+ORD-1136,2026-07-30T22:52,Ben Arous,remote,"Hay Ennour, Ben Arous",el 7ares ya5ou el colis,fashion,64.4,4,facebook,1,0,0,1,2,third_party,derja_latin
+ORD-1137,2026-09-11T19:43,Ariana,urban,"Avenue Habib Bourguiba n°10, Cité Ettadhamen, Ennasr",,cosmetics,24.2,1,facebook,0,3,0,0,3,neutral,derja_latin
+ORD-1138,2026-08-04T23:38,Ben Arous,urban,حي الأمل، بن عروس,خويا باش يستلم,fashion,38.8,1,facebook,1,0,0,1,2,third_party,ar
+ORD-1139,2026-09-05T12:40,Bizerte,peri-urban,نهج ابن خلدون عدد 40، حي الزهور، بنزرت,نكون في الدار الكل نهار,electronics,359.0,2,facebook,1,0,0,1,3,confident,ar
+ORD-1140,2026-08-03T19:48,Gabès,peri-urban,نهج ابن خلدون عدد 108، حي التضامن، قابس,مازلت نخمم فيه,cosmetics,34.3,1,facebook,0,3,0,1,3,hesitant,ar
+ORD-1141,2026-08-03T23:07,Sfax,urban,حي النصر، صفاقس,بارك الله فيك,fashion,24.5,1,website,0,2,0,0,2,confident,ar
+ORD-1142,2026-08-29T03:25,Tunis,urban,"Cité El Amel, derrière la poste, Tunis",merci de livrer plus tard dans le mois,fashion,46.9,2,website,1,0,0,1,3,reschedule,fr
+ORD-1143,2026-08-30T20:38,Tunis,urban,"Cité Ettadhamen, en face de l'école primaire, Tunis","Livraison rapide svp, merci, appelez-moi au 56 299 606",home,50.0,2,website,0,1,1,0,3,confident,fr
+ORD-1144,2026-08-22T23:49,Kasserine,remote,نهج الطاهر الحداد عدد 95، حي الأمل، القصرين,المقاس M,cosmetics,42.4,2,facebook,1,0,0,1,3,neutral,ar
+ORD-1145,2026-07-27T02:29,Sousse,urban,"Avenue Habib Bourguiba n°88, Cité Erriadh, Sousse",nchouf ken ynasebni,cosmetics,57.5,2,instagram,0,2,0,0,3,hesitant,derja_latin
+ORD-1146,2026-08-04T14:54,Tunis,urban,"Nahj Mongi Slim n°66, Cité El Amel, Tunis",laissez-le chez le gardien,electronics,189.7,2,instagram,0,2,1,1,3,third_party,fr
+ORD-1147,2026-08-16T14:29,Tunis,urban,حي الأمل، تونس,نشوف كان يعجبني,fashion,68.7,1,website,0,2,0,0,2,hesitant,ar
+ORD-1148,2026-09-04T12:45,Nabeul,peri-urban,,موش توا، الجمعة الجاية,electronics,158.4,1,facebook,0,3,0,1,0,reschedule,ar
+ORD-1149,2026-08-08T20:43,Monastir,peri-urban,نهج ابن خلدون عدد 61، حي التضامن، المنستير,اللون الأسود,cosmetics,14.3,1,instagram,1,0,0,0,3,neutral,ar
+ORD-1150,2026-08-15T21:23,Tunis,urban,تونس,بارك الله فيك,home,85.0,1,instagram,0,1,0,0,1,confident,ar
+ORD-1151,2026-08-23T22:09,Monastir,peri-urban,"Cité El Amel, Monastir",taille M,sports,135.3,1,website,1,0,0,0,2,neutral,derja_latin
+ORD-1152,2026-08-24T16:24,Tataouine,remote,"Hay Ennour, Tataouine","ya3tik essa7a, nestanna fih, kalamni 3al 45 058 300",home,73.2,2,instagram,0,3,0,0,2,confident,derja_latin
+ORD-1153,2026-08-08T15:14,Tunis,urban,"Hay Ennour, en face de la mosquée, Tunis",,home,213.1,1,facebook,0,6,0,1,3,neutral,fr
+ORD-1154,2026-08-10T05:30,Sfax,urban,حي الزهور، صفاقس,,fashion,126.5,1,facebook,0,1,1,0,2,neutral,ar
+ORD-1155,2026-08-12T20:10,Monastir,peri-urban,"Rue Ibn Khaldoun n°86, Hay Ennour, Monastir","peut-être je le prends, je ne suis pas sûre de la taille",fashion,123.7,1,facebook,0,3,0,0,3,hesitant,fr
+ORD-1156,2026-09-15T02:11,Tunis,urban,"Cité El Amel, La Marsa",c'est ma soeur qui va recevoir,home,194.1,2,instagram,0,3,0,0,2,third_party,fr
+ORD-1157,2026-08-23T15:17,Tunis,urban,"Rue Ibn Khaldoun n°109, Cité Ettadhamen, Tunis",5aliha 3and el 3attar,kids,85.5,1,instagram,0,1,0,0,3,third_party,derja_latin
+ORD-1158,2026-08-01T23:56,Tunis,urban,Tunis,si ça me plaît je garde,fashion,47.7,1,instagram,0,3,0,1,1,hesitant,fr
+ORD-1159,2026-08-03T19:53,Sousse,urban,كي توصل كلمني,كلمني على 48 772 175,home,325.7,1,facebook,0,1,0,1,0,neutral,ar
+ORD-1160,2026-08-19T00:26,Nabeul,peri-urban,نهج الطاهر الحداد عدد 44، حي التضامن، نابل,,electronics,398.6,1,website,0,1,0,0,3,neutral,ar
+ORD-1161,2026-09-16T13:40,Sfax,urban,"Cité Ennasr 2, Sfax",taille M,home,113.8,2,facebook,1,0,0,0,2,neutral,derja_latin
+ORD-1162,2026-07-31T20:48,Tunis,urban,نهج المنجي سليم عدد 100، حي التضامن، تونس,"نشوف كان يعجبني, كلمني على 27 798 270",fashion,97.7,1,instagram,1,0,0,0,3,hesitant,ar
+ORD-1163,2026-08-20T06:38,Sidi Bouzid,remote,"Cité El Amel, à côté de la pharmacie de nuit, Sidi Bouzid",j'hésite encore entre deux tailles,sports,67.3,1,facebook,0,5,0,0,3,hesitant,fr
+ORD-1164,2026-08-01T13:48,Ariana,urban,"Cité El Amel, 9odem el mdrsa el ibtida2iya, Ennasr",ken 3jebni nekhou,kids,30.4,1,instagram,1,0,0,0,3,hesitant,derja_latin
+ORD-1165,2026-08-07T21:48,Gafsa,remote,"Cité El Amel, 7dhe el bousta, Gafsa","3aslema, ena fi dar, kalamni 3al 91 983 863",fashion,85.4,2,website,0,1,1,0,3,confident,derja_latin
+ORD-1166,2026-09-08T23:45,Sfax,remote,"Cité El Amel, Sfax","3aslema, ena fi dar",fashion,36.8,2,website,1,0,0,0,2,confident,derja_latin
+ORD-1167,2026-08-03T20:02,Jendouba,remote,"Cité Ennasr 2, 9odem el mdrsa el ibtida2iya, Jendouba",,cosmetics,35.6,1,instagram,0,2,1,0,3,neutral,derja_latin
+ORD-1168,2026-09-02T23:33,Tunis,urban,,Couleur noire,home,133.1,1,facebook,0,4,0,0,0,neutral,fr
+ORD-1169,2026-08-26T21:51,Sfax,remote,كي توصل كلمني,اللون الأسود,home,109.6,1,facebook,0,1,0,1,0,neutral,ar
+ORD-1170,2026-08-28T04:53,Jendouba,remote,حي النصر، جندوبة,نكون في الدار الكل نهار,fashion,44.8,2,facebook,1,0,0,0,2,confident,ar
+ORD-1171,2026-08-18T13:43,Tunis,urban,"Avenue Habib Bourguiba n°46, Cité Erriadh, El Menzah","ya3tik essa7a, nestanna fih",sports,96.3,3,facebook,1,0,0,0,3,confident,derja_latin
+ORD-1172,2026-09-14T14:54,Sidi Bouzid,remote,نهج المنجي سليم عدد 19، حي الزهور، سيدي بوزيد,نكون في الدار الكل نهار,home,59.8,1,facebook,0,2,1,0,3,confident,ar
+ORD-1173,2026-08-08T07:39,Tunis,urban,"Avenue Habib Bourguiba n°38, Cité Erriadh, Tunis",si ça me plaît je garde,kids,44.0,1,facebook,1,0,0,1,3,hesitant,fr
+ORD-1174,2026-08-25T08:28,Bizerte,peri-urban,"Hay Ennour, Bizerte",5aliha 3and el 3attar,cosmetics,39.2,1,facebook,1,0,0,1,2,third_party,derja_latin
+ORD-1175,2026-08-25T21:35,Jendouba,remote,"Cité Erriadh, Jendouba",,cosmetics,24.3,1,facebook,1,0,0,0,2,neutral,derja_latin
+ORD-1176,2026-07-27T09:35,Ariana,urban,"Ariana, quand vous arrivez, appelez",ma mère va récupérer le colis,sports,48.7,1,instagram,1,0,0,0,1,third_party,fr
+ORD-1177,2026-08-30T08:42,Kairouan,peri-urban,"Cité Ennasr 2, Kairouan","peut-être je le prends, je ne suis pas sûre de la taille",sports,82.5,2,instagram,0,1,1,1,2,hesitant,fr
+ORD-1178,2026-08-31T21:34,Ariana,urban,"Ariana, 9rib mel centre",,home,40.5,2,facebook,0,5,0,0,1,neutral,derja_latin
+ORD-1179,2026-08-17T08:38,Sousse,urban,حي الأمل، سوسة,,fashion,67.8,1,facebook,1,0,0,0,2,neutral,ar
+ORD-1180,2026-09-22T07:11,Bizerte,peri-urban,"Cité Ettadhamen, Bizerte",Couleur noire,fashion,98.8,1,instagram,0,2,1,1,2,neutral,fr
+ORD-1181,2026-09-22T20:29,Ariana,urban,"Cité Ettadhamen, Ariana","Je serai à la maison après 17h, merci",electronics,240.5,2,instagram,1,0,0,0,2,confident,fr
+ORD-1182,2026-07-30T21:30,Ariana,remote,"Ennasr, du côté de la gare",j'hésite encore entre deux tailles,fashion,106.8,2,instagram,1,0,0,1,1,hesitant,fr
+ORD-1183,2026-09-21T21:54,Bizerte,peri-urban,حي الزهور، قدام الجامع الكبير، بنزرت,راني مسافر، ابعثها بعد الجمعة,kids,59.4,2,instagram,1,0,0,0,3,reschedule,ar
+ORD-1184,2026-08-11T14:43,Nabeul,peri-urban,"Hammamet, ki twsel kalamni",nchawer rajli 9bal,cosmetics,38.7,1,facebook,0,2,0,1,1,hesitant,derja_latin
+ORD-1185,2026-08-29T13:39,Sousse,remote,"Sousse, ki twsel kalamni",nchouf ken ynasebni,home,43.4,1,instagram,0,1,0,1,1,hesitant,derja_latin
+ORD-1186,2026-09-15T23:11,Sfax,urban,"Rue Farhat Hached n°79, Cité El Khadra, Sfax","3aslema, ena fi dar",cosmetics,77.9,1,instagram,0,1,0,1,3,confident,derja_latin
+ORD-1187,2026-07-30T03:35,Tunis,urban,ki twsel kalamni,"mech tawa, ba3d el 3id",cosmetics,45.0,1,instagram,1,0,0,1,0,reschedule,derja_latin
+ORD-1188,2026-09-19T23:34,Nabeul,peri-urban,حي الرياض، نابل,المقاس M,cosmetics,50.8,1,website,0,1,0,0,2,neutral,ar
+ORD-1189,2026-07-25T18:44,Jendouba,remote,"Rue de Marseille n°61, Cité Ettadhamen, Jendouba","Livraison rapide svp, merci",electronics,215.0,5,instagram,0,1,0,1,3,confident,fr
+ORD-1190,2026-08-01T21:58,Ben Arous,urban,"Rue Tahar Haddad n°64, Cité Ennasr 2, Ben Arous","peut-être je le prends, je ne suis pas sûre de la taille",kids,69.9,1,facebook,0,5,0,0,3,hesitant,fr
+ORD-1191,2026-08-26T18:22,Kasserine,remote,,اللون الأسود,fashion,70.1,1,facebook,1,0,0,1,0,neutral,ar
+ORD-1192,2026-08-15T23:23,Ben Arous,urban,"Hay Ennour, en face de l'école primaire, El Mourouj","Merci, je suis disponible toute la journée.",cosmetics,53.1,1,facebook,1,0,0,0,3,confident,fr
+ORD-1193,2026-08-20T00:31,Sfax,urban,صفاقس، كي توصل كلمني,راني مسافر، ابعثها بعد الجمعة,electronics,90.9,2,facebook,0,1,0,0,1,reschedule,ar
+ORD-1194,2026-08-29T14:59,Gafsa,remote,"Rue de Marseille n°100, Cité Erriadh, Gafsa","Merci barcha, dispo toute la journée",fashion,72.4,2,facebook,1,0,0,0,3,confident,derja_latin
+ORD-1195,2026-09-02T15:36,Ben Arous,urban,"Avenue de la Liberté n°91, Hay Ennour, Ben Arous",si ça me plaît je garde,cosmetics,29.3,3,website,1,0,0,1,3,hesitant,fr
+ORD-1196,2026-09-09T01:15,Ariana,urban,"Cité El Khadra, Ariana",ken tnajmou t2akhrouha chwaya,cosmetics,18.5,1,facebook,1,0,0,0,2,reschedule,derja_latin
+ORD-1197,2026-08-27T05:53,Sfax,urban,صفاقس,كلمني على 55 778 487,kids,56.2,1,instagram,0,4,1,1,1,neutral,ar
+ORD-1198,2026-09-17T21:08,Monastir,peri-urban,"Cité Ennasr 2, Monastir",si ça me plaît je garde,cosmetics,33.8,2,facebook,0,4,1,0,2,hesitant,fr
+ORD-1199,2026-08-08T22:16,Ben Arous,urban,حي الرياض، بن عروس,يعطيك الصحة، نستنى فيه,sports,53.7,1,facebook,1,0,0,0,2,confident,ar
+ORD-1200,2026-08-03T13:03,Monastir,peri-urban,"Rue des Oliviers n°48, Cité Ennasr 2, Monastir","3aslema, ena fi dar, kalamni 3al 24 427 031",fashion,95.2,1,instagram,0,1,1,1,3,confident,derja_latin
+ORD-1201,2026-08-22T21:15,Sousse,urban,"Cité Erriadh, jenb el farmasia de nuit, Sousse",ken tnajmou t2akhrouha chwaya,fashion,25.9,1,facebook,0,4,0,0,3,reschedule,derja_latin
+ORD-1202,2026-09-19T08:03,Sousse,urban,"Cité El Khadra, 9odem jem3a el kbira, Sousse",manich mt2akda mel couleur,fashion,107.6,1,instagram,1,0,0,1,3,hesitant,derja_latin
+ORD-1203,2026-09-11T23:40,Sfax,urban,صفاقس، فما جهة المحطة,"يعطيك الصحة، نستنى فيه, كلمني على 48 127 358",home,65.4,1,facebook,1,0,0,0,1,confident,ar
+ORD-1204,2026-08-11T20:55,Ben Arous,urban,حي الزهور، بن عروس,كلمني على 47 448 570,fashion,59.1,1,facebook,1,0,0,0,2,neutral,ar
+ORD-1205,2026-09-05T04:04,Nabeul,peri-urban,,je suis en voyage jusqu'à la semaine prochaine,fashion,75.3,1,instagram,0,2,0,1,0,reschedule,fr
+ORD-1206,2026-09-04T23:31,Ariana,urban,"Hay Ennour, en face de la mosquée, Ennasr",,electronics,198.5,1,instagram,0,1,1,0,3,neutral,fr
+ORD-1207,2026-08-20T21:47,Medenine,remote,ki twsel kalamni,khouya bech yestalem,fashion,76.6,2,instagram,0,3,0,1,0,third_party,derja_latin
+ORD-1208,2026-09-03T15:27,Gabès,peri-urban,Gabès,Taille L svp,electronics,680.5,1,website,0,1,0,0,1,neutral,fr
+ORD-1209,2026-08-29T18:36,Sfax,urban,حي التضامن، صفاقس,"خلّيها عند الجار, كلمني على 95 224 593",cosmetics,42.5,1,facebook,0,3,0,0,2,third_party,ar
+ORD-1210,2026-07-27T19:46,Sfax,remote,"Rue Ibn Khaldoun n°41, Cité Ettadhamen, Sfax","couleur ka7la, kalamni 3al 25 566 139",cosmetics,74.3,2,facebook,1,0,0,0,3,neutral,derja_latin
+ORD-1211,2026-07-30T05:30,Sousse,urban,"Sousse, du côté de la gare",,cosmetics,51.1,1,instagram,0,1,0,0,1,neutral,fr
+ORD-1212,2026-08-20T05:27,Sousse,urban,"Hay Ennour, Sousse",taille M,kids,41.0,1,facebook,0,2,0,0,2,neutral,derja_latin
+ORD-1213,2026-09-02T10:59,Tunis,urban,حي الزهور، تونس,خلّيها عند الجار,fashion,35.9,1,facebook,0,1,0,1,2,third_party,ar
+ORD-1214,2026-09-05T20:01,Ben Arous,urban,"Ben Arous, ki twsel kalamni","Merci barcha, dispo toute la journée",electronics,230.4,1,website,1,0,0,1,1,confident,derja_latin
+ORD-1215,2026-09-18T13:38,Nabeul,peri-urban,"Rue Tahar Haddad n°46, Cité Ettadhamen, Nabeul","merci de livrer plus tard dans le mois, appelez-moi au 48 780 038",home,97.5,2,facebook,0,4,0,0,3,reschedule,fr
+ORD-1216,2026-08-11T18:14,Monastir,peri-urban,حي التضامن، المنستير,راني مسافر، ابعثها بعد الجمعة,electronics,530.9,2,facebook,1,0,0,1,2,reschedule,ar
+ORD-1217,2026-09-18T21:08,Jendouba,remote,"Cité El Khadra, à côté de la pharmacie de nuit, Jendouba",ma mère va récupérer le colis,kids,73.8,1,instagram,0,1,0,0,3,third_party,fr
+ORD-1218,2026-08-22T15:47,Ben Arous,urban,حي التضامن، بحذا الصيدلية، بن عروس,المقاس M,sports,76.1,2,facebook,1,0,0,0,3,neutral,ar
+ORD-1219,2026-08-20T10:48,Nabeul,peri-urban,"Rue des Oliviers n°111, Cité El Khadra, Nabeul",ab3athha ba3d jom3a,cosmetics,62.8,1,facebook,0,1,0,0,3,reschedule,derja_latin
+ORD-1220,2026-08-30T23:38,Nabeul,peri-urban,,,home,46.0,2,facebook,1,0,0,1,0,neutral,ar
+ORD-1221,2026-08-23T22:53,Tataouine,remote,"Rue Tahar Haddad n°89, Cité Ennasr 2, Tataouine","couleur ka7la, kalamni 3al 22 982 665",sports,27.0,2,facebook,0,2,0,0,3,neutral,derja_latin
+ORD-1222,2026-08-04T19:24,Monastir,peri-urban,Monastir,"3aslema, ena fi dar",home,82.5,2,instagram,0,1,0,0,1,confident,derja_latin
+ORD-1223,2026-09-17T17:31,Tunis,urban,"Cité Erriadh, Tunis",j'hésite encore entre deux tailles,fashion,133.1,1,facebook,1,0,0,1,2,hesitant,fr
+ORD-1224,2026-07-27T06:42,Monastir,peri-urban,"Cité Ettadhamen, Monastir","Je serai à la maison après 17h, merci",sports,76.0,2,facebook,0,3,3,1,2,confident,fr
+ORD-1225,2026-08-18T14:52,Sfax,urban,"Cité El Khadra, Sfax",je suis en voyage jusqu'à la semaine prochaine,fashion,41.7,1,instagram,0,1,1,0,2,reschedule,fr
+ORD-1226,2026-08-12T23:27,Tunis,peri-urban,"Hay Ennour, El Menzah",j'hésite encore entre deux tailles,electronics,457.6,1,website,0,3,0,1,2,hesitant,fr
+ORD-1227,2026-09-02T09:26,Sidi Bouzid,remote,"Sidi Bouzid, près du centre","ma mère va récupérer le colis, appelez-moi au 58 303 441",fashion,38.5,1,facebook,0,2,0,1,1,third_party,fr
+ORD-1228,2026-08-15T18:29,Ben Arous,urban,"Rue Farhat Hached n°74, Cité Erriadh, El Mourouj","Livraison rapide svp, merci",cosmetics,32.9,3,instagram,0,4,0,0,3,confident,fr
+ORD-1229,2026-09-18T19:50,Bizerte,peri-urban,شارع الحبيب بورقيبة عدد 48، حي الزهور، بنزرت,بارك الله فيك,kids,127.5,1,website,1,0,0,1,3,confident,ar
+ORD-1230,2026-08-15T06:59,Sfax,urban,"Cité Ettadhamen, à côté de la pharmacie de nuit, Sfax",Couleur noire,fashion,68.9,1,instagram,0,1,0,0,3,neutral,fr
+ORD-1231,2026-09-11T01:19,Ariana,urban,"Rue des Oliviers n°86, Cité Erriadh, Ennasr","3aslema, ena fi dar",sports,71.9,2,facebook,0,2,0,0,3,confident,derja_latin
+ORD-1232,2026-07-29T11:19,Tunis,urban,"Cité Ennasr 2, 9odem jem3a el kbira, Tunis",mazal ma 5tartech el taille,electronics,263.9,1,facebook,0,2,1,0,3,hesitant,derja_latin
+ORD-1233,2026-08-23T21:36,Tunis,urban,"Hay Ennour, La Marsa","je suis en voyage jusqu'à la semaine prochaine, appelez-moi au 91 747 733",home,174.4,1,facebook,0,3,0,1,2,reschedule,fr
+ORD-1234,2026-09-12T07:22,Sfax,urban,Sfax,laissez-le chez le gardien,cosmetics,70.3,1,facebook,1,0,0,1,1,third_party,fr
+ORD-1235,2026-08-30T23:50,Tunis,urban,"Cité El Amel, derrière la poste, Tunis","Livraison rapide svp, merci",cosmetics,38.4,1,facebook,1,0,0,0,3,confident,fr
+ORD-1236,2026-09-04T13:42,Tunis,urban,"Cité El Khadra, 9odem el mdrsa el ibtida2iya, Tunis",kalamni 3al 49 022 784,cosmetics,28.7,1,instagram,0,1,0,0,3,neutral,derja_latin
+ORD-1237,2026-07-28T22:23,Ben Arous,urban,El Mourouj,laissez-le chez le gardien,kids,34.7,1,instagram,1,0,0,1,1,third_party,fr
+ORD-1238,2026-09-16T23:26,Gafsa,remote,حي الزهور، بحذا الصيدلية، قفصة,,cosmetics,31.1,1,facebook,0,2,1,0,3,neutral,ar
+ORD-1239,2026-08-29T18:52,Kairouan,peri-urban,"Cité Erriadh, Kairouan",Couleur noire,cosmetics,44.5,2,instagram,1,0,0,1,2,neutral,fr
+ORD-1240,2026-07-30T23:09,Sousse,urban,نهج ابن خلدون عدد 88، حي النصر، سوسة,خويا باش يستلم,electronics,267.1,1,facebook,0,1,0,1,3,third_party,ar
+ORD-1241,2026-08-12T21:10,Monastir,peri-urban,Monastir,,electronics,271.1,1,instagram,1,0,0,1,1,neutral,derja_latin
+ORD-1242,2026-08-10T12:00,Nabeul,peri-urban,"Rue de Marseille n°34, Cité El Amel, Nabeul",j'hésite encore entre deux tailles,fashion,51.5,1,instagram,0,2,0,1,3,hesitant,fr
+ORD-1243,2026-09-09T20:40,Gabès,peri-urban,ki twsel kalamni,khouya bech yestalem,electronics,224.4,2,website,0,1,0,1,0,third_party,derja_latin
+ORD-1244,2026-08-22T23:24,Tunis,urban,Tunis,ken tnajmou t2akhrouha chwaya,electronics,123.0,1,facebook,0,2,1,1,1,reschedule,derja_latin
+ORD-1245,2026-09-07T13:11,Jendouba,remote,نهج ابن خلدون عدد 88، حي الأمل، جندوبة,بارك الله فيك,home,66.9,1,instagram,0,2,0,0,3,confident,ar
+ORD-1246,2026-09-08T19:07,Sfax,urban,"Cité Ettadhamen, 9odem el mdrsa el ibtida2iya, Sfax","ya3tik essa7a, nestanna fih",fashion,119.6,2,website,1,0,0,0,3,confident,derja_latin
+ORD-1247,2026-08-18T02:21,Ben Arous,urban,Ben Arous,nchouf ken ynasebni,home,152.2,2,facebook,1,0,0,1,1,hesitant,derja_latin
+ORD-1248,2026-07-29T01:36,Ariana,urban,"Cité Ettadhamen, en face de l'école primaire, Ariana",Taille L svp,cosmetics,39.0,1,facebook,1,0,0,1,3,neutral,fr
+ORD-1249,2026-08-16T18:21,Tunis,urban,Tunis,taille M,cosmetics,45.7,2,website,0,4,0,0,1,neutral,derja_latin
+ORD-1250,2026-07-30T14:56,Jendouba,remote,Jendouba,j'hésite encore entre deux tailles,fashion,99.9,1,instagram,0,2,0,0,1,hesitant,fr
+ORD-1251,2026-08-07T15:51,Ariana,urban,كي توصل كلمني,موش توا، الجمعة الجاية,kids,38.0,1,facebook,1,0,0,0,0,reschedule,ar
+ORD-1252,2026-09-16T19:37,Kairouan,peri-urban,ki twsel kalamni,nchouf ken ynasebni,fashion,62.1,1,website,0,2,0,1,0,hesitant,derja_latin
+ORD-1253,2026-08-03T05:48,Sfax,remote,"Cité Erriadh, Sfax","Livraison rapide svp, merci",sports,254.6,2,instagram,1,0,0,1,2,confident,fr
+ORD-1254,2026-08-20T22:44,Tunis,urban,حي الأمل، تونس,موش توا، الجمعة الجاية,fashion,61.8,1,facebook,0,1,0,1,2,reschedule,ar
+ORD-1255,2026-07-31T23:39,Sfax,remote,"Cité El Amel, Sfax","Livraison rapide svp, merci",sports,56.6,1,facebook,1,0,0,0,2,confident,fr
+ORD-1256,2026-08-21T12:16,Monastir,peri-urban,"Monastir, ki twsel kalamni",ken 3jebni nekhou,kids,43.0,1,facebook,0,1,0,0,1,hesitant,derja_latin
+ORD-1257,2026-09-10T04:26,Tunis,urban,La Marsa,,cosmetics,79.3,1,instagram,0,1,0,0,1,neutral,fr
+ORD-1258,2026-09-11T15:21,Tunis,peri-urban,"Cité Erriadh, jenb el farmasia de nuit, El Menzah",,fashion,51.9,1,facebook,0,4,0,0,3,neutral,derja_latin
+ORD-1259,2026-08-03T23:58,Tunis,peri-urban,حي التضامن، تونس,نكون في الدار الكل نهار,cosmetics,70.1,2,facebook,1,0,0,1,2,confident,ar
+ORD-1260,2026-08-24T04:42,Tunis,urban,El Menzah,pas avant la semaine prochaine svp,cosmetics,46.4,1,instagram,0,4,1,1,1,reschedule,fr
+ORD-1261,2026-09-07T21:39,Sousse,urban,حي الزهور، سوسة,مازلت نخمم فيه,fashion,150.0,1,facebook,0,1,0,1,2,hesitant,ar
+ORD-1262,2026-08-15T09:15,Sousse,peri-urban,نهج فرحات حشاد عدد 65، حي النصر، سوسة,,electronics,183.3,1,facebook,0,1,0,0,3,neutral,ar
+ORD-1263,2026-09-07T21:51,Bizerte,peri-urban,"Cité El Khadra, Bizerte","ya3tik essa7a, nestanna fih",home,153.0,1,instagram,1,0,0,1,2,confident,derja_latin
+ORD-1264,2026-09-14T00:14,Ben Arous,urban,"Rue des Oliviers n°59, Cité Ennasr 2, El Mourouj","3aslema, ena fi dar",fashion,89.0,1,facebook,0,7,1,0,3,confident,derja_latin
+ORD-1265,2026-09-08T23:34,Ben Arous,urban,حي النصر، بن عروس,خويا باش يستلم,home,133.7,1,facebook,1,0,0,1,2,third_party,ar
+ORD-1266,2026-08-04T18:34,Ariana,urban,"Cité Ennasr 2, jenb el farmasia de nuit, Ariana",taille M,fashion,58.2,1,facebook,0,1,0,1,3,neutral,derja_latin
+ORD-1267,2026-09-09T20:30,Tunis,urban,حي التضامن، تونس,,kids,94.9,4,instagram,0,2,0,0,2,neutral,ar
+ORD-1268,2026-09-01T13:32,Medenine,remote,"Rue Ibn Khaldoun n°37, Hay Ennour, Djerba",nchouf ken ynasebni,electronics,287.8,1,facebook,0,6,0,1,3,hesitant,derja_latin
+ORD-1269,2026-08-20T20:08,Ben Arous,urban,,j'hésite encore entre deux tailles,cosmetics,40.5,1,facebook,1,0,0,1,0,hesitant,fr
+ORD-1270,2026-07-27T18:52,Tunis,urban,حي النصر، تونس,المقاس M,home,95.9,1,facebook,1,0,0,1,2,neutral,ar
+ORD-1271,2026-07-29T23:38,Tunis,urban,"Cité El Amel, El Menzah",ken 3jebni nekhou,sports,67.4,1,facebook,0,2,0,0,2,hesitant,derja_latin
+ORD-1272,2026-08-11T07:23,Sousse,urban,"Cité Erriadh, Sousse",couleur ka7la,sports,92.2,1,website,0,1,1,1,2,neutral,derja_latin
+ORD-1273,2026-08-17T20:06,Monastir,peri-urban,"Hay Ennour, Monastir","3aslema, ena fi dar",cosmetics,27.6,1,website,1,0,0,1,2,confident,derja_latin
+ORD-1274,2026-09-17T23:34,Gabès,peri-urban,شارع الحبيب بورقيبة عدد 119، حي الزهور، قابس,نكون في الدار الكل نهار,electronics,371.8,1,instagram,1,0,0,0,3,confident,ar
+ORD-1275,2026-08-13T20:08,Tunis,urban,même adresse que la dernière fois,,kids,76.6,1,facebook,0,2,0,1,0,neutral,fr
+ORD-1276,2026-09-13T21:07,Gabès,peri-urban,"Avenue de la Liberté n°75, Cité Ettadhamen, Gabès",ken tnajmou t2akhrouha chwaya,electronics,297.6,1,facebook,0,1,0,0,3,reschedule,derja_latin
+ORD-1277,2026-09-09T18:06,Ben Arous,urban,"Cité Ennasr 2, Ben Arous","Merci, je suis disponible toute la journée.",electronics,153.3,1,facebook,0,1,0,0,2,confident,fr
+ORD-1278,2026-09-09T12:02,Bizerte,peri-urban,كي توصل كلمني,,electronics,105.6,1,facebook,0,3,0,1,0,neutral,ar
+ORD-1279,2026-09-05T16:43,Nabeul,peri-urban,نابل، قريب من المركز,,home,113.3,1,website,1,0,0,1,1,neutral,ar
+ORD-1280,2026-08-19T19:31,Ben Arous,urban,شارع الحبيب بورقيبة عدد 4، حي الأمل، بن عروس,موش توا، الجمعة الجاية,home,82.5,1,facebook,0,4,0,0,3,reschedule,ar
+ORD-1281,2026-09-05T09:31,Tunis,urban,"Rue Ibn Khaldoun n°56, Cité Erriadh, El Menzah",nchawer rajli 9bal,fashion,22.0,1,facebook,0,2,0,0,3,hesitant,derja_latin
+ORD-1282,2026-08-30T21:43,Kasserine,remote,Kasserine,Couleur noire,fashion,87.1,2,website,0,4,0,0,1,neutral,fr
+ORD-1283,2026-07-31T13:27,Sousse,urban,"Avenue de la Liberté n°76, Cité El Khadra, Sousse",ma mère va récupérer le colis,cosmetics,40.7,1,facebook,0,3,1,1,3,third_party,fr
+ORD-1284,2026-08-24T00:37,Tunis,urban,حي الزهور، قدام الجامع الكبير، تونس,يعطيك الصحة، نستنى فيه,electronics,503.4,1,instagram,0,1,1,1,3,confident,ar
+ORD-1285,2026-08-13T11:36,Bizerte,peri-urban,"Avenue Habib Bourguiba n°73, Cité Erriadh, Bizerte",Couleur noire,kids,31.7,1,instagram,0,2,0,0,3,neutral,fr
+ORD-1286,2026-09-02T15:32,Gabès,peri-urban,"Gabès, ki twsel kalamni",nchawer rajli 9bal,cosmetics,51.9,1,facebook,1,0,0,1,1,hesitant,derja_latin
+ORD-1287,2026-08-03T06:47,Jendouba,remote,"Cité El Amel, Jendouba",merci de livrer plus tard dans le mois,cosmetics,37.2,1,instagram,1,0,0,0,2,reschedule,fr
+ORD-1288,2026-08-29T17:27,Ariana,urban,حي الزهور، أريانة,اللون الأسود,electronics,183.8,1,facebook,0,1,0,1,2,neutral,ar
+ORD-1289,2026-09-05T22:42,Ariana,remote,Ariana,je suis en voyage jusqu'à la semaine prochaine,fashion,58.6,2,facebook,0,1,0,1,1,reschedule,fr
+ORD-1290,2026-09-10T22:24,Sousse,urban,"Cité El Khadra, Sousse",merci de livrer plus tard dans le mois,electronics,181.1,1,instagram,0,1,0,0,2,reschedule,fr
+ORD-1291,2026-08-24T06:45,Ariana,urban,"Cité El Amel, Ariana",si ça me plaît je garde,fashion,57.9,1,facebook,0,1,0,1,2,hesitant,fr
+ORD-1292,2026-08-09T18:54,Monastir,remote,المنستير، قريب من المركز,اللون الأسود,cosmetics,30.2,2,instagram,1,0,0,0,1,neutral,ar
+ORD-1293,2026-09-08T22:27,Ben Arous,urban,بن عروس,,fashion,32.9,2,website,0,1,1,0,1,neutral,ar
+ORD-1294,2026-08-14T19:36,Medenine,remote,"Cité Erriadh, en face de l'école primaire, Medenine","Merci, je suis disponible toute la journée.",electronics,118.2,1,facebook,1,0,0,0,3,confident,fr
+ORD-1295,2026-09-21T19:05,Sfax,urban,"Sfax, fi jihet el gare","Merci barcha, dispo toute la journée",cosmetics,22.5,1,website,0,4,1,0,1,confident,derja_latin
+ORD-1296,2026-08-06T20:55,Tunis,urban,نهج فرحات حشاد عدد 94، حي التضامن، تونس,نشوف كان يعجبني,cosmetics,66.2,1,facebook,1,0,0,0,3,hesitant,ar
+ORD-1297,2026-09-07T13:25,Bizerte,peri-urban,"Rue Ibn Khaldoun n°7, Cité Ettadhamen, Bizerte",j'hésite encore entre deux tailles,kids,71.5,1,instagram,0,1,1,1,3,hesitant,fr
+ORD-1298,2026-08-13T19:25,Ben Arous,urban,كي توصل كلمني,خويا باش يستلم,kids,32.0,1,facebook,1,0,0,1,0,third_party,ar
+ORD-1299,2026-09-02T22:53,Sousse,peri-urban,"Rue des Oliviers n°7, Cité El Khadra, Sousse","Merci barcha, dispo toute la journée",fashion,107.7,1,website,0,2,1,0,3,confident,derja_latin
+ORD-1300,2026-08-01T17:54,Ariana,urban,"Cité El Khadra, Ennasr","3aslema, ena fi dar",cosmetics,84.8,1,facebook,0,2,1,0,2,confident,derja_latin
