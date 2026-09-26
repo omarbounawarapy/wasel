@@ -52,11 +52,11 @@ Cash-on-delivery orders in Tunisian e-commerce get refused at a meaningful rate 
 | LLM extraction | Groq free tier: `openai/gpt-oss-120b` or `qwen/qwen3.8-27b` (bake-off decides), strict JSON Schema + Pydantic, verified quotes | Zero cost; strict mode guarantees the shape, code verifies the content — see `SYSTEM_DESIGN.md` §6 |
 | Classifier | XGBoost on extracted features + order metadata | Default hyperparameters are fine — do not tune |
 | Backend | FastAPI | Minimal boilerplate |
-| Frontend | Streamlit | Fastest path to a working queue/detail UI; do not over-engineer |
+| Frontend | Next.js, **or** Streamlit if the Next.js skeleton isn't rendering the frozen mocks by 26 Sept 22:00 (decided once, never both) | Better chat/RTL rendering and demo polish; Streamlit remains the safe fallback — see `execution_plan.md` |
 | Data | CSV / SQLite | No Postgres, no migrations |
 | Language | Python 3.11+ | Team-wide familiarity assumed |
 
-**Time-sinks to actively avoid (research-confirmed):** prompt tuning beyond 30 min, hyperparameter search beyond 20 min, any data pipeline beyond flat CSV, UI polish beyond ~30 min for the base Streamlit layout, any deployment/Docker work before submission is safe.
+**Time-sinks to actively avoid (research-confirmed):** prompt tuning beyond 30 min, hyperparameter search beyond 20 min, any data pipeline beyond flat CSV, UI polish beyond what the hero loop needs, any deployment work beyond the one public URL the WhatsApp webhook requires.
 
 ---
 
@@ -64,7 +64,7 @@ Cash-on-delivery orders in Tunisian e-commerce get refused at a meaningful rate 
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| LLM hallucinates extracted fields | High | Pydantic schema with `Optional` fields + safe defaults; validate before feeding classifier |
+| LLM hallucinates extracted fields | High | Strict JSON Schema; the model only classifies or quotes; every quote verified as a substring of the customer text; code owns every number — `SYSTEM_DESIGN.md` §6.3-6.4 |
 | Cold-start: no real labeled data | High | ~500 synthetic, weak-labeled rows is enough for a PoC — **disclose this openly** in the submission's AI/tool section rather than implying real data |
 | Latency / free-tier rate limits (8K TPM) during live demo | High | Extraction cache, cached static prompt prefix + warm-up call, fallback model with its own bucket, rule-based last resort, separate untouched demo key — `SYSTEM_DESIGN.md` §6.7 |
 | Multilingual (Darija/Arabizi/French) extraction quality | High | Model bake-off on 20 hand-labeled dialect windows before choosing; low clarity routes to review |
@@ -81,9 +81,9 @@ Real coding time inside the official program is only about **4-4.5 hours**, spli
 - [ ] Lock the problem statement, demo scenario, and this tech stack (done — this PRD)
 - [ ] Generate the synthetic dataset (~200-500 rows) — this needs zero live coordination and can be done solo tonight
 - [ ] Draft and test the LLM extraction prompt against 10-15 sample orders
-- [ ] Scaffold the repo: FastAPI skeleton, Streamlit skeleton, requirements.txt, folder structure
+- [ ] Scaffold the repo: FastAPI skeleton, frontend skeleton on frozen mocks, requirements.txt, folder structure
 - [ ] Get API keys working end-to-end (one successful call, checked in, not committed as a secret)
-- [ ] Assign roles (below) so there's zero ambiguity at 08:30 on the 27th
+- [x] Assign roles — done, see `execution_plan.md`
 - [ ] Submit Final Team Confirmation (due 26 Sept)
 
 ### Event day, Tunis time
@@ -107,17 +107,15 @@ Real coding time inside the official program is only about **4-4.5 hours**, spli
 
 ---
 
-## 6. Team roles (3-5 people)
+## 6. Team roles
 
-Mixed skills beat matched skills — one strong builder plus one strong communicator outperforms four coders with no one owning the story.
+Assigned — see `execution_plan.md`. The split is vertical:
+- **Omar:** AI/ML core.
+- **Jesser:** backend + messaging I/O.
+- **Montassar:** frontend + infra.
+- **Fedi:** story, scope gate, language assets.
 
-| Role | Owns | Notes |
-|---|---|---|
-| **Builder** | LLM extraction pipeline + FastAPI backend + classifier | Owns `main` branch merges |
-| **Interface** | Streamlit UI, synthetic dataset prep, wiring demo flow | Also owns test-case curation (which sample orders get shown live) |
-| **Storyteller / Integrator** | Repo setup pre-event, pitch narrative, 90-second video, rehearsal schedule, submission form | If team is 3, this person also handles repo/deploy plumbing |
-| *(4th, if available)* | Prompt engineering + edge-case testing | Dedicated owner for the hallucination/multilingual risks above |
-| *(5th, if available)* | Floating — mentor liaison, backup API/fallback engineering, timekeeper | Enforces the 15:30 feature freeze |
+The interfaces between lanes are frozen before the event, so nobody blocks on anyone.
 
 ---
 
@@ -166,7 +164,7 @@ Copy-paste or chat-export ingestion was also rejected as the headline: it doesn'
 
 **Demo flow:** a team member (playing the customer) messages the sandbox number from their phone → Meta POSTs to our webhook → FastAPI parses the message body → same extraction + classifier pipeline → order appears in the risk queue. No copy-paste.
 
-**Setup (pre-event only, Omar — must not touch live sprint blocks; webhook spec in `SYSTEM_DESIGN.md` §9):**
+**Setup (pre-event only — Jesser for the Meta app + webhook, Montassar for the public HTTPS URL; must not touch live sprint blocks; webhook spec in `SYSTEM_DESIGN.md` §9):**
 1. Meta developer account → create app → add WhatsApp product → note the test number and phone-number ID
 2. Register the "customer" phones as test recipients (sandbox limit: 5 numbers)
 3. Generate a long-lived token via a System User (the quick-start token expires in 24h — it would die before event day)
