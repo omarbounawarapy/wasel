@@ -28,6 +28,7 @@ Produced by a 7-member design council (agentic-council plugin, standard mode, ru
 | [06-frontend-ux.md](06-frontend-ux.md) | Advocate | stack + gate + Streamlit fallback, master–detail screen spec with every state, segments/RTL rendering, paste/try/simulate UI, copy table, frozen mocks in full |
 | [07-scope-schedule-delivery.md](07-scope-schedule-delivery.md) | Strategist | MoSCoW (M-1…M-18, S-1…S-10), hour budgets per person Sat + Sun, go/no-go gates, 90-s video shot list, 6-slide outline, submission checklist, award text, line-by-line doc cleanup |
 | [08-user-stories-acceptance.md](08-user-stories-acceptance.md) | Conductor | user stories with acceptance criteria, each mapped to its verifying test, owner and deadline (the acceptance contract) |
+| [09-gate-checklists.md](09-gate-checklists.md) | Conductor (added after the council) | one tick-box checklist per person per gate, Sat FE0 → Sun D7, with the "if it fails" action, plus four open decisions to settle at G0 |
 
 ## 3. Ratings
 
@@ -145,6 +146,7 @@ Details, fallbacks and per-person blocks: [07 §2–3](07-scope-schedule-deliver
 | Date | Item | Where | Changes |
 |---|---|---|---|
 | Sat 26 Sept | **S-11 text baseline classifier**: TF-IDF char n-grams + logistic regression, trained on the synthetic rows | [03 §14](03-data-ml.md), [07 §1](07-scope-schedule-delivery.md) S-11, tests ML14/ML15 | S-11a takes the Sat 21:00 slot ahead of S-7 (S-7 runs only if S-11a is done). S-11b is second in the Sunday cut order. New `confidence_reasons` value `text_clf_disagrees` (additive). No Must item or gate moves |
+| Sat 26 Sept | **Gate checklists** per person | [09](09-gate-checklists.md) | No scope change. Lists four places where the spec gives two answers (repo visibility timing, eval report name, audit link owners, Omar's G1 timing) for Omar to settle at G0 |
 
 ## 11. What this spec does not do
 
