@@ -1,5 +1,7 @@
 # System Design — COD Risk Scoring
 
+> **Council update (Sat 26 Sept 2026):** [`docs/council-spec/`](docs/council-spec/README.md) is now the build spec. Where this file conflicts with it, the council spec wins. The line-by-line edits that align this file are listed in [`docs/council-spec/07-scope-schedule-delivery.md` §8](docs/council-spec/07-scope-schedule-delivery.md) (Omar, Sat 09:15).
+
 Companion to `PRD.md` (what/why) and `execution_plan.md` (who/when). This is the how, down to tables, payloads, and failure modes. Section 15 marks what gets built on event day vs. pre-event vs. slideware — read it before treating anything here as in-scope.
 
 Items marked **[VERIFY]** are assumptions not confirmed against current docs. Each must be checked with a real API call before event day (checklist in §16).

@@ -1,5 +1,7 @@
 # Hackathon Playbook — GoMyCode "Come Build With AI", 27 Sept 2026
 
+> **Council update (Sat 26 Sept 2026):** [`docs/council-spec/`](docs/council-spec/README.md) is now the build spec. Where this file conflicts with it, the council spec wins. The line-by-line edits that align this file are listed in [`docs/council-spec/07-scope-schedule-delivery.md` §8](docs/council-spec/07-scope-schedule-delivery.md) (Omar, Sat 09:15).
+
 Source: official participant guide (read 25 Sept 2026). This file distills that guide into decisions, not a copy of the guide itself — re-check the official guide for exact deadlines/links.
 
 ## Why "sellable" beats "technically impressive" here
