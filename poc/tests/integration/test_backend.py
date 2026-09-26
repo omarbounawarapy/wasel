@@ -81,6 +81,7 @@ def test_segments_join_and_highlight_exact_quotes(dev):
     risk = [s["text"] for m in d["conversation"]["messages"] for s in (m["segments"] or []) if s["kind"] == "risk"]
     assert {"9rib el jemaa", "ghali chwaya", "mouch dima fi dar"} <= set(risk)
     assert d["assessments"][-1]["tier"] == "high" and d["drafts"][0]["template_id"] == "T_ADDRESS"
+    assert all(x["prefilter"]["passed"] and x["route"] != "blocked" for x in d["drafts"])   # static drafts never blocked
 
 
 def test_script_tag_in_customer_text_stays_text(dev):

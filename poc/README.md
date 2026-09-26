@@ -4,7 +4,7 @@ This folder mirrors the repo tree in `docs/council-spec/01-architecture-contract
 promoted to the repo root by its owner with `git mv poc/<path> <path>`. The council spec is canonical; where this
 code deviates, `handoff.md` says where and why.
 
-**Status and phase plan: see [`handoff.md`](handoff.md).**
+**Status, spec alignment, open decisions and what is needed next: see [`handoff.md`](handoff.md).**
 
 ```bash
 cd poc

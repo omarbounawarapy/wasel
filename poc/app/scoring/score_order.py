@@ -41,7 +41,7 @@ from ml.features import FEATURES, ZONE_DEC, build_features, score_prior, zone_fr
 FLAG_LABELS = {"availability_uncertain": "May not be home", "vague_location": "Vague location",
                "price_hesitation": "Price hesitation", "third_party_recipient": "Someone else receives",
                "prior_refusal_mention": "Mentions a past refusal",
-               "pressure_or_inconsistency": "Pressure or contradiction"}
+               "pressure_or_inconsistency": "Pressure or inconsistency"}
 
 
 @dataclass

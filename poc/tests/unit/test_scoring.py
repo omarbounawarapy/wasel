@@ -241,8 +241,8 @@ def test_make_draft_static_routes_to_review(config):
     from app.contracts import DraftRequest
     from app.outbound.make_draft import make_draft
     from tests.conftest import T0
-    d = make_draft(DraftRequest("o", None, "T_ADDRESS", "arabizi", {"first_name": "Sami", "product": "casque bluetooth"},
-                                [], "high", 220.0, 0, T0, T0))
+    slots = {"first_name": "Sami", "product": "casque bluetooth", "price_tnd": "220"}     # all slots, as the worker sends
+    d = make_draft(DraftRequest("o", None, "T_ADDRESS", "arabizi", slots, [], "high", 220.0, 0, T0, T0))
     assert d.source == "static_template" and d.prefilter.passed and d.route == "needs_review" and d.judge is None
 
 

@@ -5,7 +5,7 @@ from __future__ import annotations
 from app.contracts import CoreEvent, DraftRecord, DraftRequest, PrefilterResult, UsageMeter
 from app.outbound.prefilter import prefilter
 from app.outbound.route import route_draft
-from app.outbound.templates import expected_questions, render_template, template_language
+from app.outbound.templates import expected_questions, render_template, template_language, template_slots
 from app.scoring.config import ScoringConfig, default_config
 
 
@@ -16,7 +16,8 @@ def make_draft(req: DraftRequest, *, llm=None, meter: UsageMeter | None = None,
     config = config or default_config()
     lang = template_language(req.language, req.customer_recent[-1] if req.customer_recent else None)
     canonical = render_template(config.templates, req.template_id, lang, req.slots)
-    fails = prefilter(canonical, canonical, req.slots, expected_questions(config.templates, req.template_id),
+    used = template_slots(config.templates, req.template_id, lang, req.slots)
+    fails = prefilter(canonical, canonical, used, expected_questions(config.templates, req.template_id),
                       config["prefilter"], config["lexicons"].get("injection"))
     route = route_draft(source="static_template", prefilter_passed=not fails, judge_approved=None,
                         confidence=req.confidence, price_tnd=req.price_tnd,

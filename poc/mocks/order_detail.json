@@ -321,12 +321,10 @@
       "text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
       "canonical_text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
       "source": "static_template",
-      "route": "blocked",
+      "route": "needs_review",
       "prefilter": {
-        "passed": false,
-        "failures": [
-          "slot_missing:price_tnd"
-        ]
+        "passed": true,
+        "failures": []
       },
       "judge": null,
       "sent_message_id": "msg_0017",

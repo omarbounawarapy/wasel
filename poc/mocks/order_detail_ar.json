@@ -204,12 +204,10 @@
       "text": "عسلامة سارة، باش نبعثولك crème visage. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟",
       "canonical_text": "عسلامة سارة، باش نبعثولك crème visage. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟",
       "source": "static_template",
-      "route": "blocked",
+      "route": "needs_review",
       "prefilter": {
-        "passed": false,
-        "failures": [
-          "slot_missing:price_tnd"
-        ]
+        "passed": true,
+        "failures": []
       },
       "judge": null,
       "sent_message_id": null,
