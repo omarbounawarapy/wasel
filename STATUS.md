@@ -1,6 +1,6 @@
 # COD Risk — Team Status
 
-**Last updated:** Sat 26 Sept 2026, 20:50 Tunis · **Read this first**, then the spec ([`docs/council-spec/README.md`](docs/council-spec/README.md)) and the code notes ([`poc/handoff.md`](poc/handoff.md)).
+**Last updated:** Sat 26 Sept 2026, 23:30 Tunis · **Read this first**, then the spec ([`docs/council-spec/README.md`](docs/council-spec/README.md)) and the code notes ([`poc/handoff.md`](poc/handoff.md)).
 
 ## Bottom line
 
@@ -8,7 +8,8 @@
 - **Tests are green:** 264 offline tests pass (1 known open finding, see O-1), plus a smoke test on a booted app.
 - **Live LLMs checked this morning:** Groq and Gemini both work through our real pipeline, and the injection guardrails held on live calls.
 - **WhatsApp webhook is built and tested with the real Meta secrets** (signed requests, dedupe, live LLM scoring). Meta setup is done except the callback URL, which needs a public host. **No real phone message has reached the app yet** (the cloud sandbox has no inbound route).
-- **Not done yet:** hosting, the React UI (a Streamlit fallback UI exists), WhatsApp send from the app (S-2), and the native-language content (`FEDI.md`).
+- **The `cod-risk-poc` UI now runs on our backend** (`frontend/`): all six screens read and write through `/api`, tested against the real backend and checked in a browser with live Groq.
+- **Not done yet:** hosting, the React UI, WhatsApp send from the app (S-2), and the native-language content (`FEDI.md`).
 - **We're ahead of the Saturday gates on code.** The critical path is now **hosting (G1 12:00), content (G3 14:00) and the frontend decision (G4 16:00)**.
 
 ---
@@ -29,7 +30,8 @@
 | Public mode: visitor sandbox, read-only seeded orders, "Try this order", LLM caps → rules | ✅ | `poc/app/mode.py`, `poc/app/api/commands.py` |
 | Outbound: static templates + prefilter + human-click send | ✅ (template copy is a draft; final copy per `FEDI.md` F4) | `poc/app/outbound/`, `poc/data/templates/` |
 | Tooling: Makefile, hygiene script, CI workflow, Dockerfile, smoke test, mocks | ✅ (CI inactive until moved to the root; Docker build not run yet) | `poc/Makefile`, `poc/scripts/` |
-| UI | 🟡 Streamlit fallback only; the React SPA isn't started | `poc/dashboard/app.py` |
+| UI: `cod-risk-poc` screens on the `poc/` API (queue, order detail, paste, WhatsApp inbox, activity, impact) | ✅ built + 18 tests against the real backend + browser check | `frontend/` ([README](frontend/README.md)) |
+| UI: React SPA | ⏳ not started (the spec's Streamlit fallback is also in `poc/dashboard/app.py`) | — |
 | WhatsApp webhook (S-1): verify, HMAC, dedupe, statuses, fail closed | ✅ built + tested (offline and with the real secrets); ⏳ not yet reached by Meta | `poc/app/api/routes_webhook.py`, `poc/app/ingress/whatsapp.py` |
 | WhatsApp send from the app (S-2) | ⏳ not built (`send_draft` returns 502 for WhatsApp) | — |
 | LLM rewrite + judge (S-3), cascade (S-6), text baseline (S-11) | ⏳ not built | — |
@@ -138,7 +140,7 @@ cd poc
 pip install -r requirements.txt -r requirements-dev.txt
 make check          # hygiene + lint + 264 offline tests (no keys)
 make demo           # API on :8000, public mode, seeded, no keys needed
-API_BASE_URL=http://localhost:8000 streamlit run dashboard/app.py    # fallback UI on :8501
+API_BASE_URL=http://localhost:8000 streamlit run ../frontend/streamlit_app.py   # the UI on :8501
 python -m scripts.smoke http://localhost:8000                          # health, hero loop, read-only check
 ```
 
