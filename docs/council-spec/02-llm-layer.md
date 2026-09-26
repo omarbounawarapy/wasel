@@ -883,6 +883,7 @@ Gemini offline tests:
 - Confirmation: ack/decline lexicon on the customer lines after `k`.
 - `product_quote`: best RapidFuzz alias hit.
 - Output: `valid=0`.
+- If S-11b ships (`text_clf.enabled`): `address_level` comes from the text classifier when its probability ≥ 0.6 and at least one address/landmark/zone token matched above; `exact` still needs the guard. Tone stays neutral. Details: [03 §14](03-data-ml.md).
 
 **Other tasks:**
 - `rewrite(req) -> RewriteResult | None`: `REWRITE_MODEL` only, then None → static template.
@@ -1175,6 +1176,7 @@ One run per model, prompt frozen before the run, no fallback, no cache. Raw outp
 | gpt-oss-120b (Groq) | primary | **_/N_order** | _/N_order | _ / _ / _ | _/4 | _/N | _% | _% (_) | _/8 | _ s / _ s | _ / _ / _ / _ |
 | gpt-oss-20b (Groq) | fallback | _ (reported) | | | | | | | _/8 | | |
 | Gemini _ (Google, OpenAI-compat) | fallback | _ (reported) | | | | | | | _/8 | | |
+| char n-gram + logistic regression (local) | baseline, no LLM (S-11a) | _/N_order | _/N_order | — | — | — | — (no quotes) | — | — | _ ms | 0 |
 
 Share of G1 flag evidence identical to a prompt example phrase: _%.
 
