@@ -48,6 +48,13 @@ def format_price(price: float | None) -> str | None:
     return None if price is None else f"{price:g}"
 
 
+def template_slots(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> dict[str, str]:
+    """The slot values the chosen variant actually uses (SD §8.1 required slots): only these are checked."""
+    t = templates["templates"][template_id][lang]
+    body = t["text"] if slots.get("first_name") else t["no_name"]
+    return {k: v for k, v in slots.items() if v and "{" + k + "}" in body}
+
+
 def render_template(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> str:
     t = templates["templates"][template_id][lang]
     body = t["text"] if slots.get("first_name") else t["no_name"]

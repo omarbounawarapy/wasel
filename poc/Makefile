@@ -15,7 +15,10 @@ export PYTHONPATH := .
 TEST_ENV := APP_MODE=dev LLM_MODE=fail_all WORKER_ENABLED=false DEMO_MODE=true GEMINI_ENABLED=false \
             GROQ_API_KEY= GEMINI_API_KEY= WA_TOKEN= WA_SEND_ENABLED=false
 
-.PHONY: help setup run test lint fmt hygiene check seed demo generate train warm eval drill smoke mocks docker clean
+ui: ## Streamlit fallback UI on :8501 (06 §1.5), reads API_BASE_URL (default :8000)
+	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py
+
+.PHONY: help setup run ui test lint fmt hygiene check seed demo generate train warm eval drill smoke mocks docker clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
