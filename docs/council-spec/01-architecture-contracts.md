@@ -74,7 +74,8 @@ hackathon/                                    (existing repo; docs stay at root)
 ├─ ml/                        Omar      (Alchemist B.1)
 │  ├─ features.py             FEATURES, NUM helper, zone_from_text, resolve_flags, S(), p_true()
 │  ├─ generate.py             python -m ml.generate --seed 20260927 --n 10000 (imports no LLM SDK)
-│  └─ train.py
+│  ├─ train.py
+│  └─ text_clf.py             S-11: TF-IDF char n-grams + logistic regression (03 §14), imports no LLM SDK
 ├─ prompts/                   Omar (Fedi checks dialect)  extract_v1.system.txt extract_v1.fewshot.jsonl
 │                             rewrite_v1.system.txt judge_v1.system.txt
 ├─ schemas/                   Omar      order_extraction_v1.json (12 fields) outbound_rewrite_v1.json outbound_judge_v1.json
@@ -88,7 +89,7 @@ hackathon/                                    (existing repo; docs stay at root)
 │     ├─ demo_seed.json       Fedi texts, Jesser shape (§3.3)
 │     └─ extraction_cache.jsonl  Omar  (scripts/warm_cache.py, dev key)
 ├─ eval/sets/                 Fedi      native_windows.jsonl labels.jsonl labels_second.jsonl injection.jsonl
-├─ models/                    Omar      risk_xgb_v1.json risk_xgb_v1.card.json
+├─ models/                    Omar      risk_xgb_v1.json risk_xgb_v1.card.json text_clf_v1.joblib text_clf_v1.card.json (S-11)
 ├─ reports/                   generated, committed: eval_extraction.json skew_eval.json impact.json
 │                             classifier_holdout.json fallback_drill.json bakeoff.json (if S-4)
 ├─ mocks/                     Jesser    orders.json order_detail.json events.json health.json (C3-validated)
@@ -311,7 +312,8 @@ class AssessmentRecord:           # -> one risk_assessments row (ids, version, t
                                               # else by tier (SD §7.3)
     confidence: Literal["high", "low"]
     confidence_reasons: list[str]             # near_tier_boundary | not_primary_model | product_not_in_catalog |
-                                              # dropped_flags | clarity_unclear | rules_path | llm_cap_reached
+                                              # dropped_flags | clarity_unclear | rules_path | llm_cap_reached |
+                                              # text_clf_disagrees (S-11b, additive)
     reason: str                               # quotes wrapped in U+2068 … U+2069
     reason_short: str                         # ≤ 90 chars, same builder
     reason_diff: str | None                   # None on version 1

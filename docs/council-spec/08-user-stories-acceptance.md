@@ -43,6 +43,7 @@ As the system, I need structured, verifiable signals from messy dialect text, so
 | AC-03.2 | Out-of-range or overlong outputs are repaired (clamped/truncated/nulled), never rejected | unit | U3 ★ (cases updated per 02 §1b: out-of-range quantity → null, long strings truncated) | G7 |
 | AC-03.3 | Cross-field rules: `exact` needs a building/number cue (shared Arabizi-digit helper, so "9rib" is not a number); pin forces `exact`; `confirmation` resets without a seller question | unit | U8, U25 | Sun (T2) |
 | AC-03.4 | Headline eval: address-level exact match X/N on native-written windows, one frozen-prompt run, committed with provenance | metric (live) | L1 `make eval` → `reports/eval_extraction.json`; R1 | Eval 19:00 |
+| AC-03.5 | (S-11) A local char n-gram baseline reports `address_level` X/N on the same windows with no LLM call; when serving, it can only lower confidence or fill `address_level` on the rules path, never change an LLM-path score | metric (offline) + unit | ML14 → `reports/text_clf_eval.json`; ML15 | S-11a Sat 22:00; S-11b Sun |
 
 ### US-04 — The score comes from a monotone model on 6 features  ·  M-9, M-10  ·  Omar
 As a judge or seller, I want the risk score to behave sensibly (a better address never raises risk) and to be reproducible.
@@ -142,7 +143,7 @@ As a judge, I want the prototype to work without the team and without affecting 
 | T1 floor (16) | Sat 22:00 | U1 U3 U5 U7 U14 U16 U17 C1 C2 C3 J10 J11 J12 E1 E4 M1 |
 | T1+ (lands with its Must code) | Sat 22:00 | U24 U28 U30 U29 J14 J15 J19 C4 P1–P5 P7 U12 M3 M4 |
 | T2 | Sun 15:30 (target 34 total) | E3 R1 R2 M2 U13 U8 U26 U27 U22 U20 U19 U4 U25 J9 J8 J7 E5 P6 P9 P10 U15 U18 U10 M5 |
-| Gated (with their Should) | per gate | J1–J6 E2 (S-1) · J16–J18 (S-3) · U2 (S-4) · U9 (S-6) · J13 (C-1) |
+| Gated (with their Should) | per gate | J1–J6 E2 (S-1) · J16–J18 (S-3) · U2 (S-4) · U9 (S-6) · ML14 (S-11a) · ML15 (S-11b) · J13 (C-1) |
 | Live (reports, not CI) | per gate | L1 eval · L3 key checks · L4 WhatsApp · L5 record · L6 bake-off (S-7) · L7 skew |
 
 Progress: 0 / 13 stories verified (no code yet).
