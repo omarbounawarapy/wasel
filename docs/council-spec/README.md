@@ -28,6 +28,7 @@ Produced by a 7-member design council (agentic-council plugin, standard mode, ru
 | [06-frontend-ux.md](06-frontend-ux.md) | Advocate | stack + gate + Streamlit fallback, master–detail screen spec with every state, segments/RTL rendering, paste/try/simulate UI, copy table, frozen mocks in full |
 | [07-scope-schedule-delivery.md](07-scope-schedule-delivery.md) | Strategist | MoSCoW (M-1…M-18, S-1…S-10), hour budgets per person Sat + Sun, go/no-go gates, 90-s video shot list, 6-slide outline, submission checklist, award text, line-by-line doc cleanup |
 | [08-user-stories-acceptance.md](08-user-stories-acceptance.md) | Conductor | user stories with acceptance criteria, each mapped to its verifying test, owner and deadline (the acceptance contract) |
+| [09-gate-checklists.md](09-gate-checklists.md) | Conductor (added after the council) | one tick-box checklist per person per gate, Sat FE0 → Sun D7, with the "if it fails" action, plus four open decisions to settle at G0 |
 
 ## 3. Ratings
 
@@ -115,6 +116,7 @@ These settle the few places where the Round 3 files still disagree. **They overr
 | Demo format | Live stage · recorded video | Recorded 90-s video of a real run + Sat safety take | There is no stage; captions and `path` badges carry the disclosures |
 | Figures in the pitch | 40–60% · 20–40% · none | No refusal-rate or COD-share figure unless the source is on screen | No verified source; an unbacked number costs credibility |
 | Awards | 5 named · 4 named | SupplyzPro, Artefact, Guepard, Real-World AI Impact; not Kredete | Claim only what the build supports |
+| Text baseline classifier (added after the council) | none · local TF-IDF char n-grams + logistic regression · hosted or open "typed decision" models | Local TF-IDF + logistic regression as Should S-11 ([03 §14](03-data-ml.md)): a no-LLM baseline row in the eval, then a disagreement check and `address_level` in the rules fallback | Trains in seconds on the synthetic rows with no GPU and no new dependency; it gives the LLM number a baseline. The larger models need a GPU or fine-tuning time the build doesn't have |
 | Responsible-AI framing | "business data, not personal data" · accurate personal-data framing | Names, phones and addresses are personal data (not special-category): synthetic only, masking, human send, stated limits | The playbook's framing is wrong and a RAI judge would mark it down |
 
 ## 8. Timeline at a glance (Tunis)
@@ -139,7 +141,14 @@ Details, fallbacks and per-person blocks: [07 §2–3](07-scope-schedule-deliver
 | V8 | Package names/pins: `python-ulid`, `google-genai`, current GitHub Actions majors, Node LTS | Jesser / Montassar | T0 14:00 |
 | V9 | Tokens-per-call after the prompt freeze → re-derive caps (R6) | Omar | G3b 16:30 |
 
-## 10. What this spec does not do
+## 10. Additions after the council
+
+| Date | Item | Where | Changes |
+|---|---|---|---|
+| Sat 26 Sept | **S-11 text baseline classifier**: TF-IDF char n-grams + logistic regression, trained on the synthetic rows | [03 §14](03-data-ml.md), [07 §1](07-scope-schedule-delivery.md) S-11, tests ML14/ML15 | S-11a takes the Sat 21:00 slot ahead of S-7 (S-7 runs only if S-11a is done). S-11b is second in the Sunday cut order. New `confidence_reasons` value `text_clf_disagrees` (additive). No Must item or gate moves |
+| Sat 26 Sept | **Gate checklists** per person | [09](09-gate-checklists.md) | No scope change. Lists four places where the spec gives two answers (repo visibility timing, eval report name, audit link owners, Omar's G1 timing) for Omar to settle at G0 |
+
+## 11. What this spec does not do
 
 - It writes no application code. The first code commit is the 09:30 skeleton ([05 §2](05-testing-ci.md)).
 - It does not verify external services; see §9.

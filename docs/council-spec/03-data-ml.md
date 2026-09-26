@@ -660,6 +660,8 @@ All tests are offline, deterministic and keyless. **Owner: Omar** (code owner), 
 | ML11 | `test_zone_from_text` | alias beats keyword; latest message wins; fallback to the window text; default suburban + imputed | 34 |
 | ML12 | `test_demo_orders_fresh` | `demo_orders.json` `classifier_version` and `config_hash` equal the current ones | 34 |
 | ML13 | `test_hero_robustness` | R1–R4 | 34 |
+| ML14 | `test_text_clf_artifact` | retraining on the same `synth_v1.csv` gives identical holdout predictions; artifact sha256 and class lists equal the card; ML10's no-LLM-import scan also covers `ml/text_clf.py`; `reports/text_clf_eval.json` has holdout and G1 fields with N | F(S-11a) |
+| ML15 | `test_text_clf_serving` (param.) | `text_clf.enabled` on vs off: `llm`-path features, `model_score`, tier and action identical; a ≥ 2-level disagreement adds `text_clf_disagrees` and nothing else; rules path: `exact` never without `passes_exact_guard`, tone stays neutral, no address token → rules level kept; hero v1/v2 fixtures predicted at the gold level (else the check ships off, §14) | F(S-11b) |
 
 - Fedi supplies case data for ML5 and ML11 and the hero text.
 - Montassar's CI runs everything in `make check`.
@@ -716,3 +718,39 @@ There are two evals with different jobs. Both use the real `score_order` in eval
 - real calibration on the committed generator
 
 The first comes from the 19:00 eval. The other two come from `train.py` on the committed seed.
+
+---
+
+### (14) Text baseline classifier: S-11 (added after the council, 26 Sept)
+
+A small classifier that reads the customer's text and returns a label with a probability. It doesn't generate text and it can't quote. It never sets the score. It has two jobs, split into two stages.
+
+**Model.** `ml/text_clf.py`, scikit-learn only (already in `requirements.txt`).
+- Input: the customer lines of the window (no `[SELLER]` line), passed through `ml/textnorm.normalize()`.
+- `TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 5), min_df=2, sublinear_tf=True)`. Character n-grams catch Arabizi spelling variants (`9rib` / `qrib` / `krib`) that a keyword list misses.
+- One `LogisticRegression(max_iter=2000)` per head, default `C`, no tuning:
+  - `address_level`: 5 classes (none · city_only · area_or_landmark · street_and_landmark · exact).
+  - `tone`: 4 classes (positive · neutral · uncertain · negative). Reported only, never served (see S-11b).
+- Trained on the 8,000 train rows of `data/synth_v1.csv` with the generator's ground-truth labels. Zero LLM calls. Trains in seconds on a laptop CPU.
+- `python -m ml.text_clf train` → `models/text_clf_v1.joblib` + `models/text_clf_v1.card.json` (sha256, sklearn version, `data_sha256`, class lists, holdout metrics). `python -m ml.text_clf eval` → `reports/text_clf_eval.json`.
+
+**S-11a: baseline number (0.5 h, Sat 21:00 slot, ahead of S-7).** Report on the same sets as the LLM:
+- Synthetic holdout (2,000 rows, `eval_only` phrases): `address_level` accuracy, `tone` accuracy, macro F1.
+- G1 native windows (Fedi's hand-written set, first-order windows only): `address_level` exact X/N and ±1 level, as a "char n-gram baseline (no LLM)" row in the 02 §9.5 table, next to the LLM.
+
+This answers the obvious judge question: does the LLM beat a cheap classifier on real dialect text? Report whatever comes out. If the baseline matches the LLM on G1, say so. That is a finding, not a failure.
+
+**S-11b: serving (0.5 h, Sunday, only if S-6 finishes early; flag `text_clf.enabled`, default `false`).**
+1. **Disagreement check on the LLM path.** When `path` is `llm` or `cascade_cache`, the classifier's top `address_level` has probability ≥ `min_prob`, and it sits ≥ `disagree_levels` levels away from the LLM's post-check level: add `text_clf_disagrees` to `confidence_reasons` (→ `confidence=low`) and emit a `text_clf.disagree` event. It never changes a feature, the score, the tier or the action.
+2. **Fallback on the rules path.** In `rules_v1`, `address_level` takes the classifier's level when its probability ≥ `min_prob` **and** the rules extractor found at least one address, landmark or zone token. Otherwise the rules level stands. `exact` still needs `passes_exact_guard` (else `street_and_landmark`). Flags, quotes, confirmation and evidence stay with the rules. **Tone stays neutral**, because the tone gate (§4.2) needs a verified span and the classifier gives none. `path` stays `rules`, confidence stays low, and `extraction_runs` records `extractor = "rules_v1+text_clf_v1"`.
+
+```yaml
+# scoring.yaml (addition)
+text_clf: { enabled: false, file: models/text_clf_v1.joblib, min_prob: 0.6, disagree_levels: 2 }
+```
+
+**Hero guard.** E1 asserts confidence `high` on v1 and v2. ML15 runs the hero fixtures through the classifier. If it disagrees with the gold level on either, the disagreement check ships off (`disagree_levels: 99`) and the README says why.
+
+**Limits (README "What this does not prove").** It learns the generator's templates, like the XGBoost model, so the holdout number is optimistic; only the G1 number counts. It can't quote evidence, so it never feeds the highlights or the reason string.
+
+**Tests:** ML14 (S-11a), ML15 (S-11b), in §11.
