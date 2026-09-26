@@ -41,7 +41,7 @@ under `poc/`), then reflow code to ruff line-length 100 (it's 125 here).
 | 4 | Tooling: Makefile, hygiene, CI (inactive under poc/), `.env.example`, Dockerfile, smoke, mocks | **done** (Docker unverified: no daemon here) | `66b22be` |
 | 3 | UI: Streamlit fallback (06 §1.5) over the API | **done** (React SPA not built; FE0 is Montassar's call) | this commit |
 | 5 | Live-key work: probe, prompt iteration, `make record` / `warm_cache --live`, G1/G3 eval, Gemini Stage A | **blocked on §7** | — |
-| 6a | **S-1 WhatsApp webhook** (verify, HMAC, dedupe, statuses, type mapping, fail closed) + J1–J6, P7, E2 | **done**, live-tested against Meta (see §3.2) | S-1 commit |
+| 6a | **S-1 WhatsApp webhook** (verify, HMAC, dedupe, statuses, type mapping, fail closed) + J1–J6, P7, E2 | **done** offline (J1–J6, P7, E2 green). Live Meta test **not run yet**: the cloud sandbox can't open a tunnel (cloudflared needs TCP/QUIC 7844; localtunnel needs plain HTTP). Run it from a laptop or the host (§3.2) | `af2a7c6`, `f295d11` |
 | 6 | Other Should items: S-2 send, S-3 rewrite + judge, S-6 cascade, S-8 feed UI, S-11 text baseline | not started | — |
 | 7 | Hosting (Cloudflare, see §8), public flip, video/slides/README numbers, submission | not started | — |
 
