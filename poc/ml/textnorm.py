@@ -59,7 +59,7 @@ NUM_RE = re.compile(rf"(?<![{LATIN}{DIGITS}])[{DIGITS}]{{1,3}}(?![{LATIN}{DIGITS
 DAR_N_RE = re.compile(rf"\b(dar|دار)(?:\s+n?°?\s*|\s*n°\s*)[{DIGITS}]{{1,3}}(?![{LATIN}{DIGITS}])")
 BUILDING_TOKENS_RAW = ("imm", "immeuble", "immeubles", "apt", "app", "appartement", "etage", "étage",
                        "bloc", "block", "residence", "résidence", "villa",
-                       "عمارة", "شقة", "طابق", "إقامة", "اقامة")      # Fedi extends
+                       "عمارة", "شقة", "طابق", "إقامة", "اقامة")      # extended per FEDI.md F2
 BUILDING_TOKENS = frozenset(normalize(t) for t in BUILDING_TOKENS_RAW)
 _TOKEN_RE = re.compile(r"[^\W_]+")
 _AR_PREFIXES = ("وال", "ال", "و")

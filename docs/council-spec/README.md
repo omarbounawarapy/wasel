@@ -14,7 +14,7 @@ Produced by a 7-member design council (agentic-council plugin, standard mode, ru
 | **Omar** (lead, AI/ML, merges) | this README → [02 LLM layer](02-llm-layer.md) → [03 Data + ML](03-data-ml.md) → [01 §2 contracts](01-architecture-contracts.md) → [05 test IDs you own](05-testing-ci.md) | `app/contracts.py` + seams merged by **10:30 (G-seams)**; 09:15 doc cleanup ([07 §8](07-scope-schedule-delivery.md)) |
 | **Jesser** (backend + WhatsApp code) | this README → [01 Architecture](01-architecture-contracts.md) (schema, API, state machine, modes) → [04 §2–4 public mode + webhook](04-security-public-mode.md) → [05 tests you own](05-testing-ci.md) | `schema.sql`, `repo.py`, stub scorer + `process_due`, C2 green by **T0 14:00** |
 | **Montassar** (frontend + infra + CI) | this README → [06 Frontend](06-frontend-ux.md) → [01 §6 deploy + modes](01-architecture-contracts.md) → [05 §4–5 CI + Makefile](05-testing-ci.md) → [04 §3 runbook](04-security-public-mode.md) | Host picked + hello-world live by **G1 12:00**; queue on mocks on the hosted URL by **G4 16:00** |
-| **Fedi** (story, language, delivery, scope gate) | this README → [07 Scope/schedule/video/submission](07-scope-schedule-delivery.md) → [03 §1 phrase-bank format](03-data-ml.md) → [02 §9 eval sets](02-llm-layer.md) → [06 §5 copy table](06-frontend-ux.md) → [04 §7 RAI text](04-security-public-mode.md) | Phrase banks + ≥ 12 of 24 eval windows + templates by **G3 14:00** |
+| **Fedi** (story, language, delivery, scope gate) | [`FEDI.md`](../../FEDI.md) only: his full plan, start to finish | see `FEDI.md` §0 |
 
 ## 2. The spec files
 
@@ -73,7 +73,7 @@ What keeps it below 9: Saturday has almost no slack for Omar, Jesser and Montass
 | Visitor isolation on the public URL | Skeptic ↔ Architect | Nullable `sandbox_id` on customers/conversations/orders; unsigned `X-Visitor-Id`; seeded rows read-only (409); "Try this order" = seed-loader replay (cache hit); 2 h purge | A shared DB fails even with honest judges: the first judge to trigger the reply completes the hero for everyone after. A signed-cookie sandbox cost more hours than it bought |
 | One container: WhatsApp target and public prototype | Skeptic ↔ Architect | `APP_MODE` defaults to `public` (sends off, webhook unmounted, WA token absent); `event` only Sun 08:00–16:45; flip back reseeds and wipes real rows | Judges must never be able to push a real WhatsApp message to a teammate's phone |
 | LLM-layer scope vs hours | Oracle ↔ Strategist | Must: hero fixes, prompts, Groq chain, cache, daily cap, 24-window eval, 8-variant injection suite, Gemini Stage A. Should: cascade, rewrite + judge, Gemini Stage B, qwen bake-off, second labeler | Quality of AI (20) and RAI (10) are earned by correctness and a measured number, not by more model calls |
-| Tests vs hours | Craftsman ↔ Strategist | Each author tests their own code; Montassar owns harness + CI; Fedi writes case data. 16-set by 22:00, 34 by Sun 15:30 | Testing (15) is judged only via repo, README and video; the 16-set covers every High red-team row |
+| Tests vs hours | Craftsman ↔ Strategist | Each author tests their own code; Montassar owns harness + CI; case data comes from `FEDI.md`. 16-set by 22:00, 34 by Sun 15:30 | Testing (15) is judged only via repo, README and video; the 16-set covers every High red-team row |
 | Stale flags after a reply | Alchemist ↔ Oracle | Prompt rule 5 first; `resolve_flags()` after the evidence check and exact guard, removal-only and idempotent; `vague_location` drops only at `exact` | Code owns the final flag set; golden test proves clean and stale windows give identical features |
 | Schema vs feature contract | Alchemist ↔ Oracle | 12 fields: `+tone_evidence` before `tone`, `−has_landmark`, `−has_building_or_apt`; 6 model features; one shared Arabizi-digit helper | Every extracted field must earn its tokens: a feature, a reason string, confidence, UI or routing |
 
@@ -83,7 +83,7 @@ These settle the few places where the Round 3 files still disagree. **They overr
 
 | # | Topic | Ruling | Overrides |
 |---|---|---|---|
-| R1 | Headline eval number | **Address-level exact match X/N** on Fedi's native-written windows (target N = 24, floor 10), `gpt-oss-120b`, prompt `extract-v1` frozen at G3b, one run with no fallback, cache or cascade. Secondary: synthetic tier agreement N/40 (skew check). Second labeler on 6 windows is Should (S-5) | 03 §12 (tier agreement as headline) |
+| R1 | Headline eval number | **Address-level exact match X/N** on the native-written windows (`FEDI.md` F3) (target N = 24, floor 10), `gpt-oss-120b`, prompt `extract-v1` frozen at G3b, one run with no fallback, cache or cascade. Secondary: synthetic tier agreement N/40 (skew check). Second labeler on 6 windows is Should (S-5) | 03 §12 (tier agreement as headline) |
 | R2 | Gemini timing | Stage A built **Sat 19:00–20:00** after G6, merged only with its tests (U14 Gemini branch, C1 `fallback_provider`, one recorded fixture, E3 `fail_groq`). Gate **G-Gem Sat 20:00**; if it slips, Omar's first Sunday task, hard stop **D3 Sun 12:30**. Missed → `GEMINI_ENABLED=false` in the hosted build and the README states "implemented and tested offline, disabled in the deployed build" with the reason. Gemini is the judge only if S-3 ships. Stage B (`to_gemini_schema` constrained decoding + U2) = S-4 | 02's Sun 09:30 cutoff; 05's Sun 14:00 hard stop and its "F(S-6 Gemini)" tag |
 | R3 | Frontend gate | **G4 Sat 16:00** on the hosted URL (checks in 07 §3 and 06 §1.4), with Advocate's early exits at 09:00 and 13:00. Fail → Streamlit from 16:00, never both | 01 §8 and 05 (15:00) |
 | R4 | Try endpoint + error codes | `POST /api/orders/{id}/try` → path label `cascade_cache` (Architect's API is canonical). Error envelope from 01 §4; codes are 01's plus Skeptic's: 400 `VISITOR_ID_REQUIRED`, 409 `SEEDED_READONLY`, 429 `REPLY_LIMIT` (5 simulated replies per conversation), 429 `DEMO_BUSY` (500 global sandbox orders or worker queue > 20). The LLM cap is never a 429 | 04's `POST /api/sandbox/try` + `path='cached'`; 07 §8 SD edit for §10 |
@@ -91,11 +91,11 @@ These settle the few places where the Round 3 files still disagree. **They overr
 | R6 | LLM caps (public) | 04 §2.5 numbers: 80 live calls/day, 120K tokens/model/day, `0` = no live calls; re-derive from measured tokens-per-call after G3b | Any 150 / 300 figures elsewhere |
 | R7 | Snapshot mode (S-9) | Ships only if the static bundle is **also** deployed to a second, static host; otherwise Won't, because a container outage takes the bundle down with it. It stays the G1 host-failure fallback | — |
 | R8 | Additive API fields | Accept Advocate's `seed_key`, `llm.visitor_cap`, `injection_suspected`; Jesser confirms at G2 12:00. Budget banner date = `health.config.seed_captured_at` (or drop the phrase) | — |
-| R9 | UI language | English chrome by default (the copy table's source language); Fedi may switch to French by Sat 18:00. Customer text is always shown as written | — |
+| R9 | UI language | English chrome by default (the copy table's source language); switch to French only per `FEDI.md` §3.10 (by Sat 18:00). Customer text is always shown as written | — |
 | R10 | Module paths | 01 §1 tree is canonical. Oracle's paths map as: `app/llm/schema.py` → `schemas/` + `app/extraction/repair.py`; `app/llm/window.py` → `app/extraction/window.py`; `app/llm/{evidence,postprocess}.py` → `app/extraction/{evidence,cross_field}.py`; `app/llm/backends.py` → `app/llm/{groq_backend,gemini_backend}.py`; `app/llm/rules_extractor.py` → `app/extraction/rules_extractor.py` | 02 file paths |
 | R11 | Item numbering | Strategist's IDs (07 §1) are canonical. Craftsman's gated tags map: F(S-1 WhatsApp) = S-1 · F(S-3 rewrite) = S-3 · F(S-5 cascade) = **S-6** · F(S-6 Gemini): Stage A tests = **M-8** (Must), U2 = **S-4** · L6 bake-off F(S-4) = **S-7**. Architect's tree tags `gemini_backend.py` "S-6" → M-8; `cascade.py` "S-5" → S-6 | 05 and 01 tags |
 | R12 | Council transcripts | Never committed here: `.claude/` is gitignored (applied). Only this sanitized folder is public | Engine default of committing `.claude/council/` |
-| R13 | Doc cleanup | A precedence banner is on every root doc now. Omar applies Strategist's line-by-line table (07 §8) at **Sat 09:15** (30 min time-box; Fedi takes it if Omar is behind). Its line numbers refer to commit `d87901b`; the banner shifts PRD.md down by 3 lines and the other root docs by 2 | — |
+| R13 | Doc cleanup | A precedence banner is on every root doc now. Omar applies Strategist's line-by-line table (07 §8) at **Sat 09:15** (30 min time-box). Its line numbers refer to commit `d87901b`; the banner shifts PRD.md down by 3 lines and the other root docs by 2 | — |
 
 ## 7. Decision log
 
@@ -132,12 +132,12 @@ Details, fallbacks and per-person blocks: [07 §2–3](07-scope-schedule-deliver
 | # | Item | Who | By |
 |---|---|---|---|
 | V1 | Final Team Confirmation actually sent | Omar | G1 12:00 |
-| V2 | Participant guide allows a video recorded before the event (else the safety take is a rehearsal) and the video length limit | Fedi | G1 12:00 |
+| V2 | Participant guide allows a video recorded before the event (else the safety take is a rehearsal) and the video length limit | `FEDI.md` §3.2 | G1 12:00 |
 | V3 | Groq: `gpt-oss-120b` / `20b` / qwen active on the demo org; rate buckets per model or per org (decides whether 20b stays in the chain) | Omar | G1 12:00 |
 | V4 | Gemini: free Flash-class model id, JSON-mode parameter names in the installed `google-genai`, schema dialect + key order, data-use terms | Omar | G1 12:00 |
 | V5 | Host: always-on vs sleep, cold start, restart on env change, disk persistence, `PORT` injection, auto-deploy pinning | Montassar | Sat 14:00 |
 | V6 | Meta: System User token path, test-number limits, webhook payload shapes (replace hand-built fixtures with scrubbed recordings) | Montassar / Jesser | G5 17:30 |
-| V7 | Who reads Darija natively (Fedi's windows + S-5 second labeler) | Team | G0 09:15 |
+| V7 | Who reads Darija natively (eval windows + S-5 second labeler; `FEDI.md` F3) | Team | G0 09:15 |
 | V8 | Package names/pins: `python-ulid`, `google-genai`, current GitHub Actions majors, Node LTS | Jesser / Montassar | T0 14:00 |
 | V9 | Tokens-per-call after the prompt freeze → re-derive caps (R6) | Omar | G3b 16:30 |
 

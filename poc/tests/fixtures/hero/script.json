@@ -1,5 +1,5 @@
 {
-  "_comment": "Hero scenario (03 §10). Fedi may reword any line if lints 6/7 and the bracketed constraints still hold. The seller line (idx 3) is the canonical T_ADDRESS template, rendered by code.",
+  "_comment": "Hero scenario (03 §10). Any line may be reworded (FEDI.md F6) if lints 6/7 and the bracketed constraints still hold. The seller line (idx 3) is the canonical T_ADDRESS template, rendered by code.",
   "customer": {
     "display_name": "Sami",
     "completed_orders": 0,

@@ -46,7 +46,7 @@ lexicons:
   decline: [non, la, annuler, "ma nhebech", "لا", "ألغي"]
   # 04 §5 I-4: the ONLY injection lexicon. Phrase-level. `normalized` patterns run on
   # normalize(text) with Cf characters removed (casefolded, أ→ا, ة→ه); `defused` patterns run on the
-  # length-preserving defused LLM view. Fedi supplies more Arabic-script and Arabizi lines.
+  # length-preserving defused LLM view. More Arabic-script and Arabizi lines per FEDI.md F7.
   injection:
     normalized:
       - 'ignore\s+(?:(?:all|the|previous|prior|above|les|toutes les|tes)\s+){1,3}(?:instructions?|consignes|règles|rules)'

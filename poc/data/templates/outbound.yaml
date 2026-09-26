@@ -1,4 +1,4 @@
-# Outbound static templates (02 §8.1, SD §8.1). Fedi owns the copy; these are DRAFTS pending the native check.
+# Outbound static templates (02 §8.1, SD §8.1). Copy per FEDI.md F4; these are DRAFTS pending the native check.
 # Rules: slots come from the order record only; every template passes the prefilter (J15, 12/12);
 # T_CONFIRM / T_ADDRESS / T_PREPAY end in exactly one yes/no question; T_ACK asks none;
 # no digits other than {price_tnd}. `no_name` is used when first_name is missing or unsafe.

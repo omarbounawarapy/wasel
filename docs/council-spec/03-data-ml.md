@@ -14,7 +14,7 @@
 | `ml/generate.py` | yes | `python -m ml.generate --seed 20260927 --n 10000`. A rerun gives byte-identical output. It doesn't import `app.llm`, `groq`, `google.genai`, `openai` or `httpx`. |
 | `ml/train.py` | yes | `python -m ml.train`. Writes the model, the card, the metrics, the golden hero file and the impact report (§6). |
 | `ml/eval_skew.py` | yes | Runs eval rows through the real `score_order` in eval mode: no cascade, no cache, no fallback (§12). |
-| `data/phrase_banks.yaml`, `data/catalog.yaml`, `data/zones.yaml` | yes | Fedi's banks, the 15-product catalog and the gazetteer. |
+| `data/phrase_banks.yaml`, `data/catalog.yaml`, `data/zones.yaml` | yes | the phrase banks (`FEDI.md` F2), the 15-product catalog and the gazetteer. |
 | `data/synth_v1.csv`, `data/synth_v1.meta.json` | yes | About 3–4 MB. The meta file holds the seed, the sha256 of each YAML and of `ml/features.py`, `n`, the base rate, the split counts and the git SHA. |
 | `models/risk_xgb_v1.json`, `models/risk_xgb_v1.card.json` | yes | Booster plus card (§6). |
 | `reports/train_metrics.json`, `reports/impact.json`, `reports/skew_eval.json`, `reports/extraction_eval.json` | yes | Written by scripts and served or read statically. |
@@ -99,7 +99,7 @@ XGBoost itself uses `random_state=42, n_jobs=1`.
 
 #### 1.5 Catalog
 
-`catalog.yaml` has 15 rows. Prices are synthetic placeholders, aliases per language are Fedi's, and the P12 name is fixed for the hero.
+`catalog.yaml` has 15 rows. Prices are synthetic placeholders, aliases per language come from `FEDI.md` F5, and the P12 name is fixed for the hero.
 
 ```
 P01 25 cosmetics .10 · P02 35 cosmetics .09 · P03 45 fashion .10 · P04 59 fashion .10 · P05 69 fashion .08
@@ -110,7 +110,7 @@ P14 349 home .03 · P15 450 electronics .02
 
 Catalog median unit price = **69** (P05). That's the serve default for an unmatched product.
 
-#### 1.6 Latent → text rendering (from Fedi's banks; the renderer never sees `S`, `p_true` or `refused`)
+#### 1.6 Latent → text rendering (from the phrase banks, `FEDI.md` F2; the renderer never sees `S`, `p_true` or `refused`)
 
 **Pool:** rows with `text_pool == eval_only` draw every phrase from the `eval_only` lists, and all other rows from the `train` lists. **Slots and product aliases are not split:**
 - slots are proper nouns shared with the gazetteer
@@ -134,7 +134,7 @@ Catalog median unit price = **69** (P05). That's the serve default for an unmatc
 - The address segment comes first with p=.70; otherwise the order is shuffled.
 - 70% of rows are 1 message. The other 30% are split at segment boundaries into 2 (p=.2) or 3 (p=.1) messages.
 
-**`phrase_banks.yaml` format (the Fedi → Omar contract):**
+**`phrase_banks.yaml` format (the `FEDI.md` F2 → Omar contract):**
 
 ```yaml
 version: 1
@@ -171,7 +171,7 @@ slots:                              # not split
 - `len(eval_only) ≥ max(1, ceil(0.30 · (len(train) + len(eval_only))))`
 - `len(train) ≥ 1`
 
-**Suggested sizes:** 5–8 phrases per cell, so 2–3 are `eval_only`. Fedi's 2.0h budget covers about 20 cells × 3 languages.
+**Suggested sizes:** 5–8 phrases per cell, so 2–3 are `eval_only`. That's about 20 cells × 3 languages (`FEDI.md` §3.3).
 
 **Generator lints (hard asserts; the generator exits non-zero):**
 1. **Evidence substring:** every rendered GT phrase (address, each flag, tone) satisfies `find_span(text, phrase) is not None` after `normalize()`.
@@ -366,7 +366,7 @@ def passes_exact_guard(quotes: list[str]) -> bool    # any(standalone_numbers(q)
   - generator `{number}` slot fill (always 1–120)
   - tests ML5/U8
 
-**Case table.** Fedi adds Darija cases; Omar owns the test.
+**Case table.** Darija cases come from `FEDI.md` F9; Omar owns the test.
 
 | Input | `standalone_numbers` | `passes_exact_guard` |
 |---|---|---|
@@ -552,7 +552,7 @@ pts_i = 100·p0·(1 − p0)·φ_i           otherwise
 
 **What the example shows:**
 - The displayed items sum to −71 against an actual −72, because items under 3 pts are omitted. The UI says "items under 3 pts not shown".
-- *(sim, 4 seeds)*: the v1 top 3 are always drawn from {address +11–14, flags +13–19, zone +10–15}, with price +5–10.5 just behind. Zone is sometimes the top driver for the rural hero. That's honest. The story is the Δ, and address dominates the Δ. Fedi should know this before writing the script line.
+- *(sim, 4 seeds)*: the v1 top 3 are always drawn from {address +11–14, flags +13–19, zone +10–15}, with price +5–10.5 just behind. Zone is sometimes the top driver for the rural hero. That's honest. The story is the Δ, and address dominates the Δ. The video script (`FEDI.md` F14) must reflect this.
 
 ---
 
@@ -585,14 +585,14 @@ Quote only the committed run, always with "simulated, on synthetic orders, with 
 - product P12 `casque bluetooth`, 220 TND
 - `DEMO_MODE=true`
 
-**Wording.** Fedi may reword any line if lints 6/7 and the constraints in brackets still hold. The words in bold are load-bearing.
+**Wording.** Any line may be reworded (`FEDI.md` F6) if lints 6/7 and the constraints in brackets still hold. The words in bold are load-bearing.
 
 | idx | role | text |
 |---|---|---|
 | 0 | CUSTOMER | `salam, nheb el casque bluetooth` |
 | 1 | CUSTOMER | `**Douar Ouled Ali**, **9rib el jemaa**` [the `douar` keyword → rural; the vagueness marker] |
 | 2 | CUSTOMER | `ama **ghali chwaya**. **mouch dima fi dar**, 3ayetli 9bal. **mazelt manich met2aked**` [price_hesitation; availability_uncertain; tone.uncertain evidence, which must not overlap a flag span] |
-| 3 | SELLER | Static `T_ADDRESS` (arabizi, Fedi's copy), stored with `template_id=T_ADDRESS`. It must end in a yes/no question. Placeholder: `Aslema Sami, bech nba3thoulek el casque bluetooth. Ta3tina l'adresse bedhabt (triq, noumrou dar)? W tconfirmi el commande, ey walla le?` (no digits, so it passes the prefilter) |
+| 3 | SELLER | Static `T_ADDRESS` (arabizi, copy from `FEDI.md` F4), stored with `template_id=T_ADDRESS`. It must end in a yes/no question. Placeholder: `Aslema Sami, bech nba3thoulek el casque bluetooth. Ta3tina l'adresse bedhabt (triq, noumrou dar)? W tconfirmi el commande, ey walla le?` (no digits, so it passes the prefilter) |
 | 4 | CUSTOMER | `**ey** behi. **Douar Ouled Ali, triq el jemaa, dar 14**, el bab lazra9 **9odem el pharmacie**. ghodwa ba3d 17h nkoun fi dar` [`dar 14` passes the exact guard; `17h` doesn't count; zone stays rural] |
 
 **Frozen extraction fixtures** (`tests/fixtures/hero/*.json`, 12 fields):
@@ -651,7 +651,7 @@ All tests are offline, deterministic and keyless. **Owner: Omar** (code owner), 
 | ML2 | `test_generator_lints` | lints 1–8 pass on the committed banks, and each lint fails on a crafted bad bank | 34 (P0) |
 | ML3 | `test_feature_contract_parity` | `FEATURES` equal in CSV, trainer `X` (no `S`/`p_true`), card, `features_json`; key set = FEATURES ∪ context | 34 (P0) |
 | ML4 | `test_model_gates` | AUC, calibration MAE and tier-rate gates from `train_metrics.json` | 34 |
-| ML5 | `test_standalone_numbers` (param.) | the §5 case table (Fedi supplies extra Darija cases) | 34 (P0) |
+| ML5 | `test_standalone_numbers` (param.) | the §5 case table (extra Darija cases: `FEDI.md` F9) | 34 (P0) |
 | ML6 | `test_resolve_flags` (param.) | §4.3 rule table, idempotence, subset, `k=None`, after-`k` survival | 34 (P0) |
 | ML7 | `test_tone_gate` | null evidence → neutral; failed evidence → neutral; overlap with a flag span → neutral; clean → kept | 34 |
 | ML8 | `test_fairness_invariant` | rural, exact, 0 flags, neutral, new customer, each catalog unit price ≤ 450 → tier `low` *(sim max 27.0–30.8; prior 29.0)* | 34 |
@@ -663,7 +663,7 @@ All tests are offline, deterministic and keyless. **Owner: Omar** (code owner), 
 | ML14 | `test_text_clf_artifact` | retraining on the same `synth_v1.csv` gives identical holdout predictions; artifact sha256 and class lists equal the card; ML10's no-LLM-import scan also covers `ml/text_clf.py`; `reports/text_clf_eval.json` has holdout and G1 fields with N | F(S-11a) |
 | ML15 | `test_text_clf_serving` (param.) | `text_clf.enabled` on vs off: `llm`-path features, `model_score`, tier and action identical; a ≥ 2-level disagreement adds `text_clf_disagrees` and nothing else; rules path: `exact` never without `passes_exact_guard`, tone stays neutral, no address token → rules level kept; hero v1/v2 fixtures predicted at the gold level (else the check ships off, §14) | F(S-11b) |
 
-- Fedi supplies case data for ML5 and ML11 and the hero text.
+- Case data for ML5 and ML11 and the hero text come from `FEDI.md` (F9, F6).
 - Montassar's CI runs everything in `make check`.
 - If Omar slips, the cut order is: ML13 R4 → ML8 moves into the card only → ML11 → ML7.
 
@@ -677,12 +677,12 @@ There are two evals with different jobs. Both use the real `score_order` in eval
 
 | | **A. Hand-written windows (headline)** | **B. Synthetic skew (secondary)** |
 |---|---|---|
-| Rows | Fedi's 24 windows (Strategist's Must), including reply windows; a second labeler on 6 | 40 `eval_subset` rows, text only from `eval_only` phrases |
+| Rows | The 24 windows (`FEDI.md` F3; Strategist's Must), including reply windows; a second labeler on 6 | 40 `eval_subset` rows, text only from `eval_only` phrases |
 | Labels | Human, per window: the 12 fields + `product_id` + `zone`; customer = new (0.30) | Generator ground truth |
 | Headline number | **Tier agreement N/24** (human-label features vs LLM features, same context, `final` tier incl. ×0.6), plus `address_level` exact match N/24 | Tier agreement N/40 |
 | Also reported | Per-field accuracy, flag precision/recall, stale-flag rate on reply windows (M12), inter-labeler agreement on 6 | 3×3 tier confusion; mean, signed-mean and max \|Δ model_score\|; per-feature attribution (swap one feature GT→LLM) |
 | Scope wording | "24 hand-written windows, not phrase-bank text" | "synthetic holdout, unseen phrases, pre-reply only" |
-| Cost | Fedi +10 min (2 extra label fields); ~24 calls | 0 human time; ~40 calls on the dev key; Omar +10 min (same runner) |
+| Cost | +10 min labeling (`FEDI.md` F3); ~24 calls | 0 human time; ~40 calls on the dev key; Omar +10 min (same runner) |
 | Output | `reports/extraction_eval.json` | `reports/skew_eval.json` |
 
 **Why A is the headline:** its text isn't generated from the banks the prompt examples came from, and tier is what the seller acts on.
@@ -707,7 +707,7 @@ There are two evals with different jobs. Both use the real `score_order` in eval
 | Deferred to Sunday slots: ROI in `train.py` (15 min), `eval_skew.py` B-run (10 min, runs inside the 19:00 eval block), ML7–ML13 | — |
 
 **Dependencies:**
-- **Fedi's banks by 14:00.** The generator can run earlier on a 1-phrase-per-cell stub, since the text doesn't affect the model.
+- **Phrase banks by 14:00 (`FEDI.md` F2).** The generator can run earlier on a 1-phrase-per-cell stub, since the text doesn't affect the model.
 - **Jesser:** `customers.completed_orders`, and the `adjustments_json.resolved_flags` / `features_json` context keys in the frozen `ScoreResult` by 12:00.
 - **Oracle's prompt:** rule 5, FS7/FS8 edits with `tone_evidence`, and the 12-field schema frozen at G3b 16:30.
 - **Advocate/Montassar:** evidence spans for highlighting come from the step-3 `(msg_idx, start, end)` output, mapped back to the original text (U7). That's the server-provided `segments`.
@@ -736,7 +736,7 @@ A small classifier that reads the customer's text and returns a label with a pro
 
 **S-11a: baseline number (0.5 h, Sat 21:00 slot, ahead of S-7).** Report on the same sets as the LLM:
 - Synthetic holdout (2,000 rows, `eval_only` phrases): `address_level` accuracy, `tone` accuracy, macro F1.
-- G1 native windows (Fedi's hand-written set, first-order windows only): `address_level` exact X/N and ±1 level, as a "char n-gram baseline (no LLM)" row in the 02 §9.5 table, next to the LLM.
+- G1 native windows (the hand-written set, `FEDI.md` F3, first-order windows only): `address_level` exact X/N and ±1 level, as a "char n-gram baseline (no LLM)" row in the 02 §9.5 table, next to the LLM.
 
 This answers the obvious judge question: does the LLM beat a cheap classifier on real dialect text? Report whatever comes out. If the baseline matches the LLM on G1, say so. That is a finding, not a failure.
 

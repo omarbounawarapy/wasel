@@ -116,7 +116,7 @@ Assigned — see `execution_plan.md`. The split is vertical:
 - **Omar:** AI/ML core.
 - **Jesser:** backend + messaging I/O.
 - **Montassar:** frontend + infra.
-- **Fedi:** story, scope gate, language assets.
+- **Fedi:** story, scope gate, language assets. Full plan: `FEDI.md`.
 
 The interfaces between lanes are frozen before the event, so nobody blocks on anyone.
 

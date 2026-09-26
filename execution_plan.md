@@ -15,12 +15,12 @@ Total live coding time on event day: **~4h15**, across four fixed blocks. Everyt
 | **Omar (Lead)** | AI/ML core | Groq extraction (strict schemas, prompt, validation, cascade, bake-off — `SYSTEM_DESIGN.md` §6), synthetic generator with ground-truth features + seeded `catalog` (§7.1), XGBoost classifier, scoring rules + `scoring.yaml` (§7.4), reason strings, extraction eval, the cached `demo_orders.json`, all merges to `main`, firefighting |
 | **Jesser** | Backend + messaging I/O | DB schema + repositories (§2.3), API endpoints (§10), rescore worker + debounce (§3.3), order state machine (§5), **WhatsApp webhook in/out** (§9: signature, dedupe, statuses, send), outbound drafts pipeline + templates + no-reply timer (§8), `requirements.txt` + `.env` |
 | **Montassar** | Frontend + infra | Dashboard (§11): queue, conversation transcript, score timeline, drafts panel, activity feed; public HTTPS URL (tunnel or deploy) for the webhook; `/health` check; fallback drill; final submission-link audit |
-| **Fedi** | Story, scope, language | Pitch script, video, submission form, scope gate, UI copy pass, outbound template copy (§8.1), **Darija/Arabizi/French phrase banks** for the generator, **hand-labels the 20 bake-off windows** against the rubric |
+| **Fedi** | Story, scope, language | see `FEDI.md` |
 
 Interfaces between lanes, so nobody blocks on anyone:
 - **Omar → Jesser:** a pure function `score_order(window, order_ctx) -> Assessment`. Jesser's worker calls it. Until Omar's is ready, Jesser uses a stub that returns a fixed assessment.
 - **Jesser → Montassar:** the JSON shapes of `GET /orders` and `GET /orders/{id}` (§10), frozen by 26 Sept 18:00. Montassar builds against a mock of exactly those shapes until the real API is up.
-- **Fedi → Omar:** phrase banks and labeled bake-off windows by 26 Sept 14:00.
+- **Content → Omar:** phrase banks and labeled eval windows by 26 Sept 14:00 (`FEDI.md` F2, F3).
 
 ### Frontend decision (made once, at 26 Sept 22:00)
 
@@ -52,11 +52,11 @@ If behind schedule: cut to the first 4 (address_specificity, red_flag_count, ton
 
 | Person | Task | Est. time |
 |---|---|---|
-| Omar | Strict JSON schemas + Pydantic mirrors (§6.3), extraction prompt + few-shot, validation (§6.4), cascade (§6.8), the four key checks (§16), bake-off on Fedi's 20 labeled windows (§6.6) | ~4h |
-| Omar | Generator: pick ground-truth `address_level`/flags/tone first, then render matching text from Fedi's phrase banks, and **save the ground truth alongside the text**. Seeded `catalog` (~15 products). Weak labels. XGBoost on the ground-truth features. `scoring.yaml`. `demo_orders.json` (10 pre-computed: 3 High / 4 Med / 3 Low) | ~3h |
+| Omar | Strict JSON schemas + Pydantic mirrors (§6.3), extraction prompt + few-shot, validation (§6.4), cascade (§6.8), the four key checks (§16), bake-off on the labeled eval windows (`FEDI.md` F3) | ~4h |
+| Omar | Generator: pick ground-truth `address_level`/flags/tone first, then render matching text from the phrase banks (`FEDI.md` F2), and **save the ground truth alongside the text**. Seeded `catalog` (~15 products). Weak labels. XGBoost on the ground-truth features. `scoring.yaml`. `demo_orders.json` (10 pre-computed: 3 High / 4 Med / 3 Low) | ~3h |
 | Jesser | SQLite schema + repositories; endpoints (§10) with the stub scorer; rescore worker + debounce; `simulate-reply`; WhatsApp webhook: Meta dev app + WhatsApp product, register the "customer" test numbers, long-lived System User token, `GET` verify + `POST` with signature check + dedupe; 5+ phone → order-row tests. **WhatsApp not working by 26 Sept 22:00 → drop it**; pitch it as roadmap and demo on paste | ~5h |
 | Montassar | Next.js skeleton: queue + detail rendering the frozen mock JSON (the 22:00 decision above). Public HTTPS URL for Jesser's webhook (tunnel or deploy), kept stable across restarts if possible. `/health` page | ~4h |
-| Fedi | Phrase banks: for each `address_level`, each flag code, and each tone, 5–8 real-sounding phrasings in Arabizi, Arabic-script Darija and French (**by 14:00**). Hand-label the 20 bake-off windows using the §6.3 rubric (**by 14:00**). Outbound templates ×3 languages (§8.1). Pitch script, scope gate, submission form ~80% | ~5h |
+| Fedi | see `FEDI.md` | — |
 
 **Sample synthetic rows (generator output — ground truth saved alongside):**
 
@@ -72,19 +72,19 @@ Weak-labeling formula: `score = address_vagueness*0.25 + price_percentile*0.20 +
 
 ## Event day — unified timeline
 
-| Time | Program | Omar | Jesser | Montassar | Fedi |
-|---|---|---|---|---|---|
-| 08:30-09:00 | Check-in | `GET /models` on the demo key; one warm-up extraction | Re-verify the webhook in the Meta console; WhatsApp token still valid; one test message from a registered phone | Restart tunnel/deploy; `/health` all green | Confirm roster; attend |
-| 09:00-11:15 | Opening, history session, NVIDIA workshop | Attend | Attend | Attend | Attend |
-| **11:15-11:30** (15m) | Sprint 1 | `score_order` end-to-end on 3 fixtures | API boots; one WhatsApp message → order row | Frontend boots against the **real** API; queue lists orders | Sync with all three builders |
-| 11:30-11:45 | Mentor checkpoint | — | — | — | — |
-| **11:45-13:00** (75m) | Sprint 2 (hero loop) | Swap the stub for real `score_order` in Jesser's worker; cascade on; reason strings; **first merge** | Ingest + webhook → messages/orders → debounced rescore → versioned assessments persisted; `simulate-reply` works | Queue live: tier badges, ▲/▼ deltas, 3s refresh; detail shows the chat transcript (RTL-aware) | Reason-string wording pass; lock the demo test messages |
-| 13:00-13:45 | Lunch | — | — | — | — |
-| 13:45-14:00 | Submission briefing | Attend | Attend | Attend | Attend + pre-fill remaining form fields |
-| **14:00-15:30** (90m) | Sprint 3 | Reply adjustments via `scoring.yaml`; extraction-eval number for the submission; **second merge** | Should-have: outbound drafts (template → rewrite → prefilter → judge via Omar's client → human-click send), delivery statuses, no-reply timer | Detail: evidence highlighting, score timeline with reason diff, drafts panel + send button, simulate-reply box; **fallback drill** (webhook down → paste; Groq down → cached) | Full UI copy pass; form to 95%; rehearse the script twice |
-| 15:30-15:45 | Checkpoint | **Feature freeze — no new code after this point** | | | |
-| **15:45-17:00** (75m) | Final sprint | Bug fixes; warm-up extraction right before recording (primes Groq's prompt cache) | Bug fixes; reset the demo DB to a clean seeded state before recording | Final audit: `/health`, every submission link opened in incognito | Dry run (15m) → record 2 takes (30m) → fix or accept fallback (15m) → final form fill (15m) |
-| 17:00-17:30 | Submission workshop | Submit early | | | Submit; handle any last Q&A |
+| Time | Program | Omar | Jesser | Montassar |
+|---|---|---|---|---|
+| 08:30-09:00 | Check-in | `GET /models` on the demo key; one warm-up extraction | Re-verify the webhook in the Meta console; WhatsApp token still valid; one test message from a registered phone | Restart tunnel/deploy; `/health` all green |
+| 09:00-11:15 | Opening, history session, NVIDIA workshop | Attend | Attend | Attend |
+| **11:15-11:30** (15m) | Sprint 1 | `score_order` end-to-end on 3 fixtures | API boots; one WhatsApp message → order row | Frontend boots against the **real** API; queue lists orders |
+| 11:30-11:45 | Mentor checkpoint | — | — | — |
+| **11:45-13:00** (75m) | Sprint 2 (hero loop) | Swap the stub for real `score_order` in Jesser's worker; cascade on; reason strings; **first merge** | Ingest + webhook → messages/orders → debounced rescore → versioned assessments persisted; `simulate-reply` works | Queue live: tier badges, ▲/▼ deltas, 3s refresh; detail shows the chat transcript (RTL-aware) |
+| 13:00-13:45 | Lunch | — | — | — |
+| 13:45-14:00 | Submission briefing | Attend | Attend | Attend |
+| **14:00-15:30** (90m) | Sprint 3 | Reply adjustments via `scoring.yaml`; extraction-eval number for the submission; **second merge** | Should-have: outbound drafts (template → rewrite → prefilter → judge via Omar's client → human-click send), delivery statuses, no-reply timer | Detail: evidence highlighting, score timeline with reason diff, drafts panel + send button, simulate-reply box; **fallback drill** (webhook down → paste; Groq down → cached) |
+| 15:30-15:45 | Checkpoint | **Feature freeze — no new code after this point** | | |
+| **15:45-17:00** (75m) | Final sprint | Bug fixes; warm-up extraction right before recording (primes Groq's prompt cache) | Bug fixes; reset the demo DB to a clean seeded state before recording | Final audit: `/health`, every submission link opened in incognito |
+| 17:00-17:30 | Submission workshop | Submit early | | |
 
 ---
 
@@ -101,7 +101,7 @@ Weak-labeling formula: `score = address_vagueness*0.25 + price_percentile*0.20 +
 
 ---
 
-## Scope-gate checklist (Fedi enforces on every "can we also add X?")
+## Scope-gate checklist (see `FEDI.md` §6; enforced on every "can we also add X?")
 
 Ask in order, stop at the first NO:
 1. **Is it must-have** per `PRD.md`'s scope list? → No: defer, stop.
@@ -112,7 +112,7 @@ All three yes → greenlight. Any no → "not in scope, nail the hero first."
 
 ---
 
-## Pitch script (90 seconds, locked by Fedi pre-event)
+## Pitch script (superseded by the video shot list in `FEDI.md` §5.1)
 
 - **0:00-0:10** — "We predict which cash-on-delivery orders will get refused, so Tunisian sellers stop paying for wasted delivery trips."
 - **0:10-0:20** — "In Tunisia, 20-40% of COD orders get refused — customer not home, address unclear, or they changed their mind. Every refusal costs fuel, time, packaging." *(20-40%, not 40-60% — confirm with one real source before using on stage.)*

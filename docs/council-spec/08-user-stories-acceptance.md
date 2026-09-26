@@ -34,7 +34,7 @@ As a seller, I want the risky phrases highlighted inside the customer's message 
 | AC-02.3 | Customer text containing `<script>`, `<img onerror>`, `</mark>` or Markdown renders as text | unit + lint | M2, `react/no-danger` in CI | Sun (T2) / G4 |
 | AC-02.4 | Reason string is deterministic from the top feature contributions, with quotes wrapped in FSI/PDI | unit | U18 | Sun (T2) |
 
-### US-03 — Extraction reads Arabizi, Arabic-script Darija and French reliably  ·  M-5, M-6  ·  Omar (Fedi: language)
+### US-03 — Extraction reads Arabizi, Arabic-script Darija and French reliably  ·  M-5, M-6  ·  Omar (language: `FEDI.md`)
 As the system, I need structured, verifiable signals from messy dialect text, so the classifier gets consistent inputs.
 
 | AC | Criterion | Method | Verified by | Due |
@@ -56,7 +56,7 @@ As a judge or seller, I want the risk score to behave sensibly (a better address
 | AC-04.4 | Tier, action and confidence follow `scoring.yaml` (35/65 tiers, 10-point boundary margin) | unit (param) | U16 ★, U19 | T0 14:00 |
 | AC-04.5 | The model artifact matches its manifest/card | unit | U22 | Sun (T2) |
 
-### US-05 — Confirmation question + reply rescoring: HIGH → LOW  ·  M-11, M-12, M-13  ·  Omar, Jesser (Fedi: copy)
+### US-05 — Confirmation question + reply rescoring: HIGH → LOW  ·  M-11, M-12, M-13  ·  Omar, Jesser (copy: `FEDI.md`)
 As a seller, I want the system to ask the right question and rescore the same order when the customer answers, so a clarified order ships and a doubtful one gets attention.
 
 | AC | Criterion | Method | Verified by | Due |
@@ -121,13 +121,13 @@ As a judge, I want the prototype to work without the team and without affecting 
 | AC-11.1 | Approval only when every judge check passes (not on the verdict alone); fails closed | unit (param) | J16 | D4 Sun 13:00 |
 | AC-11.2 | Loop guard (≤ 2 auto messages, never reply to own outbound); demo mode requires a human click | unit | J17, J18 | D4 |
 
-### US-12 — Judges see honest evidence of quality  ·  M-15, M-16, M-17  ·  Omar, Montassar, Fedi
+### US-12 — Judges see honest evidence of quality  ·  M-15, M-16, M-17  ·  Omar, Montassar (content: `FEDI.md`)
 | AC | Criterion | Method | Verified by | Due |
 |---|---|---|---|---|
 | AC-12.1 | Every report carries provenance (prompt version/sha, model, date, N, labelers) | unit | R1 | Sun (T2 #2) |
 | AC-12.2 | Numbers in the README match `reports/*.json` | unit | R2 | Sun (T2 #3) |
 | AC-12.3 | CI badge green on `main`; README "Testing & reliability" lists risk → test → result and "What this does not prove" | manual-check | 05 §8 template | G7 22:00 |
-| AC-12.4 | Video, slides and README show only numbers from `hero.json` / `reports/`; every fallback or simulation is captioned | manual-check | Fedi's checklist (07 §6) | D6 16:40 |
+| AC-12.4 | Video, slides and README show only numbers from `hero.json` / `reports/`; every fallback or simulation is captioned | manual-check | `FEDI.md` §5.3 | D6 16:40 |
 
 ### US-13 — The repo is safe to make public  ·  M-18  ·  Montassar, Omar
 | AC | Criterion | Method | Verified by | Due |

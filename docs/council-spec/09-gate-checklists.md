@@ -12,44 +12,43 @@ The spec gives two answers for each of these. Omar picks one at G0 and edits thi
 |---|---|---|---|
 | O1 | When the repo goes public | Sat 22:00–22:30 after secret scan #1 (07 M-18, G7; Montassar's block) | Sun ~16:47 after secret scan #2 (04 §3.1, §6.3) |
 | O2 | Eval report file name | `reports/g1_extract_v1.json` + `reports/g3_injection.json` (07 §3) | `reports/eval_extraction.json` (05, 08 AC-03.4) |
-| O3 | Who opens which link in the 16:50 audit | Jesser: video + slides · Montassar: URL + repo · Fedi: form preview (07 §6, "someone who did not create it") | Fedi: video + slides (07 §2 Sunday table) |
+| O3 | Who opens which link in the 16:50 audit | Jesser: video + slides · Montassar: URL + repo · form preview per `FEDI.md` §4.8 | settled in `FEDI.md` §4.8 |
 | O4 | Omar's G1 checks | due at G1 12:00 (07 §3) | run in Omar's 12:15–13:00 block (07 §2) |
 
 ---
 
 ## Gate index
 
-| Gate | Time (Tunis) | Passes when | Omar | Jesser | Montassar | Fedi |
-|---|---|---|---|---|---|---|
-| FE0 | Sat 09:00 | Frontend stack chosen | | | ● | |
-| G0 | Sat 09:15 | All four free to 22:00; stack chosen; Darija reader known | ● | ● | ● | ● |
-| G-seams | Sat 10:30 | Seams + harness on `main`; `make check` green on 4 laptops | ● | ● | ● | |
-| G1 | Sat 12:00 | Keys, host hello-world, Meta token, team confirmation | ● | | ● | ● |
-| G2 | Sat 12:00 | `ScoreResult` + mocks frozen and C3-valid | ● | ● | | |
-| FE1 | Sat 13:00 | Queue renders from mocks locally | | | ● | |
-| T0 | Sat 14:00 | Seams + CI badge + U1 U16 U23 C2 green | ● | ● | ● | ● |
-| G3 | Sat 14:00 | Banks, ≥ 12 of 24 windows, templates | | | | ● |
-| G4 | Sat 16:00 | Frontend's 5 checks pass on the hosted URL | | | ● | |
-| Flip → event | Sat 16:15 | Container in `event` for phone tests (R5) | | ● | | |
-| G3b | Sat 16:30 | `extract-v1` frozen, prefix ≤ 2.8K tokens | ● | | | ● |
-| G5 | Sat 17:30 | Real phone message → hosted webhook → order row; flip back to `public` | | ● | ● | |
-| G6 | Sat 18:00 | Hero loop green on the hosted URL | ● | ● | ● | ● |
-| Eval | Sat 19:00 | G1 + G3 reports committed | ● | | | ● |
-| Smoke | Sat 20:00 | M3 smoke on hosted URL; public-mode P1–P6 merged | ● | ● | ● | |
-| G-Gem | Sat 20:00 | Gemini Stage A green | ● | | | |
-| G7 | Sat 22:00 | 16 ★ tests green; public build; safety take captured | ● | ● | ● | ● |
-| Upload | Sat 23:15 | Safety take uploaded unlisted | | | | ● |
-| Flip → event | Sun 08:00 | `event` mode live (only if G5 passed) | | | ● | |
-| D1 | Sun 09:00 | Morning checks green | ● | ● | ● | ● |
-| D2 | Sun 11:30 | Hero loop over the venue network | ● | ● | ● | ● |
-| D3 | Sun 12:30 | Gemini Stage A (only if it slipped) | ● | | | |
-| D4 | Sun 13:00 | Rewrite + judge on or off | ● | | ● | |
-| Briefing | Sun 13:45 | Every submission field re-checked | ● | ● | ● | ● |
-| D5 | Sun 15:30 | Feature freeze | ● | ● | ● | ● |
-| D6 | Sun 16:40 | Final cut exported | ● | ● | ● | ● |
-| Flip → public | Sun 16:45 | Public mode, WA secrets gone, tag `submission-v1` | ● | | ● | |
-| Audit | Sun 16:50 | Incognito audit passes | | ● | ● | ● |
-| D7 | Sun 17:10 | Form submitted | ● | | | ● |
+| Gate | Time (Tunis) | Passes when | Omar | Jesser | Montassar |
+|---|---|---|---|---|---|
+| FE0 | Sat 09:00 | Frontend stack chosen | | | ● |
+| G0 | Sat 09:15 | All four free to 22:00; stack chosen; Darija reader known | ● | ● | ● |
+| G-seams | Sat 10:30 | Seams + harness on `main`; `make check` green on 4 laptops | ● | ● | ● |
+| G1 | Sat 12:00 | Keys, host hello-world, Meta token, team confirmation | ● | | ● |
+| G2 | Sat 12:00 | `ScoreResult` + mocks frozen and C3-valid | ● | ● | |
+| FE1 | Sat 13:00 | Queue renders from mocks locally | | | ● |
+| T0 | Sat 14:00 | Seams + CI badge + U1 U16 U23 C2 green | ● | ● | ● |
+| G3 | Sat 14:00 | Content received from `FEDI.md`: banks (F2), ≥ 12 of 24 windows (F3), templates (F4) | ● | | |
+| G4 | Sat 16:00 | Frontend's 5 checks pass on the hosted URL | | | ● |
+| Flip → event | Sat 16:15 | Container in `event` for phone tests (R5) | | ● | |
+| G3b | Sat 16:30 | `extract-v1` frozen, prefix ≤ 2.8K tokens | ● | | |
+| G5 | Sat 17:30 | Real phone message → hosted webhook → order row; flip back to `public` | | ● | ● |
+| G6 | Sat 18:00 | Hero loop green on the hosted URL | ● | ● | ● |
+| Eval | Sat 19:00 | G1 + G3 reports committed | ● | | |
+| Smoke | Sat 20:00 | M3 smoke on hosted URL; public-mode P1–P6 merged | ● | ● | ● |
+| G-Gem | Sat 20:00 | Gemini Stage A green | ● | | |
+| G7 | Sat 22:00 | 16 ★ tests green; public build; safety take captured | ● | ● | ● |
+| Flip → event | Sun 08:00 | `event` mode live (only if G5 passed) | | | ● |
+| D1 | Sun 09:00 | Morning checks green | ● | ● | ● |
+| D2 | Sun 11:30 | Hero loop over the venue network | ● | ● | ● |
+| D3 | Sun 12:30 | Gemini Stage A (only if it slipped) | ● | | |
+| D4 | Sun 13:00 | Rewrite + judge on or off | ● | | ● |
+| Briefing | Sun 13:45 | Every submission field re-checked | ● | ● | ● |
+| D5 | Sun 15:30 | Feature freeze | ● | ● | ● |
+| D6 | Sun 16:40 | Final cut exported | ● | ● | ● |
+| Flip → public | Sun 16:45 | Public mode, WA secrets gone, tag `submission-v1` | ● | | ● |
+| Audit | Sun 16:50 | Incognito audit passes | | ● | ● |
+| D7 | Sun 17:10 | Form submitted | ● | | |
 
 ---
 
@@ -59,9 +58,9 @@ The spec gives two answers for each of these. Omar picks one at G0 and edits thi
 
 **G0 · 09:15**
 - [ ] All four present and free until 22:00. Anyone with < 9 h → apply the cut order (07 §1) now
-- [ ] V7: who reads Darija natively (Fedi's windows, S-5 second labeler) is confirmed
+- [ ] V7: who reads Darija natively (eval windows, S-5 second labeler; `FEDI.md` F3) is confirmed
 - [ ] Open decisions O1–O4 settled and written into this file
-- [ ] Doc cleanup (07 §8) started, 30-min time-box; hand it to Fedi if behind (R13)
+- [ ] Doc cleanup (07 §8) started, 30-min time-box (R13)
 
 **G-seams · 10:30**
 - [ ] `app/contracts.py` (`Window`, `OrderCtx`, `ScoreResult`) merged
@@ -82,14 +81,14 @@ The spec gives two answers for each of these. Omar picks one at G0 and edits thi
 - If it fails: you freeze them; after that, changes are additive only and a rename needs Montassar's OK
 
 **T0 · 14:00**
-- [ ] U1 ★ and U16 ★ green on CI (U23 with Fedi's data)
+- [ ] U1 ★ and U16 ★ green on CI (U23 with the eval data from `FEDI.md` F3)
 - [ ] M-5a: 12-field schema, Pydantic repair, `NUM` helper, cross-field rules + U3 merged
 - [ ] M-5b: defuse, `normalize_with_map`, spans → segments, evidence check, tone gate + U5 U7 merged
 - [ ] M-7: Groq chain, extraction cache, daily cap + U14 merged
 - [ ] M-6: D2/D3 prompt loaded, compact few-shots, `usage.prompt_tokens` measured
 
 **G3b · 16:30**
-- [ ] M-9 generator on Fedi's banks: 10,000 rows, `eval_only` tagging, no-LLM import test (ML10)
+- [ ] M-9 generator on the phrase banks (`FEDI.md` F2): 10,000 rows, `eval_only` tagging, no-LLM import test (ML10)
 - [ ] Prompt iterated only on 5 windows **outside** G1
 - [ ] `extract-v1` frozen; prefix ≤ 2.8K tokens, measured
 - [ ] V9: tokens per call noted → caps re-derived (R6: public 80 calls/day, 120K tokens/model/day)
@@ -140,7 +139,7 @@ The spec gives two answers for each of these. Omar picks one at G0 and edits thi
 - [ ] `GET /models` on the Groq demo org; Gemini `models.list`
 - [ ] `/api/health?deep=1`: one fixture per provider
 - [ ] Warm-up call
-- If it fails: switch that item to its fallback (rules / Gemini off) and tell Fedi to update captions
+- If it fails: switch that item to its fallback (rules / Gemini off) and flag it for the captions (`FEDI.md` F14)
 
 **D2 · 11:30**
 - [ ] E1 green on `main`; provider chain healthy
@@ -155,7 +154,7 @@ The spec gives two answers for each of these. Omar picks one at G0 and edits thi
 - If it fails: `DRAFT_LLM=off`, static draft shown, no judge claim anywhere
 
 **13:45 briefing**
-- [ ] Every checklist field (07 §6) re-checked against what the organisers say
+- [ ] Every checklist field (`FEDI.md` §5.3) re-checked against what the organisers say
 
 **D5 · 15:30**
 - [ ] S-6 cascade (14:00–14:30, hard stop); S-4 Gemini Stage B (14:30–15:00); S-11b only if S-6 finished early
@@ -345,7 +344,7 @@ The spec gives two answers for each of these. Omar picks one at G0 and edits thi
 - [ ] `make smoke URL=<hosted>` public-green → tell Omar to tag
 - [ ] 16:48 snapshot capture (only if S-9 shipped)
 
-**Audit · 16:50** (read 04 §3.3 aloud; Fedi ticks)
+**Audit · 16:50** (read 04 §3.3 aloud; ticking per `FEDI.md` §4.8)
 - [ ] 1. `/api/health`: `mode=public`, `wa_send=false`, `webhook=disabled`, `wa_token_present=false`, `real_rows=0`
 - [ ] 2. `POST /webhook/whatsapp` → 404
 - [ ] 3. Only sample orders; no teammate names, phone numbers or `+216`
@@ -360,87 +359,6 @@ The spec gives two answers for each of these. Omar picks one at G0 and edits thi
 
 ---
 
-## Fedi (story, language, delivery, scope gate)
+## Fedi
 
-### Saturday
-
-**G0 · 09:15**
-- [ ] Present and free until 22:30
-- [ ] V7: Darija reader confirmed for your windows and the S-5 second label
-
-**G1 · 12:00**
-- [ ] V2: participant guide checked: is a video recorded before the event allowed, and what's the length limit
-- [ ] Phrase banks partial push at 11:30
-- [ ] Product name + one-liner (≤ 20 words) by 13:00
-
-**G3 · 14:00**
-- [ ] Phrase banks: 5–8 per address level / flag / tone (incl. `tone.uncertain`) × Arabizi / Arabic script / French; ≥ 30% of each cell tagged `eval_only`
-- [ ] ≥ 12 of the 24 G1 windows written and labeled (target 24: 6/6/6/6; 4 with a `[SELLER]` line; 2 non-orders), none copied from the few-shots
-- [ ] Outbound templates × 3 languages; `T_ADDRESS` ends in a yes/no question
-- [ ] U23 green on your windows
-- If it fails: placeholder banks stay; G1 runs on whatever N exists at 18:00 (floor 10) and N is reported; G3 injection drops to 4 variants
-
-**Hero lock · 15:00**
-- [ ] Hero v1/v2 text: 3 flags incl. "ghali chwaya", 220 TND, rural; the reply carries building + landmark + time + "ey"
-- [ ] A recording variant with different wording (so the video shows a real LLM call)
-- [ ] G3 injection set: 4 base × 2 = 8; 6 bad drafts for the prefilter
-- [ ] README "Testing & reliability" skeleton committed with `<!--r:…-->` markers
-
-**G3b · 16:30**
-- [ ] Native check of Omar's prompt and few-shots done
-- [ ] Slides v1 drafted (15:15–16:45)
-
-**G6 · 18:00**
-- [ ] README narrative: problem, how it works, Responsible AI, Limitations, live / cached / simulated table
-- [ ] UI language decided: English chrome by default, French only if you switch by 18:00 (R9)
-
-**Eval · 19:00**
-- [ ] Your labels are final; the rubric text is unchanged since the freeze
-- [ ] S-5 second labeler (Montassar or Jesser) has labeled 6 windows blind (Should)
-- [ ] Form draft to 80%; award text pasted from 07 §7
-
-**G7 · 22:00**
-- [ ] `windows.jsonl` (24), banks with `eval_only`, `injection.yaml` (8), `prefilter.yaml`, `normalize.yaml`, `numbers.yaml` committed
-- [ ] `templates/outbound.yaml` in; J15 green
-- [ ] Video script, VO recorded, caption file (numbers blank until E1 is green)
-- [ ] UI copy pass (`event_text.py`, reason-diff wording)
-- [ ] README 70%; slides v1 PDF; form 80%
-- [ ] Safety take directed and captured
-
-**Upload · 23:15**
-- [ ] Safety take edited, captions burned in, uploaded unlisted, link in the form draft
-
-### Sunday
-
-**D1 · 08:30–09:00**
-- [ ] Roster confirmed; every link in the form draft opens
-
-**D2 · 11:30**
-- [ ] Sync done; form at 90%
-
-**D4 · 13:00**
-- [ ] Slides final (PDF, view-anyone); README proofread
-- [ ] VO v2 lines use `hero.json` numbers only; "78 → 31" appears nowhere
-
-**13:45 briefing** (you own the field list)
-- [ ] Every field in 07 §6 re-checked against the organisers
-- [ ] Video length, language and pre-recording rule confirmed
-
-**D5 · 15:30**
-- [ ] Capture rehearsed twice (14:45, 15:10)
-- [ ] Captions final: every fallback, simulation and "synthetic" disclosure present
-- [ ] Form 100% except links
-
-**D6 · 16:40**
-- [ ] Video privacy check (07 §4): phone on DND, no real number in the WhatsApp header, no Meta console / terminal / `.env` / bookmarks bar, masked phones only
-- [ ] Directed the takes; swapped only the improved beats into the safety take
-- [ ] Final cut exported by 16:40
-- If it fails: submit the safety take unchanged
-
-**Audit · 16:50** (O3)
-- [ ] Ticked Montassar's audit items; opened your assigned links in incognito on phone data
-
-**D7 · 17:10**
-- [ ] Upload done (16:45–16:50); all links in the form
-- [ ] Awards: SupplyzPro, Artefact, Guepard, Real-World AI Impact with the 07 §7 text; **not** Kredete
-- [ ] Submitted by 17:10. At 17:05, submit whatever is green; never wait for the deadline
+Fedi's tasks and checks are in [`FEDI.md`](../../FEDI.md), not in these gates. Where a gate above needs one of his deliverables, it names the `FEDI.md` item (F1–F16) as an input.
