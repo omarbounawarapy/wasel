@@ -1,4 +1,7 @@
 # PRD — COD Risk Scoring for Tunisian E-commerce
+
+> **Council update (Sat 26 Sept 2026):** [`docs/council-spec/`](docs/council-spec/README.md) is now the build spec. Where this file conflicts with it, the council spec wins. The line-by-line edits that align this file are listed in [`docs/council-spec/07-scope-schedule-delivery.md` §8](docs/council-spec/07-scope-schedule-delivery.md) (Omar, Sat 09:15).
+
 ## GoMyCode "Come Build With AI" · 27 Sept 2026
 
 Built from: `hackathon_playbook.md` (rubric/prize analysis) + 5-agent research pass (failure patterns, architecture, domain/market, roles, judging). Research agents ran on a small model and pulled from open web search — anything below marked **[VERIFY]** must be checked by a human before it appears in the pitch or video. Do not cite an unverified figure or company name in front of judges.

@@ -1,5 +1,7 @@
 # Execution Plan — COD Risk Scoring, 27 Sept 2026
 
+> **Council update (Sat 26 Sept 2026):** [`docs/council-spec/`](docs/council-spec/README.md) is now the build spec. Where this file conflicts with it, the council spec wins. The line-by-line edits that align this file are listed in [`docs/council-spec/07-scope-schedule-delivery.md` §8](docs/council-spec/07-scope-schedule-delivery.md) (Omar, Sat 09:15).
+
 Companion to `PRD.md` (what/why) and `SYSTEM_DESIGN.md` (how). This is who does what, when. Team: **Omar (Lead)**, **Jesser**, **Montassar**, **Fedi**.
 
 Total live coding time on event day: **~4h15**, across four fixed blocks. Everything else is pre-event prep or fixed program (opening, workshop, lunch).

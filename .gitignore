@@ -216,3 +216,59 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ===== COD Risk additions — keep below the stock Python template =====
+# (council spec 04-security-public-mode.md §6.1; tested in a scratch repo)
+# The stock template ignores EVERY directory named lib/ (and dist/, build/).
+# Re-include frontend source dirs (Vite/shadcn put code in src/lib/).
+!web/src/lib/
+!frontend/src/lib/
+
+# App state and personal data (SQLite lives in var/app.db)
+var/
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+app.db*
+seed/raw/
+data/raw/
+reports/raw/
+exports/
+
+# Media: voice notes, screen recordings, raw screenshots
+*.ogg
+*.opus
+*.m4a
+*.mp4
+*.mov
+*.webm
+*.mkv
+recordings/
+screenshots/raw/
+
+# Env and secrets (.env.example is the only committed env file)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+secrets/
+
+# Frontend build output and deps
+node_modules/
+.next/
+out/
+web/dist/
+frontend/out/
+.vite/
+.vercel/
+*.tsbuildinfo
+
+# Local tooling (council transcripts reference personal files)
+.claude/
+.DS_Store
+.idea/
+.vscode/
