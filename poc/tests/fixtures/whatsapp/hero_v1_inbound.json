@@ -1,0 +1,57 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "200000000000001",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550000001",
+              "phone_number_id": "100000000000001"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Sami"
+                },
+                "wa_id": "21600000002"
+              }
+            ],
+            "messages": [
+              {
+                "from": "21600000002",
+                "id": "wamid.HERO0",
+                "timestamp": "1790503140",
+                "type": "text",
+                "text": {
+                  "body": "salam, nheb el casque bluetooth"
+                }
+              },
+              {
+                "from": "21600000002",
+                "id": "wamid.HERO1",
+                "timestamp": "1790503150",
+                "type": "text",
+                "text": {
+                  "body": "Douar Ouled Ali, 9rib el jemaa"
+                }
+              },
+              {
+                "from": "21600000002",
+                "id": "wamid.HERO2",
+                "timestamp": "1790503160",
+                "type": "text",
+                "text": {
+                  "body": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

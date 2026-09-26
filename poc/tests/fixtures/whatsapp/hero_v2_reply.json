@@ -1,0 +1,39 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "200000000000001",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550000001",
+              "phone_number_id": "100000000000001"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Sami"
+                },
+                "wa_id": "21600000002"
+              }
+            ],
+            "messages": [
+              {
+                "from": "21600000002",
+                "id": "wamid.HERO4",
+                "timestamp": "1790503230",
+                "type": "text",
+                "text": {
+                  "body": "ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ghodwa ba3d 17h nkoun fi dar"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

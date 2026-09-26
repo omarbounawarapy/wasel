@@ -13,7 +13,7 @@ export PYTHONPATH := .
 
 # Offline, keyless, deterministic: the ONLY environment tests run under (CI runs this too).
 TEST_ENV := APP_MODE=dev LLM_MODE=fail_all WORKER_ENABLED=false DEMO_MODE=true GEMINI_ENABLED=false \
-            GROQ_API_KEY= GEMINI_API_KEY= WA_TOKEN= WA_SEND_ENABLED=false
+            GROQ_API_KEY= GEMINI_API_KEY= WA_TOKEN= WA_APP_SECRET= WA_VERIFY_TOKEN= WA_SEND_ENABLED=false
 
 ui: ## Streamlit fallback UI on :8501 (06 §1.5), reads API_BASE_URL (default :8000)
 	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py

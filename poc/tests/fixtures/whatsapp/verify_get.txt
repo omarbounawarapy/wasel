@@ -1,0 +1,1 @@
+hub.mode=subscribe&hub.verify_token={VERIFY_TOKEN}&hub.challenge=1158201444

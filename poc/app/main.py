@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from app.api import models as M
 from app.api.errors import ApiError
 from app.api.routes import admin, router
+from app.api.routes_webhook import webhook
 from app.clock import Clock, SystemClock, utc_iso
 from app.db.cache import SqliteExtractionCache
 from app.db.conn import connect, create_schema, fresh_db
@@ -45,6 +46,7 @@ class AppState:
         self.started_at = clock.now()
         self.last_tick_at = None
         self.last_purge_at = None
+        self.last_webhook_at = None                     # last POST with a valid signature
         self.no_reply_s = self.config.raw["timeouts"]["no_reply_s"]["demo" if settings.demo_mode else "prod"]
 
     # one connection per thread (01 §1 conn.py)
@@ -133,7 +135,8 @@ class AppState:
                             cap_reached=cap is not None and calls >= cap,
                             visitor_cap={"per_10min": s.visitor_llm_cap_10min, "per_day": s.visitor_llm_cap_day}
                             if s.is_public else None),
-            whatsapp=M.HealthWhatsApp(last_webhook_at=None),
+            whatsapp=M.HealthWhatsApp(
+                last_webhook_at=utc_iso(self.last_webhook_at) if self.last_webhook_at else None),
             worker=M.HealthWorker(last_tick_at=utc_iso(self.last_tick_at) if self.last_tick_at else None,
                                   pending=pending,
                                   last_purge_at=utc_iso(self.last_purge_at) if self.last_purge_at else None),
@@ -179,7 +182,7 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
     @app.middleware("http")
     async def _limits_and_headers(request: Request, call_next):
         cl = request.headers.get("content-length")
-        if cl and cl.isdigit() and int(cl) > MAX_BODY:
+        if cl and cl.isdigit() and int(cl) > MAX_BODY and request.url.path != "/webhook/whatsapp":   # W-3: 1 MiB there
             return JSONResponse({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "body over 64 KB"}}, status_code=413)
         resp = await call_next(request)
         resp.headers["Content-Security-Policy"] = ("default-src 'self'; img-src 'self' data:; style-src 'self' "
@@ -196,6 +199,10 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
     app.include_router(router)
     if settings.admin_mounted:
         app.include_router(admin)
+    if settings.webhook_mounted:                        # 04 W-1: fail closed; public mode never mounts it
+        app.include_router(webhook)
+    log.info("mode=%s webhook=%s wa_send=%s", settings.app_mode, "enabled" if settings.webhook_mounted else "disabled",
+             settings.wa_send_effective)
     dist = ROOT / "web" / "dist"
     if dist.exists():
         app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")

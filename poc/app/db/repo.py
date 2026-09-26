@@ -64,14 +64,15 @@ def create_conversation(conn, ids: IdGen, now: datetime, *, customer_id, sandbox
 
 def insert_message(conn, ids: IdGen, now: datetime, *, conversation_id, direction, author, origin, kind="text",
                    text=None, canonical_text=None, template_id=None, transcript=None, lat=None, lng=None,
-                   provider_ts: datetime | None = None, channel_message_id=None, delivery_status=None) -> str | None:
+                   provider_ts: datetime | None = None, channel_message_id=None, delivery_status=None,
+                   reply_to_message_id=None) -> str | None:
     mid = ids("msg")
     cur = conn.execute(
         "INSERT OR IGNORE INTO messages (message_id, conversation_id, channel_message_id, direction, author, origin,"
-        " kind, text, canonical_text, template_id, transcript, location_lat, location_lng, provider_ts, received_at,"
-        " delivery_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        " kind, text, canonical_text, template_id, transcript, location_lat, location_lng, reply_to_message_id,"
+        " provider_ts, received_at, delivery_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (mid, conversation_id, channel_message_id, direction, author, origin, kind, text, canonical_text, template_id,
-         transcript, lat, lng, utc_iso(provider_ts or now), utc_iso(now), delivery_status))
+         transcript, lat, lng, reply_to_message_id, utc_iso(provider_ts or now), utc_iso(now), delivery_status))
     return mid if cur.rowcount else None          # None = duplicate wamid (W-6)
 
 

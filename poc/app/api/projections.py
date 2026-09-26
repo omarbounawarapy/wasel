@@ -104,6 +104,13 @@ def list_orders(conn, settings: Settings, vid: str | None, *, tier=None, status=
                                mode=settings.app_mode)
 
 
+def _reply_to(q: sqlite3.Row | None) -> M.ReplyTo | None:
+    """The quoted message (WhatsApp context.id), if it belongs to this order's thread."""
+    if q is None:
+        return None
+    return M.ReplyTo(message_id=q["message_id"], preview=strip_bidi(q["text"] or q["canonical_text"] or "")[:80])
+
+
 def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailResponse:
     s = order_summary(conn, settings, o)
     cust = repo.row(conn, "SELECT * FROM customers WHERE customer_id=?", o["customer_id"])
@@ -115,7 +122,9 @@ def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailRespo
         for sp in json.loads(run["spans_json"]):
             cur_spans.setdefault(sp["message_id"], []).append(sp)
     msgs = []
-    for m in repo.order_messages(conn, o["order_id"]):
+    order_msgs = repo.order_messages(conn, o["order_id"])
+    by_id = {m["message_id"]: m for m in order_msgs}
+    for m in order_msgs:
         segs = build_segments(m["text"], cur_spans.get(m["message_id"], [])) \
             if m["author"] == "customer" and m["text"] else None
         msgs.append(M.MessageView(
@@ -123,7 +132,8 @@ def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailRespo
             kind=m["kind"], provider_ts=m["provider_ts"], text=strip_bidi(m["text"]), segments=segs,
             transcript=m["transcript"],
             location=M.Location(lat=m["location_lat"], lng=m["location_lng"]) if m["kind"] == "location" else None,
-            reply_to=None, template_id=m["template_id"], delivery_status=m["delivery_status"]))
+            reply_to=_reply_to(by_id.get(m["reply_to_message_id"])), template_id=m["template_id"],
+            delivery_status=m["delivery_status"]))
     views, prev = [], None
     for a in asm:
         run = repo.row(conn, "SELECT * FROM extraction_runs WHERE extraction_id=?", a["extraction_id"]) \
