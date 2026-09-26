@@ -10,9 +10,9 @@ Total live coding time on event day: **~4h15**, across four fixed blocks. Everyt
 
 | Person | Owns |
 |---|---|
-| **Omar (Lead)** | LLM extraction schema + prompt, feature contract (the exact fields the classifier expects), all merges to `main`, firefighting/edge cases during sprints |
-| **Jesser** | FastAPI backend (4 endpoints), Streamlit frontend (Ingest/Queue/Detail pages), `requirements.txt` + `.env` setup, stretch: tiered-autonomy messaging (PRD §10) |
-| **Montassar** | Synthetic dataset generator, weak-labeling heuristic, XGBoost training script, fallback/cache mechanism, WhatsApp Cloud API sandbox + webhook (PRD §11), final submission-link audit |
+| **Omar (Lead)** | LLM layer on Groq (strict schemas, prompt, validation, model bake-off — `SYSTEM_DESIGN.md` §6), feature contract, WhatsApp sandbox + webhook (`SYSTEM_DESIGN.md` §9), all merges to `main`, firefighting/edge cases during sprints |
+| **Jesser** | FastAPI backend (endpoints in `SYSTEM_DESIGN.md` §10) incl. rescore worker + debounce, Streamlit frontend (Queue/Detail/Activity), `requirements.txt` + `.env` setup, stretch: tiered-autonomy messaging (PRD §10) |
+| **Montassar** | Synthetic data generator (emits ground-truth features alongside text — `SYSTEM_DESIGN.md` §7.1), seeded `catalog`, weak-labeling heuristic, XGBoost training script, fallback/cache mechanism, final submission-link audit |
 | **Fedi** | Pitch script, video, submission form, scope-gate checklist, UI copy pass |
 
 **Note:** dataset generation and classifier training are Montassar's alone — an earlier draft of Jesser's plan also listed these; that's removed here to avoid duplicate work.
@@ -23,11 +23,11 @@ Total live coding time on event day: **~4h15**, across four fixed blocks. Everyt
 
 | Feature | Type | Source |
 |---|---|---|
-| `address_specificity` | float 0-1 | LLM extraction |
-| `red_flag_count` | int | LLM extraction (`len(red_flags)`) |
+| `address_specificity` | float in {0, .25, .5, .75, 1} | code-mapped from the LLM's `address_level` enum (`SYSTEM_DESIGN.md` §6.3) |
+| `red_flag_count` | int | LLM extraction, after the evidence check drops unverifiable flags |
 | `tone_score` | int, encoded (neutral=0, uncertain=1, negative=2, positive=-1) | LLM extraction |
-| `extraction_confidence` | float 0-1 | LLM extraction |
-| `price_tnd` | float | order data |
+| `has_geo_pin` | bool | deterministic (WhatsApp location message) |
+| `price_tnd` | float | **catalog lookup**, never the LLM |
 | `zone_encoded` | categorical/int (urban=0, suburban=1, rural=2, or similar) | order data |
 | `product_category_encoded` | categorical/int | order data |
 | `customer_refusal_count` | int | customer order history |
@@ -41,10 +41,10 @@ If behind schedule: cut to the first 4 (address_specificity, red_flag_count, ton
 
 | Person | Task | Est. time |
 |---|---|---|
-| Omar | Draft Pydantic schema (fields above) + extraction prompt; test on 10-15 diverse sample orders (Arabic, French, vague, tone variants); write feature-contract doc | ~3.5h |
+| Omar | Strict JSON schemas + Pydantic mirrors (`SYSTEM_DESIGN.md` §6.3), extraction prompt + few-shot, validation pipeline (§6.4), model bake-off on 20 labeled dialect windows (§6.6), key checks in §16 | ~4h |
 | Jesser | FastAPI skeleton: `POST /orders/ingest`, `GET /orders`, `GET /orders/{id}`, `POST /orders/{id}/action`; Streamlit multi-page skeleton (Ingest/Queue/Detail); `requirements.txt` + `.env` setup (moved from Montassar to make room for the WhatsApp work) | ~2h |
-| Montassar | Synthetic dataset (300-500 rows, mixed Arabic/French addresses+notes); weak-labeling heuristic; XGBoost training script; fallback cache of ~10 pre-computed predictions (3 High/4 Med/3 Low) | ~3h |
-| Montassar | WhatsApp sandbox: Meta dev app + WhatsApp product, register "customer" test numbers, long-lived System User token, `POST /webhook/whatsapp` + `GET` verification in FastAPI (coordinate with Jesser — same app), public HTTPS URL (tunnel or deploy), 5+ end-to-end phone → queue tests. **If not working by 26 Sept 22:00, drop it** — pitch it as roadmap, demo on CSV/paste | ~2-3h |
+| Montassar | Synthetic generator (300-500 rows): pick ground-truth `address_level`/flags/tone first, then generate matching Darija/Arabizi/French text from phrase banks, and **save the ground truth alongside the text**. Seeded `catalog` (~15 products). Weak-labeling heuristic. XGBoost trained on the ground-truth features. Fallback cache of ~10 pre-computed predictions (3 High/4 Med/3 Low) | ~3.5h |
+| Omar | WhatsApp sandbox: Meta dev app + WhatsApp product, register "customer" test numbers, long-lived System User token, `POST /webhook/whatsapp` + `GET` verification in FastAPI (coordinate with Jesser — same app), public HTTPS URL (tunnel or deploy), 5+ end-to-end phone → queue tests. **If not working by 26 Sept 22:00, drop it** — pitch it as roadmap, demo on CSV/paste | ~2-3h |
 | Fedi | Fact-check and lock the pitch script (below); build the scope-gate checklist; pre-fill submission form (everything except video link, ~80%) | ~1.5-2h |
 
 **Sample synthetic rows (Montassar's format):**
@@ -63,16 +63,16 @@ Weak-labeling formula: `score = address_vagueness*0.25 + price_percentile*0.20 +
 
 | Time | Program | Omar | Jesser | Montassar | Fedi |
 |---|---|---|---|---|---|
-| 08:30-09:00 | Check-in | Attend | Attend | Attend + restart tunnel, re-verify webhook URL in Meta console, confirm token still valid, send one test message from a registered phone | Attend |
+| 08:30-09:00 | Check-in | Attend + restart tunnel, re-verify webhook URL in Meta console, confirm WhatsApp token still valid, `GET /models` on the demo key, send one test message from a registered phone | Attend | Attend | Attend |
 | 09:00-11:15 | Opening, history session, NVIDIA workshop | Attend | Attend | Attend | Attend |
-| **11:15-11:30** (15m) | Sprint 1 | Verify extraction+classifier run end-to-end | Verify FastAPI+Streamlit boot with no errors | Smoke test: data gen + model train + one prediction; one WhatsApp message → queue row | Confirm repo runs, sync with all three builders |
+| **11:15-11:30** (15m) | Sprint 1 | Verify extraction+classifier run end-to-end; one WhatsApp message → queue row | Verify FastAPI+Streamlit boot with no errors | Smoke test: data gen + model train + one prediction | Confirm repo runs, sync with all three builders |
 | 11:30-11:45 | Mentor checkpoint | — | — | — | — |
 | **11:45-13:00** (75m) | Sprint 2 (hero feature) | Extract+validate 50 rows; first `main` merge; confirm feature contract with Montassar | Wire ingest → queue page; table sorted by risk, color badges (red/yellow/green) | Wire LLM extraction → feature frame → XGBoost; merge to `main` | Draft plain-English reason string wording; first UI copy pass; lock test-order set |
 | 13:00-13:45 | Lunch | — | — | — | — |
 | 13:45-14:00 | Submission briefing | Attend | Attend | Attend | Attend + pre-fill remaining form fields |
 | **14:00-15:30** (90m) | Sprint 3 | Integration + explanation layer; full rehearsal <3s; second merge | Detail page: highlighted flagged text, reason, action buttons | Fallback engineering; rehearse demo under simulated API failure *and* simulated webhook/tunnel failure (switch to CSV/paste); verify submission links open | Full UI copy pass; submission form to 95%; rehearse script twice |
 | 15:30-15:45 | Checkpoint | **Feature freeze — no new code after this point** | | | |
-| **15:45-17:00** (75m) | Final sprint | Bug fixes only | Bug fixes only; help record if needed | Final audit: fallback tested, links verified | Dry run (15m) → record 2 takes (30m) → fix or accept fallback (15m) → final form fill (15m) |
+| **15:45-17:00** (75m) | Final sprint | Bug fixes only; one warm-up extraction call right before recording (primes Groq's prompt cache) | Bug fixes only; help record if needed | Final audit: fallback tested, links verified | Dry run (15m) → record 2 takes (30m) → fix or accept fallback (15m) → final form fill (15m) |
 | 17:00-17:30 | Submission workshop | Submit early | | | Submit; handle any last Q&A |
 
 ---

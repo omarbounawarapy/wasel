@@ -27,15 +27,16 @@ Cash-on-delivery orders in Tunisian e-commerce get refused at a meaningful rate 
 4. Rule layer: tier + value → recommended action (ship / confirm / prepay)
 5. Plain-English reason string per order
 6. Risk queue UI (sorted by risk) + order detail view showing the "why"
-7. One aggregate ROI stat for the demo close
+7. One aggregate ROI stat for the demo close (labeled as simulated)
+8. Customer reply → versioned rescore with a visible reason diff (`SYSTEM_DESIGN.md` §4). This is the ending of the demo story, built on the same pipeline, and it can be driven by `simulate-reply` if WhatsApp is down
 
 **Should-have (only after must-haves work end-to-end):**
-8. Tiered-autonomy customer messaging — see §10 below for the settled design
-9. Impact dashboard (before/after refusal rate, estimated TND saved)
-10. Live WhatsApp ingestion via Meta's Cloud API sandbox/test number (see §11) — set up entirely pre-event; CSV/paste stays as the guaranteed fallback
+9. Tiered-autonomy customer messaging — see §10 below for the settled design
+10. Impact dashboard (before/after refusal rate, estimated TND saved)
+11. Live WhatsApp ingestion via Meta's Cloud API sandbox/test number (see §11) — set up entirely pre-event; CSV/paste stays as the guaranteed fallback
 
 **Nice-to-have (cut without guilt if behind schedule):**
-11. Filter/search in the queue
+12. Filter/search in the queue
 
 **Explicitly out of scope — do not build:**
 - Auth/multi-tenant accounts, real store integrations (WooCommerce/Shopify — mock the button only), model retraining UI, native mobile, Docker/deployment infra beyond `requirements.txt` + a run command.
@@ -48,7 +49,7 @@ Cash-on-delivery orders in Tunisian e-commerce get refused at a meaningful rate 
 
 | Layer | Choice | Why |
 |---|---|---|
-| LLM extraction | Claude Haiku + Pydantic schema, with defaults for missing/invalid fields | Fast, cheap, handles Arabic/French mixed text; schema + defaults contain hallucination risk |
+| LLM extraction | Groq free tier: `openai/gpt-oss-120b` or `qwen/qwen3.8-27b` (bake-off decides), strict JSON Schema + Pydantic, verified quotes | Zero cost; strict mode guarantees the shape, code verifies the content — see `SYSTEM_DESIGN.md` §6 |
 | Classifier | XGBoost on extracted features + order metadata | Default hyperparameters are fine — do not tune |
 | Backend | FastAPI | Minimal boilerplate |
 | Frontend | Streamlit | Fastest path to a working queue/detail UI; do not over-engineer |
@@ -65,8 +66,8 @@ Cash-on-delivery orders in Tunisian e-commerce get refused at a meaningful rate 
 |---|---|---|
 | LLM hallucinates extracted fields | High | Pydantic schema with `Optional` fields + safe defaults; validate before feeding classifier |
 | Cold-start: no real labeled data | High | ~500 synthetic, weak-labeled rows is enough for a PoC — **disclose this openly** in the submission's AI/tool section rather than implying real data |
-| Latency during live demo | Medium | Pre-compute a few demo predictions as fallback; use Haiku not a larger model; target <3s end-to-end |
-| Multilingual (Arabic/French) extraction quality | Medium | Lean on Claude's native bilingual handling; hand-pick test cases you've verified work; have a structured-fields-only fallback if free text confuses the model |
+| Latency / free-tier rate limits (8K TPM) during live demo | High | Extraction cache, cached static prompt prefix + warm-up call, fallback model with its own bucket, rule-based last resort, separate untouched demo key — `SYSTEM_DESIGN.md` §6.7 |
+| Multilingual (Darija/Arabizi/French) extraction quality | High | Model bake-off on 20 hand-labeled dialect windows before choosing; low clarity routes to review |
 | Live API fails during judging | High | Have a cached/mocked response path ready so the demo continues even if the API times out — **and say so on stage** if you fall back to it. Hiding a mock reads as dishonest; disclosing it reads as engineering judgment |
 | Git conflicts under deadline pressure | Medium | Merge to `main` every 30-60 minutes, one person owns `main`, test immediately after every merge |
 
@@ -165,7 +166,7 @@ Copy-paste or chat-export ingestion was also rejected as the headline: it doesn'
 
 **Demo flow:** a team member (playing the customer) messages the sandbox number from their phone → Meta POSTs to our webhook → FastAPI parses the message body → same extraction + classifier pipeline → order appears in the risk queue. No copy-paste.
 
-**Setup (pre-event only, Montassar — must not touch live sprint blocks):**
+**Setup (pre-event only, Omar — must not touch live sprint blocks; webhook spec in `SYSTEM_DESIGN.md` §9):**
 1. Meta developer account → create app → add WhatsApp product → note the test number and phone-number ID
 2. Register the "customer" phones as test recipients (sandbox limit: 5 numbers)
 3. Generate a long-lived token via a System User (the quick-start token expires in 24h — it would die before event day)
