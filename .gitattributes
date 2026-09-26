@@ -1,0 +1,7 @@
+# This repo runs in Linux containers and sha-pins its prompt files (poc/prompts/VERSIONS),
+# so CRLF checkouts break the hash checks. Force LF everywhere.
+* text=auto eol=lf
+
+# Windows-only scripts, if any ever appear
+*.bat text eol=crlf
+*.ps1 text eol=crlf
