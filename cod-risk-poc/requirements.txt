@@ -1,7 +1,0 @@
-streamlit>=1.45
-xgboost>=2.0
-pandas>=2.0
-numpy>=1.26
-pydantic>=2.6
-requests>=2.31
-altair>=5.0

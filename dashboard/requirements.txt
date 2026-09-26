@@ -1,0 +1,6 @@
+# The dashboard as its own deployable (06 §1.5): it only talks HTTP to the API (API_BASE_URL).
+# ==-pinned to what pip resolved on 26 Sept 2026, same versions as requirements.txt / requirements-dev.txt.
+streamlit==1.64.0
+altair==6.3.0
+httpx==0.28.1
+pandas==3.0.6

@@ -224,6 +224,9 @@ __marimo__/
 !web/src/lib/
 !frontend/src/lib/
 
+# CI test report
+reports/junit.xml
+
 # App state and personal data (SQLite lives in var/app.db)
 var/
 *.db

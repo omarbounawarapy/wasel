@@ -10,19 +10,19 @@
 
 | # | Deliverable | File | Who needs it | Hard deadline (Tunis) |
 |---|---|---|---|---|
-| F1 | Product name + one-liner (≤ 20 words) | `poc/data/app.yaml` (new, 2 keys) | Montassar (UI title), video, slides | **Sat 13:00** |
-| F2 | Phrase banks (Arabizi / Arabic-script Darija / French) | `poc/data/phrase_banks.yaml` | Omar (generator) | partial **Sat 11:30**, complete **Sat 14:00** |
-| F3 | 24 hand-written eval conversations, labeled | `poc/eval/sets/g1.jsonl` | Omar (eval run) | ≥ 12 by **Sat 14:00**, all 24 by **Sat 16:30** |
-| F4 | Outbound message templates × 3 languages | `poc/data/templates/outbound.yaml` | Jesser / Omar (outbound) | **Sat 14:00** |
-| F5 | Catalog aliases + place names | `poc/data/catalog.yaml`, `poc/data/zones.yaml` | Omar (matcher, zones) | **Sat 14:00** |
-| F6 | Hero conversation v1/v2 + a recording variant | `poc/tests/fixtures/hero/script.json` + `poc/data/seed/demo_seed.json` (text only) | Omar (golden test), video | **Sat 15:00 (hero lock)** |
-| F7 | 8 injection cases | `poc/eval/sets/g3_injection.jsonl` | Omar (eval + test E4) | **Sat 15:00** |
-| F8 | Outbound test drafts (6 bad + 6 good) | `poc/tests/fixtures/cases/prefilter.yaml` | Omar (prefilter test) | **Sat 15:00** |
-| F9 | Arabic normalization + number cases | `poc/tests/fixtures/cases/normalize.yaml`, `numbers.yaml` | Jesser / Omar (tests) | **Sat 22:00** |
-| F10 | Native check of the extraction prompt + few-shots | comments to Omar (he edits `poc/prompts/`) | Omar | **Sat 16:30 (prompt freeze)** |
+| F1 | Product name + one-liner (≤ 20 words) | `data/app.yaml` (new, 2 keys) | Montassar (UI title), video, slides | **Sat 13:00** |
+| F2 | Phrase banks (Arabizi / Arabic-script Darija / French) | `data/phrase_banks.yaml` | Omar (generator) | partial **Sat 11:30**, complete **Sat 14:00** |
+| F3 | 24 hand-written eval conversations, labeled | `eval/sets/g1.jsonl` | Omar (eval run) | ≥ 12 by **Sat 14:00**, all 24 by **Sat 16:30** |
+| F4 | Outbound message templates × 3 languages | `data/templates/outbound.yaml` | Jesser / Omar (outbound) | **Sat 14:00** |
+| F5 | Catalog aliases + place names | `data/catalog.yaml`, `data/zones.yaml` | Omar (matcher, zones) | **Sat 14:00** |
+| F6 | Hero conversation v1/v2 + a recording variant | `tests/fixtures/hero/script.json` + `data/seed/demo_seed.json` (text only) | Omar (golden test), video | **Sat 15:00 (hero lock)** |
+| F7 | 8 injection cases | `eval/sets/g3_injection.jsonl` | Omar (eval + test E4) | **Sat 15:00** |
+| F8 | Outbound test drafts (6 bad + 6 good) | `tests/fixtures/cases/prefilter.yaml` | Omar (prefilter test) | **Sat 15:00** |
+| F9 | Arabic normalization + number cases | `tests/fixtures/cases/normalize.yaml`, `numbers.yaml` | Jesser / Omar (tests) | **Sat 22:00** |
+| F10 | Native check of the extraction prompt + few-shots | comments to Omar (he edits `prompts/`) | Omar | **Sat 16:30 (prompt freeze)** |
 | F11 | 6 slides (PDF, view-anyone link) | Google Slides / PDF | judges | v1 **Sat 22:00**, final **Sun 13:00** |
 | F12 | README narrative + "Testing & reliability" skeleton | `README.md` (repo root) | judges | skeleton **Sat 15:00**, 70% **Sat 22:00**, final **Sun 15:30** |
-| F13 | UI copy pass (labels, event titles, reason wording) | `poc/app/api/event_text.py` (strings only) + a list for Montassar | Montassar / Jesser | **Sat 21:00** |
+| F13 | UI copy pass (labels, event titles, reason wording) | `app/api/event_text.py` (strings only) + a list for Montassar | Montassar / Jesser | **Sat 21:00** |
 | F14 | 90-second video (safety take Sat, final Sun) | unlisted video link | judges | safety **Sat 23:15**, final export **Sun 16:40** |
 | F15 | Submission form + award text | the organisers' form | judges | **Sun 17:10** |
 | F16 | Scope gate: the "can we also add X?" check | — | whole team | all weekend |
@@ -35,8 +35,8 @@
 
 1. **Honesty words.** Anything simulated says **"simulated"**, **"synthetic"**, **"sample"** or **"recorded"**. The reply adjustments (×0.6, +15) are always called **"starting assumptions"**.
 2. **No unsourced numbers.** No refusal-rate figure (not 40–60%, not 20–40%) and no COD-share figure, anywhere, unless the source is on screen. Default wording: *"a large share of cash-on-delivery orders are refused at the door."* No competitor names (eGrow, SoukFlow…).
-3. **Hero numbers come from one place:** `poc/tests/golden/hero.json`. Today it says **v1 = 87 (HIGH) → v2 = 16 (LOW)**. Read it again after Omar's Saturday 18:00 run and before every caption. **"78 → 31" is retired**; never write it.
-4. **Eval numbers come only from `poc/reports/*.json`.** You never type a metric from memory.
+3. **Hero numbers come from one place:** `tests/golden/hero.json`. Today it says **v1 = 87 (HIGH) → v2 = 16 (LOW)**. Read it again after Omar's Saturday 18:00 run and before every caption. **"78 → 31" is retired**; never write it.
+4. **Eval numbers come only from `reports/*.json`.** You never type a metric from memory.
 5. **Personal data.** Customer names, phone numbers and addresses are personal data. We use **synthetic data only**. Never write "no personal data". Never put a teammate's real phone number or name in any file, screenshot or video.
 6. **No "AI-powered", no "smart".** Buttons use verbs. Plain, concrete sentences.
 7. **Awards we claim:** SupplyzPro, Artefact, Guepard, GOMYCODE × NVIDIA Real-World AI Impact. **Never Kredete.**
@@ -45,7 +45,7 @@
 ### Your git routine (every push)
 ```bash
 git pull origin main
-cd poc && make check          # must end with "check: green, ok to merge"
+make check          # must end with "check: green, ok to merge"
 cd .. && git add <your files> && git commit -m "content: <what>" && git push origin main
 ```
 If `make check` is red after your change, the error names the file and the rule (for example `lint 3: phrase appears under two labels`). Fix your text and rerun. If it's red for something you didn't touch, tell Omar and don't push.
@@ -54,11 +54,11 @@ If `make check` is red after your change, the error names the file and the rule 
 
 ## 2. Before 09:15 — set up (20 min, do it Friday night if you can)
 
-- [ ] `git clone https://github.com/omarbounawarapy/hackathon && cd hackathon/poc`
+- [ ] `git clone https://github.com/omarbounawarapy/hackathon && cd hackathon`
 - [ ] `pip install -r requirements.txt -r requirements-dev.txt`
 - [ ] `make check` → green (about 7 s)
 - [ ] `make demo`, then open http://localhost:8000. Click **Try this order** on the hero, then **Simulate customer reply**. Watch HIGH 87 → LOW 16. That loop is what the whole video sells.
-- [ ] Open `poc/data/phrase_banks.yaml` and `poc/data/templates/outbound.yaml`. They're a **non-native draft**. Your job is to replace them with Tunisian text that sounds real.
+- [ ] Open `data/phrase_banks.yaml` and `data/templates/outbound.yaml`. They're a **non-native draft**. Your job is to replace them with Tunisian text that sounds real.
 - [ ] Read §3.1 below (the labeling rubric) once, slowly. You'll use it all day.
 
 ---
@@ -107,7 +107,7 @@ Traps: a number that's part of a district name ("El Menzah 6", "المنزه 6")
   - Is a video **recorded before the event** allowed? (If not, tonight's safety take is only a rehearsal.)
   - What's the **video length limit** and required language?
 
-### 3.3 09:15–11:30 — F2 Phrase banks (`poc/data/phrase_banks.yaml`)
+### 3.3 09:15–11:30 — F2 Phrase banks (`data/phrase_banks.yaml`)
 
 The generator builds 10,000 practice orders from these phrases. The model learns from the **structure**, not the words, so text changes never move the scores. But the words decide whether the demo sounds Tunisian and whether the eval is honest.
 
@@ -147,12 +147,12 @@ flags:
 3. No phrase appears under two different labels (the same words can't be both `vague_location` and `area_or_landmark`).
 4. No label words anywhere: `risk`, `refus`, `fake`, `arnaque`, `مرفوض`.
 5. The 30% `eval_only` split per cell.
-6. No `eval_only` phrase appears in `poc/prompts/`.
+6. No `eval_only` phrase appears in `prompts/`.
 7. No `tone.uncertain` phrase contains an `availability_uncertain` or `price_hesitation` phrase, or the reverse.
 
-**Done when:** `cd poc && python -m ml.generate` ends without a lint error, and `make check` is green.
+**Done when:** `python -m ml.generate` ends without a lint error, and `make check` is green.
 
-### 3.4 11:30–12:45 — F3 Eval conversations (`poc/eval/sets/g1.jsonl`)
+### 3.4 11:30–12:45 — F3 Eval conversations (`eval/sets/g1.jsonl`)
 
 These 24 conversations are the **headline number** in the README, slides and video: *"address level matched a native speaker's label in X/24"*. Write them fresh and by hand.
 
@@ -169,7 +169,7 @@ Across the 22 orders, spread `address_level` about: `none` 2 · `city_only` 4 ·
 
 **Rules:**
 - **No injection text in G1.** Injections live in their own set (F7, §3.8).
-- Don't copy any line from the few-shots in `poc/prompts/extract_v1.fewshot.jsonl`, and don't reuse your own `train` phrases word for word.
+- Don't copy any line from the few-shots in `prompts/extract_v1.fewshot.jsonl`, and don't reuse your own `train` phrases word for word.
 - 1–4 messages per conversation, the way people really type (typos, split messages, emojis are fine).
 - Label every conversation against §3.1 **as it stands after the last customer message**. For reply windows, a concern the customer fixed is **not** flagged.
 - For a reply window, put the seller's question as a message with `"role": "seller"` and `"template_id"` (`T_ADDRESS` or `T_CONFIRM`), using the template text from F4.
@@ -192,7 +192,7 @@ Across the 22 orders, spread `address_level` about: `none` 2 · `city_only` 4 ·
 ### 3.5 12:45–13:00 — F1 Product name
 - [ ] Pick a name: short, easy to say in the video, and it must not be an existing company.
 - [ ] Write the one-liner (≤ 20 words), e.g. *"[Name] tells sellers which cash-on-delivery orders are risky, why, and what to do before the driver leaves."*
-- [ ] Create `poc/data/app.yaml`:
+- [ ] Create `data/app.yaml`:
   ```yaml
   name: "<Name>"
   one_liner: "<one line, ≤ 20 words>"
@@ -201,7 +201,7 @@ Across the 22 orders, spread `address_level` about: `none` 2 · `city_only` 4 ·
 
 **13:00–13:30 lunch.**
 
-### 3.6 13:30–14:00 — F4 Outbound templates (`poc/data/templates/outbound.yaml`)
+### 3.6 13:30–14:00 — F4 Outbound templates (`data/templates/outbound.yaml`)
 
 The system sends one of four messages to the customer. You write them in the three languages. Keep the file's structure: each template/language has a `text` and a `no_name` version.
 
@@ -226,13 +226,13 @@ The system sends one of four messages to the customer. You write them in the thr
 - [ ] Banks complete and pushed (F2).
 - [ ] ≥ 12 of 24 G1 conversations pushed (F3).
 - [ ] Templates pushed (F4).
-- [ ] F5, 10 min: in `poc/data/catalog.yaml`, check each product's `aliases` read naturally in all three languages (the hero product P12 stays "casque bluetooth"). In `poc/data/zones.yaml`, add real place-name keywords to the urban/suburban/rural lists (douar → rural, cité/hay → suburban, etc.).
+- [ ] F5, 10 min: in `data/catalog.yaml`, check each product's `aliases` read naturally in all three languages (the hero product P12 stays "casque bluetooth"). In `data/zones.yaml`, add real place-name keywords to the urban/suburban/rural lists (douar → rural, cité/hay → suburban, etc.).
 
 If something isn't ready at 14:00, push what exists and say what's missing. Omar runs on whatever is there, and the report states the real N.
 
 ### 3.8 14:15–15:15 — Hero, injections, test cases, README skeleton (**hero lock 15:00**)
 
-**F6 Hero text** (`poc/tests/fixtures/hero/script.json`, then the same text in `poc/data/seed/demo_seed.json`). This is the conversation in the video. You may reword any line, but the **bold** parts must stay because the numbers depend on them:
+**F6 Hero text** (`tests/fixtures/hero/script.json`, then the same text in `data/seed/demo_seed.json`). This is the conversation in the video. You may reword any line, but the **bold** parts must stay because the numbers depend on them:
 
 | # | Who | Current text | Must keep |
 |---|---|---|---|
@@ -246,7 +246,7 @@ If something isn't ready at 14:00, push what exists and say what's missing. Omar
 - [ ] After you edit, run `make check`. If `test_hero_*` goes red, your wording broke a bold rule. Revert that line, or ask Omar.
 - [ ] **15:00: the hero is locked.** No more hero edits after this.
 
-**F7 Injection cases** (`poc/eval/sets/g3_injection.jsonl`, 8 rows, same row format as G1 plus `"base_id"` and `"variant"`). Pick 4 G1 orders you labeled medium or high risk, one per language group. Each gets 2 extra customer messages appended, one per row:
+**F7 Injection cases** (`eval/sets/g3_injection.jsonl`, 8 rows, same row format as G1 plus `"base_id"` and `"variant"`). Pick 4 G1 orders you labeled medium or high risk, one per language group. Each gets 2 extra customer messages appended, one per row:
 
 | Base | Variant A (all four bases) | Variant B |
 |---|---|---|
@@ -257,7 +257,7 @@ If something isn't ready at 14:00, push what exists and say what's missing. Omar
 
 The labels are the base order's labels, unchanged, because the injection must not change anything.
 
-**F8 Outbound test drafts** (`poc/tests/fixtures/cases/prefilter.yaml`):
+**F8 Outbound test drafts** (`tests/fixtures/cases/prefilter.yaml`):
 ```yaml
 should_block:
   - {text: "...remise 10%...", reason: invented discount}
@@ -276,7 +276,7 @@ Write them in real Arabizi/French/Darija, not English.
 
 ### 3.9 15:15–16:45 — F11 Slides v1, with F10 in the middle
 - **15:15–16:00** Slides 1–3 (outline in §5.2).
-- **16:00–16:30 F10 native check.** Read `poc/prompts/extract_v1.system.txt` and `extract_v1.fewshot.jsonl`. List every Darija/Arabizi phrase that sounds wrong or would be misread, with your correction, in one chat message to Omar **before 16:30**. He edits and freezes the prompt at 16:30. After that, nobody changes it.
+- **16:00–16:30 F10 native check.** Read `prompts/extract_v1.system.txt` and `extract_v1.fewshot.jsonl`. List every Darija/Arabizi phrase that sounds wrong or would be misread, with your correction, in one chat message to Omar **before 16:30**. He edits and freezes the prompt at 16:30. After that, nobody changes it.
 - **16:30–16:45** Slides 4–6.
 
 ### 3.10 16:45–18:00 — F12b README narrative
@@ -296,7 +296,7 @@ Write, in plain English:
 
 ### 3.12 19:00 — Eval labels final (5 min)
 - [ ] Your G1 labels are final.
-- [ ] The second labeler has labeled 6 conversations **blind** (Omar picks the 6 ids at random; they label `address_level` + flag codes without seeing yours) into `poc/eval/sets/g1_second.jsonl`. If you disagree afterwards, your label stands unless you agree it was a slip.
+- [ ] The second labeler has labeled 6 conversations **blind** (Omar picks the 6 ids at random; they label `address_level` + flag codes without seeing yours) into `eval/sets/g1_second.jsonl`. If you disagree afterwards, your label stands unless you agree it was a slip.
 
 ### 3.13 19:00–20:00 — F14a Video script, voiceover, captions
 - [ ] Script from the shot list (§5.1). Replace `[Name]`; leave `[v1]`, `[v2]`, `[Δ]`, `[X]` blank until Omar confirms `hero.json` after 18:00.
@@ -306,7 +306,7 @@ Write, in plain English:
 **20:00–20:30 dinner.**
 
 ### 3.14 20:30–21:00 — F13 UI copy pass
-- [ ] `poc/app/api/event_text.py`: rewrite the English titles/details inside the quotes so a seller understands each event in 3 seconds. Don't touch anything outside quotes.
+- [ ] `app/api/event_text.py`: rewrite the English titles/details inside the quotes so a seller understands each event in 3 seconds. Don't touch anything outside quotes.
 - [ ] Review the server labels together with the UI flag names. They must say the same thing: "Vague location", "Price hesitation", "Someone else receives", "Mentions a past refusal", "Pressure or inconsistency", plus the adjustment labels ("customer confirmed", "customer declined", "customer rescheduled", "unclear reply", "no reply in time"). Send changes to Montassar as a list.
 - [ ] Check each English flag label matches what the Darija phrase actually says (e.g. "ghali chwaya" really is price hesitation).
 - [ ] `make check` green, push.
@@ -347,7 +347,7 @@ You **direct**: say what to click and when. Montassar captures the screen.
 
 ### 4.3 11:45–13:00 — Sprint 2
 - [ ] **Slides final** → export PDF → share as "anyone with the link can view" → paste the link in the form.
-- [ ] **README proofread**: every number must match `poc/reports/*.json` or `hero.json`; none typed from memory.
+- [ ] **README proofread**: every number must match `reports/*.json` or `hero.json`; none typed from memory.
 - [ ] **Voiceover v2** lines, if any number changed. "78 → 31" appears nowhere.
 
 ### 4.4 13:45–14:00 — Submission briefing (you own the field list)
