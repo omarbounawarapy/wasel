@@ -1,0 +1,32 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "200000000000001",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550000001",
+              "phone_number_id": "100000000000001"
+            },
+            "messages": [
+              {
+                "from": "21600000001",
+                "id": "wamid.STK1",
+                "timestamp": "1790503195",
+                "type": "sticker",
+                "sticker": {
+                  "id": "900000000000003",
+                  "mime_type": "image/webp"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

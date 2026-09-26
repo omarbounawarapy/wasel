@@ -1,0 +1,39 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "200000000000001",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550000001",
+              "phone_number_id": "100000000000001"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Ines Test"
+                },
+                "wa_id": "21600000001"
+              }
+            ],
+            "messages": [
+              {
+                "from": "21600000001",
+                "id": "wamid.TEST1",
+                "timestamp": "1790503170",
+                "type": "text",
+                "text": {
+                  "body": "nheb sac cuir, Sfax"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

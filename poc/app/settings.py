@@ -30,6 +30,9 @@ class Settings(BaseSettings):
     demo_mode: bool = True
     worker_enabled: bool = True
     debug_raw: bool = False
+    # WhatsApp non-secret (01 §7)
+    wa_phone_number_id: str = ""
+    wa_api_version: str = ""
     # LLM
     llm_mode: Literal["live", "replay", "fail_primary", "fail_groq", "fail_all"] = "live"
     llm_deadline_s: float = 20.0

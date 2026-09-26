@@ -1,0 +1,48 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "200000000000001",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550000001",
+              "phone_number_id": "100000000000001"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Test Client"
+                },
+                "wa_id": "21600000003"
+              }
+            ],
+            "messages": [
+              {
+                "from": "21600000003",
+                "id": "wamid.OOO2",
+                "timestamp": "1790503190",
+                "type": "text",
+                "text": {
+                  "body": "fi Sousse, 9rib el mahatta"
+                }
+              },
+              {
+                "from": "21600000003",
+                "id": "wamid.OOO1",
+                "timestamp": "1790503160",
+                "type": "text",
+                "text": {
+                  "body": "nheb mixeur"
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

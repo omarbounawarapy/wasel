@@ -1,0 +1,28 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "200000000000001",
+      "changes": [
+        {
+          "field": "messages",
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "15550000001",
+              "phone_number_id": "100000000000001"
+            },
+            "statuses": [
+              {
+                "id": "wamid.NOPE",
+                "status": "delivered",
+                "timestamp": "1790503205",
+                "recipient_id": "21600000001"
+              }
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

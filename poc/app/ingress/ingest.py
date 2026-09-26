@@ -22,14 +22,15 @@ class Stored:
 def store_inbound(conn, ids: IdGen, now: datetime, *, conversation_id: str, origin: str, text: str | None,
                   kind: str = "text", lat: float | None = None, lng: float | None = None,
                   transcript: str | None = None, provider_ts: datetime | None = None,
-                  channel_message_id: str | None = None, debounce_s: float = 4, no_debounce: bool = False,
-                  structured: dict | None = None) -> Stored:
+                  channel_message_id: str | None = None, reply_to_message_id: str | None = None,
+                  debounce_s: float = 4, no_debounce: bool = False, structured: dict | None = None) -> Stored:
     """Caller holds the transaction. Links the message to the conversation's open order (or opens one) and arms a
     debounced rescore. Duplicate wamids and outbound messages never arm a rescore."""
     conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", conversation_id)
     mid = repo.insert_message(conn, ids, now, conversation_id=conversation_id, direction="inbound", author="customer",
                               origin=origin, kind=kind, text=text, transcript=transcript, lat=lat, lng=lng,
-                              provider_ts=provider_ts, channel_message_id=channel_message_id)
+                              provider_ts=provider_ts, channel_message_id=channel_message_id,
+                              reply_to_message_id=reply_to_message_id)
     order = repo.open_order(conn, conversation_id)
     if mid is None:                                                    # duplicate (W-6)
         return Stored(order["order_id"] if order else "", None, conversation_id, False)

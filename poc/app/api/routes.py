@@ -1,5 +1,5 @@
 """/api routes (01 §4.1). DEVIATION: one module instead of routes_{orders,conversations,drafts,events,health,
-admin}.py; split by owner when promoted. The WhatsApp webhook (S-1) is not built, so it is never mounted."""
+admin}.py; split by owner when promoted. The WhatsApp webhook (S-1) lives in routes_webhook.py."""
 from __future__ import annotations
 
 import hmac
