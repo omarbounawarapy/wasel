@@ -139,18 +139,18 @@ Evaluation order per request (first failing rule wins; nothing is silent): size 
 | Sat by 14:00 | Hello-world container on the host, no `APP_MODE` set, no WA secrets | `/api/health.mode=public`, `wa_token_present=false` | Montassar |
 | Sat by 20:00 | Public-mode middleware, sandbox filter, purge and caps merged; tests P1–P6 green | `make check` | Montassar (middleware, purge), Jesser (filter, `try`), Omar (cap) |
 | Sat 18:00–18:30 (only if G5 WhatsApp is green) | **Rehearsal flip:** `APP_MODE=event` + WA secrets → Meta callback → hosted `/webhook/whatsapp` → one message from a registered phone → flip back to `public`, delete the WA secrets | Order row appears; W1–W6 green before pointing Meta at the host | Jesser + Montassar |
-| Sat 21:00 | Safety take recorded against the **hosted public** URL (Try this order + paste) | Badges visible; captions per §1 | Fedi, Montassar |
+| Sat 21:00 | Safety take recorded against the **hosted public** URL (Try this order + paste) | Badges visible; captions per §1 | Montassar (direction: `FEDI.md` §3.15) |
 | Sat 22:00 | Deploy `main` in public mode; incognito check #1; secret scan #1 (repo still private) | §3.3 audit items 1–6 pass; §6.2 scan prints nothing | Montassar, Omar |
 | **Sun 08:00** | Set `APP_MODE=event`, `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN`, `GROQ_API_KEY=KEY_EVENT`, `LIVE_LLM_DAILY_CAP=300` → restart (reseeds) [VERIFY restart-on-env-change] | `/api/health.mode=event, wa_send=true, webhook=enabled` | Montassar |
 | Sun 08:30 | Meta console: re-verify the callback; token valid; one test message | Order row appears. If not fixed by 09:00: `WEBHOOK_ENABLED=false`, paste + simulate-reply path, caption per §1 row 11 | Jesser; Omar runs `GET /models` + warm-up |
 | Sun 09:00–15:30 | Build. Hosted URL stays unlisted (no slides, no shared screens) | — | all |
 | 15:30 | Feature freeze; tag `rc` | CI green | Omar |
 | 15:45 | `POST /api/admin/reset`; clear the extraction cache or vary the scripted text; phone on DND | Badges read `LLM · gpt-oss-120b` on the live beats | Jesser |
-| 16:00–16:30 | Two takes against the hosted instance | §6.4 checklist | Fedi records, Omar reviews |
+| 16:00–16:30 | Two takes against the hosted instance | §6.4 checklist | `FEDI.md` §4.6 records, Omar reviews |
 | **16:45** | Set `APP_MODE=public`, `GROQ_API_KEY=KEY_PUBLIC`, `LIVE_LLM_DAILY_CAP=80`; **delete** `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN` from the host → restart (reseed wipes real rows). Meta console: remove the callback / unsubscribe the webhook fields [VERIFY steps]. Pin the host to tag `submission-v1` or turn off auto-deploy (N-5) | `/api/health.mode=public` | Montassar |
 | 16:45 (parallel) | Secret scan #2 (§6.2) → fix the playbook wording → flip the repo to public | Scan prints nothing | Omar |
-| 16:50 | Incognito audit (§3.3). Then capture the snapshot, if Advocate's snapshot mode shipped (N-7) | All items pass | Montassar + Fedi |
-| 17:00 | Submit | Every link opens in incognito | Fedi |
+| 16:50 | Incognito audit (§3.3). Then capture the snapshot, if Advocate's snapshot mode shipped (N-7) | All items pass | Montassar (ticking per `FEDI.md` §4.8) |
+| 17:00 | Submit | Every link opens in incognito | `FEDI.md` §4.9 |
 | Daily during judging | Open the URL; run "Try this order" | Health green | Montassar |
 | After judging closes [VERIFY date] | Revoke `WA_TOKEN` / remove the test number; delete `KEY_PUBLIC`; rotate `ADMIN_TOKEN`; optional host teardown | — | Montassar, Jesser |
 
@@ -173,7 +173,7 @@ Env changes are durable but restart the container [VERIFY per host], and a resta
 
 Deployment rollback: the host redeploys tag `submission-v1`.
 
-### 3.3 16:50 incognito audit (Montassar reads it out, Fedi ticks)
+### 3.3 16:50 incognito audit (Montassar reads it out; ticking per `FEDI.md` §4.8)
 
 1. `/api/health` shows `mode=public`, `wa_send=false`, `webhook=disabled`, `wa_token_present=false`, `real_rows=0`.
 2. `POST /webhook/whatsapp` → 404.
@@ -202,7 +202,7 @@ Deployment rollback: the host redeploys tag `submission-v1`.
   *Property test:* for random strings (emoji, Arabic, fullwidth brackets, `[SELLER]`, `</customer_messages>`, zero-width and bidi characters), `len(defuse(s)) == len(s)` and no `< > [ ] { }`, fullwidth variant, newline, U+2028/U+2029 or Cf character remains.
 - **I-2 Window format.** One line per message: `[CUSTOMER] …`, `[CUSTOMER:voice] …`, `[SELLER] …`, inside `<customer_messages>…</customer_messages>`. After I-1, customer text can't open a new line, close the block, or produce a role tag.
 - **I-3 `[SELLER]` = canonical text only.** Outbound rows carry `template_id` and `canonical_text` (the static template rendered with slot values in the extracted language). `author='ai'` → `canonical_text`; if it's NULL the row is skipped. `rendered_text` / rewrite output never enters extraction. `author='seller'` → dashboard-typed text, defused. *Test:* a rewrite containing "IGNORE ALL" never appears in the prompt captured by `ReplayClient`.
-- **I-4 Injection lexicon** (deterministic, before the LLM; lives in `scoring.yaml: lexicons.injection`; Fedi supplies the Arabic-script and Arabizi lines). **This is the only lexicon definition; 02 §2 points here.** Scope: every `[CUSTOMER]` and `[CUSTOMER:voice]` line, never `[SELLER]`. Views: the phrase patterns below (override, schema forgery, score directives) match `normalize(text_orig)` with all Cf characters **removed** (so `ig\u200bnore` can't split a word); the role-forgery patterns match the defused `text_llm`. **Phrase-level only** (N-6):
+- **I-4 Injection lexicon** (deterministic, before the LLM; lives in `scoring.yaml: lexicons.injection`; Arabic-script and Arabizi lines from `FEDI.md` F7). **This is the only lexicon definition; 02 §2 points here.** Scope: every `[CUSTOMER]` and `[CUSTOMER:voice]` line, never `[SELLER]`. Views: the phrase patterns below (override, schema forgery, score directives) match `normalize(text_orig)` with all Cf characters **removed** (so `ig\u200bnore` can't split a word); the role-forgery patterns match the defused `text_llm`. **Phrase-level only** (N-6):
   - instruction override: `ignore (all|the|previous|les|toutes les|tes) (instructions?|consignes|règles|rules)`, `(oublie|forget) (tes|your) (instructions|consignes)`, `تجاهل (التعليمات|الأوامر)`, `you are now`, `tu es maintenant`, `system prompt`;
   - role forgery: `(^|\s)(system|assistant|seller|vendeur|developer)\s*:`, and any `⟦(SELLER|CUSTOMER)` left after defuse;
   - schema forgery: `address_level|confirmation\s*[:=]|injection_suspected|red_flags|risk_score`, `"exact"`, `⦃\s*"`;
@@ -214,7 +214,7 @@ Deployment rollback: the host redeploys tag `submission-v1`.
 - **I-7 Judge input (only if S-3 ships).** The input is exactly `{product, price_tnd, first_name, template_id, canonical_text, draft_text, language, tone}`, with no customer text and no conversation. Code approves only if every boolean check is true. Judge error, timeout or invalid JSON → reject → static template (fail closed). If the judge and rewriter share a model family, the draft card shows `same_family=true`. *Test:* no ≥ 8-char substring of any customer message appears in the captured judge prompt.
 - **I-8 Rewrite (only if S-3 ships).** Before the prefilter: Arabic-Indic digits `[٠-٩۰-۹]` → ASCII; strip whitespace between digits; URL regex `\b[\w-]+\.(me|ly|co|com|tn|link|io)\b/?`; forbid `@\w{3,}`; profanity lexicon (ships with S-3). `tone=negative` → no rewrite. Public mode: no live rewrite for visitor orders (§2.5).
 - **I-9 Rendering.** Server-built `segments` (Advocate); the server drops bidi controls (U+202A–U+202E, U+2066–U+2069) from segment text, so customer text can't visually reorder the dashboard (ZWJ/ZWNJ are kept for emoji and script shaping). React text nodes only. ESLint `react/no-danger: error`. Quotes inside `reason` wrapped in FSI/PDI. The Streamlit fallback escapes each segment with `html.escape` and never passes customer-derived text to `st.markdown` unescaped. CSP per §2.6.
-- **I-10 Fixtures.** `tests/fixtures/injection.yaml` (Fedi) has 8 cases: 4 classes (override, `</customer_messages>` breakout, `[SELLER]` forgery, JSON/schema forgery) × 2 scripts (Latin/Arabizi, Arabic script), run in CI under replay. The live eval runs the 4 base variants once, and the results go to `reports/`.
+- **I-10 Fixtures.** `tests/fixtures/injection.yaml` (`FEDI.md` F7) has 8 cases: 4 classes (override, `</customer_messages>` breakout, `[SELLER]` forgery, JSON/schema forgery) × 2 scripts (Latin/Arabizi, Arabic script), run in CI under replay. The live eval runs the 4 base variants once, and the results go to `reports/`.
 
 ## 6. Repo hygiene and pre-submission security checklist
 
@@ -300,7 +300,7 @@ Also: commit `.env.example` with names only. No secret in any `VITE_*` / `NEXT_P
 - [ ] `KEY_EVENT`: revoke after 17:00. `KEY_PUBLIC`: keep until judging closes (it's capped), then delete. `WA_TOKEN`: deleted from the host at 16:45; revoke it and remove the test number after judging. `ADMIN_TOKEN`: rotate if it was ever typed on a recorded screen.
 - [ ] Keys are shared one-to-one in a direct message and deleted afterwards. Never in a group chat.
 
-### 6.4 Video / slides / README screenshots (Fedi records, Omar reviews before upload)
+### 6.4 Video / slides / README screenshots (recorded per `FEDI.md` §5.5, Omar reviews before upload)
 
 - [ ] Phone: DND on, notifications hidden, status bar cropped. WhatsApp profile name "Client Test". The header number is cropped or blurred.
 - [ ] Nothing on screen from the Meta console, host dashboard, tunnel dashboard, a terminal showing env, or `/api/health?deep=1`.

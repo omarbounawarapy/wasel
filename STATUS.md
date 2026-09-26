@@ -7,7 +7,7 @@
 - **The core product works end to end, offline and with live LLMs.** A risky order scores **HIGH 87**. After the customer replies with a proper address and time, the same order drops to **LOW 11–16**, with the reason diff shown.
 - **Tests are green:** 232 offline tests pass (1 known open finding, see O-1), plus a smoke test on a booted app.
 - **Live LLMs checked this morning:** Groq and Gemini both work through our real pipeline, and the injection guardrails held on live calls.
-- **Not done yet:** hosting, the React UI (a Streamlit fallback UI exists), the WhatsApp webhook, and Fedi's native-language content.
+- **Not done yet:** hosting, the React UI (a Streamlit fallback UI exists), the WhatsApp webhook, and the native-language content (`FEDI.md`).
 - **We're ahead of the Saturday gates on code.** The critical path is now **hosting (G1 12:00), content (G3 14:00) and the frontend decision (G4 16:00)**.
 
 ---
@@ -26,7 +26,7 @@
 | Hero scenario (golden test) | ✅ v1 HIGH 87 → v2 LOW 16 | `poc/tests/golden/hero.json` |
 | Backend: SQLite schema, worker + debounce, state machine, `/api`, versioned assessments | ✅ | `poc/app/db/`, `poc/app/worker.py`, `poc/app/api/` |
 | Public mode: visitor sandbox, read-only seeded orders, "Try this order", LLM caps → rules | ✅ | `poc/app/mode.py`, `poc/app/api/commands.py` |
-| Outbound: static templates + prefilter + human-click send | ✅ (template copy is a draft for Fedi) | `poc/app/outbound/`, `poc/data/templates/` |
+| Outbound: static templates + prefilter + human-click send | ✅ (template copy is a draft; final copy per `FEDI.md` F4) | `poc/app/outbound/`, `poc/data/templates/` |
 | Tooling: Makefile, hygiene script, CI workflow, Dockerfile, smoke test, mocks | ✅ (CI inactive until moved to the root; Docker build not run yet) | `poc/Makefile`, `poc/scripts/` |
 | UI | 🟡 Streamlit fallback only; the React SPA isn't started | `poc/dashboard/app.py` |
 | WhatsApp webhook + send (S-1/S-2) | ⏳ not built | — |
@@ -58,7 +58,7 @@ Also confirmed live:
   - **`gemini-3.5-flash-lite` answered 3/3 at about 1.4 s** with the default schema format and correct output.
 - When Gemini failed, the chain fell back to the rules extractor with sensible scores, so failures degrade instead of breaking.
 
-Not yet tested live: the "clean twin" comparison for the injection cases (covered offline by E4), the eval on real hand-written windows (needs Fedi's 24 windows), and anything WhatsApp.
+Not yet tested live: the "clean twin" comparison for the injection cases (covered offline by E4), the eval on real hand-written windows (needs the 24 windows, `FEDI.md` F3), and anything WhatsApp.
 
 ## 3. Where we stand against today's gates
 
@@ -69,9 +69,9 @@ Not yet tested live: the "clean twin" comparison for the injection cases (covere
 | G1 12:00 | Team confirmation sent · keys work · host hello-world live · Meta set up | 🟡 keys ✅ · team confirmation ❓ · **host ⏳** · Meta ⏳ |
 | G2 12:00 | Contracts + mocks frozen | ✅ mocks generated and validated (`poc/mocks/`) |
 | T0 14:00 | CI badge + first tests green | 🟡 tests green; CI activates when the workflow moves to the root |
-| G3 14:00 | Phrase banks, ≥ 12 of 24 eval windows, templates | ⏳ **Fedi** (current banks/templates are a non-native draft) |
+| G3 14:00 | Phrase banks, ≥ 12 of 24 eval windows, templates | ⏳ input from `FEDI.md` F2–F4 (current banks/templates are a non-native draft) |
 | G4 16:00 | Frontend on the hosted URL | ⏳ React not started; Streamlit fallback ready |
-| G3b 16:30 | Prompt frozen (tuned on real windows, prefix measured) | ⏳ needs Fedi's windows |
+| G3b 16:30 | Prompt frozen (tuned on real windows, prefix measured) | ⏳ needs the eval windows (`FEDI.md` F3) |
 | G5 17:30 | WhatsApp message reaches the hosted webhook | ⏳ webhook not built; Meta setup incomplete |
 | G6 18:00 | Hero loop green **on the hosted URL** | 🟡 green locally; needs the host |
 | G-Gem 20:00 | Gemini fallback green | ✅ works live with `gemini-3.5-flash-lite`; needs config + a recorded fixture |
@@ -84,22 +84,22 @@ Not yet tested live: the "clean twin" comparison for the injection cases (covere
 | O-2 | **13 spec conflicts** where the code picked a side (`poc/handoff.md` §4): confirm or flip each | Omar | G0 |
 | O-3 | **Hosting:** pick the host and deploy the container in public mode, then run the smoke test on the URL. Options and trade-offs in `poc/handoff.md` §8 | Montassar | G1 12:00 |
 | O-4 | **Frontend:** React (start at 09:00, fallback gates 13:00 / 16:00) or go straight to the Streamlit fallback | Montassar | FE0 09:00 |
-| O-5 | **Native content:** phrase banks, catalog aliases, outbound templates, the 9 seed conversations, hero wording, 24 eval windows, 8 injection cases. Everything in `poc/data/` is a non-native draft | Fedi | G3 14:00 |
+| O-5 | **Native content:** phrase banks, catalog aliases, outbound templates, the 9 seed conversations, hero wording, 24 eval windows, 8 injection cases. Everything in `poc/data/` is a non-native draft | `FEDI.md` | G3 14:00 |
 | O-6 | **Record real LLM outputs:** the seed cache and hero fixtures are hand-written. After the prompt freeze, run `warm_cache --live` + `make mocks` and re-check the hero numbers | Omar | after G3b |
 | O-7 | **Gemini config on the host:** `GEMINI_ENABLED=true`, `GEMINI_MODEL=gemini-3.5-flash-lite` (pin it, don't use `-latest`), and commit `config/probe.json` | Omar | G-Gem 20:00 |
 | O-8 | **Env variable names:** the app reads `GROQ_API_KEY` / `GEMINI_API_KEY`; set exactly these on the host | Montassar | G1 |
 | O-9 | **WhatsApp setup.** The test curl can't work yet: no access token, no recipient number, the template `jaspers_market_plain_text_v1` is Meta's sample and only sends if it exists on our account, and the line breaks are PowerShell-only. Steps: `poc/handoff.md` §7.2. Store tokens as environment secrets, never in chat or git | Montassar (Meta) · Jesser (webhook code) | G5 17:30 |
 | O-10 | **Move `poc/` to the root** lane by lane; activate CI (workflow to the root) and add the badge | each owner · Montassar (CI) | T0 14:00 |
-| O-11 | Seed has 9 conversations + hero; the spec says 12 + hero | Jesser / Fedi | G7 22:00 |
-| O-12 | Final Team Confirmation form sent? Pre-recorded video allowed? (spec V1, V2) | Omar / Fedi | G1 12:00 |
+| O-11 | Seed has 9 conversations + hero; the spec says 12 + hero | Jesser (texts: `FEDI.md` F6) | G7 22:00 |
+| O-12 | Final Team Confirmation form sent? Pre-recorded video allowed? (spec V1, V2) | Omar (video rule: `FEDI.md` §3.2) | G1 12:00 |
 | O-13 | Docker image never built here (no daemon). First real build happens on the host | Montassar | G1 |
 
 ## 5. Next actions by person
 
-- **Omar:** decide O-1 and O-2 at kickoff · run the 09:15 doc cleanup ([07 §8](docs/council-spec/07-scope-schedule-delivery.md)) · tune and freeze the prompt once Fedi's windows land · run the live eval · record fixtures (O-6) · Gemini config (O-7).
+- **Omar:** decide O-1 and O-2 at kickoff · run the 09:15 doc cleanup ([07 §8](docs/council-spec/07-scope-schedule-delivery.md)) · tune and freeze the prompt once the eval windows land (`FEDI.md` F3) · run the live eval · record fixtures (O-6) · Gemini config (O-7).
 - **Jesser:** take over the backend from `poc/` (db, worker, api) · build the WhatsApp webhook (S-1) once the Meta values exist · seed to 12 + hero (O-11).
 - **Montassar:** choose and deploy the host (O-3) · FE0 decision (O-4) · move CI to the root and add the badge · finish Meta setup (O-9).
-- **Fedi:** native check and replacement of all Darija/Arabizi/French content (O-5) · 24 eval windows + 8 injection cases · README skeleton · video script.
+- **Fedi:** everything is in [`FEDI.md`](FEDI.md).
 
 ## 6. How to run
 

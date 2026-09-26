@@ -28,7 +28,7 @@ LLM column: **No** = pure or mocked · **Rec** = `ReplayClient` over recorded fi
 |---|---|---|---|---|---|---|---|
 | **U1 ★** | `test_extraction_schema_matches_pydantic` | extraction/schemas | `schemas/order_extraction_v1.json` and `OrderExtraction` list the same **12 fields in the same order**: `is_order, is_order_change, product_quote, quantity, address_quotes, address_level, red_flags, tone_evidence, tone, confirmation, language, clarity`. `has_landmark` and `has_building_or_apt` are absent. Every property is in `required`, every object has `additionalProperties:false`, and the enum sets are equal. The same checks run for the rewrite and judge schemas once those files exist. | No | Omar | T0 | #2, #25 · AI |
 | **U16 ★** | `test_tier_action_confidence` (param) | scoring/rules | Scores 34/35/64/65 give the right tier on each side of the boundary. Price 249/250 flips prepay. Margin < 10 gives confidence low. An invalid extraction gives `review`. `clarity=unclear` gives confidence low (drop this case if `clarity` is cut). | No | Omar | T0 | #12 · AI |
-| U23 | `test_eval_windows_valid` | data | Every row of `data/eval/windows.jsonl` validates against the 12-field enums. Each language has at least 5 rows. IDs are unique. Every ID in `second_label.jsonl` is also in `windows.jsonl`. | No | Omar (data: Fedi) | T0 | #4 · AI |
+| U23 | `test_eval_windows_valid` | data | Every row of `data/eval/windows.jsonl` validates against the 12-field enums. Each language has at least 5 rows. IDs are unique. Every ID in `second_label.jsonl` is also in `windows.jsonl`. | No | Omar (data: `FEDI.md` F3) | T0 | #4 · AI |
 | **C2 ★** | `test_stub_scorer_satisfies_contract` | scoring/stub ↔ db/repo | The stub's `ScoreResult` for `initial` and `customer_reply` inserts into a fresh `schema.sql` DB with no CHECK, NOT NULL or FK error, and `version` goes 1 → 2. | No | Jesser | T0 | #25 · FX |
 | **U3 ★** | `test_repair_clamps_and_truncates` | extraction/schemas (`repair`) | qty 60 → 50 and 0 → 1. 7 flags → 6. 5 quotes → 4. 200-char evidence → 160. An unknown flag code is dropped. **No `ValidationError` is raised.** Each repair is listed in `repairs[]`. | Hand | Omar | T1 | #3 · AI |
 | **U5 ★** | `test_evidence_drops_unverifiable` | extraction/evidence | An invented flag is dropped and counted in `dropped_flags`. A quote found only in the `[SELLER]` line is dropped (#13). If every address quote is dropped, `address_level` becomes `none`. A bad `product_quote` becomes null. Two or more drops give confidence low. Surviving flags carry `msg_idx`. | Hand | Omar | T1 | #3, #13 · RAI |
@@ -48,7 +48,7 @@ LLM column: **No** = pure or mocked · **Rec** = `ReplayClient` over recorded fi
 | U30 | `test_eval_mode_is_single_shot` | extraction/clients | `build_chain(eval_mode=True)` has exactly 1 client, the cache is bypassed, and a failure is recorded as a failure rather than replaced by rules. | No | Omar | T1+ (before eval run) | N4 · AI |
 | U29 | `test_llm_budget` | extraction/clients (`CappedClient`) | At the cap it raises `CapReached` and never reaches the inner client. Replay and cache hits spend nothing. The per-visitor window resets after `FrozenClock.advance`. | No | Omar | T1+ | N3, #5 |
 | J14 | `test_prefilter` (param: `prefilter.yaml`, 6 bad drafts + passes) | outbound/prefilter | Rejected: missing slot, extra number, URL, phone, `carte`/`rib`, a discount not in the order, > 400 chars. "code postal" passes. | No | Omar | T1+ (G4) | #2, #8 · RAI |
-| J15 | `test_static_templates_pass_prefilter` | outbound/templates | Every template × language × sample slot set passes the prefilter. | No | Jesser (copy: Fedi) | T1+ (when copy lands) | #2 |
+| J15 | `test_static_templates_pass_prefilter` | outbound/templates | Every template × language × sample slot set passes the prefilter. | No | Jesser (copy: `FEDI.md` F4) | T1+ (when copy lands) | #2 |
 | J19 | `test_static_insert_and_seller_context` | worker, outbound | Tier ≥ medium writes exactly one outbound message with `template_id` and `canonical_text` (hero: `T_ADDRESS`). Tier low writes none. The next window's `[SELLER]` line equals `canonical_text`. An `author='ai'` row with NULL `canonical_text` is skipped. Outbound text is never extracted as customer text. | No | Jesser | T1+ | #8, #13, N5 |
 | C4 | `test_runtime_replay_is_recorded_only` | clients, seed | The runtime `ReplayClient` (`data/llm_replay/` only) refuses `meta.source == "hand_crafted"`. After `make seed`, every `extraction_runs.model` is a real model id. Every `data/llm_replay` fixture has `meta.prompt_version == PROMPT_VERSION`; on a mismatch the message says "run `make record`". | No | Jesser | T1+ | RAI (honesty), #19 |
 | P1 | `test_public_mode_forces_sends_off` (param: `APP_MODE` unset / `public` / `staging`) | settings, main | The effective mode is public. Even with `WA_SEND_ENABLED=true` and `WA_TOKEN` set, the sender is `NullSender`. `POST /api/drafts/{id}/send` returns "sent (simulated)" with an injected `FakeSender.calls == 0`. The webhook is not mounted. The no-reply timer is off. | No | Montassar | T1+ (**deploy gate** before 22:00 first public deploy) | N1 · RAI |
@@ -62,7 +62,7 @@ LLM column: **No** = pure or mocked · **Rec** = `ReplayClient` over recorded fi
 | M4 | CI `web` job | web/ | `eslint` with `react/no-danger: error`, `tsc --noEmit`, `vite build`. | No | Montassar | T1+ (from stack decision) | #17 |
 | E3 | `test_fallback_drill` (param: `fail_primary`, `fail_all`; `fail_groq` under F(S-6)) | full pipeline | Hero v1 is still scored (fallback model, then rules). Every API call returns 200. `llm.fallback` events are written. Under rules, v2 < v1. Writes `reports/fallback_drill.json` when `WRITE_REPORTS=1`. | Fail + Rec | Jesser + Montassar | T2 #1 | #5, #9 · FX |
 | R1 | `test_reports_have_provenance` | reports/ | Every `reports/*.json` validates against `reports/schema.json`: `report, created_at, git_sha, model, prompt_version, prompt_sha256, n, labelers, eval_mode{fallback,cache,cascade}, scope, metrics`. | No | Montassar | T2 #2 | N4 · AI, RAI |
-| R2 | `test_readme_numbers_match_reports` | README ↔ reports | Each `<!--r:FILE#dotted.path-->VALUE<!--/r-->` marker in README equals `str()` of that value in the report. Unfilled `{{…}}` placeholders fail only when `SUBMISSION=1`. | No | Montassar (fill: Fedi) | T2 #3 | TR, RAI |
+| R2 | `test_readme_numbers_match_reports` | README ↔ reports | Each `<!--r:FILE#dotted.path-->VALUE<!--/r-->` marker in README equals `str()` of that value in the report. Unfilled `{{…}}` placeholders fail only when `SUBMISSION=1`. | No | Montassar (fill: `FEDI.md` F12) | T2 #3 | TR, RAI |
 | M2 | `test_segments_escape_and_align` | api/segments | `"".join(s.text) == original text` for every message. Risk and address segments cover exactly the verified spans. `<script>`, `<img onerror>` and `</mark>` stay literal text. Arabic spans land on the correct characters. The Streamlit fallback escapes each segment. | No | Montassar | T2 #4 | #17 · XP |
 | U13 | `test_llm_request_has_no_pii` | extraction/prompt | The built request for a window containing a phone number and a customer ID contains neither. | No | Omar | T2 #5 | #16 · RAI |
 | U8 | `test_cross_field_rules` (param) | extraction/evidence | `exact` without the `NUM` helper or a building token becomes `street_and_landmark`. A pin gives `exact`. `is_order=false` gives no score. Confirmation with no outbound becomes `none`. | No | Jesser | T2 #6 | #3 · AI |
@@ -71,7 +71,7 @@ LLM column: **No** = pure or mocked · **Rec** = `ReplayClient` over recorded fi
 | U22 | `test_model_artifact_matches_manifest` | scoring/model | `sha256(classifier.json)` matches the manifest. The feature order equals `FEATURE_ORDER` (6 features). The monotone vector is `(-1,1,1,1,1,1)`. The installed xgboost major.minor matches the manifest. | No | Jesser | T2 #9 | #24 · AI |
 | U20 | `test_classifier_monotone` | scoring/model | Over a grid of the other features, the score is non-increasing in `address_specificity` and non-decreasing in the other five. | No | Jesser | T2 #10 | AI · hero |
 | U19 | `test_scoring_config` | scoring/rules | `scoring.yaml` validates and its sha256 is stable. Changing one threshold changes the hash. A bad file fails at load. | No | Jesser | T2 #11 | #24 |
-| U4 | `test_normalize_cases` (param: `normalize.yaml`) | extraction/normalize | NFKC, casefold, diacritics, tatweel, أ/إ/آ → ا, ى → ي, ة → ه, whitespace collapse. | No | Jesser (data: Fedi) | T2 #12 | #4 |
+| U4 | `test_normalize_cases` (param: `normalize.yaml`) | extraction/normalize | NFKC, casefold, diacritics, tatweel, أ/إ/آ → ا, ى → ي, ة → ه, whitespace collapse. | No | Jesser (data: `FEDI.md` F9) | T2 #12 | #4 |
 | U25 | `test_num_helper_shared` | text/numbers | One case table drives both the `exact` guard and the generator lint. `km 8.5`, `1008`, `3and` (Arabizi letter, not a number) and `rue 7` behave as specified. | No | Omar | T2 #13 | #4 · AI |
 | J9 | `test_state_transitions` (table) | state | Every allowed edge passes. `cancelled→ready_to_ship` raises. A reply while in `needs_review` triggers a rescore and keeps the seller override. | No | Jesser | T2 #14 | FX |
 | J8 | `test_extraction_window` | worker | Customer lines only, capped at the last 12 lines / 2,000 chars. The latest template `canonical_text` appears as `[SELLER]`. Lines are in `provider_ts` order. | No | Jesser | T2 #15 | #13 |
@@ -97,7 +97,7 @@ LLM column: **No** = pure or mocked · **Rec** = `ReplayClient` over recorded fi
 | J16 | `test_judge_gate` (param) | outbound/judge | `approve` with overreach ≠ none → reject. Non-empty `unsupported_claims` → reject. A judge error → fail closed. Two rejects → `static_template`. | Hand | Omar | F(S-3 rewrite) | #2 · RAI |
 | J17 | `test_loop_guard_and_window` | outbound/route | `auto_messages_sent ≤ 2`. Never a reply to our own outbound. `now − last_inbound > 24h` → `needs_review`. | No | Jesser | F(S-3) | #8, #20 |
 | J18 | `test_demo_mode_requires_click` | outbound/route | In `DEMO_MODE`, `auto_send` sends nothing until `POST /api/drafts/{id}/send`. | No | Jesser | F(S-3) | RAI |
-| L1 | `make eval` | live | 24 windows, frozen `extract-v1`, no fallback/cache/cascade, plus second-labeler agreement on 6 → `reports/eval_extraction.json` | Live | Omar (labels: Fedi + 2nd labeler) | L (G3b 16:30 → committed 19:00) | #4, N4 · AI |
+| L1 | `make eval` | live | 24 windows, frozen `extract-v1`, no fallback/cache/cascade, plus second-labeler agreement on 6 → `reports/eval_extraction.json` | Live | Omar (labels: `FEDI.md` F3 + 2nd labeler) | L (G3b 16:30 → committed 19:00) | #4, N4 · AI |
 | L3 | §16 key checks | live | `reports/verification.md` (date and result per checkbox) | Live | Omar / Jesser | L (G1 12:00) | #5 |
 | L4 | WhatsApp phone → queue × 5 | live | `reports/whatsapp_e2e.md` (timestamp, wamid suffix, pass/fail) | Live | Jesser | L, F(S-1) | #6, #7 |
 | L5 | `make record` | live | Refreshes `data/llm_replay/` and `tests/fixtures/llm/recorded/`; about 15 calls on the **dev** org | Live | Omar | L (after G3b; again after any prompt bump) | TR |
@@ -332,7 +332,7 @@ Every LLM fixture uses one envelope: `{"meta":{"source":"recorded"|"hand_crafted
 
 | Path | Source | Content | Used by |
 |---|---|---|---|
-| `data/demo_seed.json` | Fedi (text), Jesser (shape) | seeded conversations; entry `"hero"` has v1 text, the `T_ADDRESS` slot values and the v2 reply text | seed, P4, E1, E5, M3 |
+| `data/demo_seed.json` | `FEDI.md` F6 (text), Jesser (shape) | seeded conversations; entry `"hero"` has v1 text, the `T_ADDRESS` slot values and the v2 reply text | seed, P4, E1, E5, M3 |
 | `data/llm_replay/groq/extract_hero_v1.json` | recorded | hero v1 (Arabizi, landmark, 3 flags incl. `price_hesitation`) | E1, J12, C1, E3, P4, seed |
 | `data/llm_replay/groq/extract_hero_v2_clean.json` | recorded | hero v2 reply (street + building + time), no stale flags | E1, E5, P4, seed |
 | `data/llm_replay/groq/extract_seed_{fr_exact,ar_exact,mixed_medium}.json` | recorded | the other seeded orders | seed, C1, J12 |
@@ -355,11 +355,11 @@ Every LLM fixture uses one envelope: `{"meta":{"source":"recorded"|"hand_crafted
 | `tests/fixtures/whatsapp/{location,audio,image,reply_with_context}.json` | same | type mapping | J6 |
 | `tests/fixtures/whatsapp/hero_v1_inbound.json`, `hero_v2_reply.json` | same | hero as webhook payloads | E2 |
 | `tests/fixtures/whatsapp/verify_get.txt` | hand | GET handshake query string | J1 |
-| `tests/fixtures/cases/injection.yaml` | Fedi | 4 base injections × 2 languages (FR, Arabizi, Arabic-script, mixed) + clean twin ids | E4, L1 |
-| `tests/fixtures/cases/prefilter.yaml` | Fedi | 6 should-reject + should-pass drafts (incl. "code postal") | J14 |
-| `tests/fixtures/cases/cascade.yaml` | Fedi | ack/decline/content-bearing per language | U9 (F) |
-| `tests/fixtures/cases/normalize.yaml`, `numbers.yaml` | Fedi | Arabic variant pairs; `NUM` helper cases | U4, U7, U25 |
-| `data/eval/windows.jsonl` (24), `data/eval/second_label.jsonl` (6) | Fedi, second labeler | eval set | U23, U28, L1 |
+| `tests/fixtures/cases/injection.yaml` | `FEDI.md` F7 | 4 base injections × 2 languages (FR, Arabizi, Arabic-script, mixed) + clean twin ids | E4, L1 |
+| `tests/fixtures/cases/prefilter.yaml` | `FEDI.md` F8 | 6 should-reject + should-pass drafts (incl. "code postal") | J14 |
+| `tests/fixtures/cases/cascade.yaml` | Omar (Should) | ack/decline/content-bearing per language | U9 (F) |
+| `tests/fixtures/cases/normalize.yaml`, `numbers.yaml` | `FEDI.md` F9 | Arabic variant pairs; `NUM` helper cases | U4, U7, U25 |
+| `data/eval/windows.jsonl` (24), `data/eval/second_label.jsonl` (6) | `FEDI.md` F3, second labeler | eval set | U23, U28, L1 |
 | `data/catalog.csv`, `mocks/orders.json`, `mocks/order_detail.json` | Omar / Jesser | catalog; frozen UI contract (18:00) | U15, C3 |
 | `reports/schema.json` | Montassar | provenance schema | R1 |
 
@@ -697,7 +697,7 @@ select = ["E", "F", "I", "B", "UP", "DTZ"]   # DTZ catches naive datetimes
 | **Omar** | The real `score_order` passes C1 on every Must path. U1, U3, U5, U7, U14, U16, U17, E1 and E4 are green. U24, U28, U29, U30, J14 and U12 are merged with their code. `data/llm_replay/` is recorded after G3b. `models/classifier.json` and the manifest are committed. `reports/eval_extraction.json` is committed. If Gemini started, it is either merged with U2/U14/C1[`fallback_provider`] or still on its branch. |
 | **Jesser** | `schema.sql`, repo, worker and every `/api` endpoint pass C2, C3, J10, J11 and J12. J15, J19, C4, P2, P3, P4 and P7 are merged with their code, or the sandbox fell back to shared-DB + reseed with that decision written down. `make seed` and `make demo-reset` work. `.env.example` is complete. WhatsApp: J1–J3 plus `reports/whatsapp_e2e.md` 5/5, **or** the G5 "roadmap" decision is recorded. |
 | **Montassar** | `conftest.py`, `Makefile`, `hygiene.sh` and `ci.yml` are on `main` by 10:30. M1 is green by 20:00. P1 and P5 are merged. The `image` job is green. `make smoke URL=<hosted>` passes in public mode. The web job (M4) is green for the chosen stack, and that stack decision is recorded. The dashboard renders `mocks/*.json`. |
-| **Fedi** | `windows.jsonl` (24) and the banks with `eval_only` tags are in by 14:00, and U23 is green. `injection.yaml` (8), `prefilter.yaml`, `normalize.yaml` and `numbers.yaml` are committed. `templates/outbound.yaml` is in, and J15 is green. The README "Testing & reliability" skeleton (§8) is committed with `<!--r:…-->` markers. |
+| **Fedi** | see `FEDI.md` §0 (deliverables and deadlines) |
 
 **Definition of done: event day, Sun 27 Sept**
 - **08:30:** `make smoke URL=<hosted>` is green in `event` mode, and the `/api/health` model check is done.
@@ -707,7 +707,7 @@ select = ["E", "F", "I", "B", "UP", "DTZ"]   # DTZ catches naive datetimes
 - **End of S3 (15:30):** T2 items #1–#3 (E3, R1, R2) are green, and at least 34 tests pass on CI. `reports/fallback_drill.json` is committed. The README numbers are filled from `reports/`. Tag `v-freeze`.
 - **16:45–16:50:** the public flip, then `make smoke` public-green. `SUBMISSION=1 make reports-check` is green (no `{{placeholders}}` left). The badge is green, and the source link opens in incognito.
 
-## 8. README "Testing & reliability" section (Fedi commits the skeleton Sat; numbers are filled only from `reports/`)
+## 8. README "Testing & reliability" section (skeleton per `FEDI.md` F12, Sat; numbers are filled only from `reports/`)
 
 ```markdown
 ## Testing & reliability

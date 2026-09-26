@@ -212,7 +212,7 @@ Target: a 1920×1080 recording at 125 % zoom, about 1536 CSS px [VERIFY on the r
 
 | Element | Bound to | Rule / copy key |
 |---|---|---|
-| Product name | static | `app.name` (Fedi, G1 12:00) |
+| Product name | static | `app.name` (`FEDI.md` F1, Sat 13:00) |
 | Live dot | poll state | `header.live` (green) · `header.reconnecting` (amber, after 2 failures) · `header.snapshot` (grey) |
 | Mode chip | `health.mode` | `header.mode.public` / `.event` / `.dev`; tooltip `header.mode.tooltip.*` |
 | WhatsApp chip | `health.webhook`, `health.whatsapp.last_webhook_at` | only when `webhook == "enabled"`: `header.whatsapp.last` / `.none` |
@@ -507,7 +507,7 @@ usePoll<T>(path, {intervalMs, fastWhile?: (t: T) => boolean, fastMs?: number, en
   A flag removed by `resolve_flags` produces no span. That's why the three amber marks on hero message 1 disappear at v2, while the v1 timeline card still lists them from `assessments[0].flags`. In the §6 mock, message 1 is therefore a single plain segment.
 - **Priority:** `risk` over `address`. Overlaps split naturally.
 - **Scope:** only `author == "customer"` messages carry `segments`. Outbound messages have `segments: null`, so the AI never gets to flag its own words, and the UI shows it.
-- **Labels:** `label` is server-built English from one file (Fedi reviews it). React and Streamlit show it verbatim.
+- **Labels:** `label` is server-built English from one file (reviewed per `FEDI.md` F13). React and Streamlit show it verbatim.
 - **Quote isolation:** every customer quote inside `reason`, `reason_short`, `reason_diff`, `EventView.title`/`detail` and flag labels is wrapped as U+2068 FSI + quote + U+2069 PDI. In JSON these appear as `⁨…⁩`. They're plain characters, not markup.
 
 ### 3.2 Client side (React)
@@ -647,14 +647,14 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
   4. Scripted reply chip → **Send simulated reply**.
   5. "Rescoring…" for about 5 s [estimate: 4 s demo debounce + cache hit].
   6. v2 LOW 14 ▼69: the amber marks disappear, the new address is underlined green, the timeline shows `Rule: customer confirmed ×0.6 (starting assumption)` and "Resolved: …", and the row flashes.
-- **Video end card:** Strategist's end card must use these exact button names: **"Try this order → Send simulated reply"**. Fedi edits the caption to match.
+- **Video end card:** Strategist's end card must use these exact button names: **"Try this order → Send simulated reply"**. The caption is matched in `FEDI.md` F14.
 
 ---
 
-## 5. Copy table (English source; notes for Fedi's FR/AR pass)
+## 5. Copy table (English source; notes for the FR/AR copy pass, `FEDI.md` F13)
 
-**Rules for Fedi:**
-- **Language:** UI chrome ships in **English**. Switch to French only if the video narration is French, and decide that **by Sat 18:00**, because the safety take is recorded at 21:00 [VERIFY with Fedi].
+**Rules for the copy pass (`FEDI.md` F13):**
+- **Language:** UI chrome ships in **English**. Switch to French only if the video narration is French, and decide that **by Sat 18:00**, because the safety take is recorded at 21:00 [decided per `FEDI.md` §3.10].
 - **No Arabic chrome.** It would need a mirrored layout. The AR notes below cover two things only: video captions and glosses, and checking that each English label matches what the flagged Darija phrase actually says.
 - **Wording:**
   - buttons use verbs;
@@ -669,9 +669,9 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
 
 ### 5.1 Chrome, header, banners
 
-| Key | EN | Fedi note (FR / AR) |
+| Key | EN | Copy note (FR / AR) |
 |---|---|---|
-| `app.name` | {Product name} | Fedi picks it by G1 12:00 |
+| `app.name` | {Product name} | `FEDI.md` F1, Sat 13:00 |
 | `header.live` | Live | FR "En direct" |
 | `header.reconnecting` | Reconnecting… | FR "Reconnexion…" |
 | `header.snapshot` | Snapshot | FR "Instantané" |
@@ -706,7 +706,7 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
 
 ### 5.2 Queue and rows
 
-| Key | EN | Fedi note |
+| Key | EN | Copy note |
 |---|---|---|
 | `queue.aria` | Orders by risk | screen reader only |
 | `queue.summary` | {review} need review · {waiting} waiting for customer · {ready} ready to ship | singular: "1 needs review" |
@@ -728,7 +728,7 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
 
 ### 5.3 Detail, actions, Why, timeline
 
-| Key | EN | Fedi note |
+| Key | EN | Copy note |
 |---|---|---|
 | `detail.empty.title` | Select an order | none |
 | `detail.empty.body` | Pick an order on the left to see why it was scored and what to do next. | none |
@@ -782,7 +782,7 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
 
 ### 5.4 Conversation, drafts, demo tools, paste, activity, errors
 
-| Key | EN | Fedi note |
+| Key | EN | Copy note |
 |---|---|---|
 | `convo.title` | Conversation | none |
 | `convo.empty` | No messages yet. | none |
@@ -864,7 +864,7 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
 
 ### 5.5 Enum labels (client-side map, `enum.*`)
 
-| Key | EN | Fedi note |
+| Key | EN | Copy note |
 |---|---|---|
 | `enum.tier.high` / `.medium` / `.low` | HIGH / MED / LOW | FR ÉLEVÉ / MOYEN / FAIBLE |
 | `enum.action.confirm` | Confirm with customer | FR "Confirmer avec le client" |
@@ -902,7 +902,7 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
 | `enum.flag.prior_refusal_mention` | Mentions a past refusal | none |
 | `enum.flag.pressure_or_inconsistency` | Pressure or inconsistency | none |
 
-**(server) labels for Fedi to review:** `Segment.label` ("Vague location", "Address detail", …), `flags[].label`, `adjustments[].label` ("customer confirmed", "customer declined", "customer rescheduled", "unclear reply", "no reply in time"), `top_factors[].label`, `reason*`, `EventView.title/detail`, and `fallback_reason`. The client-side `enum.flag.*` labels must equal the server's flag labels. Fedi reviews both lists together.
+**(server) labels to review (`FEDI.md` F13):** `Segment.label` ("Vague location", "Address detail", …), `flags[].label`, `adjustments[].label` ("customer confirmed", "customer declined", "customer rescheduled", "unclear reply", "no reply in time"), `top_factors[].label`, `reason*`, `EventView.title/detail`, and `fallback_reason`. The client-side `enum.flag.*` labels must equal the server's flag labels. Both lists are reviewed together (`FEDI.md` F13).
 
 ---
 
@@ -921,9 +921,9 @@ Shown when `capabilities.can_simulate_reply` is true and the source isn't snapsh
 - the hero numbers are the council's hand-computed values (v1 model 82.5 → 83; v2 model 23.9 ×0.6 → 14);
 - the ROI numbers in `roi.line` are illustrative only (there is no impact mock).
 
-Two text placeholders for Fedi:
-- the template texts, which his `data/templates/*.yaml` replaces;
-- the tone phrase `manich mt2akda`, which he picks.
+Two text placeholders (filled per `FEDI.md`):
+- the template texts, which `data/templates/outbound.yaml` (`FEDI.md` F4) replaces;
+- the tone phrase `manich mt2akda` (`FEDI.md` F6).
 
 The hero messages follow Alchemist §B.10 plus the Round 2 `price_hesitation` phrase. No text equals FS7/FS8 or an eval phrase.
 
@@ -1857,7 +1857,7 @@ The hero messages follow Alchemist §B.10 plus the Round 2 `price_hesitation` ph
 
    The UI follows Architect and tolerates Skeptic's variants: a `cached` label, and copy for all three codes. The conductor picks one set.
 4. **The budget banner's "{date}"** needs the seed capture date. Jesser adds it to `health.config`, or the phrase is dropped.
-5. **UI language:** EN or FR. Fedi decides by Sat 18:00.
+5. **UI language:** EN or FR. Decided per `FEDI.md` §3.10 by Sat 18:00.
 6. **Hero numbers:** placeholders until `tests/golden/hero.json` exists (G6).
 7. **[VERIFY] list:**
    - host cold start, and whether the host shows its own loading page;

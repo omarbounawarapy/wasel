@@ -9,9 +9,9 @@ Folder = owner. Anything not listed is edited only by its lane. Omar merges to `
 
 ```
 hackathon/                                    (existing repo; docs stay at root)
-├─ README.md                  Fedi (prose) · Omar (numbers, only from reports/*.json) · Montassar (URL, badge)
+├─ README.md                  `FEDI.md` F12 (prose) · Omar (numbers, only from reports/*.json) · Montassar (URL, badge)
 ├─ PRD.md SYSTEM_DESIGN.md execution_plan.md hackathon_playbook.md
-├─ handoff.md                 Fedi: add a one-line "Superseded by PRD/SYSTEM_DESIGN/execution_plan" header
+├─ handoff.md                 Omar: add a one-line "Superseded by PRD/SYSTEM_DESIGN/execution_plan" header
 ├─ Makefile                   Montassar  (setup run test lint hygiene check seed demo-reset train record eval drill smoke capture)
 ├─ Dockerfile .dockerignore   Montassar
 ├─ .github/workflows/ci.yml   Montassar  (make check, no API keys)
@@ -45,7 +45,7 @@ hackathon/                                    (existing repo; docs stay at root)
 │  ├─ api/
 │  │  ├─ models.py            Jesser    Pydantic request/response = THE API CONTRACT (§4)
 │  │  ├─ projections.py       Jesser    detail projection, segments builder (uses extraction.normalize)
-│  │  ├─ event_text.py        Jesser code, Fedi copy   event type -> (level, title, detail)
+│  │  ├─ event_text.py        Jesser code, copy per `FEDI.md` F13   event type -> (level, title, detail)
 │  │  └─ routes_orders.py routes_conversations.py routes_drafts.py routes_events.py
 │  │     routes_health.py routes_admin.py routes_webhook.py              Jesser
 │  ├─ llm/                    Omar      (Oracle D6/D8)
@@ -76,19 +76,19 @@ hackathon/                                    (existing repo; docs stay at root)
 │  ├─ generate.py             python -m ml.generate --seed 20260927 --n 10000 (imports no LLM SDK)
 │  ├─ train.py
 │  └─ text_clf.py             S-11: TF-IDF char n-grams + logistic regression (03 §14), imports no LLM SDK
-├─ prompts/                   Omar (Fedi checks dialect)  extract_v1.system.txt extract_v1.fewshot.jsonl
+├─ prompts/                   Omar (dialect check: `FEDI.md` F10)  extract_v1.system.txt extract_v1.fewshot.jsonl
 │                             rewrite_v1.system.txt judge_v1.system.txt
 ├─ schemas/                   Omar      order_extraction_v1.json (12 fields) outbound_rewrite_v1.json outbound_judge_v1.json
 ├─ data/
 │  ├─ catalog.yaml            Omar      ~15 products: product_id, name, aliases[], price_tnd, category
-│  ├─ zones.yaml              Omar (Fedi extends)  urban/suburban/rural keyword lists
-│  ├─ phrase_banks.yaml       Fedi      (≥30% of each cell tagged eval_only)
-│  ├─ templates/outbound.yaml Fedi      T_CONFIRM/T_ADDRESS/T_PREPAY/T_ACK × fr/darija_arabic_script/arabizi + language fallback map
+│  ├─ zones.yaml              Omar (extended per `FEDI.md` F5)  urban/suburban/rural keyword lists
+│  ├─ phrase_banks.yaml       `FEDI.md` F2 (≥30% of each cell tagged eval_only)
+│  ├─ templates/outbound.yaml `FEDI.md` F4  T_CONFIRM/T_ADDRESS/T_PREPAY/T_ACK × fr/darija_arabic_script/arabizi + language fallback map
 │  ├─ synth_v1.csv synth_v1.meta.json   Omar (generated, committed)
 │  └─ seed/
-│     ├─ demo_seed.json       Fedi texts, Jesser shape (§3.3)
+│     ├─ demo_seed.json       texts: `FEDI.md` F6, Jesser shape (§3.3)
 │     └─ extraction_cache.jsonl  Omar  (scripts/warm_cache.py, dev key)
-├─ eval/sets/                 Fedi      native_windows.jsonl labels.jsonl labels_second.jsonl injection.jsonl
+├─ eval/sets/                 `FEDI.md` F3/F7 native_windows.jsonl labels.jsonl labels_second.jsonl injection.jsonl
 ├─ models/                    Omar      risk_xgb_v1.json risk_xgb_v1.card.json text_clf_v1.joblib text_clf_v1.card.json (S-11)
 ├─ reports/                   generated, committed: eval_extraction.json skew_eval.json impact.json
 │                             classifier_holdout.json fallback_drill.json bakeoff.json (if S-4)
@@ -99,7 +99,7 @@ hackathon/                                    (existing repo; docs stay at root)
 │  ├─ conftest.py             Montassar (clock, db, client, wa_post fixtures)
 │  ├─ unit/ integration/ contract/ e2e/ live/(marker, never in CI)
 │  ├─ golden/hero.json        Omar
-│  └─ fixtures/llm/ fixtures/whatsapp/ fixtures/cases/*.yaml(Fedi data)
+│  └─ fixtures/llm/ fixtures/whatsapp/ fixtures/cases/*.yaml(data: `FEDI.md` F8/F9)
 ├─ web/                       Montassar  Vite + React 18 + TS
 │  ├─ src/api/types.ts        §4 verbatim (C3 compares it to the Pydantic models' JSON Schema)
 │  ├─ src/api/datasource.ts   live | mock | snapshot; X-Visitor-Id from localStorage (try/catch → in-memory UUID)
@@ -703,8 +703,8 @@ DROP TABLE _vc; DROP TABLE _vo;
     { "key": "hero", "channel": "simulated", "order_no": 2601,
       "customer": { "display_name": "Amira B.", "external_ref": null, "completed_orders": 0, "refusals_total": 0 },
       "structured": {},
-      "messages": [ { "author": "customer", "text": "<hero v1 text, Fedi>", "offset_s": 0 } ],
-      "scripted_replies": [ "<hero v2 reply text, Fedi>" ] }
+      "messages": [ { "author": "customer", "text": "<hero v1 text, FEDI.md F6>", "offset_s": 0 } ],
+      "scripted_replies": [ "<hero v2 reply text, FEDI.md F6>" ] }
   ]
 }
 ```
@@ -1166,8 +1166,8 @@ Candidates, all [VERIFY free tier, sleep, restart-on-env-change, restart duratio
 | Sun 08:30–16:45 | **No env changes.** A crash restart keeps rows only if the disk persists (`if_empty`); an ephemeral disk reseeds [VERIFY] | — | — |
 | Sun 15:45 | `POST /api/admin/reset` → record the takes against the hosted instance (event mode) | — | Jesser |
 | **Sun 16:45** | Flip to `public`; delete `WA_TOKEN`, `WA_APP_SECRET`; remove the webhook subscription in the Meta console [VERIFY steps]; tag `submission-v1`. The restart wipes all real WhatsApp rows. | ≤ 10 min | — |
-| **Sun 16:50** | **Incognito audit** (Montassar + Fedi) | 10 min | see below |
-| Sun 17:00 | Submit (Fedi) | — | — |
+| **Sun 16:50** | **Incognito audit** (Montassar; ticking per `FEDI.md` §4.8) | 10 min | see below |
+| Sun 17:00 | Submit (`FEDI.md` §4.9) | — | — |
 
 **Audit checklist** (Sat 16:50 and Sun 16:50):
 1. `/api/health` shows `mode=public, wa_send=false, webhook=disabled`, with `git_sha` equal to the tag.
@@ -1194,7 +1194,7 @@ If G5 fails, the container stays `public` for the whole event and the video is r
 | | WhatsApp non-secret | `WA_PHONE_NUMBER_ID`, `WA_API_VERSION` [VERIFY] |
 | | runtime | `PORT=8000`, `GIT_SHA` (build arg), `FRONTEND_ORIGIN=http://localhost:5173` (dev only), `TZ_DISPLAY=Africa/Tunis`, `SCORING_CONFIG=scoring.yaml` |
 | **Frontend build env** | none | same origin in prod; in dev, the Vite proxy sends `/api` to `:8000` |
-| **`scoring.yaml`** (Omar; hashed into `config_hash`) | every tunable number and lexicon | `tiers {low_max: 35, medium_max: 65}` · `confidence {boundary_margin: 10, max_dropped_flags: 1}` · `actions {prepay_min_tnd: 250}` · `auto_send {max_tnd: 150, max_auto_messages_per_order: 2}` · `reply_adjustments {confirmed: {multiply: 0.6}, no_reply_timeout: {add: 15}}` · `timeouts {debounce_s: {demo: 4, prod: 15}, no_reply_s: {demo: 60, prod: 21600}}` · `window {max_messages: 12, max_chars: 2000}` · `catalog {match_min_score: 80}` · `lexicons {ack: [...], decline: [...], building: [...]}` (Fedi extends; SD §7.4 values as the start) |
+| **`scoring.yaml`** (Omar; hashed into `config_hash`) | every tunable number and lexicon | `tiers {low_max: 35, medium_max: 65}` · `confidence {boundary_margin: 10, max_dropped_flags: 1}` · `actions {prepay_min_tnd: 250}` · `auto_send {max_tnd: 150, max_auto_messages_per_order: 2}` · `reply_adjustments {confirmed: {multiply: 0.6}, no_reply_timeout: {add: 15}}` · `timeouts {debounce_s: {demo: 4, prod: 15}, no_reply_s: {demo: 60, prod: 21600}}` · `window {max_messages: 12, max_chars: 2000}` · `catalog {match_min_score: 80}` · `lexicons {ack: [...], decline: [...], building: [...]}` (extended per `FEDI.md` F2; SD §7.4 values as the start) |
 | **`data/zones.yaml`, `data/catalog.yaml`** (hashed into `config_hash`) | gazetteer and products | see §1 |
 | **Code constants** | anything that changes the schema | enums in `contracts.py`, schema names, `FEATURES` order in `ml/features.py` (checked against the model card) |
 

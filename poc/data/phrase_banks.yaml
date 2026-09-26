@@ -1,6 +1,6 @@
-# Phrase banks: the Fedi -> Omar contract (03 §1.6).
+# Phrase banks: the FEDI.md F2 -> Omar contract (03 §1.6).
 # STATUS: STARTER DRAFT written without a native speaker, so the generator can run on
-# something (03 §13 allows a stub bank). Fedi replaces or corrects every Darija/Arabizi line
+# something (03 §13 allows a stub bank). The native pass (FEDI.md F2) replaces or corrects every Darija/Arabizi line
 # and extends each cell to 5–8 phrases. Text doesn't affect the model: a bank edit changes
 # only text columns (test ML1).
 #

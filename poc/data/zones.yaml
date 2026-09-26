@@ -1,5 +1,5 @@
 # Gazetteer (03 §3, zone_from_text). Zone per place is a SYNTHETIC ASSUMPTION, not a market fact.
-# Omar owns the file, Fedi extends. An alias match beats a keyword match; the latest message wins.
+# Omar owns the file, extended per FEDI.md F5. An alias match beats a keyword match; the latest message wins.
 # name_ar (ADDITIVE) is what the generator puts in {place} for Arabic-script rows.
 version: 1
 entries:

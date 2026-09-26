@@ -1,5 +1,5 @@
 # 15-product catalog (03 §1.5). Prices are synthetic placeholders. Weights drive the generator.
-# Aliases per language are DRAFTS for Fedi's native check. P12's name is fixed for the hero.
+# Aliases per language are DRAFTS pending the native check (FEDI.md F5). P12's name is fixed for the hero.
 # Catalog median unit price = 69 (P05): the serve default for an unmatched product.
 version: 1
 products:
