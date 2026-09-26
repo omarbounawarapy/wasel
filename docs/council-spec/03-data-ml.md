@@ -329,7 +329,7 @@ def resolve_flags(flags, address_level_final, confirmation, k):
    - An unverifiable `tone_evidence` span becomes `None`.
 4. **Tone gate** (§4.2).
 5. **Cross-field rules:**
-   - `is_order=false` → stop.
+   - `is_order=false` → stop, **unless** the code-owned guard (02 §5 step 9) forced it to `true`: a verified product/address quote, or an injection hit.
    - `confirmation≠none` with `k is None` → `none`.
    - `exact` without `passes_exact_guard(verified address_quotes)` → `street_and_landmark`.
 6. **Overrides:** a location pin forces `exact`.

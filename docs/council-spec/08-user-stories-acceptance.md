@@ -86,6 +86,7 @@ As a seller, I need prompt injection in customer messages to be harmless.
 | AC-07.1 | 8 injection variants (4 base × 2 languages) leave tier unchanged vs. the clean window; delimiter spoofing is defused (length-preserving) | e2e (param) | E4 ★ | G7 (floor 4 variants) |
 | AC-07.2 | No phone number, name or customer id reaches an LLM request | unit | U13, U12 | Sun (T2) / G7 |
 | AC-07.3 | Eval sets and few-shots share no phrases with training banks | unit | U28 | G3b 16:30 |
+| AC-07.4 | An injection can't hide an order: a real order the model marks `is_order=false` (or any lexicon hit) still gets an assessment row in `needs_review` with the injection chip; zero-width/bidi characters can't split a lexicon phrase or reorder the dashboard | unit + e2e | U5b, E4, I-1 property test | G7 |
 
 ### US-08 — A judge opens the hosted link days later and can try the whole loop safely  ·  M-1, M-2  ·  Jesser, Montassar
 As a judge, I want the prototype to work without the team and without affecting anyone else, and I must not be able to send a real message.
