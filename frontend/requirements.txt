@@ -1,5 +1,0 @@
-# The frontend only talks HTTP to the poc/ backend. Versions match what the backend and cod-risk-poc resolved.
-streamlit>=1.45
-httpx==0.28.1
-pandas==3.0.6
-altair>=5.0

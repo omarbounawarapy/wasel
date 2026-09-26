@@ -1,8 +1,0 @@
-app.db
-seed.tmp
-.env
-.env.*
-!.env.example
-.streamlit/secrets.toml
-__pycache__/
-.pytest_cache/
