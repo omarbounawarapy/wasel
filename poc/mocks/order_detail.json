@@ -1,0 +1,352 @@
+{
+  "order": {
+    "order_id": "ord_0010",
+    "order_ref": "#2610",
+    "conversation_id": "cnv_0010",
+    "customer": {
+      "customer_id": "cus_0010",
+      "display_name": "Customer #2610",
+      "phone_masked": null
+    },
+    "channel": "simulated",
+    "status": "ready_to_ship",
+    "rescore_state": "idle",
+    "product_name": "casque bluetooth",
+    "price_tnd": 220.0,
+    "score": {
+      "version": 2,
+      "final_score": 16,
+      "tier": "low",
+      "action": "ship",
+      "confidence": "high",
+      "path": "cascade_cache",
+      "delta": -71,
+      "reason_short": "LOW 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19"
+    },
+    "has_pending_draft": false,
+    "is_seeded": false,
+    "read_only": false,
+    "last_message_preview": "ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmaci",
+    "updated_at": "2026-09-27T10:00:05.000000Z",
+    "seed_key": "hero",
+    "injection_suspected": false,
+    "quantity": 1,
+    "zone": "rural",
+    "zone_source": "gazetteer",
+    "address_text": "Douar Ouled Ali, triq el jemaa, dar 14 · 9odem el pharmacie",
+    "product_id": "P12",
+    "language": "arabizi",
+    "auto_messages_sent": 0,
+    "awaiting_reply_since": "2026-09-27T10:00:00.000000Z",
+    "seller_approved_at": null,
+    "opened_at": "2026-09-27T10:00:00.000000Z"
+  },
+  "customer": {
+    "customer_id": "cus_0010",
+    "display_name": "Customer #2610",
+    "phone_masked": null,
+    "completed_orders": 0,
+    "refusals_total": 0
+  },
+  "conversation": {
+    "conversation_id": "cnv_0010",
+    "channel": "simulated",
+    "messages": [
+      {
+        "message_id": "msg_0014",
+        "direction": "inbound",
+        "author": "customer",
+        "origin": "seed",
+        "kind": "text",
+        "provider_ts": "2026-09-27T09:50:00.000000Z",
+        "text": "salam, nheb el casque bluetooth",
+        "segments": [
+          {
+            "text": "salam, nheb el casque bluetooth",
+            "kind": null,
+            "codes": [],
+            "label": null
+          }
+        ],
+        "transcript": null,
+        "location": null,
+        "reply_to": null,
+        "template_id": null,
+        "delivery_status": null
+      },
+      {
+        "message_id": "msg_0015",
+        "direction": "inbound",
+        "author": "customer",
+        "origin": "seed",
+        "kind": "text",
+        "provider_ts": "2026-09-27T09:50:10.000000Z",
+        "text": "Douar Ouled Ali, 9rib el jemaa",
+        "segments": [
+          {
+            "text": "Douar Ouled Ali, 9rib el jemaa",
+            "kind": null,
+            "codes": [],
+            "label": null
+          }
+        ],
+        "transcript": null,
+        "location": null,
+        "reply_to": null,
+        "template_id": null,
+        "delivery_status": null
+      },
+      {
+        "message_id": "msg_0016",
+        "direction": "inbound",
+        "author": "customer",
+        "origin": "seed",
+        "kind": "text",
+        "provider_ts": "2026-09-27T09:50:20.000000Z",
+        "text": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked",
+        "segments": [
+          {
+            "text": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked",
+            "kind": null,
+            "codes": [],
+            "label": null
+          }
+        ],
+        "transcript": null,
+        "location": null,
+        "reply_to": null,
+        "template_id": null,
+        "delivery_status": null
+      },
+      {
+        "message_id": "msg_0017",
+        "direction": "outbound",
+        "author": "ai",
+        "origin": "simulated",
+        "kind": "text",
+        "provider_ts": "2026-09-27T10:00:00.000000Z",
+        "text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
+        "segments": null,
+        "transcript": null,
+        "location": null,
+        "reply_to": null,
+        "template_id": "T_ADDRESS",
+        "delivery_status": null
+      },
+      {
+        "message_id": "msg_0018",
+        "direction": "inbound",
+        "author": "customer",
+        "origin": "simulated",
+        "kind": "text",
+        "provider_ts": "2026-09-27T10:00:00.000001Z",
+        "text": "ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ghodwa ba3d 17h nkoun fi dar",
+        "segments": [
+          {
+            "text": "ey behi. ",
+            "kind": null,
+            "codes": [],
+            "label": null
+          },
+          {
+            "text": "Douar Ouled Ali, triq el jemaa, dar 14",
+            "kind": "address",
+            "codes": [],
+            "label": "Address detail"
+          },
+          {
+            "text": ", el bab lazra9 ",
+            "kind": null,
+            "codes": [],
+            "label": null
+          },
+          {
+            "text": "9odem el pharmacie",
+            "kind": "address",
+            "codes": [],
+            "label": "Address detail"
+          },
+          {
+            "text": ". ghodwa ba3d 17h nkoun fi dar",
+            "kind": null,
+            "codes": [],
+            "label": null
+          }
+        ],
+        "transcript": null,
+        "location": null,
+        "reply_to": null,
+        "template_id": null,
+        "delivery_status": null
+      }
+    ]
+  },
+  "assessments": [
+    {
+      "assessment_id": "asm_0010",
+      "version": 1,
+      "trigger": "initial",
+      "created_at": "2026-09-27T10:00:00.000000Z",
+      "path": "cascade_cache",
+      "model_score": 87.1,
+      "final_score": 87,
+      "delta": null,
+      "tier": "high",
+      "action": "confirm",
+      "confidence": "high",
+      "confidence_reasons": [],
+      "confirmation": "none",
+      "reason": "HIGH 87 · base 30 · 3 warning signs: \"⁨9rib el jemaa⁩\" +17 · rural delivery zone +13 · vague address (\"⁨Douar Ouled Ali⁩\") +12",
+      "reason_diff": null,
+      "adjustments": [],
+      "resolved_flags": [],
+      "flags": [
+        {
+          "code": "vague_location",
+          "label": "Vague location",
+          "quote": "9rib el jemaa",
+          "message_id": "msg_0015"
+        },
+        {
+          "code": "availability_uncertain",
+          "label": "May not be home",
+          "quote": "mouch dima fi dar",
+          "message_id": "msg_0016"
+        },
+        {
+          "code": "price_hesitation",
+          "label": "Price hesitation",
+          "quote": "ghali chwaya",
+          "message_id": "msg_0016"
+        }
+      ],
+      "top_factors": [
+        {
+          "feature": "red_flag_count",
+          "label": "3 warning signs: \"⁨9rib el jemaa⁩\"",
+          "value": 3.0,
+          "contribution": 16.6
+        },
+        {
+          "feature": "zone_encoded",
+          "label": "rural delivery zone",
+          "value": 2.0,
+          "contribution": 12.5
+        },
+        {
+          "feature": "address_specificity",
+          "label": "vague address (\"⁨Douar Ouled Ali⁩\")",
+          "value": 0.5,
+          "contribution": 12.2
+        }
+      ],
+      "extraction": {
+        "provider": "groq",
+        "model": "hand-crafted (not an LLM output; run scripts.warm_cache --live)",
+        "cache_hit": true,
+        "valid": true,
+        "dropped_flags": 0,
+        "latency_ms": 0
+      },
+      "config_hash": "50b7c24a",
+      "classifier_version": "xgb_v1-90d41187",
+      "prompt_version": "extract-v1"
+    },
+    {
+      "assessment_id": "asm_0011",
+      "version": 2,
+      "trigger": "customer_reply",
+      "created_at": "2026-09-27T10:00:05.000000Z",
+      "path": "cascade_cache",
+      "model_score": 26.8,
+      "final_score": 16,
+      "delta": -71,
+      "tier": "low",
+      "action": "ship",
+      "confidence": "high",
+      "confidence_reasons": [],
+      "confirmation": "confirmed",
+      "reason": "LOW 16 · base 30 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19 · no warning signs −3 · rural delivery zone +11 · customer confirmed ×0.6 (cold-start rule) −11",
+      "reason_diff": "v1 87 → v2 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −32 · warning signs resolved (availability_uncertain, price_hesitation, vague_location) −20 · tone uncertain → neutral −8 · customer confirmed ×0.6 (cold-start rule) −11",
+      "adjustments": [
+        {
+          "rule": "confirmed",
+          "label": "Customer confirmed ×0.6 (starting assumption)",
+          "effect": "x0.6",
+          "before": 26.8,
+          "after": 16.08
+        }
+      ],
+      "resolved_flags": [],
+      "flags": [],
+      "top_factors": [
+        {
+          "feature": "address_specificity",
+          "label": "full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\")",
+          "value": 1.0,
+          "contribution": -19.5
+        },
+        {
+          "feature": "zone_encoded",
+          "label": "rural delivery zone",
+          "value": 2.0,
+          "contribution": 10.9
+        },
+        {
+          "feature": "price_tnd",
+          "label": "high order value (220 TND)",
+          "value": 220.0,
+          "contribution": 9.1
+        }
+      ],
+      "extraction": {
+        "provider": "groq",
+        "model": "hand-crafted (not an LLM output; run scripts.warm_cache --live)",
+        "cache_hit": true,
+        "valid": true,
+        "dropped_flags": 0,
+        "latency_ms": 0
+      },
+      "config_hash": "50b7c24a",
+      "classifier_version": "xgb_v1-90d41187",
+      "prompt_version": "extract-v1"
+    }
+  ],
+  "drafts": [
+    {
+      "draft_id": "drf_0006",
+      "assessment_version": 1,
+      "template_id": "T_ADDRESS",
+      "language": "arabizi",
+      "text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
+      "canonical_text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
+      "source": "static_template",
+      "route": "blocked",
+      "prefilter": {
+        "passed": false,
+        "failures": [
+          "slot_missing:price_tnd"
+        ]
+      },
+      "judge": null,
+      "sent_message_id": "msg_0017",
+      "sent_at": "2026-09-27T10:00:00.000000Z",
+      "delivery": "recorded_only",
+      "created_at": "2026-09-27T10:00:00.000000Z"
+    }
+  ],
+  "capabilities": {
+    "read_only": false,
+    "can_try": false,
+    "can_simulate_reply": true,
+    "can_rescore": true,
+    "can_send_drafts": true,
+    "actions": [
+      "cancel",
+      "ship"
+    ]
+  },
+  "scripted_replies": [
+    "ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ghodwa ba3d 17h nkoun fi dar"
+  ]
+}

@@ -1,0 +1,230 @@
+{
+  "order": {
+    "order_id": "ord_0003",
+    "order_ref": "#2603",
+    "conversation_id": "cnv_0003",
+    "customer": {
+      "customer_id": "cus_0003",
+      "display_name": "سارة م.",
+      "phone_masked": null
+    },
+    "channel": "paste",
+    "status": "awaiting_reply",
+    "rescore_state": "idle",
+    "product_name": "crème visage",
+    "price_tnd": 35.0,
+    "score": {
+      "version": 1,
+      "final_score": 42,
+      "tier": "medium",
+      "action": "confirm",
+      "confidence": "low",
+      "path": "cascade_cache",
+      "delta": null,
+      "reason_short": "MEDIUM 42 · vague address (\"⁨حي النصر⁩\") +14 · 2 warning signs: \"⁨قريب من الجامع⁩\" +11"
+    },
+    "has_pending_draft": true,
+    "is_seeded": true,
+    "read_only": true,
+    "last_message_preview": "حي النصر، قريب من الجامع. أختي هي اللي باش تستلم",
+    "updated_at": "2026-09-27T10:00:00.000000Z",
+    "seed_key": "ar_area",
+    "injection_suspected": false,
+    "quantity": null,
+    "zone": null,
+    "zone_source": "default",
+    "address_text": "حي النصر",
+    "product_id": "P02",
+    "language": "darija_arabic_script",
+    "auto_messages_sent": 0,
+    "awaiting_reply_since": null,
+    "seller_approved_at": null,
+    "opened_at": "2026-09-27T10:00:00.000000Z"
+  },
+  "customer": {
+    "customer_id": "cus_0003",
+    "display_name": "سارة م.",
+    "phone_masked": null,
+    "completed_orders": 1,
+    "refusals_total": 0
+  },
+  "conversation": {
+    "conversation_id": "cnv_0003",
+    "channel": "paste",
+    "messages": [
+      {
+        "message_id": "msg_0005",
+        "direction": "inbound",
+        "author": "customer",
+        "origin": "seed",
+        "kind": "text",
+        "provider_ts": "2026-09-27T09:50:00.000000Z",
+        "text": "نحب كريمة للوجه",
+        "segments": [
+          {
+            "text": "نحب كريمة للوجه",
+            "kind": null,
+            "codes": [],
+            "label": null
+          }
+        ],
+        "transcript": null,
+        "location": null,
+        "reply_to": null,
+        "template_id": null,
+        "delivery_status": null
+      },
+      {
+        "message_id": "msg_0006",
+        "direction": "inbound",
+        "author": "customer",
+        "origin": "seed",
+        "kind": "text",
+        "provider_ts": "2026-09-27T09:50:20.000000Z",
+        "text": "حي النصر، قريب من الجامع. أختي هي اللي باش تستلم",
+        "segments": [
+          {
+            "text": "حي النصر",
+            "kind": "address",
+            "codes": [],
+            "label": "Address detail"
+          },
+          {
+            "text": "، ",
+            "kind": null,
+            "codes": [],
+            "label": null
+          },
+          {
+            "text": "قريب من الجامع",
+            "kind": "risk",
+            "codes": [
+              "vague_location"
+            ],
+            "label": "Vague location"
+          },
+          {
+            "text": ". ",
+            "kind": null,
+            "codes": [],
+            "label": null
+          },
+          {
+            "text": "أختي هي اللي باش تستلم",
+            "kind": "risk",
+            "codes": [
+              "third_party_recipient"
+            ],
+            "label": "Someone else receives"
+          }
+        ],
+        "transcript": null,
+        "location": null,
+        "reply_to": null,
+        "template_id": null,
+        "delivery_status": null
+      }
+    ]
+  },
+  "assessments": [
+    {
+      "assessment_id": "asm_0003",
+      "version": 1,
+      "trigger": "initial",
+      "created_at": "2026-09-27T10:00:00.000000Z",
+      "path": "cascade_cache",
+      "model_score": 41.8,
+      "final_score": 42,
+      "delta": null,
+      "tier": "medium",
+      "action": "confirm",
+      "confidence": "low",
+      "confidence_reasons": [
+        "imputed_inputs",
+        "near_tier_boundary"
+      ],
+      "confirmation": "none",
+      "reason": "MEDIUM 42 · base 30 · vague address (\"⁨حي النصر⁩\") +14 · 2 warning signs: \"⁨قريب من الجامع⁩\" +11",
+      "reason_diff": null,
+      "adjustments": [],
+      "resolved_flags": [],
+      "flags": [
+        {
+          "code": "vague_location",
+          "label": "Vague location",
+          "quote": "قريب من الجامع",
+          "message_id": "msg_0006"
+        },
+        {
+          "code": "third_party_recipient",
+          "label": "Someone else receives",
+          "quote": "أختي هي اللي باش تستلم",
+          "message_id": "msg_0006"
+        }
+      ],
+      "top_factors": [
+        {
+          "feature": "address_specificity",
+          "label": "vague address (\"⁨حي النصر⁩\")",
+          "value": 0.5,
+          "contribution": 14.5
+        },
+        {
+          "feature": "red_flag_count",
+          "label": "2 warning signs: \"⁨قريب من الجامع⁩\"",
+          "value": 2.0,
+          "contribution": 10.7
+        },
+        {
+          "feature": "price_tnd",
+          "label": "low order value (35 TND)",
+          "value": 35.0,
+          "contribution": -10.3
+        }
+      ],
+      "extraction": {
+        "provider": "groq",
+        "model": "hand-crafted (not an LLM output; run scripts.warm_cache --live)",
+        "cache_hit": true,
+        "valid": true,
+        "dropped_flags": 0,
+        "latency_ms": 0
+      },
+      "config_hash": "50b7c24a",
+      "classifier_version": "xgb_v1-90d41187",
+      "prompt_version": "extract-v1"
+    }
+  ],
+  "drafts": [
+    {
+      "draft_id": "drf_0002",
+      "assessment_version": 1,
+      "template_id": "T_ADDRESS",
+      "language": "darija_arabic_script",
+      "text": "عسلامة سارة، باش نبعثولك crème visage. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟",
+      "canonical_text": "عسلامة سارة، باش نبعثولك crème visage. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟",
+      "source": "static_template",
+      "route": "blocked",
+      "prefilter": {
+        "passed": false,
+        "failures": [
+          "slot_missing:price_tnd"
+        ]
+      },
+      "judge": null,
+      "sent_message_id": null,
+      "sent_at": null,
+      "delivery": null,
+      "created_at": "2026-09-27T10:00:00.000000Z"
+    }
+  ],
+  "capabilities": {
+    "read_only": true,
+    "can_try": true,
+    "can_simulate_reply": false,
+    "can_rescore": false,
+    "can_send_drafts": false,
+    "actions": []
+  },
+  "scripted_replies": []
+}

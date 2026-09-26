@@ -1,0 +1,52 @@
+{
+  "status": "ok",
+  "mode": "public",
+  "wa_send": false,
+  "webhook": "disabled",
+  "db": true,
+  "demo_mode": true,
+  "build": {
+    "git_sha": "dev",
+    "started_at": "2026-09-27T10:00:00.000000Z"
+  },
+  "config": {
+    "config_hash": "50b7c24a",
+    "prompt_version": "extract-v1",
+    "classifier_version": "xgb_v1-90d41187",
+    "seed_version": 1,
+    "seed_captured_at": null
+  },
+  "llm": {
+    "llm_mode": "live",
+    "chain_extract": [
+      "groq:openai/gpt-oss-120b",
+      "groq:openai/gpt-oss-20b",
+      "gemini:gemini"
+    ],
+    "chain_judge": [],
+    "primary": "groq:openai/gpt-oss-120b",
+    "fallback_active": false,
+    "fallback_reason": null,
+    "last_path": "cascade_cache",
+    "last_call_at": null,
+    "remaining_tokens": null,
+    "live_calls_today": 0,
+    "live_call_cap": 80,
+    "cap_reached": false,
+    "visitor_cap": {
+      "per_10min": 6,
+      "per_day": 20
+    }
+  },
+  "whatsapp": {
+    "last_webhook_at": null
+  },
+  "worker": {
+    "last_tick_at": null,
+    "pending": 0,
+    "last_purge_at": null
+  },
+  "wa_token_present": false,
+  "real_rows": 0,
+  "sandbox_orders": 1
+}
