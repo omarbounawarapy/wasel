@@ -1,0 +1,53 @@
+# Outbound static templates (02 §8.1, SD §8.1). Fedi owns the copy; these are DRAFTS pending the native check.
+# Rules: slots come from the order record only; every template passes the prefilter (J15, 12/12);
+# T_CONFIRM / T_ADDRESS / T_PREPAY end in exactly one yes/no question; T_ACK asks none;
+# no digits other than {price_tnd}. `no_name` is used when first_name is missing or unsafe.
+version: 1
+language_fallback:            # F18: extraction language -> template language
+  fr: fr
+  arabizi: arabizi
+  ar: darija_arabic_script
+  darija_arabic_script: darija_arabic_script
+  mixed: by_last_customer_message
+expected_questions: {T_CONFIRM: one, T_ADDRESS: one, T_PREPAY: one, T_ACK: none}
+templates:
+  T_CONFIRM:
+    arabizi:
+      text: "Aslema {first_name}, commande mte3ek: {product} b {price_tnd} DT. Tconfirmiha, ey walla le?"
+      no_name: "Aslema, commande mte3ek: {product} b {price_tnd} DT. Tconfirmiha, ey walla le?"
+    fr:
+      text: "Bonjour {first_name}, votre commande : {product} à {price_tnd} DT. Vous la confirmez, oui ou non ?"
+      no_name: "Bonjour, votre commande : {product} à {price_tnd} DT. Vous la confirmez, oui ou non ?"
+    darija_arabic_script:
+      text: "عسلامة {first_name}، الكوموند متاعك: {product} ب {price_tnd} دينار. تأكدها، إيه ولا لا؟"
+      no_name: "عسلامة، الكوموند متاعك: {product} ب {price_tnd} دينار. تأكدها، إيه ولا لا؟"
+  T_ADDRESS:
+    arabizi:
+      text: "Aslema {first_name}, bech nba3thoulek {product}. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?"
+      no_name: "Aslema, bech nba3thoulek {product}. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?"
+    fr:
+      text: "Bonjour {first_name}, nous préparons l'envoi de {product}. Pouvez-vous nous donner l'adresse exacte (rue et numéro de maison) et confirmer la commande, oui ou non ?"
+      no_name: "Bonjour, nous préparons l'envoi de {product}. Pouvez-vous nous donner l'adresse exacte (rue et numéro de maison) et confirmer la commande, oui ou non ?"
+    darija_arabic_script:
+      text: "عسلامة {first_name}، باش نبعثولك {product}. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟"
+      no_name: "عسلامة، باش نبعثولك {product}. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟"
+  T_PREPAY:
+    arabizi:
+      text: "Aslema, commande mte3ek: {product} b {price_tnd} DT. Bech nab3athouha, lazem tkhalles 9bal el livraison. Mouwafe9, ey walla le?"
+      no_name: "Aslema, commande mte3ek: {product} b {price_tnd} DT. Bech nab3athouha, lazem tkhalles 9bal el livraison. Mouwafe9, ey walla le?"
+    fr:
+      text: "Bonjour, votre commande : {product} à {price_tnd} DT. Pour l'envoyer, nous demandons le paiement avant la livraison. Êtes-vous d'accord, oui ou non ?"
+      no_name: "Bonjour, votre commande : {product} à {price_tnd} DT. Pour l'envoyer, nous demandons le paiement avant la livraison. Êtes-vous d'accord, oui ou non ?"
+    darija_arabic_script:
+      text: "عسلامة، الكوموند متاعك: {product} ب {price_tnd} دينار. باش نبعثوها لازم تخلص قبل التوصيل. موافق، إيه ولا لا؟"
+      no_name: "عسلامة، الكوموند متاعك: {product} ب {price_tnd} دينار. باش نبعثوها لازم تخلص قبل التوصيل. موافق، إيه ولا لا؟"
+  T_ACK:
+    arabizi:
+      text: "Ya3tik saha {first_name}, commande mte3ek tconfirmet. Nab3athouhalek fi a9rab wa9t."
+      no_name: "Ya3tik saha, commande mte3ek tconfirmet. Nab3athouhalek fi a9rab wa9t."
+    fr:
+      text: "Merci {first_name}, votre commande est confirmée. Nous l'envoyons bientôt."
+      no_name: "Merci, votre commande est confirmée. Nous l'envoyons bientôt."
+    darija_arabic_script:
+      text: "يعطيك الصحة {first_name}، الكوموند متاعك تأكدت. نبعثوهالك في أقرب وقت."
+      no_name: "يعطيك الصحة، الكوموند متاعك تأكدت. نبعثوهالك في أقرب وقت."

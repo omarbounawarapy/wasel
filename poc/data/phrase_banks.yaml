@@ -1,0 +1,93 @@
+# Phrase banks: the Fedi -> Omar contract (03 §1.6).
+# STATUS: STARTER DRAFT written without a native speaker, so the generator can run on
+# something (03 §13 allows a stub bank). Fedi replaces or corrects every Darija/Arabizi line
+# and extends each cell to 5–8 phrases. Text doesn't affect the model: a bank edit changes
+# only text columns (test ML1).
+#
+# Every leaf cell is {train: [...], eval_only: [...]}, keyed by language:
+# arabizi | darija_arabic_script | fr   (mixed is composed, never authored)
+# Split rule: len(eval_only) >= max(1, ceil(0.30 * total)), len(train) >= 1.
+# Slots: {product} {place} {landmark} {street} {number}
+version: 1
+
+order_intro:
+  arabizi: {train: ["nheb {product}", "3andkom {product}"], eval_only: ["n7eb {product} 3afak", "slm, nheb nechri {product}"]}
+  fr: {train: ["je veux commander {product}", "bonjour, je voudrais {product}"], eval_only: ["je souhaite acheter {product}"]}
+  darija_arabic_script: {train: ["نحب {product}", "عندكم {product}"], eval_only: ["نحب نشري {product}"]}
+
+address:
+  none:
+    arabizi: {train: ["l'adresse nab3athelkom ba3d", "mazelt ma 3andich l'adresse"], eval_only: ["l'adresse nkalmek 3liha"]}
+    fr: {train: ["je vous envoie l'adresse plus tard", "adresse à confirmer"], eval_only: ["je n'ai pas encore l'adresse"]}
+    darija_arabic_script: {train: ["العنوان نبعثهولك من بعد", "مازلت ما عنديش العنوان"], eval_only: ["العنوان نقلك عليه"]}
+  city_only:
+    arabizi: {train: ["fi {place}", "ena men {place}"], eval_only: ["ab3athha l {place}"]}
+    fr: {train: ["à {place}", "livraison à {place}"], eval_only: ["j'habite {place}"]}
+    darija_arabic_script: {train: ["في {place}", "أنا من {place}"], eval_only: ["التوصيل ل{place}"]}
+  area_or_landmark:          # neighborhood / cité / douar, no vagueness marker, no named street, no number
+    arabizi: {train: ["7ay {place}", "cité {place}"], eval_only: ["douar {place}"]}
+    fr: {train: ["cité {place}", "quartier {place}"], eval_only: ["lotissement {place}"]}
+    darija_arabic_script: {train: ["حي {place}", "سيتي {place}"], eval_only: ["دوار {place}"]}
+  street_and_landmark:       # a named street, no house number, no building token (lint 2)
+    arabizi: {train: ["{street}, {landmark}, {place}", "{place}, {street}"], eval_only: ["{street} m3a {landmark}, {place}"]}
+    fr: {train: ["{street}, {landmark}, {place}", "{place}, {street}"], eval_only: ["{place}, {street} ({landmark})"]}
+    darija_arabic_script: {train: ["{street}، {landmark}، {place}", "{place}، {street}"], eval_only: ["{street} مع {landmark}، {place}"]}
+  exact:                     # MUST contain {number} or a building token (lint 2)
+    arabizi: {train: ["{street}, dar {number}, {place}", "{street}, imm {number}, {place}"], eval_only: ["{place}, {street}, noumrou {number}"]}
+    fr: {train: ["{number} {street}, {place}", "{street}, bloc B, {place}"], eval_only: ["{street} n°{number}, {place}"]}
+    darija_arabic_script: {train: ["{street} عدد {number}، {place}", "{street}، عمارة {number}، {place}"], eval_only: ["{place}، {street}، دار {number}"]}
+
+flags:
+  vague_location:
+    arabizi: {train: ["9rib {landmark}", "ki tousel kalemni"], eval_only: ["kalmni wa9t twsel", "wra {landmark}"]}
+    fr: {train: ["près de {landmark}", "appelez-moi en arrivant"], eval_only: ["derrière {landmark}", "à côté de {landmark}"]}
+    darija_arabic_script: {train: ["قريب من {landmark}", "كلمني كي توصل"], eval_only: ["ورا {landmark}"]}
+  availability_uncertain:
+    arabizi: {train: ["mouch dima fi dar", "ken l9itni"], eval_only: ["ma nkounech fi dar barcha"]}
+    fr: {train: ["je ne suis pas toujours là", "peut-être en voyage"], eval_only: ["je suis rarement à la maison"]}
+    darija_arabic_script: {train: ["مانيش ديما في الدار", "كان لقيتني"], eval_only: ["ما نكونش برشا في الدار"]}
+  price_hesitation:
+    arabizi: {train: ["ghali chwaya", "ken famma remise"], eval_only: ["soumou kbir 3liya"]}
+    fr: {train: ["c'est un peu cher", "vous faites une remise"], eval_only: ["le prix est élevé"]}
+    darija_arabic_script: {train: ["غالية شوية", "كان فما تخفيض"], eval_only: ["السوم كبير عليا"]}
+  third_party_recipient:
+    arabizi: {train: ["o5ti bech testalem", "khouya howa li bech ye5ou"], eval_only: ["jarti testalem 3ali"]}
+    fr: {train: ["c'est ma sœur qui va récupérer", "mon frère va recevoir le colis"], eval_only: ["le voisin va le prendre"]}
+    darija_arabic_script: {train: ["أختي هي اللي باش تستلم", "خويا باش ياخذها"], eval_only: ["جارتي تستلم عليا"]}
+  prior_refusal_mention:
+    arabizi: {train: ["l marra li fetet ma 5dhitouch", "deja rja3t colis"], eval_only: ["akher commande ma stlamtehech"]}
+    fr: {train: ["la dernière fois je n'ai pas pris le colis", "j'ai déjà renvoyé une commande"], eval_only: ["le dernier colis est reparti"]}
+    darija_arabic_script: {train: ["المرة اللي فاتت ما خذيتوش", "رجعت كوليه قبل"], eval_only: ["آخر كوموند ما استلمتهاش"]}
+  pressure_or_inconsistency:
+    arabizi: {train: ["lazem lyoum wala nlaghi", "ken mouch ghodwa ma nhebech"], eval_only: ["tawa tawa wala khaliha"]}
+    fr: {train: ["livrez aujourd'hui sinon j'annule", "si ce n'est pas demain j'annule"], eval_only: ["il me le faut ce soir sinon rien"]}
+    darija_arabic_script: {train: ["لازم اليوم وإلا نبطل", "كان موش غدوة ما نحبش"], eval_only: ["توا توا وإلا خليها"]}
+
+tone:
+  positive:
+    arabizi: {train: ["merci barcha", "ya3tik saha"], eval_only: ["y3aychek"]}
+    fr: {train: ["merci beaucoup", "super, merci"], eval_only: ["mille mercis"]}
+    darija_arabic_script: {train: ["يعطيك الصحة", "مرسي برشا"], eval_only: ["يعيشك"]}
+  uncertain:                 # hedges about the purchase itself; no availability/price words (lint 7)
+    arabizi: {train: ["mazelt manich met2aked", "nchouf"], eval_only: ["mazelt nfakker"]}
+    fr: {train: ["je ne suis pas encore sûr", "on verra"], eval_only: ["j'hésite encore"]}
+    darija_arabic_script: {train: ["مازلت مانيش متأكد", "نشوف"], eval_only: ["ما نعرفش، نشوف"]}
+  negative:
+    arabizi: {train: ["dima t3ata9ou", "ma 3jebnich el service"], eval_only: ["9ala9touni"]}
+    fr: {train: ["vous êtes toujours en retard", "je suis déçu du service"], eval_only: ["c'est pénible à la fin"]}
+    darija_arabic_script: {train: ["ديما تعطلو", "ما عجبنيش السرفيس"], eval_only: ["قلقتوني"]}
+
+time:
+  arabizi: {train: ["ghodwa ba3d 17h", "l3chiya nkoun fi dar"], eval_only: ["sbe7 bekri"]}
+  fr: {train: ["demain après 17h", "le soir de préférence"], eval_only: ["plutôt le matin"]}
+  darija_arabic_script: {train: ["غدوة بعد الخمسة", "في العشية"], eval_only: ["الصباح بكري"]}
+
+slots:                        # not split: proper nouns shared with the gazetteer / serve side
+  landmark:
+    arabizi: ["el jemaa", "el pharmacie", "el poste", "el lycée"]
+    fr: ["la mosquée", "la pharmacie", "la poste", "le lycée"]
+    darija_arabic_script: ["الجامع", "الصيدلية", "البوسطة", "الليسي"]
+  street:
+    arabizi: ["nahj el Jazira", "triq el matar", "nahj Ibn Khaldoun"]
+    fr: ["rue Ibn Khaldoun", "avenue de la Liberté", "rue de Marseille"]
+    darija_arabic_script: ["نهج الجزيرة", "شارع الحرية", "نهج ابن خلدون"]

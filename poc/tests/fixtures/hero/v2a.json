@@ -1,0 +1,17 @@
+{
+  "is_order": true,
+  "is_order_change": false,
+  "product_quote": "casque bluetooth",
+  "quantity": 1,
+  "address_quotes": [
+    "Douar Ouled Ali, triq el jemaa, dar 14",
+    "9odem el pharmacie"
+  ],
+  "address_level": "exact",
+  "red_flags": [],
+  "tone_evidence": null,
+  "tone": "neutral",
+  "confirmation": "confirmed",
+  "language": "arabizi",
+  "clarity": "clear"
+}

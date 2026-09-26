@@ -1,8 +1,8 @@
-app.db
-seed.tmp
-.env
-.env.*
-!.env.example
-.streamlit/secrets.toml
-__pycache__/
+# poc/ additions (the root .gitignore already ignores *.db, .env*, node_modules/, web/dist/, .claude/)
+var/
+.venv/
+reports/junit.xml
+htmlcov/
 .pytest_cache/
+.ruff_cache/
+__pycache__/

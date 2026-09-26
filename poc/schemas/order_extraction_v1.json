@@ -1,0 +1,124 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "is_order",
+    "is_order_change",
+    "product_quote",
+    "quantity",
+    "address_quotes",
+    "address_level",
+    "red_flags",
+    "tone_evidence",
+    "tone",
+    "confirmation",
+    "language",
+    "clarity"
+  ],
+  "properties": {
+    "is_order": {
+      "type": "boolean"
+    },
+    "is_order_change": {
+      "type": "boolean"
+    },
+    "product_quote": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "quantity": {
+      "type": [
+        "integer",
+        "null"
+      ]
+    },
+    "address_quotes": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "address_level": {
+      "type": "string",
+      "enum": [
+        "none",
+        "city_only",
+        "area_or_landmark",
+        "street_and_landmark",
+        "exact"
+      ]
+    },
+    "red_flags": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence",
+          "code"
+        ],
+        "properties": {
+          "evidence": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "availability_uncertain",
+              "vague_location",
+              "price_hesitation",
+              "third_party_recipient",
+              "prior_refusal_mention",
+              "pressure_or_inconsistency"
+            ]
+          }
+        }
+      }
+    },
+    "tone_evidence": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "tone": {
+      "type": "string",
+      "enum": [
+        "positive",
+        "neutral",
+        "uncertain",
+        "negative"
+      ]
+    },
+    "confirmation": {
+      "type": "string",
+      "enum": [
+        "none",
+        "confirmed",
+        "declined",
+        "reschedule",
+        "ambiguous"
+      ]
+    },
+    "language": {
+      "type": "string",
+      "enum": [
+        "fr",
+        "ar",
+        "darija_arabic_script",
+        "arabizi",
+        "mixed"
+      ]
+    },
+    "clarity": {
+      "type": "string",
+      "enum": [
+        "clear",
+        "partial",
+        "unclear"
+      ]
+    }
+  }
+}

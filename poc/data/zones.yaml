@@ -1,0 +1,37 @@
+# Gazetteer (03 §3, zone_from_text). Zone per place is a SYNTHETIC ASSUMPTION, not a market fact.
+# Omar owns the file, Fedi extends. An alias match beats a keyword match; the latest message wins.
+# name_ar (ADDITIVE) is what the generator puts in {place} for Arabic-script rows.
+version: 1
+entries:
+  - {name: Tunis, name_ar: تونس, aliases: [], governorate: Tunis, zone: urban}
+  - {name: La Marsa, name_ar: المرسى, aliases: [Marsa], governorate: Tunis, zone: urban}
+  - {name: El Menzah, name_ar: المنزه, aliases: [Menzah], governorate: Tunis, zone: urban}
+  - {name: Le Bardo, name_ar: باردو, aliases: [Bardo], governorate: Tunis, zone: urban}
+  - {name: Ariana, name_ar: أريانة, aliases: [Aryana], governorate: Ariana, zone: urban}
+  - {name: Ennasr, name_ar: النصر, aliases: [Nasr], governorate: Ariana, zone: urban}
+  - {name: Ben Arous, name_ar: بن عروس, aliases: [], governorate: Ben Arous, zone: urban}
+  - {name: El Mourouj, name_ar: المروج, aliases: [Mourouj], governorate: Ben Arous, zone: urban}
+  - {name: Sfax, name_ar: صفاقس, aliases: [Sfaks], governorate: Sfax, zone: urban}
+  - {name: Sousse, name_ar: سوسة, aliases: [Soussa], governorate: Sousse, zone: urban}
+  - {name: Monastir, name_ar: المنستير, aliases: [], governorate: Monastir, zone: urban}
+  - {name: Bizerte, name_ar: بنزرت, aliases: [Bizert], governorate: Bizerte, zone: urban}
+  - {name: Manouba, name_ar: منوبة, aliases: [], governorate: Manouba, zone: suburban}
+  - {name: Mornag, name_ar: مرناق, aliases: [], governorate: Ben Arous, zone: suburban}
+  - {name: Menzel Bouzelfa, name_ar: منزل بوزلفة, aliases: [], governorate: Nabeul, zone: suburban}
+  - {name: Soliman, name_ar: سليمان, aliases: [], governorate: Nabeul, zone: suburban}
+  - {name: Hammamet, name_ar: الحمامات, aliases: [], governorate: Nabeul, zone: suburban}
+  - {name: Msaken, name_ar: مساكن, aliases: [], governorate: Sousse, zone: suburban}
+  - {name: Jemmal, name_ar: جمال, aliases: [], governorate: Monastir, zone: suburban}
+  - {name: Kairouan, name_ar: القيروان, aliases: [Kairouen], governorate: Kairouan, zone: suburban}
+  - {name: Béja, name_ar: باجة, aliases: [Beja], governorate: Béja, zone: suburban}
+  - {name: Zaghouan, name_ar: زغوان, aliases: [], governorate: Zaghouan, zone: suburban}
+  - {name: Sbiba, name_ar: سبيبة, aliases: [], governorate: Kasserine, zone: rural}
+  - {name: Haffouz, name_ar: حفوز, aliases: [], governorate: Kairouan, zone: rural}
+  - {name: El Ala, name_ar: العلا, aliases: [], governorate: Kairouan, zone: rural}
+  - {name: Thala, name_ar: تالة, aliases: [], governorate: Kasserine, zone: rural}
+  - {name: Nefza, name_ar: نفزة, aliases: [], governorate: Béja, zone: rural}
+  - {name: Ghardimaou, name_ar: غار الدماء, aliases: [], governorate: Jendouba, zone: rural}
+  - {name: Makthar, name_ar: مكثر, aliases: [Maktar], governorate: Siliana, zone: rural}
+  - {name: Oueslatia, name_ar: الوسلاتية, aliases: [], governorate: Kairouan, zone: rural}
+keywords:
+  rural: [douar, دوار, ouled, أولاد, "rif"]

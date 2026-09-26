@@ -1,0 +1,18 @@
+# Tool config only (05 §5).
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q -ra --strict-markers --durations=5"
+markers = ["live: needs real API keys; never in CI (set RUN_LIVE=1)"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+extend-exclude = ["web", ".venv", "var"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "DTZ"]   # DTZ catches naive datetimes
+ignore = ["E221", "E241", "E272", "UP040", "UP047"]   # aligned contract columns (01 §2 is copied verbatim)
+
+[tool.ruff.lint.per-file-ignores]
+"app/contracts.py" = ["E501"]
+"tests/*" = ["E501", "B023"]
