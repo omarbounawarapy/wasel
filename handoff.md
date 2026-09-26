@@ -1,3 +1,5 @@
+> **Superseded 26 Sept. Historical only.** Do not use this file for numbers, scope or screens. Canonical: `docs/council-spec/`, then `PRD.md`, `SYSTEM_DESIGN.md`, `execution_plan.md`.
+
 # COD Risk Scoring — Hackathon Handoff
 
 Tunisian e-commerce cash-on-delivery orders get refused 40-60% of the time (no-show, address issues, change of mind). Each refusal costs the seller a wasted driver trip. This tool scores incoming orders for refusal risk and recommends an action, so sellers stop paying for doomed deliveries.
