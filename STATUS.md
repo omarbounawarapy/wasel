@@ -100,7 +100,7 @@ Not yet tested live: a real phone message reaching the webhook (O-9), the "clean
 | G-seams 10:30 | Contracts, clock, LLM client, worker function merged | ✅ at the repo root |
 | G1 12:00 | Team confirmation sent · keys work · host hello-world live · Meta set up | 🟡 keys ✅ · team confirmation ❓ · **host ⏳** · Meta ✅ except the callback URL (needs the host) |
 | G2 12:00 | Contracts + mocks frozen | ✅ mocks generated and validated (`mocks/`) |
-| T0 14:00 | CI badge + first tests green | 🟡 tests green; CI activates when the workflow moves to the root |
+| T0 14:00 | CI badge + first tests green | ✅ CI green on `main`, badge in the README |
 | G3 14:00 | Phrase banks, ≥ 12 of 24 eval windows, templates | ⏳ input from `FEDI.md` F2–F4 (current banks/templates are a non-native draft) |
 | G4 16:00 | Frontend on the hosted URL | ⏳ React not started; Streamlit fallback ready |
 | G3b 16:30 | Prompt frozen (tuned on real windows, prefix measured) | ⏳ needs the eval windows (`FEDI.md` F3) |
@@ -121,10 +121,10 @@ Not yet tested live: a real phone message reaching the webhook (O-9), the "clean
 | O-7 | **Gemini config on the host:** `GEMINI_ENABLED=true`, `GEMINI_MODEL=gemini-3.5-flash-lite` (pin it, don't use `-latest`), and commit `config/probe.json` | Omar | G-Gem 20:00 |
 | O-8 | **Env variable names:** the app reads `GROQ_API_KEY` / `GEMINI_API_KEY`; set exactly these on the host | Montassar | G1 |
 | O-9 | **WhatsApp end to end.** Done: token, number registration, app subscribed to the WhatsApp Business Account, webhook code. Left: (1) a public URL (the host, or the app on a laptop + `cloudflared tunnel --url http://localhost:8000`); (2) set the callback `https://<url>/webhook/whatsapp` with `WA_VERIFY_TOKEN` and subscribe the `messages` field (App Dashboard → WhatsApp → Configuration, or `POST /1104336828760534/subscriptions`); (3) send a message to +1 555-175-8185 and check it shows up in the queue. Host env needs `APP_MODE=event`, `WEBHOOK_ENABLED=true`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN`, `WA_PHONE_NUMBER_ID=1420186451169673`. Secrets stay in environment settings, never in chat or git | Montassar (host) · Omar (callback) | G5 17:30 |
-| O-10 | ✅ Moved to the root and CI is live from `.github/workflows/ci.yml`. Left: add the CI badge to the README, and watch the first CI run (the `image` job builds Docker for the first time) | Montassar (CI) | T0 14:00 |
+| O-10 | ✅ Done: code at the root, CI live from `.github/workflows/ci.yml` with the badge in the README. First run green, including the first Docker build and the safe-defaults boot check | — | — |
 | O-11 | Seed has 9 conversations + hero; the spec says 12 + hero | Jesser (texts: `FEDI.md` F6) | G7 22:00 |
 | O-12 | Final Team Confirmation form sent? Pre-recorded video allowed? (spec V1, V2) | Omar (video rule: `FEDI.md` §3.2) | G1 12:00 |
-| O-13 | Docker image never built here (no daemon). First real build happens on the host | Montassar | G1 |
+| O-13 | ✅ The image builds and boots in safe public mode in CI (run #1). Still to do: the first build on the host | Montassar | G1 |
 | O-14 | **Extraction on replies (live run):** (a) a reply giving a delivery time doesn't clear `availability_uncertain` / `price_hesitation`, so the hero ends at LOW 27, not 11–16; (b) the "full address given" reason can quote the older vague message. Fix in prompt tuning and check the reason's quote picks the latest address | Omar | G3b 16:30 |
 
 ## 5. Next actions by person

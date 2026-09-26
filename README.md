@@ -1,5 +1,7 @@
 # COD Risk
 
+[![ci](https://github.com/omarbounawarapy/hackathon/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/omarbounawarapy/hackathon/actions/workflows/ci.yml)
+
 Scores Tunisian cash-on-delivery orders for refusal risk from the customer's own messages (Darija, Arabizi, Arabic, French), recommends an action, and drafts the confirmation message. A person approves every send. Built for GOMYCODE "Come Build With AI" (27 Sept 2026). **Synthetic data only.**
 
 Current state, gates and open points: [`STATUS.md`](STATUS.md). The build spec: [`docs/council-spec/`](docs/council-spec/README.md).
