@@ -1,0 +1,35 @@
+# 15-product catalog (03 §1.5). Prices are synthetic placeholders. Weights drive the generator.
+# Aliases per language are DRAFTS for Fedi's native check. P12's name is fixed for the hero.
+# Catalog median unit price = 69 (P05): the serve default for an unmatched product.
+version: 1
+products:
+  - {product_id: P01, name: "rouge à lèvres", price_tnd: 25, category: cosmetics, weight: 0.10,
+     aliases: {fr: ["rouge à lèvres"], arabizi: ["rouge a levre", "rouj"], darija_arabic_script: ["روج"]}}
+  - {product_id: P02, name: "crème visage", price_tnd: 35, category: cosmetics, weight: 0.09,
+     aliases: {fr: ["crème visage", "crème pour le visage"], arabizi: ["krema lel wejh"], darija_arabic_script: ["كريمة للوجه"]}}
+  - {product_id: P03, name: "t-shirt coton", price_tnd: 45, category: fashion, weight: 0.10,
+     aliases: {fr: ["t-shirt coton", "t-shirt en coton"], arabizi: ["tricot coton"], darija_arabic_script: ["تريكو قطن"]}}
+  - {product_id: P04, name: "jean slim", price_tnd: 59, category: fashion, weight: 0.10,
+     aliases: {fr: ["jean slim"], arabizi: ["serwel jean"], darija_arabic_script: ["سروال جين"]}}
+  - {product_id: P05, name: "robe d'été", price_tnd: 69, category: fashion, weight: 0.08,
+     aliases: {fr: ["robe d'été"], arabizi: ["robe sif"], darija_arabic_script: ["روبة صيف"]}}
+  - {product_id: P06, name: "parure de draps", price_tnd: 79, category: home, weight: 0.08,
+     aliases: {fr: ["parure de draps"], arabizi: ["mlehef"], darija_arabic_script: ["ملاحف"]}}
+  - {product_id: P07, name: "lampe de chevet", price_tnd: 89, category: home, weight: 0.07,
+     aliases: {fr: ["lampe de chevet"], arabizi: ["lampa"], darija_arabic_script: ["لمبة"]}}
+  - {product_id: P08, name: "sac en cuir", price_tnd: 99, category: fashion, weight: 0.07,
+     aliases: {fr: ["sac en cuir"], arabizi: ["sac cuir"], darija_arabic_script: ["ساك جلد"]}}
+  - {product_id: P09, name: "mixeur", price_tnd: 129, category: home, weight: 0.06,
+     aliases: {fr: ["mixeur"], arabizi: ["mixeur"], darija_arabic_script: ["ميكسار"]}}
+  - {product_id: P10, name: "montre connectée", price_tnd: 149, category: electronics, weight: 0.06,
+     aliases: {fr: ["montre connectée"], arabizi: ["montre connecté"], darija_arabic_script: ["ساعة ذكية"]}}
+  - {product_id: P11, name: "écouteurs sans fil", price_tnd: 179, category: electronics, weight: 0.05,
+     aliases: {fr: ["écouteurs sans fil"], arabizi: ["kitman sans fil"], darija_arabic_script: ["سماعات"]}}
+  - {product_id: P12, name: "casque bluetooth", price_tnd: 220, category: electronics, weight: 0.05,
+     aliases: {fr: ["casque bluetooth"], arabizi: ["casque bluetooth"], darija_arabic_script: ["كاسك بلوتوث"]}}
+  - {product_id: P13, name: "enceinte portable", price_tnd: 279, category: electronics, weight: 0.04,
+     aliases: {fr: ["enceinte portable"], arabizi: ["baffle"], darija_arabic_script: ["بافل"]}}
+  - {product_id: P14, name: "aspirateur", price_tnd: 349, category: home, weight: 0.03,
+     aliases: {fr: ["aspirateur"], arabizi: ["aspirateur"], darija_arabic_script: ["اسبيراتور"]}}
+  - {product_id: P15, name: "tablette", price_tnd: 450, category: electronics, weight: 0.02,
+     aliases: {fr: ["tablette"], arabizi: ["tablette"], darija_arabic_script: ["تابلات"]}}

@@ -1,0 +1,30 @@
+{
+  "is_order": true,
+  "is_order_change": false,
+  "product_quote": "casque bluetooth",
+  "quantity": 1,
+  "address_quotes": [
+    "Douar Ouled Ali",
+    "9rib el jemaa"
+  ],
+  "address_level": "area_or_landmark",
+  "red_flags": [
+    {
+      "evidence": "9rib el jemaa",
+      "code": "vague_location"
+    },
+    {
+      "evidence": "mouch dima fi dar",
+      "code": "availability_uncertain"
+    },
+    {
+      "evidence": "ghali chwaya",
+      "code": "price_hesitation"
+    }
+  ],
+  "tone_evidence": "mazelt manich met2aked",
+  "tone": "uncertain",
+  "confirmation": "none",
+  "language": "arabizi",
+  "clarity": "clear"
+}

@@ -1,0 +1,29 @@
+"""Deterministic injection lexicon (04 §5 I-4). The patterns live in scoring.yaml: lexicons.injection.
+Runs on every [CUSTOMER] / [CUSTOMER:voice] line, never on [SELLER]. A hit sets injection_suspected
+(-> confidence low, needs_review, forced is_order=true, confirmation ignored). It NEVER changes the score.
+
+DEVIATION: placed in app/extraction/injection.py (01 §1's tree has no slot for it)."""
+from __future__ import annotations
+
+import re
+from functools import lru_cache
+
+from app.extraction.normalize import lexicon_view
+from app.extraction.window import Window
+
+
+@lru_cache(maxsize=8)
+def _compile(normalized: tuple[str, ...], defused: tuple[str, ...]):
+    return ([re.compile(p, re.IGNORECASE) for p in normalized],
+            [re.compile(p, re.IGNORECASE) for p in defused])
+
+
+def injection_hit_text(text_orig: str, text_llm: str, lexicon: dict) -> bool:
+    norm, defu = _compile(tuple(lexicon.get("normalized", [])), tuple(lexicon.get("defused", [])))
+    view = lexicon_view(text_orig)
+    return any(p.search(view) for p in norm) or any(p.search(text_llm) for p in defu)
+
+
+def injection_hit(w: Window, lexicon: dict) -> bool:
+    return any(injection_hit_text(m.text_orig, m.text_llm, lexicon)
+               for m in w.messages if m.role == "customer" and m.kind in ("text", "voice"))

@@ -1,0 +1,78 @@
+{
+  "classifier_version": "xgb_v1-90d41187",
+  "config_hash": "50b7c24a",
+  "v1": {
+    "features": [
+      0.5,
+      3,
+      1,
+      220.0,
+      2,
+      0.3
+    ],
+    "model_score": 87.1,
+    "final": 87,
+    "tier": "high",
+    "action": "confirm",
+    "confidence": "high",
+    "confidence_reasons": [],
+    "template_id": "T_ADDRESS",
+    "resolved_flags": [],
+    "zone_source": "keyword",
+    "imputed": [],
+    "address_level_final": "area_or_landmark",
+    "reason": "HIGH 87 · base 30 · 3 warning signs: \"⁨9rib el jemaa⁩\" +17 · rural delivery zone +13 · vague address (\"⁨Douar Ouled Ali⁩\") +12",
+    "reason_short": "HIGH 87 · 3 warning signs: \"⁨9rib el jemaa⁩\" +17 · rural delivery zone +13"
+  },
+  "v2a": {
+    "features": [
+      1.0,
+      0,
+      0,
+      220.0,
+      2,
+      0.3
+    ],
+    "model_score": 26.8,
+    "final": 16,
+    "tier": "low",
+    "action": "ship",
+    "confidence": "high",
+    "confidence_reasons": [],
+    "template_id": null,
+    "resolved_flags": [],
+    "zone_source": "keyword",
+    "imputed": [],
+    "address_level_final": "exact",
+    "reason": "LOW 16 · base 30 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19 · no warning signs −3 · rural delivery zone +11 · customer confirmed ×0.6 (cold-start rule) −11",
+    "reason_short": "LOW 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19"
+  },
+  "v2b": {
+    "features": [
+      1.0,
+      0,
+      0,
+      220.0,
+      2,
+      0.3
+    ],
+    "model_score": 26.8,
+    "final": 16,
+    "tier": "low",
+    "action": "ship",
+    "confidence": "high",
+    "confidence_reasons": [],
+    "template_id": null,
+    "resolved_flags": [
+      "vague_location",
+      "availability_uncertain",
+      "price_hesitation"
+    ],
+    "zone_source": "keyword",
+    "imputed": [],
+    "address_level_final": "exact",
+    "reason": "LOW 16 · base 30 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19 · no warning signs −3 · rural delivery zone +11 · customer confirmed ×0.6 (cold-start rule) −11",
+    "reason_short": "LOW 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19"
+  },
+  "diff_reason": "v1 87 → v2 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −32 · warning signs resolved (availability_uncertain, price_hesitation, vague_location) −20 · tone uncertain → neutral −8 · customer confirmed ×0.6 (cold-start rule) −11"
+}

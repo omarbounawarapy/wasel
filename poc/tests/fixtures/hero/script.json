@@ -1,0 +1,37 @@
+{
+  "_comment": "Hero scenario (03 §10). Fedi may reword any line if lints 6/7 and the bracketed constraints still hold. The seller line (idx 3) is the canonical T_ADDRESS template, rendered by code.",
+  "customer": {
+    "display_name": "Sami",
+    "completed_orders": 0,
+    "refusals_total": 0
+  },
+  "product_id": "P12",
+  "price_tnd": 220,
+  "messages": [
+    {
+      "idx": 0,
+      "role": "customer",
+      "text": "salam, nheb el casque bluetooth"
+    },
+    {
+      "idx": 1,
+      "role": "customer",
+      "text": "Douar Ouled Ali, 9rib el jemaa"
+    },
+    {
+      "idx": 2,
+      "role": "customer",
+      "text": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked"
+    },
+    {
+      "idx": 3,
+      "role": "seller",
+      "template_id": "T_ADDRESS"
+    },
+    {
+      "idx": 4,
+      "role": "customer",
+      "text": "ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ghodwa ba3d 17h nkoun fi dar"
+    }
+  ]
+}

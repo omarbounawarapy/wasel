@@ -1,0 +1,30 @@
+{
+  "is_order": true,
+  "is_order_change": false,
+  "product_quote": "casque bluetooth",
+  "quantity": 1,
+  "address_quotes": [
+    "Douar Ouled Ali, triq el jemaa, dar 14",
+    "9odem el pharmacie"
+  ],
+  "address_level": "exact",
+  "red_flags": [
+    {
+      "evidence": "9rib el jemaa",
+      "code": "vague_location"
+    },
+    {
+      "evidence": "mouch dima fi dar",
+      "code": "availability_uncertain"
+    },
+    {
+      "evidence": "ghali chwaya",
+      "code": "price_hesitation"
+    }
+  ],
+  "tone_evidence": null,
+  "tone": "neutral",
+  "confirmation": "confirmed",
+  "language": "arabizi",
+  "clarity": "clear"
+}

@@ -1,0 +1,137 @@
+{
+  "classifier_version": "xgb_v1-90d41187",
+  "params": {
+    "objective": "binary:logistic",
+    "n_estimators": 400,
+    "learning_rate": 0.05,
+    "max_depth": 2,
+    "min_child_weight": 10,
+    "subsample": 0.8,
+    "colsample_bytree": 1.0,
+    "reg_lambda": 1.0,
+    "tree_method": "hist",
+    "monotone_constraints": "(-1,1,1,1,1,1)",
+    "random_state": 42,
+    "n_jobs": 1,
+    "eval_metric": "logloss"
+  },
+  "FEATURES": [
+    "address_specificity",
+    "red_flag_count",
+    "tone_score",
+    "price_tnd",
+    "zone_encoded",
+    "customer_refusal_rate"
+  ],
+  "monotone": [
+    -1,
+    1,
+    1,
+    1,
+    1,
+    1
+  ],
+  "model_sha256": "90d4118782bb627f6b245497a5794998ef523d4460abf2d612b82a762a3da2fd",
+  "data_sha256": "20f0aa9347e4e366d9fe9f6d70ce2104182def4f8b7ac0a8df77b704bc2783ea",
+  "synth_meta": {
+    "seed": 20260927,
+    "n": 10000,
+    "features": [
+      "address_specificity",
+      "red_flag_count",
+      "tone_score",
+      "price_tnd",
+      "zone_encoded",
+      "customer_refusal_rate"
+    ],
+    "base_rate": 0.2995,
+    "split_counts": {
+      "train": 7999,
+      "holdout": 2001
+    },
+    "eval_subset": 40,
+    "sha256": {
+      "data/phrase_banks.yaml": "df34524571dbf28b87afe368bc558a1bbb3d5af6f57ef8b177f11b436b45e300",
+      "data/catalog.yaml": "371ba81f70d6ef8d4a86235b2a0cb0c1c4b7126f21e01c9493ae9f02fad5a3fc",
+      "data/zones.yaml": "0beaa07cf5863fd194e0bfc9f8ef7172ad0a342377c0e3de7a07162011c13c71",
+      "ml/features.py": "710cab208d60e41db8a28e59213261b216277718f7db20ef8cf342c60a50e64f"
+    },
+    "csv_sha256": "20f0aa9347e4e366d9fe9f6d70ce2104182def4f8b7ac0a8df77b704bc2783ea",
+    "git_sha": "0aae91aba41225b4f60aabbcd1a1894df5fda16d"
+  },
+  "versions": {
+    "xgboost": "3.2.0",
+    "numpy": "2.4.6",
+    "sklearn": "1.9.1"
+  },
+  "git_sha": "0aae91aba41225b4f60aabbcd1a1894df5fda16d",
+  "trained_at": "2026-09-26T03:08:48.469447Z",
+  "metrics_ref": "reports/train_metrics.json",
+  "reliability": [
+    {
+      "bin": "0.0-0.1",
+      "n": 340,
+      "mean_pred": 0.0651,
+      "refusal_rate": 0.0824
+    },
+    {
+      "bin": "0.1-0.2",
+      "n": 504,
+      "mean_pred": 0.1443,
+      "refusal_rate": 0.1369
+    },
+    {
+      "bin": "0.2-0.3",
+      "n": 347,
+      "mean_pred": 0.2466,
+      "refusal_rate": 0.2277
+    },
+    {
+      "bin": "0.3-0.4",
+      "n": 254,
+      "mean_pred": 0.3471,
+      "refusal_rate": 0.3425
+    },
+    {
+      "bin": "0.4-0.5",
+      "n": 189,
+      "mean_pred": 0.4467,
+      "refusal_rate": 0.4392
+    },
+    {
+      "bin": "0.5-0.6",
+      "n": 142,
+      "mean_pred": 0.5448,
+      "refusal_rate": 0.5634
+    },
+    {
+      "bin": "0.6-0.7",
+      "n": 100,
+      "mean_pred": 0.6474,
+      "refusal_rate": 0.73
+    },
+    {
+      "bin": "0.7-0.8",
+      "n": 66,
+      "mean_pred": 0.7558,
+      "refusal_rate": 0.8333
+    },
+    {
+      "bin": "0.8-0.9",
+      "n": 52,
+      "mean_pred": 0.8409,
+      "refusal_rate": 0.7692
+    },
+    {
+      "bin": "0.9-1.0",
+      "n": 7,
+      "mean_pred": 0.9227,
+      "refusal_rate": 0.8571
+    }
+  ],
+  "notes": [
+    "No time split: rows have no temporal order.",
+    "The model class matches the prior (additive in log-odds), so depth 2 and no tuning.",
+    "model_score = 100 \u00b7 P(refused) on simulated outcomes, not a real-world refusal rate."
+  ]
+}

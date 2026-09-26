@@ -1,0 +1,56 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "unsupported_claims",
+    "grounded",
+    "language_ok",
+    "tone_ok",
+    "overreach",
+    "question_count",
+    "verdict"
+  ],
+  "properties": {
+    "unsupported_claims": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "grounded": {
+      "type": "boolean"
+    },
+    "language_ok": {
+      "type": "boolean"
+    },
+    "tone_ok": {
+      "type": "boolean"
+    },
+    "overreach": {
+      "type": "string",
+      "enum": [
+        "none",
+        "discount_or_price_change",
+        "payment_request",
+        "delivery_commitment",
+        "instructions_in_draft",
+        "other"
+      ]
+    },
+    "question_count": {
+      "type": "string",
+      "enum": [
+        "none",
+        "one",
+        "several"
+      ]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "approve",
+        "reject"
+      ]
+    }
+  }
+}

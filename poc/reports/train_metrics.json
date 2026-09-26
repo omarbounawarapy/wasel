@@ -1,0 +1,31 @@
+{
+  "report": "train_metrics",
+  "created_at": "2026-09-26T03:08:48.469447Z",
+  "classifier_version": "xgb_v1-90d41187",
+  "n_train": 7999,
+  "n_holdout": 2001,
+  "base_rate_train": 0.2994,
+  "base_rate_holdout": 0.2999,
+  "auc": 0.7844,
+  "oracle_auc": 0.7832,
+  "brier": 0.1619,
+  "oracle_brier": 0.1623,
+  "calib_mae_pts": 2.41,
+  "calib_max_pts": 16.88,
+  "tier_share": {
+    "low": 0.6552,
+    "medium": 0.2579,
+    "high": 0.087
+  },
+  "tier_refusal_rate": {
+    "low": 0.1594,
+    "medium": 0.4961,
+    "high": 0.7759
+  },
+  "gates": {
+    "auc": "pass",
+    "calibration_mae": "pass",
+    "tier_refusal_rate_increasing": "pass"
+  },
+  "note": "Synthetic data; labels are simulated outcomes drawn from a documented prior (03 \u00a72)."
+}

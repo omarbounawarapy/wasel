@@ -1,44 +1,107 @@
+"""Shared fixtures (05 §2). Offline, keyless, deterministic: every test runs with no network."""
+from __future__ import annotations
+
 import json
+import socket
 import sys
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parent.parent
+ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 
-from pipeline import db  # noqa: E402
-from pipeline.llm import LLMError  # noqa: E402
+from app.clock import FrozenClock  # noqa: E402
+from app.contracts import CustomerHistory, ScoreInput, StructuredFields, WindowMessage  # noqa: E402
+from app.scoring.config import load_config  # noqa: E402
+
+T0 = datetime(2026, 9, 27, 10, 0, 0, tzinfo=UTC)
 
 
-class FakeClient:
-    """Stands in for Gemini/Groq. `script` is a list of str responses or exceptions, consumed in order."""
-    model = "fake-model"
+@pytest.fixture(autouse=True)
+def _no_network(monkeypatch, request):
+    if request.node.get_closest_marker("live"):
+        return
+    real = socket.socket.connect
 
-    def __init__(self, script):
-        self.script = list(script)
-        self.calls = []
-
-    def complete_json(self, system, user, temperature=0.0):
-        self.calls.append((system, user))
-        if not self.script:
-            raise LLMError("script exhausted")
-        nxt = self.script.pop(0)
-        if isinstance(nxt, Exception):
-            raise nxt
-        return nxt if isinstance(nxt, str) else json.dumps(nxt)
+    def guard(self, addr, *a, **k):
+        if isinstance(addr, str) or addr[0] in ("127.0.0.1", "::1", "localhost"):
+            return real(self, addr, *a, **k)
+        raise RuntimeError(f"network call to {addr} in an offline test: use ReplayBackend")
+    monkeypatch.setattr(socket.socket, "connect", guard)
 
 
-@pytest.fixture
-def conn(tmp_path):
-    c = db.connect(tmp_path / "test.db")
-    yield c
-    c.close()
+@pytest.fixture(scope="session")
+def config():
+    return load_config()
 
 
 @pytest.fixture
-def order():
-    return dict(order_id="T-1", created_at="2026-09-01T21:30", governorate="Kasserine", zone_tier="remote",
-                address_text="Kasserine, ki twsel kalamni", note_text="nchouf ken ynasebni",
-                product_category="electronics", value_tnd=210.0, item_count=1, channel="facebook",
-                is_first_order=True, prior_orders=0, prior_refusals=0)
+def clock():
+    return FrozenClock(T0)
+
+
+def customer_msg(i: int, text: str, kind: str = "text") -> WindowMessage:
+    return WindowMessage(f"m{i}", "inbound", "customer", "paste", kind, text if kind == "text" else None, None,
+                         None, None, kind == "location", T0.replace(second=i), True)
+
+
+def seller_msg(i: int, canonical: str, template_id: str = "T_CONFIRM") -> WindowMessage:
+    return WindowMessage(f"m{i}", "outbound", "ai", "dashboard", "text", canonical, canonical, template_id, None,
+                         False, T0.replace(second=i), True)
+
+
+def make_input(texts, *, seller_at: int | None = None, seller_text: str = "Vous confirmez, oui ou non ?",
+               template_id: str = "T_CONFIRM", completed: int = 0, refusals: int = 0,
+               structured: StructuredFields | None = None, trigger: str = "initial", prior=None,
+               sandbox_id: str | None = None) -> ScoreInput:
+    msgs, i = [], 0
+    for j, t in enumerate(texts):
+        if seller_at is not None and j == seller_at:
+            msgs.append(seller_msg(i, seller_text, template_id))
+            i += 1
+        msgs.append(customer_msg(i, t) if t != "<pin>" else customer_msg(i, "", "location"))
+        i += 1
+    return ScoreInput("ord_test", sandbox_id, "paste", trigger, msgs, structured or StructuredFields(),
+                      CustomerHistory(completed, refusals), prior, T0)
+
+
+def envelope(render: str, extraction: dict | str, *, source: str = "hand_crafted", provider: str = "groq",
+             model: str = "openai/gpt-oss-120b", status: int = 200) -> dict:
+    from app.llm.client import replay_key
+    content = extraction if isinstance(extraction, str) else json.dumps(extraction, ensure_ascii=False)
+    return {"meta": {"source": source, "provider": provider, "model": model, "prompt_version": "extract-v1",
+                     "recorded_at": "2026-09-26"},
+            "key": replay_key(render), "window": render, "status": status, "headers": {},
+            "response": {"choices": [{"finish_reason": "stop", "message": {"content": content}}],
+                         "usage": {"prompt_tokens": 2800, "completion_tokens": 120}}}
+
+
+@pytest.fixture
+def replay_dir(tmp_path):
+    d = tmp_path / "replay"
+    d.mkdir()
+
+    def add(name: str, render: str, extraction, **kw) -> Path:
+        p = d / f"{name}.json"
+        p.write_text(json.dumps(envelope(render, extraction, **kw), ensure_ascii=False), encoding="utf-8")
+        return p
+    add.dir = d
+    return add
+
+
+class CountingMeter:
+    def __init__(self, cap: int | None = None):
+        self.cap, self.calls = cap, 0
+
+    def allow(self, role, sandbox_id, now):
+        if self.cap is not None and self.calls >= self.cap:
+            return "global_cap"
+        self.calls += 1
+        return "ok"
+
+
+@pytest.fixture
+def meter():
+    return CountingMeter()
