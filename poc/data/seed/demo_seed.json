@@ -1,0 +1,208 @@
+{
+  "version": 1,
+  "_comment": "Seed conversations (01 §3.3). STARTER DRAFTS: Fedi writes the final texts. Customers and texts are synthetic.",
+  "conversations": [
+    {
+      "key": "hero",
+      "channel": "simulated",
+      "order_no": 2601,
+      "customer": {
+        "display_name": "Sami",
+        "external_ref": null,
+        "completed_orders": 0,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "salam, nheb el casque bluetooth",
+          "offset_s": 0
+        },
+        {
+          "author": "customer",
+          "text": "Douar Ouled Ali, 9rib el jemaa",
+          "offset_s": 10
+        },
+        {
+          "author": "customer",
+          "text": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked",
+          "offset_s": 20
+        }
+      ],
+      "scripted_replies": [
+        "ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ghodwa ba3d 17h nkoun fi dar"
+      ]
+    },
+    {
+      "key": "fr_exact",
+      "channel": "paste",
+      "order_no": 2602,
+      "customer": {
+        "display_name": "Leila M.",
+        "external_ref": "C-102",
+        "completed_orders": 4,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "Bonjour, je voudrais la montre connectée. 12 rue Ibn Khaldoun, immeuble Yasmine, La Marsa. Merci beaucoup",
+          "offset_s": 0
+        }
+      ],
+      "scripted_replies": []
+    },
+    {
+      "key": "ar_area",
+      "channel": "paste",
+      "order_no": 2603,
+      "customer": {
+        "display_name": "سارة م.",
+        "external_ref": "C-103",
+        "completed_orders": 1,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "نحب كريمة للوجه",
+          "offset_s": 0
+        },
+        {
+          "author": "customer",
+          "text": "حي النصر، قريب من الجامع. أختي هي اللي باش تستلم",
+          "offset_s": 20
+        }
+      ],
+      "scripted_replies": []
+    },
+    {
+      "key": "arabizi_rural_prepay",
+      "channel": "paste",
+      "order_no": 2604,
+      "customer": {
+        "display_name": "Hedi",
+        "external_ref": "C-104",
+        "completed_orders": 2,
+        "refusals_total": 1
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "nheb el tablette",
+          "offset_s": 0
+        },
+        {
+          "author": "customer",
+          "text": "douar Sbiba, ki tousel kalemni. ken famma remise",
+          "offset_s": 30
+        }
+      ],
+      "scripted_replies": []
+    },
+    {
+      "key": "mixed_city",
+      "channel": "paste",
+      "order_no": 2605,
+      "customer": {
+        "display_name": "Nour",
+        "external_ref": "C-105",
+        "completed_orders": 0,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "nheb el aspirateur, livraison à Kairouan. مانيش ديما في الدار",
+          "offset_s": 0
+        }
+      ],
+      "scripted_replies": []
+    },
+    {
+      "key": "fr_street",
+      "channel": "paste",
+      "order_no": 2606,
+      "customer": {
+        "display_name": "Yassine",
+        "external_ref": "C-106",
+        "completed_orders": 6,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "je veux commander le jean slim. rue de Marseille, à côté de la poste, Sousse",
+          "offset_s": 0
+        }
+      ],
+      "scripted_replies": []
+    },
+    {
+      "key": "arabizi_exact",
+      "channel": "paste",
+      "order_no": 2607,
+      "customer": {
+        "display_name": "Rim",
+        "external_ref": "C-107",
+        "completed_orders": 3,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "3andkom sac cuir? nahj el Jazira, dar 22, Monastir. merci barcha",
+          "offset_s": 0
+        }
+      ],
+      "scripted_replies": []
+    },
+    {
+      "key": "ar_exact",
+      "channel": "paste",
+      "order_no": 2608,
+      "customer": {
+        "display_name": "كريم",
+        "external_ref": "C-108",
+        "completed_orders": 1,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "نحب ساعة ذكية. نهج ابن خلدون عدد 5، سوسة",
+          "offset_s": 0
+        }
+      ],
+      "scripted_replies": []
+    },
+    {
+      "key": "fr_prior_refusal",
+      "channel": "paste",
+      "order_no": 2609,
+      "customer": {
+        "display_name": "Mehdi",
+        "external_ref": "C-109",
+        "completed_orders": 3,
+        "refusals_total": 2
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "je prends le mixeur, livraison à Thala. la dernière fois je n'ai pas pris le colis. si ce n'est pas demain j'annule",
+          "offset_s": 0
+        }
+      ],
+      "scripted_replies": []
+    }
+  ]
+}

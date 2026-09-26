@@ -1,0 +1,230 @@
+{
+  "_comment": "Hand-written stand-ins for recorded LLM extractions, keyed by seed key. scripts/warm_cache.py turns them into data/seed/extraction_cache.jsonl with model 'hand-crafted'. Replace with `python -m scripts.warm_cache --live` (dev key) once the prompt is frozen.",
+  "hero": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "product_quote": "casque bluetooth",
+      "quantity": 1,
+      "address_quotes": [
+        "Douar Ouled Ali",
+        "9rib el jemaa"
+      ],
+      "address_level": "area_or_landmark",
+      "red_flags": [
+        {
+          "evidence": "9rib el jemaa",
+          "code": "vague_location"
+        },
+        {
+          "evidence": "mouch dima fi dar",
+          "code": "availability_uncertain"
+        },
+        {
+          "evidence": "ghali chwaya",
+          "code": "price_hesitation"
+        }
+      ],
+      "tone_evidence": "mazelt manich met2aked",
+      "tone": "uncertain",
+      "confirmation": "none",
+      "language": "arabizi",
+      "clarity": "clear"
+    },
+    "replies": [
+      {
+        "is_order": true,
+        "is_order_change": false,
+        "product_quote": "casque bluetooth",
+        "quantity": 1,
+        "address_quotes": [
+          "Douar Ouled Ali, triq el jemaa, dar 14",
+          "9odem el pharmacie"
+        ],
+        "address_level": "exact",
+        "red_flags": [],
+        "tone_evidence": null,
+        "tone": "neutral",
+        "confirmation": "confirmed",
+        "language": "arabizi",
+        "clarity": "clear"
+      }
+    ]
+  },
+  "fr_exact": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": "Merci beaucoup",
+      "tone": "positive",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [],
+      "product_quote": "la montre connectée",
+      "address_quotes": [
+        "12 rue Ibn Khaldoun, immeuble Yasmine, La Marsa"
+      ],
+      "address_level": "exact",
+      "language": "fr"
+    }
+  },
+  "ar_area": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": null,
+      "tone": "neutral",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [
+        {
+          "evidence": "قريب من الجامع",
+          "code": "vague_location"
+        },
+        {
+          "evidence": "أختي هي اللي باش تستلم",
+          "code": "third_party_recipient"
+        }
+      ],
+      "product_quote": "كريمة للوجه",
+      "address_quotes": [
+        "حي النصر"
+      ],
+      "address_level": "area_or_landmark",
+      "language": "darija_arabic_script"
+    }
+  },
+  "arabizi_rural_prepay": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": null,
+      "tone": "neutral",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [
+        {
+          "evidence": "ki tousel kalemni",
+          "code": "vague_location"
+        },
+        {
+          "evidence": "ken famma remise",
+          "code": "price_hesitation"
+        }
+      ],
+      "product_quote": "tablette",
+      "address_quotes": [
+        "douar Sbiba"
+      ],
+      "address_level": "area_or_landmark",
+      "language": "arabizi"
+    }
+  },
+  "mixed_city": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": null,
+      "tone": "neutral",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [
+        {
+          "evidence": "مانيش ديما في الدار",
+          "code": "availability_uncertain"
+        }
+      ],
+      "product_quote": "aspirateur",
+      "address_quotes": [
+        "Kairouan"
+      ],
+      "address_level": "city_only",
+      "language": "mixed"
+    }
+  },
+  "fr_street": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": null,
+      "tone": "neutral",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [],
+      "product_quote": "jean slim",
+      "address_quotes": [
+        "rue de Marseille, à côté de la poste, Sousse"
+      ],
+      "address_level": "street_and_landmark",
+      "language": "fr"
+    }
+  },
+  "arabizi_exact": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": "merci barcha",
+      "tone": "positive",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [],
+      "product_quote": "sac cuir",
+      "address_quotes": [
+        "nahj el Jazira, dar 22, Monastir"
+      ],
+      "address_level": "exact",
+      "language": "arabizi"
+    }
+  },
+  "ar_exact": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": null,
+      "tone": "neutral",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [],
+      "product_quote": "ساعة ذكية",
+      "address_quotes": [
+        "نهج ابن خلدون عدد 5، سوسة"
+      ],
+      "address_level": "exact",
+      "language": "darija_arabic_script"
+    }
+  },
+  "fr_prior_refusal": {
+    "v1": {
+      "is_order": true,
+      "is_order_change": false,
+      "quantity": null,
+      "tone_evidence": null,
+      "tone": "neutral",
+      "confirmation": "none",
+      "clarity": "clear",
+      "red_flags": [
+        {
+          "evidence": "la dernière fois je n'ai pas pris le colis",
+          "code": "prior_refusal_mention"
+        },
+        {
+          "evidence": "si ce n'est pas demain j'annule",
+          "code": "pressure_or_inconsistency"
+        }
+      ],
+      "product_quote": "mixeur",
+      "address_quotes": [
+        "Thala"
+      ],
+      "address_level": "city_only",
+      "language": "fr"
+    }
+  }
+}
