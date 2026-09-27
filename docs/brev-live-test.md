@@ -75,10 +75,25 @@ the fine-tuned server.
 - The Groq-only `reasoning_format` field is dropped automatically for self-hosted endpoints;
   `reasoning_effort=low` is kept (vLLM honors it for gpt-oss). If the server 400s anyway,
   `tests/unit/test_groq_backend_routing.py` pins which kwargs each path sends.
+- gpt-oss on vLLM keeps the harmony analysis channel: a tiny `max_completion_tokens` can be
+  consumed entirely by reasoning and return `content: null` (the check uses 512 and falls
+  back to `reasoning_content` for display). Extraction prompts budget enough tokens — this
+  only bites quick manual probes.
+- `.env` values containing spaces must be **quoted** (`VLLM_ARGS="--gpu-memory-utilization
+  0.92 …"`) — the loader rewrites names only, and an unquoted `0.92` gets executed as a
+  command (`set -u` kills the script).
+- Don't run the eval while other `brev exec/copy` commands are in flight against the same
+  instance: they share one multiplexed SSH connection with the port-forward, and the added
+  latency can push LLM calls past the 6 s step deadline (cases then fall through to the
+  rules extractor and the run mis-measures the model).
 - The endpoint must never be exposed without its `--api-key` token; anyone with the URL and
   token can burn your GPU credit.
 - **Credit burns while the instance runs, not while it's stopped**: `make brev-serve`'s
   `stop` subcommand (or `bash scripts/brev_llm_up.sh stop`) tears the server down, then stop
   the instance in the Brev console. This is the whole budget discipline.
 - The script re-runs cleanly (`serve` exits 0 if the model is already being served); the
-  first boot downloads weights, so give 20b ~15–25 min the first time.
+  first boot downloads weights, so give 20b ~15–25 min and 120b ~30–40 min the first time.
+- Measured 2026-09-27 (A6000 48 GB, gpt-oss-20b): `eval.run --live` unpaced in 6.5 min —
+  40-case extraction sample is_order 0.875 vs 0.961 on the offline 279-case cache (Groq
+  120b outputs); every LLM-answered case was right on is_order and the gate misses were
+  chain fall-throughs. 120b on an A100 80 GB is the production-parity shape.
