@@ -32,6 +32,7 @@ WAIT_MINS="$(cfg WAIT_MINS 25)"          # first boot pulls weights (~13GB for 2
 BASE="$(cfg GROQ_BASE_URL)"              # check: e.g. http://<instance-ip>:8001/v1
 TOKEN="$(cfg GROQ_API_KEY)"              # the vLLM --api-key value (must exist even for vLLM)
 CONTAINER="$(cfg CONTAINER brev-vllm)"
+VLLM_ARGS="$(cfg VLLM_ARGS)"            # only from caller env or .env; unquoted on purpose
 
 die() { echo "brev_llm_up: $*" >&2; exit 1; }
 
