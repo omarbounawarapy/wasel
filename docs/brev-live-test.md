@@ -75,6 +75,15 @@ the fine-tuned server.
 - The Groq-only `reasoning_format` field is dropped automatically for self-hosted endpoints;
   `reasoning_effort=low` is kept (vLLM honors it for gpt-oss). If the server 400s anyway,
   `tests/unit/test_groq_backend_routing.py` pins which kwargs each path sends.
+- On hosts with a CUDA 12.x driver (< 12.8), pin `VLLM_IMAGE=vllm/vllm-openai:v0.10.1` —
+  the `latest` image ships torch/cu13 and dies with "NVIDIA driver too old". v0.10.1
+  serves gpt-oss MXFP4 on Ampere (Triton backend, slower than optimized kernels).
+- Verify the box's real disk before choosing it for 120b (`df -h`, not `brev search`):
+  a denvr A100 advertising 2 TB had a 92 GB root volume — 63 GB weights + image do not fit.
+- After any `brev create`, run `brev ls` and delete phantoms: a create can report
+  "0/1 instances" while still provisioning (and billing) one.
+- Shadeform-backed instances cannot be stopped — `brev delete` is the only way to stop
+  the meter once you're done.
 - gpt-oss on vLLM keeps the harmony analysis channel: a tiny `max_completion_tokens` can be
   consumed entirely by reasoning and return `content: null` (the check uses 512 and falls
   back to `reasoning_content` for display). Extraction prompts budget enough tokens — this
