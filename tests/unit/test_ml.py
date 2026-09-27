@@ -155,7 +155,7 @@ def test_generator_lints_pass_on_committed_banks():
     (lambda b: b["flags"]["price_hesitation"]["fr"].update(train=["c'est une arnaque"]), "lint4"),
     (lambda b: b["time"]["fr"].update(eval_only=[]), "lint5"),
     (lambda b: b["tone"]["uncertain"]["arabizi"].update(train=["nchouf, ghali chwaya"]), "lint7"),
-    (lambda b: b["tone"]["positive"]["fr"].update(train=["on verra"]), "lint3"),
+    (lambda b: b["tone"]["positive"]["fr"].update(train=["Je ne suis pas encore sûr"]), "lint3"),
 ])
 def test_generator_lints_fail_on_bad_banks(mutate, lint):
     banks, _, zones = load_inputs()

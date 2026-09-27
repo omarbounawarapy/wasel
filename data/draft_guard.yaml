@@ -7,11 +7,26 @@ version: 1
 slots:
   first_name: [Amira, Sami, Yassine, Ines, Mohamed, Salma, "", Walid, Nour]
   product: ["Robe d'été", "Montre sport", "Sac à main", "Ecouteurs sans fil", "Chaussures running",
-            "Parfum 50ml", "Coque iPhone", "Ensemble bébé", "Lampe LED", "Tapis salon"]
-  price_tnd: ["89", "45", "120", "35.5", "79", "150", "29", "64"]
-safe:          # reassuring phrases that state no new fact (rewrite rule 6)
+            "Parfum 50ml", "Coque iPhone", "Ensemble bébé", "Lampe LED", "Tapis salon", "casque bluetooth"]
+  price_tnd: ["89", "45", "120", "35.5", "79", "150", "29", "64", "250"]
+safe:          # reassuring phrases that state no new fact (rewrite rule 6). The fr/darija entries
+               # mirror the F4 (v2) template vocabulary — paiement-avant-livraison, code postal,
+               # livraison programmée — so the ok manifold covers drafts reworded from those templates.
   fr: ["Merci beaucoup.", "Merci pour votre confiance.", "Nous restons à votre écoute.", "Bonne journée !",
-       "Pas d'inquiétude, nous sommes là.", "Merci 🙏"]
+       "Pas d'inquiétude, nous sommes là.", "Merci 🙏",
+       "Le paiement se fait à la livraison, sans frais supplémentaires.",
+       "Nous vous informerons dès que la livraison est programmée.",
+       "Votre commande est bien confirmée.",
+       "Merci de nous transmettre votre adresse complète avec le code postal.",
+       "Le code postal aide le livreur à trouver l'adresse plus vite.",
+       "Votre code postal et un point de repère nous suffisent.",
+       "Merci d'envoyer le nom de la rue et le numéro de la maison.",
+       "Un point de repère nous aide à vous trouver plus vite.",
+       "Pouvez-vous aussi nous communiquer un point de repère ?",
+       "Vous pouvez aussi envoyer le code postal, ainsi que le nom de la rue.",
+       "Pour completer votre adresse, ajoutez un point de repère proche.",
+       "Nous pouvons vous communiquer la date de livraison par message.",
+       "Ajoutez aussi un point de repère, cela nous aide à completer l'adresse."]
   arabizi: ["Ya3tik saha.", "Ma t9la9ch, a7na m3ak.", "Nhar zin!", "Merci barcha 🙏", "Bech n3awnouk."]
   darija_arabic_script: ["يعطيك الصحة.", "ما تقلقش، احنا معاك.", "نهارك زين!", "مرسي برشا 🙏"]
 unsafe:

@@ -52,7 +52,7 @@ def _insert(rng: random.Random, draft: str, phrase: str) -> str:
     return f"{draft[:i]} {phrase}{draft[i:]}"
 
 
-def build_corpus(templates: dict, bank: dict, *, split: str = "train", n_base: int = 600,
+def build_corpus(templates: dict, bank: dict, *, split: str = "train", n_base: int = 1100,
                  seed: int = 7, bases: list[str] | None = None) -> tuple[list[str], list[str]]:
     """(texts, labels). split='train' uses the `train` phrases, split='holdout' the `holdout` ones. If `bases` is a
     list, the rendered template each text was built from is appended to it (the golden set needs it)."""
@@ -77,7 +77,7 @@ def build_corpus(templates: dict, bank: dict, *, split: str = "train", n_base: i
     for cls, groups in bank["unsafe"].items():
         for lang, phrases in groups[split].items():
             for p in phrases:
-                for _ in range(8 if split == "train" else 3):
+                for _ in range(12 if split == "train" else 4):
                     _, d, t = rng.choice([b for b in base if b[0] == lang])
                     X.append(_insert(rng, d, p))
                     y.append(cls)

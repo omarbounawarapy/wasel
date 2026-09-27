@@ -44,22 +44,31 @@ timeouts:         { debounce_s: { demo: 4, prod: 15 }, no_reply_s: { demo: 60, p
 window:           { max_messages: 12, max_chars: 2000 }
 
 lexicons:
-  ack:     [ok, oui, ey, eyh, behi, "d'accord", merci, "ya3tik saha", "نعم", "باهي", "إيه"]
+  ack:     [ok, oui, ey, eyh, behi, "d'accord", merci, "ya3tik saha", "je confirme", "نعم", "باهي", "إيه"]
   decline: [non, la, annuler, "ma nhebech", "لا", "ألغي"]
+  # F3: a darija commitment with no product name ("nheb wa7ed noir" after "3andkom casque bluetooth?")
+  # is an order; the fr ask ("je voudrais connaître la couleur") is not, so no fr verbs here.
+  order_intent: [nheb, n7eb, nebghi, نوردر, نحب, نبغي]
   # 04 §5 I-4: the ONLY injection lexicon. Phrase-level. `normalized` patterns run on
   # normalize(text) with Cf characters removed (casefolded, أ→ا, ة→ه); `defused` patterns run on the
   # length-preserving defused LLM view. More Arabic-script and Arabizi lines per FEDI.md F7.
   injection:
+    # F7/F8 extensions (Fedi's variants, additive to the 04 §5 I-4 core): "risk rules" target,
+    # mark/marque/7ot verbs with bare LOW, system/admin update-override headers, règle système,
+    # unaccented "regles", Arabic قوانين / تحديث نظام.
     normalized:
-      - 'ignore\s+(?:(?:all|the|previous|prior|above|les|toutes les|tes)\s+){1,3}(?:instructions?|consignes|règles|rules)'
+      - 'ignore\s+(?:(?:all|the|previous|prior|above|les|toutes les|tes)\s+){1,3}(?:instructions?|consignes|r[eè]gles|rules|risk\s+rules)'
       - '(?:oublie|forget)\s+(?:tes|your)\s+(?:instructions|consignes)'
-      - 'تجاهل\s+(?:كل\s+)?(?:التعليمات|الاوامر)'
+      - 'تجاهل\s+(?:كل\s+)?(?:ال)?(?:تعليمات|اوامر|قوانين)'
       - 'you are now'
       - 'tu es maintenant'
       - 'system prompt'
       - 'address_level|confirmation\s*[:=]|injection_suspected|red_flags|risk_score'
       - '"exact"'
-      - '(?:mark|classe?|set).{0,20}(?:low risk|faible risque|safe|score\s*0)'
+      - '(?:mark|marque[z]?|classe?|set|7ot)\b.{0,20}(?:low(?:\s+risk)?|risk\s*low|risque\s*low|faible\s*risque|safe|score\s*0)'
+      - '(?:system|admin)\s+(?:update|override|notice|message)\s*[:!]'
+      - '(?:nouvelle\s+)?r[eè]gle\s+syst[eè]me\s*[:!]'
+      - 'تحديث\s+نظام\s*[:：]'
     defused:
       - '(?:^|\s)(?:system|assistant|seller|vendeur|developer)\s*:'
       - '⟦\s*(?:SELLER|CUSTOMER)'

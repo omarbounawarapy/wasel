@@ -33,5 +33,8 @@ entries:
   - {name: Ghardimaou, name_ar: غار الدماء, aliases: [], governorate: Jendouba, zone: rural}
   - {name: Makthar, name_ar: مكثر, aliases: [Maktar], governorate: Siliana, zone: rural}
   - {name: Oueslatia, name_ar: الوسلاتية, aliases: [], governorate: Kairouan, zone: rural}
-keywords:
-  rural: [douar, دوار, ouled, أولاد, "rif"]
+keywords:           # F5 place vocabulary (Area/neighborhood rows) + F2's rural terms. Vocabulary
+                    # aids: an alias match beats a keyword; latest message wins.
+  urban: ["centre ville", وسط البلد]
+  suburban: [cite, cité, hay, houma, حي, حومة]
+  rural: [douar, دوار, ouled, أولاد, "rif", "3zib", عزيب]

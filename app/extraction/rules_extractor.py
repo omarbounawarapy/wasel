@@ -14,18 +14,30 @@ from itertools import product as cartesian
 
 from app.extraction.repair import OrderExtraction
 from app.extraction.window import Window
-from ml.textnorm import find_span, has_phrase, normalize, passes_exact_guard, tokens
+from ml.textnorm import find_span, has_building_token, has_phrase, normalize, standalone_numbers, tokens
 
-STREET = ("rue", "avenue", "av", "nahj", "ne7j", "شارع", "نهج", "زنقة",
+STREET = ("rue", "avenue", "av", "nahj", "ne7j", "شارع", "نهج", "زنقة", "zen9et",
           "triq", "طريق")                                    # triq/طريق: ADDITIVE (hero v2 uses "triq")
 AREA = ("cité", "cite", "hay", "7ay", "حي", "douar", "دوار", "9rib", "قريب", "à côté", "près", "9odem", "قدام",
-        "jemaa", "جامع", "pharmacie", "صيدلية", "poste", "quartier")
+        "jemaa", "جامع", "pharmacie", "صيدلية", "poste", "quartier",
+        "7dhe", "7dha", "حذا", "حدا", "jihet", "جهة")        # additive per FEDI.md F2 §03
 _SENT = re.compile(r"[^.\n!?؟]+")
 _SLOT = re.compile(r"\{(\w+)\}")
 
 
 def _sentences(text: str) -> list[str]:
     return [s.strip() for s in _SENT.findall(text) if s.strip()]
+
+
+def _sentences_q(text: str) -> list[tuple[str, bool]]:
+    """(sentence, is_question). _SENT drops the delimiters, so interrogative form is read from the
+    character that closes the sentence (F3: "vous avez des casques ?" is a browse, not an order)."""
+    out = []
+    for m in _SENT.finditer(text):
+        s = m.group(0).strip()
+        if s:
+            out.append((s, m.end() < len(text) and text[m.end()] in "!?؟"))
+    return out
 
 
 def _bank_phrases(banks: dict) -> list[tuple[str, str]]:
@@ -64,13 +76,19 @@ def _language(texts: list[str]) -> str:
 def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicons: dict) -> OrderExtraction:
     cust = [m for m in w.messages if m.role == "customer" and m.kind != "location_pin" and m.text_orig]
     texts = [m.text_orig for m in cust]
-    # product
+    # product: the alias must appear in a NON-interrogative sentence — "vous avez des casques ?"
+    # is a browse, not an order (F3: g1-fr-14, g1-mix-20)
     product_quote = None
     for m in reversed(cust):
-        for p in catalog["products"]:
-            for alias in [p["name"], *[a for v in p["aliases"].values() for a in v]]:
-                if (sp := find_span(m.text_orig, alias)) is not None:
-                    product_quote = m.text_orig[sp[0]:sp[1]]
+        for sent, question in _sentences_q(m.text_orig):
+            if question:
+                continue
+            for p in catalog["products"]:
+                for alias in [p["name"], *[a for v in p["aliases"].values() for a in v]]:
+                    if (sp := find_span(sent, alias)) is not None:
+                        product_quote = sent[sp[0]:sp[1]]
+                        break
+                if product_quote:
                     break
             if product_quote:
                 break
@@ -87,7 +105,10 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
             has_area = any(has_phrase(sent, a) for a in AREA)
             has_city = any(has_phrase(sent, p) for p in places)
             r = 0
-            if has_street and passes_exact_guard([sent]):
+            # Exact needs a NUMBER plus a street word or building token ("dar 57", "Maison numéro 12,
+            # rue X"; F2 exact phrases). A building word alone is not exact ("à la maison" = at home,
+            # F7-03) and a bare number alone is not either (prices/times also contain digits).
+            if standalone_numbers(sent) and (has_street or has_building_token(sent)):
                 r = 4
             elif has_street:
                 r = 3
@@ -121,7 +142,11 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
                 conf = "declined"
             elif any(head.startswith(normalize(a)) for a in lexicons.get("ack", [])):
                 conf = "confirmed"
-    is_order = bool(product_quote or quotes or flags)
+    # F3: a bare flag ("le prix est un peu élevé") or an availability question is a browse, not an
+    # order — order evidence is a declarative product mention, an address quote, or a darija intent
+    # verb ("nheb wa7ed noir" after the availability question), never a flag alone.
+    intent = any(has_phrase(t, w) for t in reversed(texts) for w in lexicons.get("order_intent", []))
+    is_order = bool(product_quote or quotes or intent)
     return OrderExtraction(
         is_order=is_order, is_order_change=False, product_quote=product_quote, quantity=None,
         address_quotes=list(dict.fromkeys(quotes))[:4], address_level=ranks[level_rank],

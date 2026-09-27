@@ -56,10 +56,10 @@ LATIN = r"A-Za-zÀ-ɏ"
 DIGITS = r"0-9٠-٩۰-۹"
 NUM_RE = re.compile(rf"(?<![{LATIN}{DIGITS}])[{DIGITS}]{{1,3}}(?![{LATIN}{DIGITS}])")
 # "dar 14", "dar n°14", "دار 14". "dar14" deliberately does NOT match (03 §5 known gap).
-DAR_N_RE = re.compile(rf"\b(dar|دار)(?:\s+n?°?\s*|\s*n°\s*)[{DIGITS}]{{1,3}}(?![{LATIN}{DIGITS}])")
+DAR_N_RE = re.compile(rf"\b(dar|دار)(?:\s+(?:n?°?|عدد|رقم)\s*|\s+n°\s*)[{DIGITS}]{{1,3}}(?![{LATIN}{DIGITS}])")
 BUILDING_TOKENS_RAW = ("imm", "immeuble", "immeubles", "apt", "app", "appartement", "etage", "étage",
-                       "bloc", "block", "residence", "résidence", "villa",
-                       "عمارة", "شقة", "طابق", "إقامة", "اقامة")      # extended per FEDI.md F2
+                       "bloc", "block", "residence", "résidence", "villa", "maison",
+                       "عمارة", "شقة", "طابق", "إقامة", "اقامة", "بلوك")   # extended per FEDI.md F2
 BUILDING_TOKENS = frozenset(normalize(t) for t in BUILDING_TOKENS_RAW)
 _TOKEN_RE = re.compile(r"[^\W_]+")
 _AR_PREFIXES = ("وال", "ال", "و")

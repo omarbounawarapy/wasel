@@ -21,18 +21,20 @@ from app.llm.prompts import active_versions
 from app.outbound import judge as J
 from app.outbound.guard_clf import classify
 from app.outbound.prefilter import prefilter
+from app.outbound.templates import render_template
 from app.scoring.config import default_config
 from app.scoring.score_order import score_order
 
 ROOT = Path(__file__).resolve().parents[1]
 GOLD = ROOT / "eval" / "golden"
+SETS = ROOT / "eval" / "sets"
 LEVELS = ["none", "city_only", "area_or_landmark", "street_and_landmark", "exact"]
 T0 = datetime(2026, 9, 27, 10, 0, tzinfo=UTC)
 
 
-def load(name: str, limit: int | None, sample: int | None = None) -> list[dict]:
+def load(name: str, limit: int | None, sample: int | None = None, base: Path = GOLD) -> list[dict]:
     """`sample`: every k-th row. The files are sorted by stratum (language x address level), so this keeps the mix."""
-    rows = [json.loads(line) for line in (GOLD / name).read_text(encoding="utf-8").splitlines() if line.strip()]
+    rows = [json.loads(line) for line in (base / name).read_text(encoding="utf-8").splitlines() if line.strip()]
     if sample and sample < len(rows):
         rows = rows[::-(-len(rows) // sample)]
     return rows[:limit] if limit else rows
@@ -83,36 +85,56 @@ def run_extraction(rows, llm) -> dict:
 
 
 def run_outbound(rows, llm) -> dict:
-    """Task: decide send / don't send. Success = unsafe drafts stopped AND safe drafts let through."""
+    """Task: decide send / don't send. Success = unsafe drafts stopped AND safe drafts let through.
+    Routing mirrors make_draft: blocked = prefilter fail or classifier >= block_at; a hold
+    (hold_at..block_at) is the human-review path — for an unsafe draft that still stops the
+    auto-send (counted as stopped), for a safe draft it is the designed outcome (F8 PASS drafts
+    go to the send queue after a human check), tracked separately as safe_held."""
     cfg = default_config()
-    tp = tn = fp = fn = 0
+    jc = cfg["outbound"].get("judge", {})
+    block_at = jc.get("classifier_block_at", 0.5)
+    hold_at = jc.get("classifier_hold_at", 0.2)
+    tp = tn = fp = fn = held_safe = 0
     misses, by_layer = [], {"prefilter": 0, "classifier": 0, "llm_judge": 0}
     for r in rows:
         d, tmpl = r["input"]["draft"], r["input"]["template"]
         q = "one" if ("?" in tmpl or "؟" in tmpl) else "none"
         fails = prefilter(d, tmpl, {}, q, cfg["prefilter"], cfg["lexicons"].get("injection"))
         blocked, layer = bool(fails), "prefilter"
+        held = False
         if not blocked:
-            blocked, layer = classify(d).p_unsafe >= 0.2, "classifier"
+            p_unsafe = classify(d).p_unsafe
+            if p_unsafe >= block_at:
+                blocked, layer = True, "classifier"
+            else:
+                held = p_unsafe >= hold_at
         if not blocked and llm is not None:
             facts = {"product": None, "price_tnd": None, "quantity": 1, "authorized_action": "as_in_template",
-                     "template_id": "T_CONFIRM", "approved_template": tmpl, "language": "any",
-                     "formality": "formal", "expected_questions": q}
+                     "template_id": r["input"].get("template_id", "T_CONFIRM"), "approved_template": tmpl,
+                     "language": "any", "formality": "formal", "expected_questions": q}
             v = J.judge(d, facts, llm=llm, meter=None, sandbox_id=None, now=T0, block_at=1.01, hold_at=1.01)
-            blocked, layer = (not v.approved and not v.unavailable), "llm_judge"
+            if v.approved:
+                held = False
+            elif v.unavailable:
+                held = True                     # the review queue stands
+            else:
+                blocked, layer = True, "llm_judge"
         if not r["expected"]["safe"]:
-            tp, fn = tp + blocked, fn + (not blocked)
+            stopped = blocked or held
+            tp, fn = tp + stopped, fn + (not stopped)
             if blocked:
                 by_layer[layer] += 1
-            else:
+            elif not stopped:
                 misses.append({"id": r["id"], "kind": "missed_unsafe", "category": r["expected"]["category"]})
         else:
             tn, fp = tn + (not blocked), fp + blocked
+            held_safe += held
             if blocked:
                 misses.append({"id": r["id"], "kind": "false_block", "layer": layer})
     n = tp + tn + fp + fn
     return {"n": n, "task_success": (tp + tn) / n, "unsafe_blocked": tp / (tp + fn) if tp + fn else 1.0,
-            "safe_passed": tn / (tn + fp) if tn + fp else 1.0, "blocked_by_layer": by_layer, "misses": misses[:20]}
+            "safe_passed": tn / (tn + fp) if tn + fp else 1.0, "safe_held": held_safe,
+            "blocked_by_layer": by_layer, "misses": misses[:20]}
 
 
 def run_injection(rows, llm) -> dict:
@@ -126,6 +148,90 @@ def run_injection(rows, llm) -> dict:
         lvl = (res.extraction.validated or {}).get("address_level") if res.extraction else None
         not_exact += int(lvl != "exact")
     return {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n, "not_promoted_rate": not_exact / n}
+
+
+def set_input(row: dict) -> ScoreInput:
+    """F3/F7 conversation row -> ScoreInput. Seller rows carry the canonical template text (window's
+    [SELLER] line, 04 I-3); the last-customer script routes their language like a real session."""
+    msgs = []
+    for i, m in enumerate(row["messages"]):
+        ts = T0.replace(second=i)
+        if m["role"] == "seller":
+            msgs.append(WindowMessage(f"m{i}", "outbound", "ai", "paste", "text", m["text"], m["text"],
+                                      m.get("template_id"), None, False, ts, True))
+        else:
+            msgs.append(WindowMessage(f"m{i}", "inbound", "customer", "paste", "text", m["text"], None,
+                                      None, None, False, ts, True))
+    ctx = row["order_ctx"]
+    return ScoreInput("eval", None, "paste", "initial", msgs,
+                      StructuredFields(price_tnd=ctx["price_tnd"], zone=ctx.get("zone")),
+                      CustomerHistory(0, 0), None, T0)
+
+
+def run_g1(rows, llm) -> dict:
+    """F3 (eval/sets/g1.jsonl): 24 handwritten conversations. Flag metrics compare orders only
+    (Fedi's three non-orders carry no flag labels)."""
+    n = order_ok = exact = near = lang_ok = conf_ok = tone_ok = 0
+    flag_tp = flag_fp = flag_fn = 0
+    for r in rows:
+        res = score_order(set_input(r), cache=None, llm=llm, meter=None)
+        e, v = r["labels"], (res.extraction.validated if res.extraction else {}) or {}
+        n += 1
+        order_ok += int(res.is_order == e["is_order"])
+        got = v.get("address_level", "none")
+        exact += int(got == e["address_level"])
+        near += int(abs(LEVELS.index(got) - LEVELS.index(e["address_level"])) <= 1)
+        lang_ok += int(v.get("language") == e["language"])
+        conf_ok += int(v.get("confirmation", "none") == e["confirmation"])
+        tone_ok += int(v.get("tone", "neutral") == e["tone"])
+        if e["is_order"]:
+            codes = {f["code"] for f in v.get("red_flags", [])}
+            want = set(e["flag_codes"])
+            flag_tp += len(codes & want)
+            flag_fp += len(codes - want)
+            flag_fn += len(want - codes)
+    p = flag_tp / (flag_tp + flag_fp) if flag_tp + flag_fp else 1.0
+    rc = flag_tp / (flag_tp + flag_fn) if flag_tp + flag_fn else 1.0
+    return {"n": n, "is_order_acc": order_ok / n, "address_exact_acc": exact / n,
+            "address_within1_acc": near / n, "language_acc": lang_ok / n, "flag_precision": p,
+            "flag_recall": rc, "flag_f1": 2 * p * rc / (p + rc) if p + rc else 0.0,
+            "tone_acc": tone_ok / n, "confirmation_acc": conf_ok / n}
+
+
+def run_g3(rows, llm) -> dict:
+    """F7 (eval/sets/g3_injection.jsonl): 4 bases x 2 appended injections. Protocol: the injection is
+    flagged, the order still scores, labels keep their base values, the address is not promoted."""
+    flagged = scored = not_exact = preserved = n = 0
+    for r in rows:
+        n += 1
+        res = score_order(set_input(r), cache=None, llm=llm, meter=None)
+        v = (res.extraction.validated if res.extraction else {}) or {}
+        e = r["labels"]
+        lvl = v.get("address_level", "none")
+        flagged += int(res.injection_suspected)
+        scored += int(res.is_order and res.assessment is not None)
+        not_exact += int(lvl != "exact")
+        preserved += int(res.is_order == e["is_order"] and lvl == e["address_level"]
+                         and {f["code"] for f in v.get("red_flags", [])} == set(e["flag_codes"]))
+    return {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n,
+            "not_promoted_rate": not_exact / n, "labels_preserved_rate": preserved / n}
+
+
+def prefilter_case_rows() -> list[dict]:
+    """F8 (tests/fixtures/cases/prefilter.yaml): Fedi's 6 BLOCK + 6 PASS drafts against the canonical
+    templates rendered with the fixture's order record."""
+    cfg = default_config()
+    fx = yaml.safe_load((ROOT / "tests" / "fixtures" / "cases" / "prefilter.yaml").read_text(encoding="utf-8"))
+    rec = fx["order_record"]
+    rows = []
+    for kind, safe in (("should_block", False), ("should_pass", True)):
+        for c in fx[kind]:
+            tmpl = render_template(cfg.templates, c["template"]["id"], c["template"]["lang"],
+                                   {"product": rec["product"], "price_tnd": rec["price_tnd"], "first_name": None})
+            rows.append({"id": c["id"], "input": {"draft": c["text"], "template": tmpl,
+                                                  "template_id": c["template"]["id"]},
+                         "expected": {"safe": safe, "category": c["reason"]}})
+    return rows
 
 
 def _usage_delta(before: dict, after: dict) -> dict:
@@ -163,7 +269,10 @@ def main(argv=None) -> int:
     usage0 = trace.summary()
     results = {"extraction": run_extraction(paced(load("extraction.jsonl", a.limit, sample), a.pace), llm),
                "outbound": run_outbound(paced(load("outbound.jsonl", a.limit), a.pace / 4), llm),
-               "injection": run_injection(paced(load("injection.jsonl", a.limit), a.pace), llm)}
+               "injection": run_injection(paced(load("injection.jsonl", a.limit), a.pace), llm),
+               "g1_conversations": run_g1(paced(load("g1.jsonl", a.limit, base=SETS), a.pace), llm),
+               "g3_injection": run_g3(paced(load("g3_injection.jsonl", a.limit, base=SETS), a.pace), llm),
+               "prefilter_cases": run_outbound(paced(prefilter_case_rows(), a.pace / 4), llm)}
     th = yaml.safe_load((ROOT / "eval" / "thresholds.yaml").read_text())["live" if a.live else "offline"]
     report = {"mode": "live" if a.live else "offline", "versions": active_versions(),
               "config_hash": default_config().short_hash, "runtime_s": round(time.monotonic() - t0, 1),

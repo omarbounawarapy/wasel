@@ -19,7 +19,7 @@ from app.outbound.prefilter import prefilter
 from app.scoring.config import default_config
 from tests.conftest import T0
 
-GOOD_LLM = "Bonjour {first_name}, votre commande : Robe d'été à 89 DT. Vous la confirmez, oui ou non ? Merci 🙏"
+GOOD_LLM = "Bonjour {first_name}, votre commande de Robe d'été est à 89 TND. Confirmez-vous que vous souhaitez la recevoir ? Merci 🙏"
 GOOD_FR = GOOD_LLM.replace("{first_name}", "Amira")
 APPROVE = {"unsupported_claims": [], "grounded": True, "language_ok": True, "tone_ok": True, "overreach": "none",
            "question_count": "one", "verdict": "approve"}

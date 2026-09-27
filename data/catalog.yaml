@@ -26,7 +26,12 @@ products:
   - {product_id: P11, name: "écouteurs sans fil", price_tnd: 179, category: electronics, weight: 0.05,
      aliases: {fr: ["écouteurs sans fil"], arabizi: ["kitman sans fil"], darija_arabic_script: ["سماعات"]}}
   - {product_id: P12, name: "casque bluetooth", price_tnd: 220, category: electronics, weight: 0.05,
-     aliases: {fr: ["casque bluetooth"], arabizi: ["casque bluetooth"], darija_arabic_script: ["كاسك بلوتوث"]}}
+     # F5: canonical "casque bluetooth"; short form "casque"/"كاسك"; spelling variant "كاسك بلوتوث";
+     # canonical Arabic "سماعات بلوتوث". NOT aliased per F5's normalization cautions ("do not
+     # automatically equate"): generic "écouteurs bluetooth"/"إيربودز"/"kit mains libres"/"كيت مان ليرب",
+     # and plain "سماعات" (owned by P11) — ambiguous terms ask for clarification instead.
+     aliases: {fr: ["casque bluetooth", "casque"], arabizi: ["casque bluetooth", "casque"],
+               darija_arabic_script: ["سماعات بلوتوث", "كاسك بلوتوث", "كاسك"]}}
   - {product_id: P13, name: "enceinte portable", price_tnd: 279, category: electronics, weight: 0.04,
      aliases: {fr: ["enceinte portable"], arabizi: ["baffle"], darija_arabic_script: ["بافل"]}}
   - {product_id: P14, name: "aspirateur", price_tnd: 349, category: home, weight: 0.03,
