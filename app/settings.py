@@ -65,6 +65,12 @@ class Settings(BaseSettings):
             log.warning("unknown APP_MODE %r -> public", v)
         return "public"
 
+    @field_validator("live_llm_daily_cap", mode="before")
+    @classmethod
+    def _cap(cls, v):
+        # .env.example ships `LIVE_LLM_DAILY_CAP=` (empty = the mode default); without this a copied example crashes
+        return None if isinstance(v, str) and not v.strip() else v
+
     # ---- derived (never read from env directly)
     @property
     def is_public(self) -> bool:

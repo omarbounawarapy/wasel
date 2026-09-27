@@ -15,6 +15,11 @@ sys.path.insert(0, str(ROOT))
 from app.clock import FrozenClock  # noqa: E402
 from app.contracts import CustomerHistory, ScoreInput, StructuredFields, WindowMessage  # noqa: E402
 from app.scoring.config import load_config  # noqa: E402
+from app.settings import Settings  # noqa: E402
+
+# Tests never read a developer's .env (auto-send, webhook, DRAFT_LLM, keys...): only the process env, which
+# `make test` sets, and each test's explicit Settings(...). Same results on every laptop as in CI (no .env).
+Settings.model_config["env_file"] = None
 
 T0 = datetime(2026, 9, 27, 10, 0, 0, tzinfo=UTC)
 
