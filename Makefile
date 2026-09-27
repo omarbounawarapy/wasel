@@ -33,7 +33,13 @@ ui: ## dashboard only on :8501 (06 §1.5), against API_BASE_URL (default :8000)
 wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (STATUS O-9/G5; docs/whatsapp-live-test.md)
 	bash scripts/wa_webhook_up.sh
 
-.PHONY: help setup run up ui wa-up test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
+brev-serve: ## run ON the Brev GPU instance: install + serve vLLM (MODEL, PORT, VLLM_ARGS; docs/brev-live-test.md)
+	bash scripts/brev_llm_up.sh serve
+
+brev-check: ## verify the self-hosted LLM endpoint from the laptop (GROQ_BASE_URL + GROQ_API_KEY in .env)
+	bash scripts/brev_llm_up.sh check
+
+.PHONY: help setup run up ui wa-up brev-serve brev-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

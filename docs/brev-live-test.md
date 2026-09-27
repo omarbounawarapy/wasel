@@ -1,0 +1,69 @@
+# Live self-hosted LLM: the brain on a Brev GPU, from a laptop
+
+Brev plan P0/P1 (`docs/brev_gpu_plan.md`). The LLM layer here is already OpenAI-compatible
+(`app/llm/groq_backend.py`), so one env var moves it from Groq's free tier (1,000 req/day,
+8K tok/min, ~1 h per paced eval) to a GPU you rent by the hour: same request shape, no rate
+limits, unpaced evals in minutes, and demo-day insurance when Groq caps out mid-pitch.
+`scripts/brev_llm_up.sh` (`make brev-serve` / `make brev-check`) sets the instance side up
+and verifies the laptop side. No app code changes beyond `GROQ_BASE_URL` in `.env`.
+
+## Prerequisites
+
+- A Brev account with credit (brev.nvidia.com) and an instance:
+  - **gpt-oss-20b** (default): any 24 GB card — L4, A10G, RTX 4090 class. ~$0.4–1/hr.
+  - **gpt-oss-120b**: an 80 GB card — A100/H100. ~$1.5–3.5/hr; launch it with
+    `MODEL=openai/gpt-oss-120b VLLM_ARGS="--gpu-memory-utilization 0.95 --max-model-len 16384"`.
+- SSH access to the instance (Brev gives you the command in the console) and either `docker`
+  or `python3` on it. On Blackwell GPUs use the docker path — the official `vllm/vllm-openai`
+  image ships the right kernels.
+- On the laptop: `.env` keys (the instance's public IP goes in `GROQ_BASE_URL`):
+  ```
+  GROQ_BASE_URL=http://<instance-ip>:8001/v1   # empty = Groq (the default chain)
+  GROQ_API_KEY=<the vLLM --api-key token>       # still required when self-hosted
+  EXTRACT_MODEL=openai/gpt-oss-20b
+  FALLBACK_MODEL=openai/gpt-oss-20b             # or GROQ_FALLBACK_ENABLED=false: single-model backend
+  ```
+
+## Run
+
+On the **instance** (clone the repo, or at least `scripts/` + a `.env` if you prefer):
+
+```bash
+make brev-serve                                  # MODEL=openai/gpt-oss-20b by default
+```
+
+Installs vLLM (docker if present, else a venv), starts the server on :8001 keyed by a token
+(generated and shown once if `GROQ_API_KEY` isn't set), waits for the weights to load, then
+prints the exact `.env` lines to paste on the laptop.
+
+On the **laptop**:
+
+```bash
+make brev-check                                  # /v1/models + one JSON completion + round-trip ms
+GROQ_BASE_URL=… GROQ_API_KEY=… EXTRACT_MODEL=… \
+  .venv/bin/python -m eval.run --live            # unpaced; add --sample 279 for the full set
+```
+
+If the instance has no reachable public IP, tunnel it: `cloudflared tunnel --url
+http://localhost:8001` on the instance, and put the trycloudflare URL in `GROQ_BASE_URL`.
+
+## Demo-day flip (Groq dies mid-pitch)
+
+The chain reads env at request time — no restart of code needed beyond restarting the API so
+`.env` is re-read: set `GROQ_BASE_URL` + `GROQ_API_KEY` + `EXTRACT_MODEL` in `.env`, `make up`,
+and the next message extracts from the GPU. Flip the keys back to empty to return to Groq.
+
+## Checks and caveats
+
+- `make brev-check` must pass before trusting the flip; check both `make eval` (offline,
+  unchanged) and one `eval.run --live` before demo day so the model's behavior is known.
+- The Groq-only `reasoning_format` field is dropped automatically for self-hosted endpoints;
+  `reasoning_effort=low` is kept (vLLM honors it for gpt-oss). If the server 400s anyway,
+  `tests/unit/test_groq_backend_routing.py` pins which kwargs each path sends.
+- The endpoint must never be exposed without its `--api-key` token; anyone with the URL and
+  token can burn your GPU credit.
+- **Credit burns while the instance runs, not while it's stopped**: `make brev-serve`'s
+  `stop` subcommand (or `bash scripts/brev_llm_up.sh stop`) tears the server down, then stop
+  the instance in the Brev console. This is the whole budget discipline.
+- The script re-runs cleanly (`serve` exits 0 if the model is already being served); the
+  first boot downloads weights, so give 20b ~15–25 min the first time.

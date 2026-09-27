@@ -179,18 +179,17 @@ Leftover credit rolls into the post-hackathon hosted stack (one L4 running vLLM
    card rate. On Blackwell GPUs use the official vLLM container (correct kernels);
    on L4/A100 plain `pip install vllm` is fine.
 2. **Serve:** `vllm serve openai/gpt-oss-20b|120b --port 8001 --api-key $TOKEN`.
-3. **3-line app patch** (only change needed): make the base URL env-driven —
-   `app/llm/groq_backend.py:27` → `GROQ_BASE_URL = os.environ.get("GROQ_BASE_URL",
-   "https://api.groq.com/openai/v1")` and thread it through `groq_backend()` (it
-   already takes `base_url` as a ctor arg at line 52). Model already env-driven via
+3. ~~**3-line app patch**~~ **done (P1)**: `groq_backend()` now resolves explicit arg >
+   `GROQ_BASE_URL` env > Groq default, read at call time; unit-tested in
+   `tests/unit/test_groq_backend_routing.py`. Model already env-driven via
    `EXTRACT_MODEL` / `config/llm.yaml`.
-4. **[VERIFY] reasoning kwargs:** `GROQ_REASONING_KWARGS` (`reasoning_effort=low`,
-   `reasoning_format=hidden`, `app/llm/groq_backend.py:28`) — `reasoning_effort` is
-   supported by vLLM for gpt-oss, but `reasoning_format` is a Groq-specific field
-   that may 400 on vLLM. If so, make the extra-kwargs map backend-aware (empty for
-   self-hosted).
-5. **Eval:** `GROQ_BASE_URL=… EXTRACT_MODEL=openai/gpt-oss-120b make eval-live`
-   without pacing; compare against `reports/eval_live.json` baselines.
+4. ~~**[VERIFY] reasoning kwargs**~~ **handled (P1)**: for self-hosted URLs the Groq-only
+   `reasoning_format` field is dropped automatically (`SELFHOST_REASONING_KWARGS`);
+   `reasoning_effort=low` is kept (vLLM honors it for gpt-oss).
+5. **Eval:** `GROQ_BASE_URL=… EXTRACT_MODEL=openai/gpt-oss-20b .venv/bin/python -m
+   eval.run --live` without pacing (add `--sample 279` for the full extraction set);
+   compare against `reports/eval_live.json` baselines. Instance/laptop runbook:
+   `docs/brev-live-test.md` (`make brev-serve` / `make brev-check`).
 6. **Teardown discipline:** `brev stop` the instance the moment a session ends —
    credit burns while running, not while stopped. The planned spend assumes ~40
    running GPU-hours total; leaving one H100 idling over a weekend burns a third of
