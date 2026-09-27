@@ -86,7 +86,7 @@ class AppState:
                              meter=meter, config=self.config)
         process_due(conn, now, scorer, self.drafter, ids=self.ids, meter=meter,
                     no_reply_s=self.no_reply_s if self.settings.no_reply_enabled else None)
-        if self.sender is not None and self.settings.wa_auto_send:
+        if self.settings.wa_auto_send and not self.settings.is_public:
             from app.api.commands import auto_send_due
             auto_send_due(conn, self.ids, now, self.settings, self.sender)
 
@@ -156,7 +156,8 @@ class AppState:
                                   last_purge_at=utc_iso(self.last_purge_at) if self.last_purge_at else None),
             wa_token_present=bool(s.wa_token),
             real_rows=conn.execute("SELECT COUNT(*) FROM conversations WHERE channel='whatsapp'").fetchone()[0],
-            sandbox_orders=conn.execute("SELECT COUNT(*) FROM orders WHERE sandbox_id IS NOT NULL").fetchone()[0])
+            sandbox_orders=conn.execute("SELECT COUNT(*) FROM orders WHERE sandbox_id IS NOT NULL").fetchone()[0],
+            wa_auto_send=s.wa_auto_send and not s.is_public)
 
 
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,
@@ -199,9 +200,11 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         if cl and cl.isdigit() and int(cl) > MAX_BODY and request.url.path != "/webhook/whatsapp":   # W-3: 1 MiB there
             return JSONResponse({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "body over 64 KB"}}, status_code=413)
         resp = await call_next(request)
-        resp.headers["Content-Security-Policy"] = ("default-src 'self'; img-src 'self' data:; style-src 'self' "
-                                                   "'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; "
-                                                   "base-uri 'none'")
+        # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags (04 §
+        # [VERIFY] answered). XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule (06 §1.2).
+        resp.headers["Content-Security-Policy"] = ("default-src 'self'; script-src 'self' 'unsafe-inline'; "
+                                                   "img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+                                                   "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "no-referrer"
         return resp

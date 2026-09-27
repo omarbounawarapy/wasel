@@ -52,7 +52,7 @@ def thresholds(cfg: dict | None = None) -> tuple[float, float]:
     """(block_at, hold_at) from scoring.yaml outbound.judge; the same numbers everywhere (02 §8.2)."""
     from app.scoring.config import default_config
     jc = (cfg if cfg is not None else default_config().raw).get("outbound", {}).get("judge", {})
-    return float(jc.get("classifier_block_at", 0.5)), float(jc.get("classifier_hold_at", 0.2))
+    return float(jc.get("classifier_block_at", 0.5)), float(jc.get("classifier_hold_at", 0.1))
 
 
 def _render(templates: dict, tid: str, lang: str, slots: dict[str, str]) -> str:
@@ -158,9 +158,9 @@ def calibrate(*, block_at: float | None = None, hold_at: float | None = None, n_
     """Measure the three-way decision on text the classifier never trained on: the bank's `holdout` unsafe
     phrases inserted into rendered templates, against safe drafts built from the static templates + `safe`
     phrases. Reports the counts per decision and the rates that gate the design (how much untrained unsafe
-    text is cleared to send; whether any safe draft is held or blocked), plus the smallest hold_at on a 5%
-    grid that clears at most 5% of the unsafe holdout while blocking no safe draft, with block_at fixed.
-    Deterministic; no training happens here."""
+    text is cleared to send; how many safe drafts are held or blocked), plus the smallest hold_at on a 5%
+    grid that clears at most 15% of the unsafe holdout while holding at most 15% of safe drafts (auto-send
+    has to stay viable) and blocking none, with block_at fixed. Deterministic; no training happens here."""
     import yaml
 
     from app.scoring.config import default_config
@@ -190,13 +190,15 @@ def calibrate(*, block_at: float | None = None, hold_at: float | None = None, n_
 
     rep = report((block_at, hold_at))
     if grid:
-        # Smallest hold_at that clears at most 5% of untrained unsafe text while still blocking no safe draft.
+        # Smallest hold_at that clears at most 15% of untrained unsafe text while holding at most 15% of
+        # safe drafts (auto-send has to stay viable) and blocking none. Both sides matter: 0.05 clears
+        # only 4% of unsafe text but holds ~60% of safe rewrites, which kills auto-send in practice.
         # (It only moves the send/review line; block_at stays fixed, so the veto never loosens.)
         candidates = []
         for h in [round(0.05 * i, 2) for i in range(1, int(block_at * 20))]:
             r = report((block_at, h))
-            if r["unsafe_sent"] <= 0.05 and r["safe_blocked"] == 0:
+            if r["unsafe_sent"] <= 0.15 and r["safe_held"] <= 0.15 and r["safe_blocked"] == 0:
                 candidates.append(h)
         rep["suggested_hold_at"] = candidates[0] if candidates else None
-        rep["grid"] = [report((block_at, round(0.05 * i, 2))) for i in range(1, int(block_at * 20), 2)]
+        rep["grid"] = [report((block_at, round(0.05 * i, 2))) for i in range(1, int(block_at * 20))]
     return rep

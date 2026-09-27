@@ -116,7 +116,7 @@ def test_order_detail_shows_score_flags_and_draft(server):
     at = run("Order Detail", order_id=h["order_id"])
     t = texts(at)
     assert "HIGH 87" in t and "9rib el jemaa" in t and "T_ADDRESS" in t
-    assert any(b.label.startswith("📤 Send") for b in at.button)
+    assert any(b.label.startswith("Send message") for b in at.button)
     assert any("Approve for shipping" in b.label for b in at.button)
 
 
@@ -124,7 +124,7 @@ def test_hero_loop_through_the_ui(server):
     """Scripted reply → backend rescores → the page shows v2 lower than v1, with the reason diff."""
     h = hero(server)
     at = run("Order Detail", order_id=h["order_id"])
-    next(b for b in at.button if b.label.startswith("💬")).click()
+    next(b for b in at.button if b.label.startswith("Reply: ")).click()
     at.run()
     assert not at.exception, [x.value for x in at.exception]
     at.run()                                                # next render: the worker tick has rescored it
@@ -137,7 +137,7 @@ def test_hero_loop_through_the_ui(server):
 def test_send_draft_records_it(server):
     h = hero(server)
     at = run("Order Detail", order_id=h["order_id"])
-    next(b for b in at.button if b.label.startswith("📤 Send")).click()
+    next(b for b in at.button if b.label.startswith("Send message")).click()
     at.run()
     assert not at.exception, [x.value for x in at.exception]
     d = server.client.get(f"/api/orders/{h['order_id']}").json()
@@ -224,7 +224,7 @@ def test_whatsapp_webhook_message_reaches_the_inbox(wa_server):
     metrics = {m.label: m.value for m in at.metric}
     assert metrics["WhatsApp conversations"] == "1"
     df = at.dataframe[0].value
-    assert list(df["From"]) == ["Sami"] and "🔴" in df["Risk"][0]
+    assert list(df["From"]) == ["Sami"] and "High" in df["Risk"][0]
     assert "mouch dima fi dar" in texts(at)                  # the thread under the table
 
 
@@ -244,7 +244,7 @@ def test_order_detail_shows_every_judge_layer_for_an_llm_rewrite(server):
         next(d.value for d in at.dataframe if "Layer" in d.value)
     assert list(layers["Layer"]) == ["1 · Rules prefilter", "2 · Guard classifier (local, no LLM)",
                                      "3 · LLM judge (groq:openai/gpt-oss-120b)"]
-    assert "⛔ rejected" in set(layers["Result"])        # the model said approve; code recomputed it
+    assert "rejected" in set(layers["Result"])        # the model said approve; code recomputed it
     assert any("livraison gratuite" in w.value for w in at.warning)
 
 

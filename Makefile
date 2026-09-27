@@ -3,7 +3,9 @@ SHELL         := /bin/bash
 .SHELLFLAGS   := -eu -o pipefail -c
 .DEFAULT_GOAL := help
 
-PY          ?= python3
+# the project venv if there is one (.venv/bin on Linux/macOS, .venv/Scripts on Windows, where
+# `python3` is only the Microsoft Store stub), else python3 on PATH
+PY          ?= $(firstword $(wildcard .venv/bin/python .venv/Scripts/python.exe) python3)
 PYTEST      := $(PY) -m pytest
 RUFF        := $(PY) -m ruff
 URL         ?= http://localhost:8000
@@ -30,6 +32,12 @@ up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set
 ui: ## dashboard only on :8501 (06 §1.5), against API_BASE_URL (default :8000)
 	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
 
+web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make demo` then serve it at :8000/
+	cd web && npm ci --no-audit --no-fund && npm run build
+
+web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make run` or `make up` first)
+	cd web && npm run dev
+
 wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (STATUS O-9/G5; docs/whatsapp-live-test.md)
 	bash scripts/wa_webhook_up.sh
 
@@ -39,7 +47,7 @@ brev-serve: ## run ON the Brev GPU instance: install + serve vLLM (MODEL, PORT, 
 brev-check: ## verify the self-hosted LLM endpoint from the laptop (GROQ_BASE_URL + GROQ_API_KEY in .env)
 	bash scripts/brev_llm_up.sh check
 
-.PHONY: help setup run up ui wa-up brev-serve brev-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
+.PHONY: help setup run up ui web web-dev wa-up brev-serve brev-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

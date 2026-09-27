@@ -221,15 +221,16 @@ def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | N
 
 
 def auto_send_due(conn, ids: IdGen, now: datetime, settings: Settings, sender) -> list[str]:
-    """Send every unsent auto_send draft on a real WhatsApp conversation (WA_AUTO_SEND, event/dev only).
-    route=auto_send already means: rewrite approved by the judge and the classifier, confidence high, price under
-    the cap, loop guard and 24 h window (route.py). Failures stay unsent and visible for a human."""
-    if not (settings.wa_auto_send and settings.wa_send_effective and sender is not None):
+    """Send every unsent auto_send draft (WA_AUTO_SEND, never in public mode). route=auto_send already means
+    the auto_send gate passed (route.py): the classifier cleared the draft, confidence high, price under the
+    cap, loop guard and 24 h window. Real WhatsApp conversations go out through the Cloud API; any other
+    channel records the send as simulated, so the threshold loop is visible in the demo. Failures stay
+    unsent and visible for a human."""
+    if not settings.wa_auto_send or settings.is_public:
         return []
     sent = []
     for d in conn.execute("SELECT d.draft_id FROM outbound_drafts d JOIN orders o ON o.order_id=d.order_id"
-                          " JOIN conversations c ON c.conversation_id=o.conversation_id"
-                          " WHERE d.sent_message_id IS NULL AND d.route='auto_send' AND c.channel='whatsapp'"
+                          " WHERE d.sent_message_id IS NULL AND d.route='auto_send'"
                           " AND o.sandbox_id IS NULL").fetchall():
         try:
             send_draft(conn, ids, now, settings, None, d["draft_id"], sender, decided_by="system")

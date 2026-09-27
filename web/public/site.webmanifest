@@ -1,0 +1,12 @@
+{
+	"name": "Wasel · COD order risk",
+	"short_name": "Wasel",
+	"start_url": "/dashboard/",
+	"display": "standalone",
+	"background_color": "#f4f6f9",
+	"theme_color": "#12386b",
+	"icons": [
+		{ "src": "/wasel-mark.png", "sizes": "512x512", "type": "image/png" },
+		{ "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" }
+	]
+}

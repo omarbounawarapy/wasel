@@ -15,6 +15,10 @@ APP_ID="${META_APP_ID:-1104336828760534}"        # the RISKINI app subscribed to
 GRAPH="${META_GRAPH_VERSION:-v21.0}"
 CLOUDFLARED="${CLOUDFLARED:-$(command -v cloudflared || true)}"
 [ -n "$CLOUDFLARED" ] || CLOUDFLARED="$HOME/.local/bin/cloudflared"
+[ -x "$CLOUDFLARED" ] || [ ! -x "$CLOUDFLARED.exe" ] || CLOUDFLARED="$CLOUDFLARED.exe"      # Windows (Git Bash)
+# the project venv's python if present; on Windows `python3` is only the Microsoft Store stub
+PYTHON="${PYTHON:-$(for p in .venv/bin/python .venv/Scripts/python.exe; do [ -x "$p" ] && echo "$p" && break; done)}"
+PYTHON="${PYTHON:-python3}"
 [ -x "$CLOUDFLARED" ] || { echo "cloudflared not found (set CLOUDFLARED=… or install it)" >&2; exit 1; }
 
 [ -f .env ] && { set -a; . ./.env; set +a; }
@@ -37,7 +41,7 @@ TUNNEL_PID=$!
 echo "waiting for the tunnel…"
 URL=""
 for _ in $(seq 1 30); do
-  URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOG" | head -1)
+  URL=$(grep -oE 'https://[a-z0-9-]+\.trycloudflare\.com' "$LOG" | head -1 || true)   # no match yet: keep waiting (set -e)
   [ -n "$URL" ] && break
   sleep 2
 done
@@ -50,7 +54,7 @@ done
 echo "tunnel up: $URL"
 
 TOKEN=$(curl -sf -m 15 "https://graph.facebook.com/oauth/access_token?client_id=$APP_ID&client_secret=$WA_APP_SECRET&grant_type=client_credentials" \
-        | python3 -c "import json,sys; print(json.load(sys.stdin).get('access_token',''))")
+        | "$PYTHON" -c "import json,sys; print(json.load(sys.stdin).get('access_token',''))")
 [ -n "$TOKEN" ] || { echo "could not get an app access token — check META_APP_ID / WA_APP_SECRET" >&2; exit 1; }
 
 RESULT=$(curl -sf -m 15 -X POST "https://graph.facebook.com/$GRAPH/$APP_ID/subscriptions" \

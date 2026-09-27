@@ -6,11 +6,11 @@
 
 The guard classifier (layer 2 of the 3 draft checks — the local, no-LLM one) now outputs an explicit
 decision on every generated draft: **`send`** (clear to send to the client), **`review`** (goes to the
-owner-approval queue), **`block`** (vetoed; the standard template is used instead). Same model, same
-thresholds as before (`scoring.yaml` → `outbound.judge`: `classifier_hold_at: 0.2`, `classifier_block_at:
-0.5`), so routing and the human-click rule are **unchanged**. "send" is the classifier's recommendation
-only — auto-send still needs the LLM judge's approval plus the route guards, and a human clicks in this
-pilot regardless.
+owner-approval queue), **`block`** (vetoed; the standard template is used instead). Same model; the
+thresholds live in `scoring.yaml` → `outbound.judge` (`classifier_block_at: 0.5`; `classifier_hold_at`
+was 0.2 at the time of this paragraph — **moved to 0.1 in UPDATE 2 below**). "send" is the classifier's
+recommendation only — auto-send still needs the LLM judge's approval plus the route guards, and a human
+clicks in this pilot regardless.
 
 ## What's new for you (no backend work needed)
 
@@ -33,7 +33,7 @@ pilot regardless.
   the classifier flagging doubt even when the judge approved — worth showing, it's exactly the
   grey-zone case this feature exists for.
 - Optional explainer for the "How this message was checked" expander:
-  *"A small local model scores how risky this message is. Below 20% it's cleared, 20–50% goes to you for
+  *"A small local model scores how risky this message is. Below 10% it's cleared, 10–50% goes to you for
   approval, above 50% it's blocked and the standard template is used."*
 
 ## Copy (keep the verbs, no "AI-powered")
@@ -44,7 +44,7 @@ pilot regardless.
 | `review` | Owner approval |
 | `block` | Blocked |
 
-If you also want the one-line **reason** ("risk 31% in the 20%–50% review band, most likely discount") in
+If you also want the one-line **reason** ("risk 31% in the 10%–50% review band, most likely discount") in
 the draft view: it isn't in the API yet (only the score parts are) — tell me and I'll add it to the
 projection, it's one line.
 
@@ -57,3 +57,41 @@ pytest tests/unit/test_outbound_judge.py -q  # 26 passed — includes the new de
 
 Then `make demo` → open a sample order → the activity feed's `draft.judged` line shows
 "classifier: …". Seeded/old drafts may show no decision — that's the n/a case above.
+
+---
+
+## UPDATE (same day): the threshold now auto-sends
+
+Omar's call after the note above: `scoring.yaml` → `auto_send.gate: classifier`. What it means for you:
+
+- **`decision == "send"` now means the draft goes out without a click** (once `WA_AUTO_SEND` is on):
+  the classifier clearing it is enough — the LLM judge is *not* required anymore (it still runs when
+  available, and a judge **rejection** still kills the rewrite). `review` and `block` behave exactly as
+  before: owner-approval queue / veto.
+- **What still never auto-sends:** static templates (human click), drafts over 150 TND, low confidence,
+  more than 2 auto messages per order, outside the 24 h window, anything in **public mode**, and
+  sandbox copies. On non-WhatsApp channels a system send is **recorded as simulated**
+  (`delivery: "recorded_only"`, `decided_by: "system"`) so the loop is visible in the demo.
+- **API shape unchanged** — same `route` values (`auto_send | needs_review | blocked`), same
+  `decision` key. Only the mapping from decision to route changed.
+- **One dashboard copy to fix:** in `draft_checks()`, the layer-3 "unavailable" row says
+  *"a person must check it (never auto-sent)"* — no longer true for a `send` decision. Suggested:
+  *"judge unavailable — sent on the classifier's clear"* when `decision == "send"`, keep the old text
+  otherwise. `JUDGE_SHORT()`'s "vetoed by the guard classifier" is still correct.
+
+The old rule stays available: set `auto_send.gate: judge` in `scoring.yaml` and the judge approval is
+required again — no code change.
+
+## UPDATE 2 (same day): the review line moved to 10%
+
+With auto-send riding on the classifier's decision (update above), the hold line is the only backstop
+when the judge is down, so it moved: `classifier_hold_at: 0.1` (was `0.2`), block stays `0.5`. Measured
+on bank phrases the model never trained on: unsafe text cleared to send drops **21% → 11%**, ~12% of
+safe drafts now land in the review band (they're safe — they just wait for your click), and zero safe
+drafts are blocked. The tighter 0.05 line was rejected on measurement: it holds ~60% of safe golden
+rewrites, i.e. auto-send would almost never fire. `calibrate()` now weighs both sides when suggesting
+the line, and its suggestion is test-pinned to the shipped config.
+
+For you: only the explainer copy above changes (10% instead of 20%). The `reason` string already
+renders the band from config ("risk 31% in the 10%–50% review band, most likely …"), and the
+decision/route values are untouched.
