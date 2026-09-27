@@ -56,7 +56,7 @@ For live extraction, copy `.env.example` to `.env` and set `GROQ_API_KEY`. `make
 | `make run` / `make ui` | API only / dashboard only (against `API_BASE_URL`) |
 | `make demo` | API in public mode, the way the hosted demo will run |
 | `make check` | hygiene + lint + offline tests, no keys (CI runs exactly this) |
-| `make docker` | build the production image |
+| `make serve` / `make tunnel` | host run + publish it on Cloudflare ([deploy guide](docs/deploy-cloudflare.md)) |
 | `make help` | every target |
 
 ## How it works
