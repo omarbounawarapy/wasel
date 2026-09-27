@@ -156,6 +156,48 @@ def eval_reports(request: Request):
     return _nocache_json(out)
 
 
+def _failure_sessions(request: Request, source: str, vid: str | None) -> list[dict]:
+    from failures import dataset
+    if source == "app":
+        from failures.adapter import sessions_from_db
+        conn = _s(request).conn()
+        return sessions_from_db(conn) + (sessions_from_db(conn, vid) if vid else [])
+    if source not in ("synthetic", "holdout"):
+        raise ApiError(400, "BAD_SOURCE", "source must be synthetic, holdout or app")
+    return dataset.load(dataset.OUT if source == "synthetic" else dataset.OUT_HOLDOUT)
+
+
+@router.get("/failures")
+def failures(request: Request, source: str = "synthetic", vid: str | None = Depends(visitor_id)):
+    """Hidden-failure analyzer (failures/): ranked issues, grouped sessions, evidence, accuracy on the labeled
+    sets, runtime and cost. Rules run live; the LLM-labeled run is read from reports/ when it was recorded."""
+    from failures.run import analyze, score
+    sessions = _failure_sessions(request, source, vid)
+    rep = analyze(sessions)
+    findings = rep.pop("_findings")
+    if source != "app":
+        rep["accuracy"] = score(sessions, findings)
+    p = _s(request).config.root / "reports" / f"failures_{source}_llm.json"
+    llm = None
+    if p.exists():
+        try:
+            d = json.loads(p.read_text(encoding="utf-8"))
+            llm = {k: d.get(k) for k in ("accuracy", "semantics", "runtime", "cost", "by_status", "issues")}
+        except ValueError:
+            llm = None
+    return _nocache_json({"source": source, **rep, "llm_run": llm})
+
+
+@router.get("/failures/sessions/{session_id}")
+def failure_session(session_id: str, request: Request, source: str = "synthetic",
+                    vid: str | None = Depends(visitor_id)):
+    s = next((x for x in _failure_sessions(request, source, vid) if x["session_id"] == session_id), None)
+    if s is None:
+        raise ApiError(404, "NOT_FOUND", "no such session")
+    from failures.detect import detect
+    return _nocache_json({"session": s, "findings": [f.to_dict() for f in detect(s)]})
+
+
 def _nocache_json(d: dict) -> JSONResponse:
     return JSONResponse(d, headers={"Cache-Control": "no-store"})
 

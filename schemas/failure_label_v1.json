@@ -1,0 +1,23 @@
+{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["items"],
+  "properties": {
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "success_claim", "hedged", "asks", "gives_exact_address", "confirms_or_declines"],
+        "properties": {
+          "id": {"type": "integer"},
+          "success_claim": {"type": "boolean"},
+          "hedged": {"type": "boolean"},
+          "asks": {"type": "string", "enum": ["address", "confirm", "other", "none"]},
+          "gives_exact_address": {"type": "boolean"},
+          "confirms_or_declines": {"type": "boolean"}
+        }
+      }
+    }
+  }
+}

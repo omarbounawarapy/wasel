@@ -1,0 +1,1701 @@
+{
+  "source": "holdout",
+  "semantics_mode": "rules",
+  "n_sessions": 130,
+  "n_events": 2009,
+  "findings": 49,
+  "by_status": {
+    "failure": 49
+  },
+  "issues": [
+    {
+      "type": "incomplete_marked_done",
+      "status": "failure",
+      "title": "The session was closed as done while something the order needs was missing.",
+      "signature": "closed with an imprecise address",
+      "details": {},
+      "sessions": [
+        "H015",
+        "H016",
+        "H024",
+        "H046",
+        "H047",
+        "H057",
+        "H086",
+        "H098",
+        "H105"
+      ],
+      "n_sessions": 9,
+      "share": 0.069,
+      "confidence": 0.85,
+      "severity": 0.8,
+      "priority": 6.12,
+      "findings": [
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H015",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Tunis",
+                "address_level": "city_only",
+                "customer_id": "C101",
+                "order_id": "O015"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H016",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 16,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Monastir",
+                "address_level": "city_only",
+                "customer_id": "C109",
+                "order_id": "O016"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H024",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Tunis",
+                "address_level": "city_only",
+                "customer_id": "C102",
+                "order_id": "O024"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H046",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 16,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Tunis",
+                "address_level": "city_only",
+                "customer_id": "C102",
+                "order_id": "O046"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H047",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Menzah",
+                "address_level": "city_only",
+                "customer_id": "C101",
+                "order_id": "O047"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H057",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Tunis",
+                "address_level": "city_only",
+                "customer_id": "C106",
+                "order_id": "O057"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H086",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "près de la poste, Nabeul",
+                "address_level": "city_only",
+                "customer_id": "C108",
+                "order_id": "O086"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H098",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Tunis",
+                "address_level": "city_only",
+                "customer_id": "C107",
+                "order_id": "O098"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H105",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 14,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Menzah",
+                "address_level": "city_only",
+                "customer_id": "C104",
+                "order_id": "O105"
+              }
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "type": "wrong_customer_record",
+      "status": "failure",
+      "title": "A tool returned another customer's record and the agent kept using it.",
+      "signature": "lookup_customer returned another customer",
+      "details": {},
+      "sessions": [
+        "H003",
+        "H013",
+        "H025",
+        "H033",
+        "H036",
+        "H116"
+      ],
+      "n_sessions": 6,
+      "share": 0.046,
+      "confidence": 0.93,
+      "severity": 1.0,
+      "priority": 5.58,
+      "findings": [
+        {
+          "type": "wrong_customer_record",
+          "session_id": "H003",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0003, lookup returned customer C102 (0002), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C102",
+                "name": "Hatem",
+                "past_orders": 2,
+                "phone": "21600000002"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "immeuble Yasmine 2e étage, Lac 2",
+                "address_level": "exact",
+                "customer_id": "C102",
+                "order_id": "O003"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "H013",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0006, lookup returned customer C107 (0007), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C107",
+                "name": "Nour",
+                "past_orders": 2,
+                "phone": "21600000007"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "12 rue de Rome, Tunis",
+                "address_level": "exact",
+                "customer_id": "C107",
+                "order_id": "O013"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "H025",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0007, lookup returned customer C103 (0003), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C103",
+                "name": "Salma",
+                "past_orders": 4,
+                "phone": "21600000003"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "cité el khadra bloc 4 app 12",
+                "address_level": "exact",
+                "customer_id": "C103",
+                "order_id": "O025"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "H033",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0009, lookup returned customer C107 (0007), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C107",
+                "name": "Nour",
+                "past_orders": 0,
+                "phone": "21600000007"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "12 rue de Rome, Tunis",
+                "address_level": "exact",
+                "customer_id": "C107",
+                "order_id": "O033"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "H036",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0001, lookup returned customer C109 (0009), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C109",
+                "name": "Rim",
+                "past_orders": 1,
+                "phone": "21600000009"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "35 avenue Farhat Hached, Sfax",
+                "address_level": "exact",
+                "customer_id": "C109",
+                "order_id": "O036"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "H116",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0009, lookup returned customer C107 (0007), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C107",
+                "name": "Nour",
+                "past_orders": 3,
+                "phone": "21600000007"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "immeuble Yasmine 2e étage, Lac 2",
+                "address_level": "exact",
+                "customer_id": "C107",
+                "order_id": "O116"
+              }
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 2
+    },
+    {
+      "type": "tool_error_ignored",
+      "status": "failure",
+      "title": "A tool failed and the agent carried on as if it had worked.",
+      "signature": "confirm_order failed",
+      "details": {
+        "out_of_stock": 2,
+        "timeout": 1,
+        "payment_rule_violation": 5
+      },
+      "sessions": [
+        "H031",
+        "H042",
+        "H043",
+        "H048",
+        "H055",
+        "H094",
+        "H095",
+        "H121"
+      ],
+      "n_sessions": 8,
+      "share": 0.062,
+      "confidence": 0.8,
+      "severity": 0.7,
+      "priority": 4.48,
+      "findings": [
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H031",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (out_of_stock)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "out_of_stock"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H042",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (timeout)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "timeout"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H043",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H048",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H055",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H094",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H095",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (out_of_stock)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "out_of_stock"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H121",
+          "confidence": 0.8,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "confirm_order failed and the next step was a message",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 3
+    },
+    {
+      "type": "no_progress_search",
+      "status": "failure",
+      "title": "The same search was repeated with the same input and no new result.",
+      "signature": "search_address: same query, no results",
+      "details": {},
+      "sessions": [
+        "H014",
+        "H016",
+        "H027",
+        "H045",
+        "H046",
+        "H070",
+        "H085",
+        "H105",
+        "H125"
+      ],
+      "n_sessions": 9,
+      "share": 0.069,
+      "confidence": 0.94,
+      "severity": 0.5,
+      "priority": 4.25,
+      "findings": [
+        {
+          "type": "no_progress_search",
+          "session_id": "H014",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 5x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H016",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 4x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H027",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 5x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H045",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 4x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H046",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 4x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H070",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 5x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H085",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 5x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H125",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 4x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "H105",
+          "confidence": 0.9,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 3x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 4
+    },
+    {
+      "type": "tool_error_ignored",
+      "status": "failure",
+      "title": "A tool failed and the agent carried on as if it had worked.",
+      "signature": "update_order failed",
+      "details": {
+        "db_locked": 6
+      },
+      "sessions": [
+        "H010",
+        "H018",
+        "H083",
+        "H090",
+        "H103",
+        "H127"
+      ],
+      "n_sessions": 6,
+      "share": 0.046,
+      "confidence": 0.8,
+      "severity": 0.7,
+      "priority": 3.36,
+      "findings": [
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H010",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000002"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H018",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000007"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H083",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000008"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H090",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000004"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H103",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000007"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "H127",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000001"
+              }
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 5
+    },
+    {
+      "type": "repeated_question",
+      "status": "failure",
+      "title": "The agent asked again for something the customer had already given.",
+      "signature": "asked again: address",
+      "details": {},
+      "sessions": [
+        "H017",
+        "H023",
+        "H049",
+        "H061",
+        "H071",
+        "H081",
+        "H119"
+      ],
+      "n_sessions": 7,
+      "share": 0.054,
+      "confidence": 0.88,
+      "severity": 0.4,
+      "priority": 2.46,
+      "findings": [
+        {
+          "type": "repeated_question",
+          "session_id": "H017",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Vous pouvez m'envoyer votre adresse complète ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "35 avenue Farhat Hached, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Je n'ai pas bien noté, c'est quoi votre adresse complète ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "H023",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ab3athli l'adresse kemla ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "12 rue de Rome, Tunis"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Ma fhemtch, l'adresse kemla chnowa ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "H049",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ab3athli l'adresse kemla ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "35 avenue Farhat Hached, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Ma fhemtch, l'adresse kemla chnowa ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "H061",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ab3athli l'adresse kemla ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "35 avenue Farhat Hached, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Ma fhemtch, l'adresse kemla chnowa ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "H071",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Vous pouvez m'envoyer votre adresse complète ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "35 avenue Farhat Hached, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Je n'ai pas bien noté, c'est quoi votre adresse complète ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "H081",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ab3athli l'adresse kemla ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "12 rue de Rome, Tunis"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Ma fhemtch, l'adresse kemla chnowa ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "H119",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ab3athli l'adresse kemla ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "12 rue de Rome, Tunis"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Ma fhemtch, l'adresse kemla chnowa ?"
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 6
+    },
+    {
+      "type": "incomplete_marked_done",
+      "status": "failure",
+      "title": "The session was closed as done while something the order needs was missing.",
+      "signature": "customer question left unanswered",
+      "details": {},
+      "sessions": [
+        "H021",
+        "H022",
+        "H088",
+        "H122"
+      ],
+      "n_sessions": 4,
+      "share": 0.031,
+      "confidence": 0.7,
+      "severity": 0.8,
+      "priority": 2.24,
+      "findings": [
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H021",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "route de Gabès km 4, Sfax. vous livrez le samedi ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H022",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "route de Gabès km 4, Sfax. vous livrez le samedi ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H088",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "immeuble Yasmine 2e étage, Lac 2. vous livrez le samedi ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "H122",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "route de Gabès km 4, Sfax. vous livrez le samedi ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 7
+    }
+  ],
+  "semantics": {
+    "semantics": "rules"
+  },
+  "runtime": {
+    "labeling_s": 0.0,
+    "rules_s": 0.013,
+    "total_s": 0.015,
+    "ms_per_session": 0.11
+  },
+  "cost": {
+    "llm_calls": 0,
+    "llm_tokens": 0,
+    "note": "rules only: 0 LLM calls, CPU only"
+  },
+  "limitations": [
+    "Detectors are rules tuned on the shapes in this dataset (tool names, FR/Arabizi phrasing). New tools or languages need new patterns; the LLM review only sees findings the rules already raised (no recall gain).",
+    "Synthetic sessions are cleaner than real traffic; the scores below are an upper bound for real logs.",
+    "Ambiguous cases (reminders after silence, hedged wording) are surfaced as needs-review, not counted as failures.",
+    "On this app's data, 'tool calls' are the pipeline steps (extraction, scoring, drafting, judge, send) rebuilt from the database, not a live agent trace."
+  ],
+  "accuracy": {
+    "per_type": {
+      "unsupported_success_claim": {
+        "support": 17,
+        "tp": 0,
+        "fp": 0,
+        "fn": 17,
+        "precision": null,
+        "recall": 0.0,
+        "false_positive_sessions": [],
+        "missed_sessions": [
+          "H005",
+          "H017",
+          "H026",
+          "H031",
+          "H042"
+        ]
+      },
+      "wrong_customer_record": {
+        "support": 6,
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "incomplete_marked_done": {
+        "support": 13,
+        "tp": 13,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "tool_error_ignored": {
+        "support": 6,
+        "tp": 6,
+        "fp": 8,
+        "fn": 0,
+        "precision": 0.429,
+        "recall": 1.0,
+        "false_positive_sessions": [
+          "H031",
+          "H042",
+          "H043",
+          "H048",
+          "H055"
+        ],
+        "missed_sessions": []
+      },
+      "no_progress_search": {
+        "support": 9,
+        "tp": 9,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "repeated_question": {
+        "support": 12,
+        "tp": 7,
+        "fp": 0,
+        "fn": 5,
+        "precision": 1.0,
+        "recall": 0.583,
+        "false_positive_sessions": [],
+        "missed_sessions": [
+          "H052",
+          "H069",
+          "H076",
+          "H092",
+          "H110"
+        ]
+      }
+    },
+    "micro_precision": 0.837,
+    "micro_recall": 0.651,
+    "clean_sessions_flagged": 0,
+    "clean_sessions": 62,
+    "recoveries_flagged": [],
+    "ambiguous_to_review": 0
+  }
+}

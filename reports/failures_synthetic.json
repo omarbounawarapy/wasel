@@ -1,0 +1,2112 @@
+{
+  "source": "synthetic",
+  "semantics_mode": "rules",
+  "n_sessions": 130,
+  "n_events": 1999,
+  "findings": 70,
+  "by_status": {
+    "failure": 63,
+    "needs_review": 7
+  },
+  "issues": [
+    {
+      "type": "unsupported_success_claim",
+      "status": "failure",
+      "title": "The agent told the customer it succeeded, but no successful tool call backs it.",
+      "signature": "confirm_order never called",
+      "details": {},
+      "sessions": [
+        "S012",
+        "S045",
+        "S071",
+        "S075",
+        "S085",
+        "S090",
+        "S105",
+        "S115",
+        "S118"
+      ],
+      "n_sessions": 9,
+      "share": 0.069,
+      "confidence": 0.85,
+      "severity": 1.0,
+      "priority": 7.65,
+      "findings": [
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S012",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S045",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S071",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S075",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S085",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S090",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S105",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S115",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S118",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "type": "unsupported_success_claim",
+      "status": "failure",
+      "title": "The agent told the customer it succeeded, but no successful tool call backs it.",
+      "signature": "confirm_order failed",
+      "details": {
+        "out_of_stock": 2,
+        "payment_rule_violation": 3,
+        "timeout": 3
+      },
+      "sessions": [
+        "S043",
+        "S074",
+        "S076",
+        "S082",
+        "S094",
+        "S102",
+        "S104",
+        "S128"
+      ],
+      "n_sessions": 8,
+      "share": 0.062,
+      "confidence": 0.92,
+      "severity": 1.0,
+      "priority": 7.36,
+      "findings": [
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S043",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (out_of_stock)",
+          "summary": "Claimed success after confirm_order returned out_of_stock",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "out_of_stock"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S074",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S076",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (out_of_stock)",
+          "summary": "Claimed success after confirm_order returned out_of_stock",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "out_of_stock"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S082",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (timeout)",
+          "summary": "Claimed success after confirm_order returned timeout",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "timeout"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S094",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (timeout)",
+          "summary": "Claimed success after confirm_order returned timeout",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "timeout"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S102",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S104",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (timeout)",
+          "summary": "Claimed success after confirm_order returned timeout",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "timeout"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "S128",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 2
+    },
+    {
+      "type": "incomplete_marked_done",
+      "status": "failure",
+      "title": "The session was closed as done while something the order needs was missing.",
+      "signature": "closed with an imprecise address",
+      "details": {},
+      "sessions": [
+        "S018",
+        "S019",
+        "S025",
+        "S026",
+        "S028",
+        "S039",
+        "S049",
+        "S050",
+        "S088"
+      ],
+      "n_sessions": 9,
+      "share": 0.069,
+      "confidence": 0.85,
+      "severity": 0.8,
+      "priority": 6.12,
+      "findings": [
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S018",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 16,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Ben Arous",
+                "address_level": "city_only",
+                "customer_id": "C109",
+                "order_id": "O018"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S019",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Sfax",
+                "address_level": "city_only",
+                "customer_id": "C103",
+                "order_id": "O019"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S025",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "7ay Haffouz",
+                "address_level": "city_only",
+                "customer_id": "C104",
+                "order_id": "O025"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S026",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 18,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Ben Arous",
+                "address_level": "city_only",
+                "customer_id": "C107",
+                "order_id": "O026"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S028",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Ben Arous",
+                "address_level": "city_only",
+                "customer_id": "C102",
+                "order_id": "O028"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S039",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "cité Ennasr",
+                "address_level": "city_only",
+                "customer_id": "C104",
+                "order_id": "O039"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S049",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "9rib el jemaa, Sousse",
+                "address_level": "city_only",
+                "customer_id": "C109",
+                "order_id": "O049"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S050",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "9rib el jemaa, Sousse",
+                "address_level": "city_only",
+                "customer_id": "C109",
+                "order_id": "O050"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S088",
+          "confidence": 0.85,
+          "signature": "closed with an imprecise address",
+          "summary": "Closed as confirmed with address level 'city_only'",
+          "evidence": [
+            {
+              "i": 14,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "cité Ennasr",
+                "address_level": "city_only",
+                "customer_id": "C102",
+                "order_id": "O088"
+              }
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 3
+    },
+    {
+      "type": "wrong_customer_record",
+      "status": "failure",
+      "title": "A tool returned another customer's record and the agent kept using it.",
+      "signature": "lookup_customer returned another customer",
+      "details": {},
+      "sessions": [
+        "S013",
+        "S014",
+        "S032",
+        "S062",
+        "S077",
+        "S108"
+      ],
+      "n_sessions": 6,
+      "share": 0.046,
+      "confidence": 0.93,
+      "severity": 1.0,
+      "priority": 5.58,
+      "findings": [
+        {
+          "type": "wrong_customer_record",
+          "session_id": "S013",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0003, lookup returned customer C108 (0008), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C108",
+                "name": "Sami",
+                "past_orders": 0,
+                "phone": "21600000008"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Rue Ibn Khaldoun n°12, Sfax",
+                "address_level": "exact",
+                "customer_id": "C108",
+                "order_id": "O013"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "S014",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0001, lookup returned customer C102 (0002), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C102",
+                "name": "Hatem",
+                "past_orders": 0,
+                "phone": "21600000002"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Avenue de la Liberté 45, Tunis",
+                "address_level": "exact",
+                "customer_id": "C102",
+                "order_id": "O014"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "S032",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0005, lookup returned customer C109 (0009), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C109",
+                "name": "Rim",
+                "past_orders": 4,
+                "phone": "21600000009"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Rue Ibn Khaldoun n°12, Sfax",
+                "address_level": "exact",
+                "customer_id": "C109",
+                "order_id": "O032"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "S062",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0006, lookup returned customer C109 (0009), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C109",
+                "name": "Rim",
+                "past_orders": 0,
+                "phone": "21600000009"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Rue de Marseille 3, Bizerte",
+                "address_level": "exact",
+                "customer_id": "C109",
+                "order_id": "O062"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "S077",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0003, lookup returned customer C109 (0009), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C109",
+                "name": "Rim",
+                "past_orders": 1,
+                "phone": "21600000009"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "Avenue de la Liberté 45, Tunis",
+                "address_level": "exact",
+                "customer_id": "C109",
+                "order_id": "O077"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "wrong_customer_record",
+          "session_id": "S108",
+          "confidence": 0.93,
+          "signature": "lookup_customer returned another customer",
+          "summary": "Chat is from 0004, lookup returned customer C107 (0007), then used in update_order",
+          "evidence": [
+            {
+              "i": 1,
+              "type": "tool_result",
+              "tool": "lookup_customer",
+              "result": {
+                "customer_id": "C107",
+                "name": "Nour",
+                "past_orders": 1,
+                "phone": "21600000007"
+              },
+              "ok": true
+            },
+            {
+              "i": 10,
+              "type": "tool_call",
+              "tool": "update_order",
+              "args": {
+                "address": "nahj 9 avril 21, Kairouan",
+                "address_level": "exact",
+                "customer_id": "C107",
+                "order_id": "O108"
+              }
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 4
+    },
+    {
+      "type": "repeated_question",
+      "status": "failure",
+      "title": "The agent asked again for something the customer had already given.",
+      "signature": "asked again: address",
+      "details": {},
+      "sessions": [
+        "S002",
+        "S020",
+        "S024",
+        "S029",
+        "S045",
+        "S047",
+        "S051",
+        "S090",
+        "S091",
+        "S105",
+        "S118",
+        "S121"
+      ],
+      "n_sessions": 12,
+      "share": 0.092,
+      "confidence": 0.88,
+      "severity": 0.4,
+      "priority": 4.22,
+      "findings": [
+        {
+          "type": "repeated_question",
+          "session_id": "S002",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Pouvez-vous nous donner l'adresse exacte (rue et numéro) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "nahj el habib bourguiba 7, Sousse"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Merci ! Il nous manque encore l'adresse exacte, rue et numéro s'il vous plaît ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S020",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Pouvez-vous nous donner l'adresse exacte (rue et numéro) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Rue Ibn Khaldoun n°12, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Merci ! Il nous manque encore l'adresse exacte, rue et numéro s'il vous plaît ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S024",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ta3tina l'adresse bel dhabt (nahj w noumrou) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Rue Ibn Khaldoun n°12, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Y3aychek, ma zelnech na9sin l'adresse bel dhabt, nahj w noumrou ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S029",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Pouvez-vous nous donner l'adresse exacte (rue et numéro) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Rue de Marseille 3, Bizerte"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Merci ! Il nous manque encore l'adresse exacte, rue et numéro s'il vous plaît ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S045",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ta3tina l'adresse bel dhabt (nahj w noumrou) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "nahj 9 avril 21, Kairouan"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Y3aychek, ma zelnech na9sin l'adresse bel dhabt, nahj w noumrou ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S047",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ta3tina l'adresse bel dhabt (nahj w noumrou) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "nahj el habib bourguiba 7, Sousse"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Y3aychek, ma zelnech na9sin l'adresse bel dhabt, nahj w noumrou ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S051",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Pouvez-vous nous donner l'adresse exacte (rue et numéro) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Avenue de la Liberté 45, Tunis"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Merci ! Il nous manque encore l'adresse exacte, rue et numéro s'il vous plaît ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S090",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ta3tina l'adresse bel dhabt (nahj w noumrou) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Rue Ibn Khaldoun n°12, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Y3aychek, ma zelnech na9sin l'adresse bel dhabt, nahj w noumrou ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S091",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Pouvez-vous nous donner l'adresse exacte (rue et numéro) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "nahj 9 avril 21, Kairouan"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Merci ! Il nous manque encore l'adresse exacte, rue et numéro s'il vous plaît ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S105",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Ta3tina l'adresse bel dhabt (nahj w noumrou) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Rue Ibn Khaldoun n°12, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Y3aychek, ma zelnech na9sin l'adresse bel dhabt, nahj w noumrou ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S118",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Pouvez-vous nous donner l'adresse exacte (rue et numéro) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Rue Ibn Khaldoun n°12, Sfax"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Merci ! Il nous manque encore l'adresse exacte, rue et numéro s'il vous plaît ?"
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S121",
+          "confidence": 0.88,
+          "signature": "asked again: address",
+          "summary": "Asked for the address again after the customer had given it",
+          "evidence": [
+            {
+              "i": 6,
+              "type": "agent",
+              "text": "Pouvez-vous nous donner l'adresse exacte (rue et numéro) ?"
+            },
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Avenue de la Liberté 45, Tunis"
+            },
+            {
+              "i": 8,
+              "type": "agent",
+              "text": "Merci ! Il nous manque encore l'adresse exacte, rue et numéro s'il vous plaît ?"
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 5
+    },
+    {
+      "type": "no_progress_search",
+      "status": "failure",
+      "title": "The same search was repeated with the same input and no new result.",
+      "signature": "search_address: same query, no results",
+      "details": {},
+      "sessions": [
+        "S015",
+        "S018",
+        "S026",
+        "S030",
+        "S053",
+        "S067",
+        "S088",
+        "S106",
+        "S116"
+      ],
+      "n_sessions": 9,
+      "share": 0.069,
+      "confidence": 0.93,
+      "severity": 0.5,
+      "priority": 4.18,
+      "findings": [
+        {
+          "type": "no_progress_search",
+          "session_id": "S018",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 4x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S026",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 5x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S030",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 4x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S067",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 4x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S116",
+          "confidence": 0.95,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 5x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 15,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S015",
+          "confidence": 0.9,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 3x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S053",
+          "confidence": 0.9,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 3x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S088",
+          "confidence": 0.9,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 3x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "no_progress_search",
+          "session_id": "S106",
+          "confidence": 0.9,
+          "signature": "search_address: same query, no results",
+          "summary": "search_address called 3x with the same input, no results, nothing changed in between",
+          "evidence": [
+            {
+              "i": 9,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            },
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "search_address",
+              "result": {
+                "matches": 0
+              },
+              "ok": true
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 6
+    },
+    {
+      "type": "tool_error_ignored",
+      "status": "failure",
+      "title": "A tool failed and the agent carried on as if it had worked.",
+      "signature": "update_order failed",
+      "details": {
+        "db_locked": 6
+      },
+      "sessions": [
+        "S010",
+        "S027",
+        "S078",
+        "S086",
+        "S125",
+        "S129"
+      ],
+      "n_sessions": 6,
+      "share": 0.046,
+      "confidence": 0.8,
+      "severity": 0.7,
+      "priority": 3.36,
+      "findings": [
+        {
+          "type": "tool_error_ignored",
+          "session_id": "S010",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000005"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "S027",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000009"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "S078",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000001"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "S086",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000005"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "S125",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000007"
+              }
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "tool_error_ignored",
+          "session_id": "S129",
+          "confidence": 0.8,
+          "signature": "update_order failed (db_locked)",
+          "summary": "update_order failed and the next step was send_message",
+          "evidence": [
+            {
+              "i": 11,
+              "type": "tool_result",
+              "tool": "update_order",
+              "result": {
+                "error": "db_locked"
+              },
+              "ok": false
+            },
+            {
+              "i": 12,
+              "type": "tool_call",
+              "tool": "send_message",
+              "args": {
+                "template": "T_ACK",
+                "to": "21600000009"
+              }
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 7
+    },
+    {
+      "type": "incomplete_marked_done",
+      "status": "failure",
+      "title": "The session was closed as done while something the order needs was missing.",
+      "signature": "customer question left unanswered",
+      "details": {},
+      "sessions": [
+        "S023",
+        "S038",
+        "S073",
+        "S079"
+      ],
+      "n_sessions": 4,
+      "share": 0.031,
+      "confidence": 0.7,
+      "severity": 0.8,
+      "priority": 2.24,
+      "findings": [
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S023",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Avenue de la Liberté 45, Tunis. et la livraison c'est combien ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S038",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "Rue de Marseille 3, Bizerte. w el livraison 9addech ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S073",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "nahj 9 avril 21, Kairouan. w el livraison 9addech ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Behi, el commande tconfirmat, twosslek ghodwa."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "incomplete_marked_done",
+          "session_id": "S079",
+          "confidence": 0.7,
+          "signature": "customer question left unanswered",
+          "summary": "The customer's last question was never answered before closing",
+          "evidence": [
+            {
+              "i": 7,
+              "type": "user",
+              "text": "nahj 9 avril 21, Kairouan. et la livraison c'est combien ?"
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Parfait, votre commande est confirmée et sera livrée demain."
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 8
+    },
+    {
+      "type": "repeated_question",
+      "status": "needs_review",
+      "title": "The agent asked again for something the customer had already given.",
+      "signature": "asked again: confirm",
+      "details": {},
+      "sessions": [
+        "S009",
+        "S034",
+        "S068",
+        "S098",
+        "S100",
+        "S107",
+        "S124"
+      ],
+      "n_sessions": 7,
+      "share": 0.054,
+      "confidence": 0.4,
+      "severity": 0.4,
+      "priority": 1.12,
+      "findings": [
+        {
+          "type": "repeated_question",
+          "session_id": "S009",
+          "confidence": 0.4,
+          "signature": "asked again: confirm",
+          "summary": "Asked for the confirm twice with no reply in between (360 min apart)",
+          "evidence": [
+            {
+              "i": 4,
+              "type": "agent",
+              "text": "Aslema Salma, m3ak el boutique. Tconfirmi el commande mta3 casque bluetooth b 119 DT ?"
+            },
+            {
+              "i": 5,
+              "type": "agent",
+              "text": "Nfakrek Salma: tconfirmi el commande mta3 casque bluetooth ?"
+            }
+          ],
+          "status": "needs_review"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S034",
+          "confidence": 0.4,
+          "signature": "asked again: confirm",
+          "summary": "Asked for the confirm twice with no reply in between (360 min apart)",
+          "evidence": [
+            {
+              "i": 4,
+              "type": "agent",
+              "text": "Aslema Rim, m3ak el boutique. Tconfirmi el commande mta3 mlehef b 79 DT ?"
+            },
+            {
+              "i": 5,
+              "type": "agent",
+              "text": "Nfakrek Rim: tconfirmi el commande mta3 mlehef ?"
+            }
+          ],
+          "status": "needs_review"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S068",
+          "confidence": 0.4,
+          "signature": "asked again: confirm",
+          "summary": "Asked for the confirm twice with no reply in between (360 min apart)",
+          "evidence": [
+            {
+              "i": 4,
+              "type": "agent",
+              "text": "Bonjour Salma, ici la boutique. Vous confirmez la commande de casque bluetooth à 119 DT ?"
+            },
+            {
+              "i": 5,
+              "type": "agent",
+              "text": "Petit rappel Salma : vous confirmez la commande de casque bluetooth ?"
+            }
+          ],
+          "status": "needs_review"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S098",
+          "confidence": 0.4,
+          "signature": "asked again: confirm",
+          "summary": "Asked for the confirm twice with no reply in between (361 min apart)",
+          "evidence": [
+            {
+              "i": 4,
+              "type": "agent",
+              "text": "Aslema Sami, m3ak el boutique. Tconfirmi el commande mta3 montre connectée b 149 DT ?"
+            },
+            {
+              "i": 5,
+              "type": "agent",
+              "text": "Nfakrek Sami: tconfirmi el commande mta3 montre connectée ?"
+            }
+          ],
+          "status": "needs_review"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S100",
+          "confidence": 0.4,
+          "signature": "asked again: confirm",
+          "summary": "Asked for the confirm twice with no reply in between (360 min apart)",
+          "evidence": [
+            {
+              "i": 4,
+              "type": "agent",
+              "text": "Bonjour Rim, ici la boutique. Vous confirmez la commande de sac cuir à 89 DT ?"
+            },
+            {
+              "i": 5,
+              "type": "agent",
+              "text": "Petit rappel Rim : vous confirmez la commande de sac cuir ?"
+            }
+          ],
+          "status": "needs_review"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S107",
+          "confidence": 0.4,
+          "signature": "asked again: confirm",
+          "summary": "Asked for the confirm twice with no reply in between (360 min apart)",
+          "evidence": [
+            {
+              "i": 4,
+              "type": "agent",
+              "text": "Bonjour Hatem, ici la boutique. Vous confirmez la commande de tablette 10 pouces à 450 DT ?"
+            },
+            {
+              "i": 5,
+              "type": "agent",
+              "text": "Petit rappel Hatem : vous confirmez la commande de tablette 10 pouces ?"
+            }
+          ],
+          "status": "needs_review"
+        },
+        {
+          "type": "repeated_question",
+          "session_id": "S124",
+          "confidence": 0.4,
+          "signature": "asked again: confirm",
+          "summary": "Asked for the confirm twice with no reply in between (360 min apart)",
+          "evidence": [
+            {
+              "i": 4,
+              "type": "agent",
+              "text": "Aslema Amira, m3ak el boutique. Tconfirmi el commande mta3 serwel jean b 59 DT ?"
+            },
+            {
+              "i": 5,
+              "type": "agent",
+              "text": "Nfakrek Amira: tconfirmi el commande mta3 serwel jean ?"
+            }
+          ],
+          "status": "needs_review"
+        }
+      ],
+      "rank": 9
+    }
+  ],
+  "semantics": {
+    "semantics": "rules"
+  },
+  "runtime": {
+    "labeling_s": 0.0,
+    "rules_s": 0.013,
+    "total_s": 0.017,
+    "ms_per_session": 0.13
+  },
+  "cost": {
+    "llm_calls": 0,
+    "llm_tokens": 0,
+    "note": "rules only: 0 LLM calls, CPU only"
+  },
+  "limitations": [
+    "Detectors are rules tuned on the shapes in this dataset (tool names, FR/Arabizi phrasing). New tools or languages need new patterns; the LLM review only sees findings the rules already raised (no recall gain).",
+    "Synthetic sessions are cleaner than real traffic; the scores below are an upper bound for real logs.",
+    "Ambiguous cases (reminders after silence, hedged wording) are surfaced as needs-review, not counted as failures.",
+    "On this app's data, 'tool calls' are the pipeline steps (extraction, scoring, drafting, judge, send) rebuilt from the database, not a live agent trace."
+  ],
+  "accuracy": {
+    "per_type": {
+      "unsupported_success_claim": {
+        "support": 17,
+        "tp": 17,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "wrong_customer_record": {
+        "support": 6,
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "incomplete_marked_done": {
+        "support": 13,
+        "tp": 13,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "tool_error_ignored": {
+        "support": 6,
+        "tp": 6,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "no_progress_search": {
+        "support": 9,
+        "tp": 9,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      },
+      "repeated_question": {
+        "support": 12,
+        "tp": 12,
+        "fp": 0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
+        "false_positive_sessions": [],
+        "missed_sessions": []
+      }
+    },
+    "micro_precision": 1.0,
+    "micro_recall": 1.0,
+    "clean_sessions_flagged": 0,
+    "clean_sessions": 62,
+    "recoveries_flagged": [],
+    "ambiguous_to_review": 7
+  }
+}
