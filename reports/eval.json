@@ -6,7 +6,7 @@
     "judge": "judge-v2"
   },
   "config_hash": "4021f195",
-  "runtime_s": 5.7,
+  "runtime_s": 6.2,
   "results": {
     "extraction": {
       "n": 279,
@@ -41,5 +41,6 @@
       "not_promoted_rate": 1.0
     }
   },
+  "llm_usage": {},
   "gate_failures": []
 }

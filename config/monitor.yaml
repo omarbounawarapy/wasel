@@ -1,0 +1,20 @@
+# Monitor thresholds (GET /api/monitor). A rate over its ceiling (or PSI over drift_psi) -> an alert in the
+# response and on the dashboard's "AI quality" page. Same review rule as config/llm.yaml.
+version: 1
+window: 200                         # most recent assessments / drafts / LLM attempts looked at
+min_samples: 20                     # below this a metric is reported but never alerts (too noisy)
+drift_psi: 0.2                      # PSI >= 0.2: the input mix moved away from the reference
+drift_features: [language, address_level, tier]   # the extraction path is watched by fallback_rate
+ceilings:
+  hallucinated_quotes_per_extraction: 0.10   # evidence quotes the model invented (not in the chat), dropped by code
+  dropped_flags_per_extraction: 0.20
+  invalid_extraction_rate: 0.05              # schema repair failed
+  refusal_rate: 0.05                         # provider answered but not in schema (parse/schema errors)
+  fallback_rate: 0.30                        # scored by a fallback model/provider or rules
+  injection_rate: 0.10
+  judge_reject_rate: 0.40
+  judge_ungrounded_rate: 0.10                # judge says the draft makes claims the order doesn't support
+  judge_tone_fail_rate: 0.05                 # toxicity / pressure proxy: judge tone_ok = false
+  judge_unavailable_rate: 0.10
+  classifier_veto_rate: 0.20
+  llm_error_rate: 0.10
