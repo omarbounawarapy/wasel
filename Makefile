@@ -30,7 +30,10 @@ up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set
 ui: ## dashboard only on :8501 (06 §1.5), against API_BASE_URL (default :8000)
 	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
 
-.PHONY: help setup run up ui test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
+wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (STATUS O-9/G5; docs/whatsapp-live-test.md)
+	bash scripts/wa_webhook_up.sh
+
+.PHONY: help setup run up ui wa-up test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

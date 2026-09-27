@@ -2,7 +2,8 @@
 # wa_webhook_up.sh (STATUS O-9 / G5): put the localhost webhook on the internet for Meta in one
 # command — a cloudflared quick tunnel + Graph API registration of the callback URL and the
 # `messages` field. What remains after this is human-only: send a WhatsApp message to the
-# business number. Needs the real secrets in .env (WA_APP_SECRET, WA_VERIFY_TOKEN) and
+# business number. Teammate guide: docs/whatsapp-live-test.md. Needs the real secrets in .env
+# (WA_APP_SECRET, WA_VERIFY_TOKEN) and
 # WEBHOOK_ENABLED=true; the quick-tunnel URL is ephemeral, so re-run after every restart
 # (registration is idempotent — it replaces the previous callback). Ctrl-C tears the tunnel down.
 set -euo pipefail
