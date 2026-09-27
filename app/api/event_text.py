@@ -31,6 +31,12 @@ def event_text(type_: str, payload_json: str) -> tuple[str, str | None]:
     p = json.loads(payload_json or "{}")
     title = TITLES.get(type_, type_.replace(".", " ").capitalize())
     detail = None
+    if type_ == "draft.sent":            # who sent it and where: a real WhatsApp send is not the demo record
+        auto = p.get("decided_by") == "system"
+        if p.get("delivery") == "whatsapp_sent":
+            title = "Message sent automatically on WhatsApp" if auto else "Message sent on WhatsApp"
+        elif auto:
+            title = "Message sent automatically (simulated in this demo)"
     if type_ == "order.rescored" and p.get("tier"):
         detail = f"{p['tier'].upper()} {p.get('final_score')} · path {p.get('path')} · trigger {p.get('trigger')}"
     elif type_ == "llm.fallback":

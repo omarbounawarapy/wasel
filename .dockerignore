@@ -7,3 +7,9 @@ reports/junit.xml
 .pytest_cache/
 .ruff_cache/
 data/synth_v1.csv
+web/dist/
+web/.next/
+web/test-results/
+web/playwright-report/
+web/*.tsbuildinfo
+.env

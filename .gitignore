@@ -265,6 +265,9 @@ node_modules/
 .next/
 out/
 web/dist/
+# the Python `lib/` rule above would drop the frontend's API layer (06 §1.1, Skeptic N-1)
+!web/lib/
+web/*.tsbuildinfo
 frontend/out/
 .vite/
 .vercel/

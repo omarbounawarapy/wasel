@@ -190,6 +190,7 @@ class DraftView(BaseModel):
     sent_at: str | None
     delivery: Literal["whatsapp_sent", "recorded_only"] | None
     created_at: str
+    decided_by: Literal["system", "human"] | None = None     # additive: "system" = sent by auto-send, no click
 
 
 class Capabilities(BaseModel):
@@ -385,6 +386,7 @@ class HealthResponse(BaseModel):
     wa_token_present: bool = False               # 04 §2.6
     real_rows: int = 0                            # 04 §2.6
     sandbox_orders: int = 0
+    wa_auto_send: bool = False                    # additive: auto_send drafts go out without a click (never public)
 
 
 class ImpactResponse(BaseModel):
