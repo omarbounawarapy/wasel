@@ -12,6 +12,7 @@ COPY data/ data/
 COPY models/ models/
 COPY reports/ reports/
 COPY scoring.yaml .
+COPY config/ config/
 ARG GIT_SHA=dev
 ENV GIT_SHA=${GIT_SHA} PYTHONUNBUFFERED=1
 CMD ["sh", "-c", "uvicorn app.main:create_app --factory --host 0.0.0.0 --port ${PORT:-8000} --workers 1"]
