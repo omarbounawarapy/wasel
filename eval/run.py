@@ -16,6 +16,7 @@ from pathlib import Path
 import yaml
 
 from app.contracts import CustomerHistory, ScoreInput, StructuredFields, WindowMessage
+from app.llm import trace
 from app.llm.prompts import active_versions
 from app.outbound import judge as J
 from app.outbound.guard_clf import classify
@@ -29,9 +30,20 @@ LEVELS = ["none", "city_only", "area_or_landmark", "street_and_landmark", "exact
 T0 = datetime(2026, 9, 27, 10, 0, tzinfo=UTC)
 
 
-def load(name: str, limit: int | None) -> list[dict]:
+def load(name: str, limit: int | None, sample: int | None = None) -> list[dict]:
+    """`sample`: every k-th row. The files are sorted by stratum (language x address level), so this keeps the mix."""
     rows = [json.loads(line) for line in (GOLD / name).read_text(encoding="utf-8").splitlines() if line.strip()]
+    if sample and sample < len(rows):
+        rows = rows[::-(-len(rows) // sample)]
     return rows[:limit] if limit else rows
+
+
+def paced(rows, pace_s: float):
+    """Live runs: space the calls so the primary model's tokens-per-minute limit isn't what gets measured."""
+    for i, r in enumerate(rows):
+        if i and pace_s:
+            time.sleep(pace_s)
+        yield r
 
 
 def score_input(texts: list[str], price: float) -> ScoreInput:
@@ -104,16 +116,22 @@ def run_outbound(rows, llm) -> dict:
 
 
 def run_injection(rows, llm) -> dict:
-    flagged = scored = not_exact = 0
+    flagged = scored = not_exact = n = 0
     for r in rows:
+        n += 1
         res = score_order(score_input(r["input"]["messages"], r["input"]["price_tnd"]), cache=None, llm=llm,
                           meter=None)
         flagged += int(res.injection_suspected)
         scored += int(res.is_order and res.assessment is not None)
         lvl = (res.extraction.validated or {}).get("address_level") if res.extraction else None
         not_exact += int(lvl != "exact")
-    n = len(rows)
     return {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n, "not_promoted_rate": not_exact / n}
+
+
+def _usage_delta(before: dict, after: dict) -> dict:
+    keys = ("requests", "cache_hits", "failed", "tokens_in", "tokens_out")
+    return {role: {**{k: s[k] - before.get(role, {}).get(k, 0) for k in keys},
+                   "p50_ms": s["p50_ms"], "p95_ms": s["p95_ms"]} for role, s in after.items()}
 
 
 def gate(report: dict, thresholds: dict) -> list[str]:
@@ -130,6 +148,8 @@ def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--live", action="store_true")
     ap.add_argument("--limit", type=int)
+    ap.add_argument("--sample", type=int, help="extraction rows, stratified (live default 40: token budget)")
+    ap.add_argument("--pace", type=float, default=0.0, help="seconds between LLM cases (live)")
     a = ap.parse_args(argv)
     llm = None
     if a.live:
@@ -139,13 +159,15 @@ def main(argv=None) -> int:
             print("eval --live: no provider configured (GROQ_API_KEY)", file=sys.stderr)
             return 2
     t0 = time.monotonic()
-    results = {"extraction": run_extraction(load("extraction.jsonl", a.limit), llm),
-               "outbound": run_outbound(load("outbound.jsonl", a.limit), llm),
-               "injection": run_injection(load("injection.jsonl", a.limit), llm)}
+    sample = a.sample if a.sample is not None else (40 if a.live else None)
+    usage0 = trace.summary()
+    results = {"extraction": run_extraction(paced(load("extraction.jsonl", a.limit, sample), a.pace), llm),
+               "outbound": run_outbound(paced(load("outbound.jsonl", a.limit), a.pace / 4), llm),
+               "injection": run_injection(paced(load("injection.jsonl", a.limit), a.pace), llm)}
     th = yaml.safe_load((ROOT / "eval" / "thresholds.yaml").read_text())["live" if a.live else "offline"]
     report = {"mode": "live" if a.live else "offline", "versions": active_versions(),
               "config_hash": default_config().short_hash, "runtime_s": round(time.monotonic() - t0, 1),
-              "results": results}
+              "results": results, "llm_usage": _usage_delta(usage0, trace.summary()) if a.live else {}}
     report["gate_failures"] = gate(report, th)
     out = ROOT / "reports" / ("eval_live.json" if a.live else "eval.json")
     out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")

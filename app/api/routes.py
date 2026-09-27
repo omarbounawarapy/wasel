@@ -128,6 +128,38 @@ def impact(request: Request):
                                      assumptions=d.get("assumptions", [])))
 
 
+@router.get("/monitor")
+def monitor(request: Request):
+    """Drift, faithfulness, safety and LLM ops over the recent window (app/monitor.py). Rates only, no text."""
+    from app import monitor as mon
+    return _nocache_json(mon.report(_s(request).conn()))
+
+
+@router.get("/traces")
+def traces(request: Request, role: str | None = None, order_id: str | None = None, limit: int = 100):
+    """Recent LLM trace records (ids, versions, model, outcome, latency, tokens; never the customer's text)."""
+    from app.llm import trace
+    return _nocache_json({"traces": trace.recent(min(limit, 500), role=role, order_id=order_id)})
+
+
+@router.get("/eval")
+def eval_reports(request: Request):
+    """The last offline (CI gate) and live eval reports, as committed in reports/."""
+    root = _s(request).config.root / "reports"
+    out = {}
+    for mode, name in (("offline", "eval.json"), ("live", "eval_live.json")):
+        p = root / name
+        try:
+            out[mode] = json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+        except ValueError:
+            out[mode] = None
+    return _nocache_json(out)
+
+
+def _nocache_json(d: dict) -> JSONResponse:
+    return JSONResponse(d, headers={"Cache-Control": "no-store"})
+
+
 admin = APIRouter(prefix="/api/admin")
 
 
