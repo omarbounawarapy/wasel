@@ -1,12 +1,5 @@
 {
-  "source": "eval/golden/extraction.jsonl (279 rows, offline pipeline)",
   "distributions": {
-    "language": {
-      "arabizi": 0.3118,
-      "darija_arabic_script": 0.2688,
-      "fr": 0.2258,
-      "mixed": 0.1935
-    },
     "address_level": {
       "area_or_landmark": 0.2867,
       "city_only": 0.1792,
@@ -14,11 +7,18 @@
       "none": 0.1039,
       "street_and_landmark": 0.2151
     },
+    "language": {
+      "arabizi": 0.3333,
+      "darija_arabic_script": 0.2688,
+      "fr": 0.2043,
+      "mixed": 0.1935
+    },
     "tier": {
       "high": 0.1505,
       "low": 0.4122,
       "medium": 0.3978,
       "none": 0.0394
     }
-  }
+  },
+  "source": "eval/golden/extraction.jsonl (279 rows, offline pipeline)"
 }

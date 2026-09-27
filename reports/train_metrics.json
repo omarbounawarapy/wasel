@@ -1,6 +1,6 @@
 {
   "report": "train_metrics",
-  "created_at": "2026-09-27T10:36:49.048858Z",
+  "created_at": "2026-09-27T11:52:48.275746Z",
   "classifier_version": "xgb_v1-90d41187",
   "n_train": 7999,
   "n_holdout": 2001,

@@ -53,6 +53,21 @@ The chain reads env at request time — no restart of code needed beyond restart
 `.env` is re-read: set `GROQ_BASE_URL` + `GROQ_API_KEY` + `EXTRACT_MODEL` in `.env`, `make up`,
 and the next message extracts from the GPU. Flip the keys back to empty to return to Groq.
 
+## Serving the fine-tuned artifact (LoRA)
+
+Fine-tune happens once on Brev (brev plan P2a); hosts only ever serve the result. The run kit
+passes extra server flags through `VLLM_ARGS`, so no script change is needed:
+
+```bash
+VLLM_ARGS="--enable-lora --lora-modules extract-v1=$PWD/models/extract_lora_v1" make brev-serve
+# laptop .env: EXTRACT_MODEL=extract-v1   (the name given in --lora-modules)
+```
+
+A 20b base + adapter still fits a 24 GB L4. The adapter is versioned and committed with a
+model card + sha256 (`models/extract_lora_v1/`, same discipline as `models/risk_xgb_v1.json`);
+after swapping it, re-record the offline cache: `scripts/warm_cache.py` with `LIVE=1` against
+the fine-tuned server.
+
 ## Checks and caveats
 
 - `make brev-check` must pass before trusting the flip; check both `make eval` (offline,

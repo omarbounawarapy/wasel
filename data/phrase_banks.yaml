@@ -131,13 +131,25 @@ tone:
     fr: {train: ["vous êtes toujours en retard", "je suis déçu du service"], eval_only: ["c'est pénible à la fin"]}
     darija_arabic_script: {train: ["ديما تعطلو", "ما عجبنيش السرفيس"], eval_only: ["قلقتوني"]}
 
-time:                        # F2 §14
-  arabizi: {train: ["ghodwa ba3d 17h", "samedi sbe7", "ba3d el 3chiya"],
-            eval_only: ["nhar el a7ad fi sbe7", "ba3d ma nkamel el 5edma"]}
-  fr: {train: ["Demain après 17h", "Samedi matin", "En fin d'après-midi"],
-       eval_only: ["Dimanche dans la matinée", "Après le travail"]}
-  darija_arabic_script: {train: ["غدوة بعد الساعة 17", "السبت الصباح", "بعد العشية"],
-                         eval_only: ["نهار الأحد في الصباح", "بعد ما نكمل الخدمة"]}
+time:                        # F2 §14 + Brev P3 supplement (see header note below)
+  # Brev P3 (docs/brev_gpu_plan.md, gap G3b/O-14): definite presence commitments paired with a
+  # delivery window ("ghodwa ba3d 17h nkoun fi dar"). These render in the time segment, which
+  # carries no flag: the label prior never draws availability_uncertain for them, so the
+  # extractor's learning signal is "commitment clears the flag" — the exact hero failure class.
+  # PENDING native pass (lines below the F2 originals are not Fedi-reviewed yet).
+  arabizi: {train: ["ghodwa ba3d 17h", "samedi sbe7", "ba3d el 3chiya",
+                    "ghodwa ba3d 17h nkoun fi dar", "bech nkoun mawjoued ghodwa", "ba3d el 3chiya nkoun fi dar"],
+            eval_only: ["nhar el a7ad fi sbe7", "ba3d ma nkamel el 5edma",
+                        "ki t7ebou taw nkoun fi dar", "ba3d 17h nkoun dima fi dar"]}
+  fr: {train: ["Demain après 17h", "Samedi matin", "En fin d'après-midi",
+               "Demain après 17h, je serai à la maison", "Je serai là demain, pas de souci",
+               "En fin de journée, je serai à la maison"],
+       eval_only: ["Dimanche dans la matinée", "Après le travail",
+                   "Quand vous voulez, je serai à la maison", "Après 17h, je serai chez moi"]}
+  darija_arabic_script: {train: ["غدوة بعد الساعة 17", "السبت الصباح", "بعد العشية",
+                                 "غدوة بعد الساعة 17 نكون في الدار", "باش نكون موجود غدوة", "بعد العشية نكون في الدار"],
+                         eval_only: ["نهار الأحد في الصباح", "بعد ما نكمل الخدمة",
+                                     "كي تحبوا توّا نكون في الدار", "بعد 17 نكون ديما في الدار"]}
 
 slots:                        # not split: proper nouns shared with the gazetteer / serve side.
   # Landmarks/streets extended with F2's place-name vocabulary (F5); Fedi's landmark row

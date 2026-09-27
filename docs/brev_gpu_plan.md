@@ -99,6 +99,27 @@ highest-leverage model upgrade in the product. Two GPU shapes:
   drops from p95 ≈ 1.8 s (LLM) to milliseconds, and the demo no longer depends on
   any API.
 
+**Artifact discipline — fine-tune once on Brev, serve the artifact everywhere:**
+
+- Fine-tuning is a one-time job, rerun only when data/prompts change (e.g., new phrase-bank
+  cells land). It never happens at deploy time.
+- The output is an artifact: a LoRA adapter (tens of MB on the unchanged base
+  `openai/gpt-oss-20b`) or, for simplicity, the adapter merged into full weights.
+- Every host serves the same artifact. With vLLM:
+  `vllm serve openai/gpt-oss-20b --api-key $TOKEN --enable-lora
+  --lora-modules extract-v1=/path/to/adapter` — or serve the merged directory like
+  any model. Via the run kit: `VLLM_ARGS="--enable-lora
+  --lora-modules extract-v1=$PWD/models/extract_lora_v1" bash scripts/brev_llm_up.sh serve`
+  (20b + adapter still fits a 24 GB L4), then `EXTRACT_MODEL=extract-v1` on the app side.
+- Per host, the only things that ever change: the GPU/VRAM class and the env vars
+  (`GROQ_BASE_URL`, `EXTRACT_MODEL`) — the app side is env-driven since P1.
+- Provenance: commit the adapter (or attach as a release asset if too big) with a model
+  card + sha256 — same discipline as `models/risk_xgb_v1.json` + `.card.json`. Version it
+  (`extract_lora_v1` → `v2`), keep the previous version for rollback.
+- After swapping the served artifact, re-record the extraction cache
+  (`scripts/warm_cache.py`, `LIVE=1`, against the fine-tuned server) so offline replay
+  matches live behavior.
+
 Methodological trap to avoid (we are judgeable on this): the training text is
 generated from the same phrase bank as the eval cases, so a fine-tune can
 regurgitate surface forms. Mitigate by paraphrase-expanding the phrase bank with the
@@ -172,6 +193,46 @@ solver:**
 Drops if time runs short, in order: P2b → P3 → P1. Keep to the end: P0, P2a.
 Leftover credit rolls into the post-hackathon hosted stack (one L4 running vLLM
 + the demo container is the whole product, self-hosted).
+
+## Phases on branch `brev` (execution order)
+
+**Phase 0 — self-hosted backend switch — DONE (committed)**
+`GROQ_BASE_URL` env override (explicit arg > env > Groq, read at call time), the Groq-only
+`reasoning_format` field dropped automatically for self-hosted endpoints, routing unit
+tests (`tests/unit/test_groq_backend_routing.py`), `.env.example` documented. Nothing in
+`app/` hardcodes Groq anymore.
+
+**Phase 1 — instance tooling — CODED, commit pending (working tree of `brev`)**
+`scripts/brev_llm_up.sh` (`serve` / `check` / `stop`), `make brev-serve` / `make
+brev-check`, teammate guide `docs/brev-live-test.md`. Exit criteria: one 24 GB instance
+up, `make brev-check` green from the laptop, one unpaced `eval.run --live` baseline on
+20b recorded next to `reports/eval_live.json`. Cost ≈ $5–12.
+
+**Phase 2 — extraction fix factory (G3b / O-14) — NOT STARTED ($10–25)**
+1. Phrase-bank cells for the failure class: availability / delivery-window replies
+   ("ghodwa ba3d 17h nkoun fi dar"), price-hesitation variants — plus held-out cells so
+   eval cases never double as training text.
+2. 120b on an 80 GB card paraphrase-expands those cells into training-scale data.
+3. Unpaced prompt sweeps → `extract_v2`; LoRA on 20b only if prompts plateau.
+Exit: `extraction.is_order_acc ≥ 0.95`, the hero lands 11–16 and quotes the v2 address.
+
+**Phase 3 — fine-tune once, ship the artifact — follows Phase 2 if needed ($18–35)**
+Train the LoRA once on Brev; export the adapter with a model card + sha256 (same
+discipline as `models/risk_xgb_v1.json.card.json`); every host afterwards serves the
+artifact (`vllm serve … --lora-modules extract=…`, or merged weights). Never retrain
+per host — retraining happens only when phrase-bank/prompt data changes, always on
+Brev, and bumps the artifact version with the previous one kept for rollback.
+Re-record the extraction cache from the fine-tuned server (closes O-6 with correct
+provenance).
+
+**Phase 4 — optional spend — ONLY IF CREDIT AND TIME REMAIN ($10–20)**
+S-11 text baseline (Darija encoder fine-tune), S-6 cascade test locally (20b first,
+escalate on uncertainty), O-11 seed conversations drafted on-GPU for human curation.
+Explicitly excluded: O-1 fairness XFAIL (a decision, not compute — never tune the model
+to pass it) and O-2 spec conflicts (13 decisions, not workloads).
+
+Teardown discipline applies to every phase: `bash scripts/brev_llm_up.sh stop` on the
+instance, then `brev stop` in the console — credit burns only while the instance runs.
 
 ## Runbook
 

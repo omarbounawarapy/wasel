@@ -32,7 +32,7 @@
     1
   ],
   "model_sha256": "90d4118782bb627f6b245497a5794998ef523d4460abf2d612b82a762a3da2fd",
-  "data_sha256": "24c80566ce5bb478b52a5032b30ab6827dad6ee9da6720686f26d11006539d9a",
+  "data_sha256": "e6d36cc1efb6013d5cdcb8f77bf5e7a19d74a8e0d9e50d8eeb9556be0b9f6414",
   "synth_meta": {
     "seed": 20260927,
     "n": 10000,
@@ -51,21 +51,21 @@
     },
     "eval_subset": 40,
     "sha256": {
-      "data/phrase_banks.yaml": "9649527f9222642ca97f3340b7ee1671ef76e76eaf04af8dd8c55fe41bee8f43",
+      "data/phrase_banks.yaml": "a0135887f0f9015469541f1d454b58a19b59a3a7d6554dcd592a11f54a821471",
       "data/catalog.yaml": "929b688fc8bf463ff8dc1b3720ace2da73dfbae73c283fb96530c8f93963c957",
       "data/zones.yaml": "f64816994c121d43020006c342aca586bc0425e89a954b9c5c09cd003785b29c",
       "ml/features.py": "710cab208d60e41db8a28e59213261b216277718f7db20ef8cf342c60a50e64f"
     },
-    "csv_sha256": "24c80566ce5bb478b52a5032b30ab6827dad6ee9da6720686f26d11006539d9a",
-    "git_sha": "53aa26b85d80b80f096cd575c70323d312ac66bb"
+    "csv_sha256": "e6d36cc1efb6013d5cdcb8f77bf5e7a19d74a8e0d9e50d8eeb9556be0b9f6414",
+    "git_sha": "db08e7844b3aa46cf29eb12ab7a7dd841ba0349b"
   },
   "versions": {
     "xgboost": "3.2.0",
     "numpy": "2.4.6",
     "sklearn": "1.9.1"
   },
-  "git_sha": "53aa26b85d80b80f096cd575c70323d312ac66bb",
-  "trained_at": "2026-09-27T10:36:49.048858Z",
+  "git_sha": "db08e7844b3aa46cf29eb12ab7a7dd841ba0349b",
+  "trained_at": "2026-09-27T11:52:48.275746Z",
   "metrics_ref": "reports/train_metrics.json",
   "reliability": [
     {
