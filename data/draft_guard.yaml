@@ -58,7 +58,7 @@ unsafe:
   contact:
     train:
       fr: ["Plus d'infos sur www.boutique-promo.tn", "Appelez le 22 123 456.", "Cliquez ici : bit.ly/cmd89",
-           "Contactez-nous sur wa.me/21622123456"]
+           "Contactez-nous sur wa.me/21600000009"]
       arabizi: ["Chouf el site www.promo-shop.tn", "Kallemna 3la 55 987 654.", "Odkhel lel lien bit.ly/xyz"]
       darija_arabic_script: ["شوف السيت www.promo-shop.tn", "كلمنا على 55987654.", "ادخل للرابط bit.ly/xyz"]
     holdout:
