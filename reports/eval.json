@@ -3,10 +3,11 @@
   "versions": {
     "extract": "extract-v1",
     "rewrite": "rewrite-v2",
-    "judge": "judge-v2"
+    "judge": "judge-v2",
+    "failure_label": "failure-label-v1"
   },
   "config_hash": "4021f195",
-  "runtime_s": 6.2,
+  "runtime_s": 5.2,
   "results": {
     "extraction": {
       "n": 279,

@@ -27,6 +27,12 @@ roles:
       judge-v2: { system: judge_v2.system.txt, schema: outbound_judge_v1 }     # placeholders, arabizi digits, <=5 claims
     limits: { max_input_chars: 3000, max_output_tokens: 700, temperature: 0.0 }
     cache: true
+  failure_label:                  # hidden-failure analyzer's language layer (failures/semantics.py); offline tool
+    active: failure-label-v1
+    versions:
+      failure-label-v1: { system: failure_label_v1.system.txt, schema: failure_label_v1 }
+    limits: { max_input_chars: 8000, max_output_tokens: 3000, temperature: 0.0 }
+    cache: true
 routing:                          # env EXTRACT_MODEL / FALLBACK_MODEL / GEMINI_MODEL still override (01 §7)
   primary: openai/gpt-oss-120b
   fallback_model: openai/gpt-oss-20b

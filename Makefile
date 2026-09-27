@@ -30,7 +30,7 @@ up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set
 ui: ## dashboard only on :8501 (06 §1.5), against API_BASE_URL (default :8000)
 	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
 
-.PHONY: help setup run up ui test lint fmt hygiene check seed demo generate train warm eval eval-live golden drill smoke mocks docker clean
+.PHONY: help setup run up ui test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
@@ -64,6 +64,15 @@ eval-live: ## same golden sets through the live LLM extractor + judge (needs GRO
 
 golden: ## rebuild eval/golden/*.jsonl from committed synthetic sources (deterministic, 0 LLM calls)
 	$(PY) -m eval.build_golden
+
+sessions: ## rebuild data/agent_sessions{,_holdout}.jsonl: labeled synthetic agent runs (deterministic)
+	$(PY) -m failures.dataset
+
+failures: ## hidden-failure analyzer, rules only, on the train + holdout sets and this app's DB -> reports/failures_*.json
+	$(PY) -m failures.run && $(PY) -m failures.run --source holdout && $(PY) -m failures.run --source db --db $(DB)
+
+failures-llm: ## same with the LLM language layer (needs GROQ_API_KEY) -> reports/failures_*_llm.json
+	$(PY) -m failures.run --llm && $(PY) -m failures.run --source holdout --llm
 
 check: hygiene lint test eval ## THE pre-merge gate. CI runs exactly this.
 	@echo "check: green, ok to merge"
