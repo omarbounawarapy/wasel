@@ -161,14 +161,15 @@ flowchart LR
 
 | Doc | For |
 |---|---|
-| [docs/architecture.md](docs/architecture.md) | how it works, as diagrams |
-| [docs/team-guide.md](docs/team-guide.md) | owners, where to change what, merge flow |
-| [examples/](examples/) | runnable API walkthroughs |
-| [docs/council-spec/](docs/council-spec/README.md) | the build spec (wins over older docs) |
-| [STATUS.md](STATUS.md) | what's built, gates, open points |
+| **[ARCHITECTURE.md](ARCHITECTURE.md)** | **Judges: start here.** Complete system design, LLMOps, safeguards, what's built, 282 tests passing, classifier performance, Brev decision. Replaces council-spec for clarity. |
+| [docs/architecture.md](docs/architecture.md) | diagrams: request flow, scoring pipeline, LLM chain, order state machine, ML pipeline |
+| [examples/](examples/) | runnable API walkthroughs (customer reply, paste, rescore) |
+| [docs/team-guide.md](docs/team-guide.md) | team: owners, where to change what, merge flow |
+| [STATUS.md](STATUS.md) | progress snapshot: what's built, gates, open points as of Sun 27 Sept 00:50 |
 | [CHANGELOG.md](CHANGELOG.md) | notable changes |
 | [SECURITY.md](SECURITY.md) | reporting problems, safety model |
-| `PRD.md`, `SYSTEM_DESIGN.md`, `execution_plan.md`, `hackathon_playbook.md`, `handoff.md`, `FEDI.md` | planning history (superseded where the council spec differs) |
+| [FEDI.md](FEDI.md) | language/content/story (native speakers) |
+| Planning history | `PRD.md`, `SYSTEM_DESIGN.md`, `execution_plan.md`, etc. (for context, superseded by ARCHITECTURE.md) |
 
 Model numbers come from [`reports/train_metrics.json`](reports/train_metrics.json): holdout AUC 0.784 on synthetic data. [`reports/impact.json`](reports/impact.json) is a simulation on the same synthetic holdout, not a field result.
 
