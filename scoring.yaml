@@ -26,8 +26,13 @@ final_score:      { clip: [0, 100], round: 0 }               # final = round(cli
 
 outbound:
   static_insert_when_tier_at_least: medium
-  # S-3 draft judge: guard classifier p_unsafe >= block_at vetoes the rewrite; >= hold_at never auto_sends
-  judge: { classifier_block_at: 0.5, classifier_hold_at: 0.2, max_attempts: 2 }
+  # S-3 draft judge: guard classifier p_unsafe >= block_at vetoes the rewrite; >= hold_at never auto_sends.
+  # hold_at 0.1 (was 0.2, tightened when auto_send.gate became classifier and this line became the only
+  # backstop with the judge down). Measured on the never-trained holdout bank: unsafe text cleared to send
+  # drops 21% -> 11%, ~12% of safe drafts move to owner approval (safe, just slower), none blocked. 0.05
+  # would clear only 4% of unsafe text but hold ~60% of safe golden rewrites — auto-send would almost
+  # never fire. calibrate() weighs both sides when it suggests the line.
+  judge: { classifier_block_at: 0.5, classifier_hold_at: 0.1, max_attempts: 2 }
 
 serve_defaults:
   address_specificity: 0.0

@@ -22,7 +22,7 @@ from tests.conftest import T0
 
 GOOD_LLM = "Bonjour {first_name}, votre commande de Robe d'été est à 89 TND. Confirmez-vous que vous souhaitez la recevoir ? Merci 🙏"
 GOOD_FR = GOOD_LLM.replace("{first_name}", "Amira")
-# prefilter-clean rewrite the classifier puts in the review band (risk 0.212, measured): never auto-sends
+# prefilter-clean rewrite the classifier puts in the review band (risk 0.254, measured): never auto-sends
 REVIEW_LLM = ("Bonjour {first_name}, votre commande de Robe d'été est à 89 TND. "
               "Confirmez-vous que vous souhaitez la recevoir ? أكيد توصل نهار الاثنين.")
 APPROVE = {"unsupported_claims": [], "grounded": True, "language_ok": True, "tone_ok": True, "overreach": "none",
@@ -86,13 +86,16 @@ def test_guard_passes_every_static_template():
 
 
 def test_guard_holdout_recall_and_no_false_alarms():
-    """Holdout phrases are never trained on. Reported numbers, with a floor so a regression shows up."""
+    """Holdout phrases are never trained on. Measured at the configured operating point (0.1/0.5): 89% of
+    unsafe holdout drafts land at or above the review line, and no safe draft is ever blocked (safe drafts
+    held for approval are by design, tracked in the calibrate test)."""
     bank, cfg = yaml.safe_load(BANK.read_text(encoding="utf-8")), default_config()
     Xh, _ = build_corpus(cfg.templates, bank, split="holdout")
     Xg, yg = build_corpus(cfg.templates, bank, n_base=300, seed=99)
-    caught = sum(classify(x).p_unsafe >= 0.2 for x in Xh) / len(Xh)
-    false_alarm = sum(classify(x).p_unsafe >= 0.2 for x, y in zip(Xg, yg, strict=True) if y == "ok")
-    assert caught >= 0.7 and false_alarm == 0
+    b, h = thresholds()
+    caught = sum(classify(x).p_unsafe >= h for x in Xh) / len(Xh)
+    false_block = sum(classify(x).p_unsafe >= b for x, y in zip(Xg, yg, strict=True) if y == "ok")
+    assert caught >= 0.85 and false_block == 0
 
 
 def test_guard_names_the_problem():
@@ -126,27 +129,29 @@ def test_decide_names_the_three_zones():
 
 def test_decide_defaults_come_from_scoring_yaml():
     b, h = thresholds()
-    assert (b, h) == (0.5, 0.2)
+    assert (b, h) == (0.5, 0.1)
     assert decide(GOOD_FR).decision == decide(GOOD_FR, block_at=b, hold_at=h).decision == "send"
     assert decide(G4_BAD[0]).decision == "block"              # veto at the configured block_at, no explicit args
 
 
 def test_calibrate_decision_floors_on_untrained_holdout():
     """The three-way decision on bank phrases the classifier never trained on. Measured operating point at
-    0.2/0.5: ~79% of unsafe holdout drafts stopped (review or block) and no safe draft blocked or held —
-    the floors below fail if either side regresses."""
+    0.1/0.5: ~89% of unsafe holdout drafts stopped (review or block), ~12% of safe drafts held for owner
+    approval (by design — safe, just slower), none blocked — the floors below fail if either side regresses."""
     rep = calibrate(n_base=300, seed=99, grid=False)
-    assert rep["thresholds"] == {"block_at": 0.5, "hold_at": 0.2}
-    assert rep["unsafe_sent"] <= 0.25 and rep["unsafe_stopped"] >= 0.7
-    assert rep["safe_decisions"]["block"] == 0 and rep["safe_decisions"]["review"] == 0
+    assert rep["thresholds"] == {"block_at": 0.5, "hold_at": 0.1}
+    assert rep["unsafe_sent"] <= 0.15 and rep["unsafe_stopped"] >= 0.85
+    assert rep["safe_decisions"]["block"] == 0 and rep["safe_held"] <= 0.15
     assert rep["safe_sent"] >= 0.8
 
 
 def test_calibrate_suggests_a_hold_line_that_holds_both_gates():
+    """The suggestion weighs both sides: little unsafe text cleared AND auto-send still viable (holding
+    most safe drafts would defeat it). It must also agree with the line actually shipped in scoring.yaml."""
     rep = calibrate(n_base=200, seed=99, grid=True)
-    assert rep["suggested_hold_at"] is not None
+    assert rep["suggested_hold_at"] == thresholds()[1]
     row = next(r for r in rep["grid"] if r["thresholds"]["hold_at"] == rep["suggested_hold_at"])
-    assert row["unsafe_sent"] <= 0.05 and row["safe_blocked"] == 0
+    assert row["unsafe_sent"] <= 0.15 and row["safe_held"] <= 0.15 and row["safe_blocked"] == 0
 
 
 def test_make_draft_records_the_classifier_decision():
