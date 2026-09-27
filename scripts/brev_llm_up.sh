@@ -22,9 +22,9 @@ $(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=/DOTENV_\1=/' .env)
 EOF2
   set +a
 fi
-cfg() { # cfg VAR default — caller env > .env > default; echoes the resolved value
+cfg() { # cfg VAR [default] — caller env > .env > default; echoes the resolved value
   local v="$1" n="DOTENV_$1"
-  echo "${!v:-${!n:-$2}}"
+  echo "${!v:-${!n:-${2:-}}}"
 }
 MODEL="$(cfg MODEL openai/gpt-oss-20b)"  # 120b needs an 80GB card: MODEL=openai/gpt-oss-120b
 VLLM_PORT="$(cfg VLLM_PORT 8001)"        # own name on purpose: PORT=8000 in .env is uvicorn's
