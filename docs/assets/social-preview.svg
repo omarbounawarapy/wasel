@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0f172a"/><stop offset="1" stop-color="#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <g font-family="Inter, 'DejaVu Sans', Arial, sans-serif">
+    <text x="80" y="150" fill="#94a3b8" font-size="28" letter-spacing="4">Z-TEAM · COME BUILD WITH AI 2026</text>
+    <text x="80" y="245" fill="#f8fafc" font-size="96" font-weight="700">COD Risk</text>
+    <text x="80" y="310" fill="#cbd5e1" font-size="34">Cash-on-delivery refusal risk for Tunisian e-commerce,</text>
+    <text x="80" y="355" fill="#cbd5e1" font-size="34">read from the customer's own messages.</text>
+
+    <g transform="translate(80,420)">
+      <rect width="250" height="96" rx="16" fill="#7f1d1d"/>
+      <text x="125" y="40" fill="#fecaca" font-size="22" text-anchor="middle">v1 · before reply</text>
+      <text x="125" y="80" fill="#fff" font-size="36" font-weight="700" text-anchor="middle">HIGH 87</text>
+    </g>
+    <text x="370" y="484" fill="#94a3b8" font-size="48">→</text>
+    <g transform="translate(440,420)">
+      <rect width="250" height="96" rx="16" fill="#14532d"/>
+      <text x="125" y="40" fill="#bbf7d0" font-size="22" text-anchor="middle">v2 · after reply</text>
+      <text x="125" y="80" fill="#fff" font-size="36" font-weight="700" text-anchor="middle">LOW 16</text>
+    </g>
+
+    <g fill="#e2e8f0" font-size="26">
+      <text x="780" y="440">Darija · Arabizi · Arabic · French</text>
+      <text x="780" y="485">LLM extracts, XGBoost + rules score</text>
+      <text x="780" y="530">A person approves every message</text>
+    </g>
+    <text x="80" y="600" fill="#64748b" font-size="22">github.com/omarbounawarapy/hackathon · synthetic data only</text>
+  </g>
+</svg>
