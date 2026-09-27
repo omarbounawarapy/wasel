@@ -17,7 +17,8 @@ from tests.conftest import T0
 
 REPO = Path(__file__).resolve().parents[2]
 APP = str(REPO / "dashboard" / "app.py")
-PAGES = ["Risk Queue", "Order Detail", "Paste an order", "WhatsApp inbox", "Activity", "Impact (simulated)"]
+PAGES = ["Risk Queue", "Order Detail", "Paste an order", "WhatsApp inbox", "Activity", "Impact (simulated)",
+         "AI quality", "Hidden failures"]
 
 
 class Draining:
@@ -225,3 +226,40 @@ def test_whatsapp_webhook_message_reaches_the_inbox(wa_server):
     df = at.dataframe[0].value
     assert list(df["From"]) == ["Sami"] and "🔴" in df["Risk"][0]
     assert "mouch dima fi dar" in texts(at)                  # the thread under the table
+
+
+def test_order_detail_shows_every_judge_layer_for_an_llm_rewrite(server):
+    import json
+    h = hero(server)
+    judge = {"decided_by": "llm", "approved": False, "verdict": "approve", "grounded": False,
+             "unsupported_claims": ["livraison gratuite"], "language_ok": True, "tone_ok": True,
+             "overreach": "delivery_commitment", "question_count": "one", "judge_model": "groq:openai/gpt-oss-120b",
+             "classifier": {"p_unsafe": 0.12, "label": "promise"}}
+    server.core.conn().execute("UPDATE outbound_drafts SET source='llm_rewrite', judge_json=? WHERE order_id=? "
+                               "AND sent_message_id IS NULL", (json.dumps(judge), h["order_id"]))
+    at = run("Order Detail", order_id=h["order_id"])
+    t = texts(at)
+    assert "Checked by 3 layers" in t and "judge rejected (delivery promise)" in t
+    layers = at.dataframe[-1].value if "Layer" in at.dataframe[-1].value else \
+        next(d.value for d in at.dataframe if "Layer" in d.value)
+    assert list(layers["Layer"]) == ["1 · Rules prefilter", "2 · Guard classifier (local, no LLM)",
+                                     "3 · LLM judge (groq:openai/gpt-oss-120b)"]
+    assert "⛔ rejected" in set(layers["Result"])        # the model said approve; code recomputed it
+    assert any("livraison gratuite" in w.value for w in at.warning)
+
+
+def test_ai_quality_page_shows_the_eval_gate_and_monitor(server):
+    at = run("AI quality")
+    metrics = {m.label: m.value for m in at.metric}
+    assert metrics["CI gate (offline, every push)"] == "green" and int(metrics["Golden cases"]) >= 400
+    assert "Population stability index" in texts(at)
+    assert ("/api/monitor" in {p for _, p in server.calls}) and ("/api/eval" in {p for _, p in server.calls})
+
+
+def test_hidden_failures_page_ranks_issues_with_evidence(server):
+    at = run("Hidden failures")
+    metrics = {m.label: m.value for m in at.metric}
+    assert metrics["Sessions"] == "130" and int(metrics["Failures"]) > 0
+    issues = next(d.value for d in at.dataframe if "Issue" in d.value)
+    assert list(issues["#"]) == list(range(1, len(issues) + 1))
+    assert "Why it matters" in texts(at) and "Final status claimed" in texts(at)

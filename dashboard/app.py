@@ -16,7 +16,8 @@ import streamlit as st
 
 st.set_page_config(page_title="COD Risk Queue", page_icon="📦", layout="wide")
 
-PAGES = ["Risk Queue", "Order Detail", "Paste an order", "WhatsApp inbox", "Activity", "Impact (simulated)"]
+PAGES = ["Risk Queue", "Order Detail", "Paste an order", "WhatsApp inbox", "Activity", "Impact (simulated)",
+         "AI quality", "Hidden failures"]
 TIER = {"high": ("High", "#d93025", "🔴"), "medium": ("Med", "#f29900", "🟠"), "low": ("Low", "#188038", "🟢")}
 ACTION_LABELS = {"confirm": "Confirm with the customer", "prepay": "Ask for prepayment", "ship": "Ship normally",
                  "review": "Needs your review", "cancelled": "Cancelled"}
@@ -336,6 +337,68 @@ def rescoring_banner(order_id: str) -> None:
              "drafting": "Drafting the message to the customer…"}.get(o["rescore_state"], "Scoring…"))
 
 
+ROUTE = {"auto_send": "can go out without a click", "needs_review": "a person checks and clicks Send",
+         "blocked": "blocked: the standard template is used"}
+OVERREACH = {"none": "none", "discount_or_price_change": "discount or price change", "payment_request": "payment request",
+             "delivery_commitment": "delivery promise", "instructions_in_draft": "instructions in the draft",
+             "other": "other"}
+
+
+def JUDGE_SHORT(j: dict) -> str:  # noqa: N802 - reads like a label in the f-strings above
+    if j.get("unavailable"):
+        return "judge unavailable"
+    if j.get("decided_by") == "classifier":
+        return "vetoed by the guard classifier"
+    return "judge approved" if j.get("approved") else f"judge rejected ({OVERREACH.get(j.get('overreach'), 'other')})"
+
+
+def draft_checks(dr: dict, oid: str) -> None:
+    """The three layers a draft passes (02 §8.2), cheapest first, and the rewrite attempts that led here."""
+    j = dr.get("judge") or {}
+    clf = j.get("classifier") or {}
+    pf = dr["prefilter"]
+    if dr["source"] == "llm_rewrite":
+        st.caption(f"Checked by 3 layers · {JUDGE_SHORT(j)} · route: {ROUTE.get(dr['route'], dr['route'])}")
+    else:
+        st.caption(f"Standard template, checked by the rules · route: {ROUTE.get(dr['route'], dr['route'])}")
+    with st.expander("How this message was checked", expanded=False):
+        rows = [{"Layer": "1 · Rules prefilter", "Result": "✅ passed" if pf["passed"] else "⛔ failed",
+                 "Detail": ", ".join(pf["failures"]) or "numbers, links, phone, payment/discount/promise words, "
+                 "question count, length"}]
+        if dr["source"] == "llm_rewrite":
+            rows.append({"Layer": "2 · Guard classifier (local, no LLM)",
+                         "Result": "⛔ veto" if j.get("decided_by") == "classifier" and not j.get("unavailable")
+                         else "✅ passed", "Detail": f"risk {clf.get('p_unsafe', 0):.0%}"
+                         + (f", looks like: {clf.get('label')}" if clf.get("label") not in (None, "ok") else "")})
+            if j.get("unavailable"):
+                rows.append({"Layer": "3 · LLM judge", "Result": "⚠️ unavailable",
+                             "Detail": f"{j.get('reason', '')}: a person must check it (never auto-sent)"})
+            elif j.get("decided_by") == "llm":
+                rows.append({"Layer": f"3 · LLM judge ({j.get('judge_model', '')})",
+                             "Result": "✅ approved" if j.get("approved") else "⛔ rejected",
+                             "Detail": f"model said {j.get('verdict')}; approval recomputed in code"})
+        st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+        if j.get("decided_by") == "llm":
+            c = st.columns(5)
+            c[0].metric("Grounded in the order", "yes" if j.get("grounded") else "no")
+            c[1].metric("Language", "ok" if j.get("language_ok") else "wrong")
+            c[2].metric("Tone", "ok" if j.get("tone_ok") else "pushy/rude")
+            c[3].metric("Overreach", OVERREACH.get(j.get("overreach"), j.get("overreach")))
+            c[4].metric("Questions", j.get("question_count", "?"))
+            if j.get("unsupported_claims"):
+                st.warning("Claims the order doesn't support: " + "; ".join(e(x) for x in j["unsupported_claims"]))
+        if dr["source"] == "llm_rewrite" and dr.get("canonical_text"):
+            st.caption("Approved template it was adapted from:")
+            st.markdown(f'<div dir="auto" style="background:#f1f3f4;color:#111;padding:8px 12px;border-radius:8px">'
+                        f'{e(dr["canonical_text"])}</div>', unsafe_allow_html=True)
+        hist = [x for x in (call(api.events, order_id=oid, quiet=True) or {"events": []})["events"]
+                if x["type"].startswith("draft.") and x["type"] not in ("draft.created", "draft.sent")]
+        if hist:
+            st.caption("Rewrite attempts")
+            st.dataframe(pd.DataFrame([{"When (UTC)": x["ts"][11:19], "Step": x["title"], "Detail": x["detail"] or ""}
+                                       for x in hist]), hide_index=True, width="stretch")
+
+
 def page_detail():
     rows = order_list(include_collecting=True)["orders"]
     if not rows:
@@ -434,15 +497,7 @@ def page_detail():
         st.markdown(f"{'✅' if ok else '⛔'} **{src}** `{dr['template_id']}` · {dr['language']} · route "
                     f"`{dr['route']}`" + ("" if dr["prefilter"]["passed"]
                                           else f" · blocked by checks: {', '.join(dr['prefilter']['failures'])}"))
-        if j := dr.get("judge"):
-            clf = j.get("classifier") or {}
-            if j.get("unavailable"):
-                verdict = "LLM judge unavailable, a person must check it"
-            else:
-                verdict = ("approved" if j.get("approved") else f"rejected ({j.get('overreach', 'other')})") + \
-                    f" by {j.get('judge_model', 'the LLM judge')}"
-            st.caption(f"Judge: {verdict} · guard classifier risk {clf.get('p_unsafe', 0):.0%}"
-                       + (f" ({clf.get('label')})" if clf.get("label") not in (None, "ok") else ""))
+        draft_checks(dr, oid)
         st.markdown(f'<div dir="auto" style="background:#dcf8c6;color:#111;padding:10px 14px;border-radius:10px">'
                     f'{e(dr["text"])}</div>', unsafe_allow_html=True)
         where = "on WhatsApp" if o["channel"] == "whatsapp" and health["wa_send"] else "(recorded, not sent)"
@@ -453,7 +508,8 @@ def page_detail():
                 st.rerun()
     for dr in sent:
         st.caption(f"Sent {dr['sent_at'][11:16]} UTC: {dr['template_id']} "
-                   f"({'WhatsApp' if dr['delivery'] == 'whatsapp_sent' else 'recorded only'})")
+                   f"({'WhatsApp' if dr['delivery'] == 'whatsapp_sent' else 'recorded only'})"
+                   + (f" · {JUDGE_SHORT(dr['judge'])}" if dr.get("judge") else ""))
 
     if caps["can_simulate_reply"]:
         st.divider()
@@ -707,8 +763,243 @@ def page_impact():
                 "cost, measured against a ~5% random ship-normally control group of Med/High orders.")
 
 
+# --- AI quality --------------------------------------------------------------------------------
+
+METRIC_LABEL = {
+    "hallucinated_quotes_per_extraction": "Invented evidence quotes per extraction",
+    "dropped_flags_per_extraction": "Unsupported flags dropped per extraction",
+    "invalid_extraction_rate": "Extractions that failed the schema", "refusal_rate": "LLM answers not in schema",
+    "fallback_rate": "Scored without the main model", "injection_rate": "Messages with instruction text",
+    "judge_reject_rate": "Rewrites rejected by the judge", "judge_ungrounded_rate": "Rewrites with unsupported claims",
+    "judge_tone_fail_rate": "Rewrites with a pushy or rude tone", "judge_unavailable_rate": "Judge unavailable",
+    "classifier_veto_rate": "Rewrites vetoed by the guard classifier", "llm_error_rate": "LLM attempts that failed"}
+EVAL_LABEL = {"task_success": "Send / don't-send decisions right", "unsafe_blocked": "Unsafe drafts stopped",
+              "safe_passed": "Safe drafts let through", "is_order_acc": "Order vs not-order",
+              "address_within1_acc": "Address level (±1 step)", "address_exact_acc": "Address level (exact)",
+              "language_acc": "Language", "flag_precision": "Warning-sign precision", "flag_recall": "Warning-sign recall",
+              "flagged_rate": "Injections flagged", "still_scored_rate": "Injected orders still scored",
+              "not_promoted_rate": "Injections that didn't fake an exact address"}
+
+
+def pct(v) -> str:
+    return "–" if v is None else f"{v:.0%}" if isinstance(v, float) and v <= 1 else str(v)
+
+
+def eval_table(rep: dict) -> pd.DataFrame:
+    rows = []
+    for task, m in rep["results"].items():
+        for k, v in m.items():
+            if k in EVAL_LABEL:
+                rows.append({"Set": f"{task} (n={m.get('n')})", "Metric": EVAL_LABEL[k], "Score": f"{v:.1%}"})
+    return pd.DataFrame(rows)
+
+
+def page_quality():
+    st.markdown("#### AI quality")
+    st.caption("How every LLM step is checked: golden-set eval gates in CI, live monitoring of drift, faithfulness "
+               "and safety, and a trace of every LLM request (ids, versions, model, tokens; never customer text).")
+    tabs = st.tabs(["Eval gate", "Monitor", "Traces", "Versions & rollback"])
+    ev = call(api.eval_reports, quiet=True) or {}
+    with tabs[0]:
+        off, live = ev.get("offline"), ev.get("live")
+        if not off:
+            st.info("No eval report yet: run `make eval`.")
+        else:
+            gate = "✅ green" if not off["gate_failures"] else "⛔ " + "; ".join(off["gate_failures"])
+            c = st.columns(3)
+            c[0].metric("CI gate (offline, every push)", "green" if not off["gate_failures"] else "failing")
+            c[1].metric("Golden cases", sum(m.get("n", 0) for m in off["results"].values()))
+            c[2].metric("Runtime", f"{off['runtime_s']} s")
+            st.caption(f"`make eval` · rules extractor + prefilter + guard classifier, no keys · {gate} · "
+                       "floors in `eval/thresholds.yaml`, a drop under any floor blocks the merge")
+            st.dataframe(eval_table(off), hide_index=True, width="stretch")
+        if live:
+            st.markdown("##### Live run (LLM extraction + LLM judge)")
+            gate = "✅ green" if not live["gate_failures"] else "⛔ " + "; ".join(live["gate_failures"])
+            st.caption(f"`make eval-live` · {gate} · {live['runtime_s']} s · versions "
+                       + ", ".join(f"`{k}={v}`" for k, v in live["versions"].items()))
+            st.dataframe(eval_table(live), hide_index=True, width="stretch")
+            if live.get("llm_usage"):
+                st.dataframe(pd.DataFrame([{"Role": r, "Requests": u["requests"], "Failed": u["failed"],
+                                            "Tokens in": u["tokens_in"], "Tokens out": u["tokens_out"],
+                                            "p50 ms": u["p50_ms"], "p95 ms": u["p95_ms"]}
+                                           for r, u in live["llm_usage"].items()]), hide_index=True, width="stretch")
+    with tabs[1]:
+        m = call(api.monitor, quiet=True)
+        if not m:
+            st.info("Monitor unavailable.")
+        else:
+            if m["alerts"]:
+                for a in m["alerts"]:
+                    name = METRIC_LABEL.get(a["metric"], a["metric"])
+                    st.warning(f"**{a['kind']}** · {name}: {pct(a['value'])} (limit {pct(a['limit'])})")
+            else:
+                st.success("No alerts on the last "
+                           f"{m['window']} assessments, drafts and LLM attempts.")
+            if health["llm"]["llm_mode"] != "live" or not health["llm"]["chain_extract"]:
+                st.caption("No live LLM on this backend: 'scored without the main model' is expected to be high.")
+            st.markdown("##### Drift (input mix vs the golden set)")
+            st.caption(f"Population stability index; ≥ 0.2 means the mix moved. Reference: {m['reference']}")
+            d_rows = []
+            for d in m["drift"]:
+                for k in sorted(set(d["reference"]) | set(d["current"])):
+                    d_rows += [{"Feature": d["feature"], "Value": k, "Share": d["reference"].get(k, 0), "Set": "reference"},
+                               {"Feature": d["feature"], "Value": k, "Share": d["current"].get(k, 0), "Set": "recent"}]
+            c = st.columns(len(m["drift"]))
+            for col, d in zip(c, m["drift"], strict=True):
+                col.metric(d["feature"].replace("_", " "), "–" if d["psi"] is None else f"PSI {d['psi']:.2f}",
+                           "drifted" if d["drifted"] else f"n={d['n']}", delta_color="inverse" if d["drifted"] else "off")
+            if d_rows:
+                st.altair_chart(alt.Chart(pd.DataFrame(d_rows)).mark_bar().encode(
+                    x=alt.X("Share:Q", axis=alt.Axis(format="%")), y=alt.Y("Set:N", title=None),
+                    color=alt.Color("Set:N", scale=alt.Scale(range=["#9aa0a6", "#1a73e8"]), legend=None),
+                    row=alt.Row("Value:N", title=None), column=alt.Column("Feature:N", title=None),
+                    tooltip=["Feature", "Value", "Set", alt.Tooltip("Share:Q", format=".0%")]).properties(
+                    height=28, width=160))
+            f, sf = m["faithfulness"], m["safety"]
+            st.markdown("##### Faithfulness and safety")
+            rows = [{"Metric": METRIC_LABEL[k], "Value": pct(v), "Over": f"n={f['n']} extractions"}
+                    for k, v in f.items() if k in METRIC_LABEL]
+            rows += [{"Metric": METRIC_LABEL[k], "Value": pct(v), "Over": f"n={sf['judged']} judged drafts"}
+                     for k, v in sf.items() if k in METRIC_LABEL]
+            rows += [{"Metric": METRIC_LABEL[k], "Value": pct(m["ops"][k]), "Over": f"n={m['ops']['attempts']} attempts"}
+                     for k in ("refusal_rate", "llm_error_rate")]
+            st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+            if sf["overreach"]:
+                st.caption("Judge rejections by kind: " + ", ".join(f"{OVERREACH.get(k, k)} {v}"
+                                                                  for k, v in sf["overreach"].items()))
+            by_role = m["ops"]["by_role"]
+            if by_role:
+                st.markdown("##### LLM calls by role")
+                st.dataframe(pd.DataFrame([{"Role": r, "Attempts": x["attempts"], "Errors": x["errors"],
+                                            "Not in schema": x["refusals"], "Tokens in": x["tokens_in"],
+                                            "Tokens out": x["tokens_out"], "p50 ms": x["p50_ms"], "p95 ms": x["p95_ms"],
+                                            "Models": ", ".join(x["models"])} for r, x in by_role.items()]),
+                             hide_index=True, width="stretch")
+    with tabs[2]:
+        role = st.segmented_control("Role", ["all", "extract", "rewrite", "judge"], default="all",
+                                    label_visibility="collapsed")
+        t = (call(api.traces, None if role in (None, "all") else role, quiet=True) or {}).get("traces", [])
+        if not t:
+            st.info("No LLM requests since the backend started (seeded orders use recorded results).")
+        else:
+            st.dataframe(pd.DataFrame([{"When (UTC)": x.get("ts", "")[11:19], "Role": x.get("role"),
+                                        "Prompt": x.get("prompt_version"), "Outcome": x.get("outcome"),
+                                        "Model": x.get("model") or x.get("path"), "ms": x.get("latency_ms"),
+                                        "Tokens in": x.get("tokens_in"), "Tokens out": x.get("tokens_out"),
+                                        "Cache": "hit" if x.get("cache_hit") else "", "Order": x.get("order_id"),
+                                        "Input sha": x.get("input_sha")} for x in t]),
+                         hide_index=True, width="stretch", height=460)
+    with tabs[3]:
+        vers = (ev.get("offline") or {}).get("versions") or {}
+        st.caption("Prompts live in `prompts/` (sha256-locked in `prompts/VERSIONS`), output schemas in `schemas/`, "
+                   "the role → version → model map in `config/llm.yaml`. None of it is in application code, and "
+                   "changes need a CODEOWNERS review.")
+        if vers:
+            st.dataframe(pd.DataFrame([{"Role": k, "Active version": v,
+                                        "Roll back in one step": f"python -m scripts.rollback {k} <version>"}
+                                       for k, v in vers.items()]), hide_index=True, width="stretch")
+        st.caption(f"Scoring config `{health['config']['config_hash']}` · classifier "
+                   f"`{health['config']['classifier_version']}`")
+
+
+# --- Hidden failures ---------------------------------------------------------------------------
+
+FAILURE_LABEL = {"unsupported_success_claim": "Unsupported success claim", "wrong_customer_record": "Wrong customer record",
+                 "incomplete_marked_done": "Incomplete request closed as done", "tool_error_ignored": "Tool error ignored",
+                 "no_progress_search": "Search with no progress", "repeated_question": "Repeated question"}
+SOURCES = {"synthetic": "Labeled agent runs (130)", "holdout": "Paraphrased holdout (130)", "app": "This app's orders"}
+
+
+def evidence_line(x: dict) -> str:
+    if x["type"] in ("agent", "user"):
+        return f"**{'Agent' if x['type'] == 'agent' else 'Customer'}:** {e(x.get('text'))}"
+    if x["type"] == "tool_call":
+        return f"🔧 `{x['tool']}({', '.join(f'{k}={v}' for k, v in (x.get('args') or {}).items())})`"
+    ok = "✅" if x.get("ok") else "⛔"
+    return f"{ok} `{x['tool']}` → `{e(x.get('result'))}`"
+
+
+def page_failures():
+    st.markdown("#### Hidden failures")
+    st.caption("Runs that end without a technical error can still fail the customer. The analyzer reads each "
+               "session's messages and tool calls, finds recurring problems, groups them and ranks what to look "
+               "at first, with the messages and tool results that support each finding.")
+    src = st.segmented_control("Source", list(SOURCES), format_func=SOURCES.get, default="synthetic",
+                               label_visibility="collapsed") or "synthetic"
+    r = call(api.failures, src)
+    if not r:
+        return
+    bs = r["by_status"]
+    c = st.columns(5)
+    c[0].metric("Sessions", r["n_sessions"])
+    c[1].metric("Failures", bs.get("failure", 0))
+    c[2].metric("Needs review", bs.get("needs_review", 0))
+    c[3].metric("Runtime", f"{r['runtime']['total_s'] * 1000:.0f} ms")
+    c[4].metric("LLM cost (this view)", "0 calls", help="The live view runs the rules; the LLM run is recorded below.")
+    acc, llm = r.get("accuracy"), r.get("llm_run")
+    if acc:
+        rows = [{"Failure type": FAILURE_LABEL[t], "Planted": m["support"], "Rules precision": pct(m["precision"]),
+                 "Rules recall": pct(m["recall"])} for t, m in acc["per_type"].items()]
+        if llm and llm.get("accuracy"):
+            for row, m in zip(rows, llm["accuracy"]["per_type"].values(), strict=True):
+                row["+LLM precision"], row["+LLM recall"] = pct(m["precision"]), pct(m["recall"])
+        with st.expander(f"Accuracy against the labels · rules P {pct(acc['micro_precision'])} / "
+                         f"R {pct(acc['micro_recall'])}" + (f" · with the LLM layer P "
+                         f"{pct(llm['accuracy']['micro_precision'])} / R {pct(llm['accuracy']['micro_recall'])}"
+                         if llm and llm.get("accuracy") else ""), expanded=src == "holdout"):
+            st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+            st.caption(f"Clean runs wrongly flagged: {acc['clean_sessions_flagged']}/{acc['clean_sessions']} "
+                       f"(recoveries: {len(acc['recoveries_flagged'])}) · ambiguous runs sent to review: "
+                       f"{acc['ambiguous_to_review']}")
+            if llm and llm.get("semantics"):
+                sm = llm["semantics"]
+                st.caption(f"LLM layer: {sm.get('calls')} calls for {sm.get('texts')} unique messages, "
+                           f"{sm.get('tokens_in', 0) + sm.get('tokens_out', 0):,} tokens, {sm.get('seconds')} s, "
+                           f"model `{sm.get('model')}`")
+    if not r["issues"]:
+        st.success("No failures found in these sessions.")
+    else:
+        st.markdown("##### Ranked issues")
+        st.dataframe(pd.DataFrame([{
+            "#": i["rank"], "Status": "failure" if i["status"] == "failure" else "needs review",
+            "Issue": FAILURE_LABEL[i["type"]], "Pattern": i["signature"]
+            + (f" ({', '.join(f'{k} {v}' for k, v in i['details'].items())})" if i["details"] else ""),
+            "Sessions": i["n_sessions"], "Share": f"{i['share']:.0%}", "Confidence": f"{i['confidence']:.2f}",
+            "Priority": i["priority"]} for i in r["issues"]]), hide_index=True, width="stretch")
+        pick = st.selectbox("Issue", r["issues"], format_func=lambda i: f"#{i['rank']} {FAILURE_LABEL[i['type']]}: "
+                            f"{i['signature']} ({i['n_sessions']} sessions)")
+        st.markdown(f"**Why it matters:** {pick['title']}  \n**Sessions:** {', '.join(pick['sessions'])}")
+        for f in pick["findings"][:3]:
+            with st.container(border=True):
+                st.markdown(f"`{f['session_id']}` · confidence {f['confidence']:.2f} · {e(f['summary'])}")
+                for x in f["evidence"]:
+                    st.markdown(f"<small>[{x['i']}]</small> " + evidence_line(x), unsafe_allow_html=True)
+        sid = st.selectbox("Open a session", pick["sessions"])
+        if sid:
+            d = call(api.failure_session, sid, src)
+            if d:
+                marked = {x["i"] for f in d["findings"] for x in f["evidence"]}
+                st.caption(f"Final status claimed: **{d['session']['final'].get('status_claimed')}**"
+                           + (f" · label: {d['session']['label']['kind']}" if d["session"].get("label") else ""))
+                for ev in d["session"]["events"]:
+                    line = f"<small>[{ev['i']}] +{ev['t']}s</small> " + evidence_line(ev)
+                    st.markdown(f"<div style='background:#fde293;color:#111;padding:2px 6px;border-radius:4px'>{line}</div>"
+                                if ev["i"] in marked else line, unsafe_allow_html=True)
+    with st.expander("Method, uncertainty and limitations"):
+        st.markdown("- **Detectors** are deterministic and explainable: each finding points at the exact messages "
+                    "and tool results. Confidence ≥ 0.6 is a failure, 0.35–0.6 goes to review (reminders after "
+                    "silence, hedged wording).\n- **Retries that end in success, and re-asking after an unclear "
+                    "answer, are recoveries**, not failures.\n- **Optional LLM layer** (`make failures-llm`): the "
+                    "LLM labels what each unique message says (success claim, hedged, what it asks, whether a reply "
+                    "answers it); the same structural rules then decide. Prompt `failure-label-v1`, strict schema, "
+                    "cached, traced.\n- **Grouping:** same failure type and pattern; ranking = severity × sessions "
+                    "× confidence.\n" + "\n".join(f"- {x}" for x in r["limitations"]))
+
+
 {"Risk Queue": page_queue, "Order Detail": page_detail, "Paste an order": page_paste,
- "WhatsApp inbox": page_inbox, "Activity": page_activity, "Impact (simulated)": page_impact}[page]()
+ "WhatsApp inbox": page_inbox, "Activity": page_activity, "Impact (simulated)": page_impact,
+ "AI quality": page_quality, "Hidden failures": page_failures}[page]()
 
 st.divider()
 st.caption("Synthetic data only, no real customer data. The LLM extracts flags; the classifier scores and the "
