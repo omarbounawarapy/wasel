@@ -94,13 +94,15 @@ case "${1:-check}" in
     [ -n "$TOKEN" ] || die "GROQ_API_KEY is empty (.env) — the vLLM --api-key value"
     models_ok "$BASE" || die "$BASE/models did not list $MODEL (server up? token right?)"
     echo "  OK: $MODEL listed in $BASE/models"
-    BODY=$(printf '{"model":"%s","messages":[{"role":"user","content":"Return only JSON: {\\"ok\\": true}"}],"temperature":0,"max_completion_tokens":32}' "$MODEL")
+    BODY=$(printf '{"model":"%s","messages":[{"role":"user","content":"Return only JSON: {\\"ok\\": true}"}],"temperature":0,"max_completion_tokens":512}' "$MODEL")
     T0=$(date +%s%3N)
     RESP=$(curl -sf -m "${CHECK_TIMEOUT_S:-60}" -H "Authorization: Bearer $TOKEN" \
                  -H "Content-Type: application/json" -d "$BODY" "$BASE/chat/completions") \
       || die "chat/completions failed"
     T1=$(date +%s%3N)
-    echo "$RESP" | python3 -c 'import json,sys; d=json.load(sys.stdin); print("  OK: completion:", d["choices"][0]["message"]["content"][:80].replace("\n", " "))'
+    # gpt-oss reasoning models may return the answer in content after an analysis
+    # channel (reasoning_content); 512 tokens leaves room for both.
+    echo "$RESP" | python3 -c 'import json,sys; m=json.load(sys.stdin)["choices"][0]["message"]; c=m.get("content") or m.get("reasoning_content") or ""; print("  OK: completion:", (c[:80].replace("\n", " ")) or "(empty)")'
     echo "  round-trip $((T1 - T0)) ms"
     echo "self-hosted endpoint check passed"
     ;;
