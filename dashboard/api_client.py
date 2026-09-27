@@ -77,6 +77,24 @@ class Api:
             after = page["last_seq"]
         return out[-keep:]
 
+    def monitor(self) -> dict:
+        return self._call("GET", "/api/monitor")
+
+    def traces(self, role: str | None = None, limit: int = 100) -> dict:
+        params: dict[str, Any] = {"limit": limit}
+        if role:
+            params["role"] = role
+        return self._call("GET", "/api/traces", params=params)
+
+    def eval_reports(self) -> dict:
+        return self._call("GET", "/api/eval")
+
+    def failures(self, source: str = "synthetic") -> dict:
+        return self._call("GET", "/api/failures", params={"source": source})
+
+    def failure_session(self, session_id: str, source: str = "synthetic") -> dict:
+        return self._call("GET", f"/api/failures/sessions/{session_id}", params={"source": source})
+
     def impact(self) -> dict:
         return self._call("GET", "/api/metrics/impact")
 

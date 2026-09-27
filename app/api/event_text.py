@@ -19,6 +19,10 @@ TITLES = {
     "injection.suspected": "Possible instruction text in the message — check before acting",
     "webhook.rejected": "Webhook rejected (bad signature)",
     "sandbox.created": "Your copy of a sample order was created",
+    "draft.judged": "LLM rewrite checked by the judge",
+    "draft.rejected": "LLM rewrite rejected by the checks",
+    "draft.fallback_static": "Rewrites rejected: standard template used",
+    "draft.rewrite_unavailable": "LLM rewrite unavailable: standard template used",
     "error": "Error",
 }
 
@@ -37,6 +41,18 @@ def event_text(type_: str, payload_json: str) -> tuple[str, str | None]:
         detail = f"{p.get('flags', 0)} flag(s), {p.get('quotes', 0)} quote(s)"
     elif type_ == "draft.created":
         detail = f"{p.get('template_id')} · {p.get('language')} · {p.get('route')}"
+    elif type_ == "draft.judged":
+        verdict = "approved" if p.get("approved") else "unavailable" if p.get("unavailable") else "rejected"
+        by = {"llm": "LLM judge", "classifier": "guard classifier"}.get(p.get("decided_by"), p.get("decided_by"))
+        detail = (f"attempt {p.get('attempt')} · {verdict} by {by} · classifier risk {p.get('p_unsafe', 0):.0%}"
+                  + (f" · {p['overreach']}" if p.get("overreach") not in (None, "none", "ok") else "")
+                  + (" · held for review" if p.get("hold") else ""))
+    elif type_ == "draft.rejected":
+        detail = f"attempt {p.get('attempt')} · {p.get('layer')}: {', '.join(p.get('failures', []))}"
+    elif type_ == "draft.fallback_static":
+        detail = f"after {p.get('attempts')} attempt(s)"
+    elif type_ == "draft.rewrite_unavailable":
+        detail = p.get("reason")
     elif type_ == "error":
         detail = p.get("error")
     return title, detail
