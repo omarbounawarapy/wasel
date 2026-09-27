@@ -7,14 +7,14 @@
     "failure_label": "failure-label-v1"
   },
   "config_hash": "92d1dc3c",
-  "runtime_s": 6.1,
+  "runtime_s": 7.6,
   "results": {
     "extraction": {
       "n": 279,
       "is_order_acc": 0.9605734767025089,
       "address_exact_acc": 0.9068100358422939,
       "address_within1_acc": 0.9713261648745519,
-      "language_acc": 0.9247311827956989,
+      "language_acc": 0.9032258064516129,
       "flag_precision": 0.9711538461538461,
       "flag_recall": 0.957345971563981,
       "flag_f1": 0.964200477326969,
