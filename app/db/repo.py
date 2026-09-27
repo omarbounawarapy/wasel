@@ -251,11 +251,12 @@ def insert_draft(conn, ids: IdGen, now: datetime, order_id, assessment_id, d: Dr
 
 
 def mark_draft_sent(conn, ids: IdGen, now: datetime, draft: sqlite3.Row, *, origin: str, delivery: str,
-                    decided_by: str) -> str:
+                    decided_by: str, channel_message_id: str | None = None) -> str:
     order = get_order(conn, draft["order_id"])
     mid = insert_message(conn, ids, now, conversation_id=order["conversation_id"], direction="outbound", author="ai",
                          origin=origin, text=draft["rendered_text"], canonical_text=draft["canonical_text"],
-                         template_id=draft["template_id"], delivery_status="sent" if delivery == "whatsapp_sent" else None)
+                         template_id=draft["template_id"], delivery_status="sent" if delivery == "whatsapp_sent" else None,
+                         channel_message_id=channel_message_id)
     link(conn, order["order_id"], mid)
     conn.execute("UPDATE outbound_drafts SET sent_message_id=?, sent_at=?, delivery=?, decided_by=? WHERE draft_id=?",
                  (mid, utc_iso(now), delivery, decided_by, draft["draft_id"]))

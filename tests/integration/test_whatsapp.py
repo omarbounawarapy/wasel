@@ -318,3 +318,89 @@ def test_hero_loop_webhook_parity(wa):
     assert (v1["final_score"], v2["final_score"]) == (GOLDEN["v1"]["final"], GOLDEN["v2a"]["final"])
     assert (v1["tier"], v2["tier"]) == ("high", "low") and v2["reason_diff"] and "dar 14" in v2["reason_diff"]
     assert got["order"]["status"] == "ready_to_ship"
+
+
+# ---------------------------------------------------------------- S-2 send (offline: httpx MockTransport as Meta)
+def _sender(calls, status=200):
+    import httpx
+
+    from app.outbound.whatsapp_send import WhatsAppSender
+
+    def handler(request):
+        calls.append(json.loads(request.content))
+        if status != 200:
+            return httpx.Response(status, json={"error": {"code": 131047}})
+        return httpx.Response(200, json={"messages": [{"id": "wamid.OUT1"}]})
+    return WhatsAppSender("test-token", PNID, "v21.0", transport=httpx.MockTransport(handler))
+
+
+@pytest.fixture
+def wa_send(tmp_path):
+    c, core, clock = make_client(tmp_path, "dev", wa_send_enabled=True, wa_token="test-token", **WA)
+    with c:
+        yield c, core, clock
+
+
+def _draft_for(c, core, clock):
+    wa_post(c, "text_inbound")
+    settle(core, clock)
+    conn = core.conn()
+    o = order_of(conn, "wamid.TEST1")
+    if repo.unsent_draft(conn, o["order_id"]) is None:
+        c.post(f"/api/orders/{o['order_id']}/actions", json={"action": "request_confirmation"})
+    return conn, o, repo.unsent_draft(conn, o["order_id"])
+
+
+def test_send_draft_goes_out_on_whatsapp_and_tracks_delivery(wa_send):
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls)
+    conn, o, d = _draft_for(c, core, clock)
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 200 and r.json()["delivery"] == "whatsapp_sent"
+    assert calls == [{"messaging_product": "whatsapp", "recipient_type": "individual", "to": "21600000001",
+                      "type": "text", "text": {"preview_url": False, "body": d["rendered_text"]}}]
+    m = msg(conn, "wamid.OUT1")
+    assert m["direction"] == "outbound" and m["delivery_status"] == "sent"
+    wa_post(c, "status_delivered")                                  # Meta's status webhook closes the loop
+    assert msg(conn, "wamid.OUT1")["delivery_status"] == "delivered"
+    assert c.post(f"/api/drafts/{d['draft_id']}/send").status_code == 409
+
+
+def test_send_failure_is_502_and_draft_stays_unsent(wa_send):
+    c, core, clock = wa_send
+    core.sender = _sender([], status=400)
+    conn, o, d = _draft_for(c, core, clock)
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 502 and r.json()["error"]["code"] == "WHATSAPP_SEND_FAILED"
+    assert repo.unsent_draft(conn, o["order_id"])["draft_id"] == d["draft_id"]
+
+
+def test_send_refused_outside_24h_window(wa_send):
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls)
+    conn, o, d = _draft_for(c, core, clock)
+    clock.advance(25 * 3600)
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 409 and r.json()["error"]["code"] == "OUTSIDE_24H_WINDOW" and calls == []
+
+
+def test_auto_send_only_sends_auto_send_drafts(wa_send):
+    from app.api.commands import auto_send_due
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls)
+    conn, o, d = _draft_for(c, core, clock)
+    s = core.settings.model_copy(update={"wa_auto_send": True})
+    assert d["route"] != "auto_send" and auto_send_due(conn, core.ids, clock.now(), s, core.sender) == []
+    conn.execute("UPDATE outbound_drafts SET route='auto_send' WHERE draft_id=?", (d["draft_id"],))
+    assert auto_send_due(conn, core.ids, clock.now(), s, core.sender) == [d["draft_id"]] and len(calls) == 1
+    row = conn.execute("SELECT decided_by, delivery FROM outbound_drafts WHERE draft_id=?", (d["draft_id"],)).fetchone()
+    assert tuple(row) == ("system", "whatsapp_sent")
+
+
+def test_public_mode_never_builds_a_sender(tmp_path):
+    c, core, _ = make_client(tmp_path, "public", wa_send_enabled=True, wa_token="test-token", wa_auto_send=True, **WA)
+    with c:
+        assert core.sender is None

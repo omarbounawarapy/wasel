@@ -7,7 +7,7 @@ import io
 from datetime import datetime, timedelta
 
 from app.api.errors import ApiError, invalid_transition, not_found, seeded_read_only
-from app.clock import utc_iso
+from app.clock import parse_utc, utc_iso
 from app.contracts import Drafter
 from app.db import repo
 from app.db.conn import tx
@@ -177,8 +177,11 @@ def apply_action(conn, ids: IdGen, now: datetime, settings: Settings, vid: str |
         repo.add_event(conn, now, f"order.{action}", "info", order_id=order_id, sandbox_id=o["sandbox_id"])
 
 
+WA_WINDOW = timedelta(hours=24)
+
+
 def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | None, draft_id: str,
-               sender=None) -> dict:
+               sender=None, *, decided_by: str = "human") -> dict:
     d = repo.row(conn, "SELECT * FROM outbound_drafts WHERE draft_id=?", draft_id)
     if d is None:
         raise not_found("draft")
@@ -187,13 +190,50 @@ def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | N
         raise ApiError(409, "ALREADY_SENT", "this draft was already sent")
     if d["route"] == "blocked":
         raise ApiError(409, "DRAFT_BLOCKED", "this draft failed the prefilter")
+    if decided_by == "system" and d["route"] != "auto_send":
+        raise ApiError(409, "NEEDS_REVIEW", "only an auto_send draft goes out without a human click")
     conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", o["conversation_id"])
-    delivery, origin = "recorded_only", "dashboard"
+    delivery, origin, wamid = "recorded_only", "dashboard", None
     if conv["channel"] == "whatsapp" and settings.wa_send_effective and sender is not None:
-        # S-2 (event mode only): real send + 24 h window check. Not exercised in this POC.
-        raise ApiError(502, "WHATSAPP_SEND_FAILED", "WhatsApp sending is not built in this POC (S-2)")
+        # S-2: free-form text is only allowed inside the 24 h customer-service window (SD §9)
+        last_in = conv["last_inbound_at"]
+        if not last_in or now - parse_utc(last_in) > WA_WINDOW:
+            raise ApiError(409, "OUTSIDE_24H_WINDOW", "the customer's last message is older than 24 h")
+        cust = repo.row(conn, "SELECT phone_e164 FROM customers WHERE customer_id=?", o["customer_id"])
+        if not cust or not cust["phone_e164"]:
+            raise ApiError(409, "NO_RECIPIENT", "this customer has no WhatsApp number")
+        from app.outbound.whatsapp_send import SendFailed
+        try:
+            wamid = sender.send_text(cust["phone_e164"], d["rendered_text"])
+        except SendFailed as e:
+            with tx(conn):
+                repo.add_event(conn, now, "draft.send_failed", "error", order_id=o["order_id"],
+                               sandbox_id=o["sandbox_id"], entity_id=draft_id, payload={"reason": e.reason})
+            raise ApiError(502, "WHATSAPP_SEND_FAILED", f"WhatsApp refused the message ({e.reason})") from e
+        delivery, origin = "whatsapp_sent", "whatsapp"
     with tx(conn):
-        mid = repo.mark_draft_sent(conn, ids, now, d, origin=origin, delivery=delivery, decided_by="human")
+        mid = repo.mark_draft_sent(conn, ids, now, d, origin=origin, delivery=delivery, decided_by=decided_by,
+                                   channel_message_id=wamid)
         repo.add_event(conn, now, "draft.sent", "success", order_id=o["order_id"], sandbox_id=o["sandbox_id"],
-                       entity_id=draft_id, payload={"delivery": delivery})
+                       entity_id=draft_id, payload={"delivery": delivery, "decided_by": decided_by,
+                                                    "source": d["source"]})
     return {"draft_id": draft_id, "sent_message_id": mid, "sent_at": utc_iso(now), "delivery": delivery}
+
+
+def auto_send_due(conn, ids: IdGen, now: datetime, settings: Settings, sender) -> list[str]:
+    """Send every unsent auto_send draft on a real WhatsApp conversation (WA_AUTO_SEND, event/dev only).
+    route=auto_send already means: rewrite approved by the judge and the classifier, confidence high, price under
+    the cap, loop guard and 24 h window (route.py). Failures stay unsent and visible for a human."""
+    if not (settings.wa_auto_send and settings.wa_send_effective and sender is not None):
+        return []
+    sent = []
+    for d in conn.execute("SELECT d.draft_id FROM outbound_drafts d JOIN orders o ON o.order_id=d.order_id"
+                          " JOIN conversations c ON c.conversation_id=o.conversation_id"
+                          " WHERE d.sent_message_id IS NULL AND d.route='auto_send' AND c.channel='whatsapp'"
+                          " AND o.sandbox_id IS NULL").fetchall():
+        try:
+            send_draft(conn, ids, now, settings, None, d["draft_id"], sender, decided_by="system")
+            sent.append(d["draft_id"])
+        except ApiError:
+            continue
+    return sent

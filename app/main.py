@@ -48,6 +48,10 @@ class AppState:
         self.last_purge_at = None
         self.last_webhook_at = None                     # last POST with a valid signature
         self.no_reply_s = self.config.raw["timeouts"]["no_reply_s"]["demo" if settings.demo_mode else "prod"]
+        self.sender = None                              # S-2: only when sending is effective (never public mode)
+        if settings.wa_send_effective and settings.wa_phone_number_id:
+            from app.outbound.whatsapp_send import WhatsAppSender
+            self.sender = WhatsAppSender(settings.wa_token, settings.wa_phone_number_id, settings.wa_api_version)
 
     # one connection per thread (01 §1 conn.py)
     def conn(self):
@@ -65,8 +69,14 @@ class AppState:
         return make_scorer(cache=SqliteExtractionCache(conn, self.settings.prompt_version), llm=self.llm,
                            meter=self.meter(conn), config=self.config)
 
+    @property
+    def draft_llm(self):
+        """S-3 rewrite + judge runs only with DRAFT_LLM=true and a provider configured; else static templates."""
+        return self.llm if self.settings.draft_llm and getattr(self.llm, "steps", None) else None
+
     def drafter(self, req):
-        return make_draft(req, llm=None, config=self.config)          # DRAFT_LLM=false: static only (S-3 not built)
+        return make_draft(req, llm=self.draft_llm, meter=self.meter() if self.draft_llm else None,
+                          config=self.config)
 
     def tick(self, now) -> None:
         """One worker step on this thread's connection (01 §5.3)."""
@@ -76,6 +86,9 @@ class AppState:
                              meter=meter, config=self.config)
         process_due(conn, now, scorer, self.drafter, ids=self.ids, meter=meter,
                     no_reply_s=self.no_reply_s if self.settings.no_reply_enabled else None)
+        if self.sender is not None and self.settings.wa_auto_send:
+            from app.api.commands import auto_send_due
+            auto_send_due(conn, self.ids, now, self.settings, self.sender)
 
     def purge(self, now) -> int:
         return purge_sandboxes(self.conn(), now, self.settings.sandbox_ttl_s)
@@ -127,7 +140,8 @@ class AppState:
             config=M.HealthConfig(config_hash=self.config.short_hash, prompt_version=s.prompt_version,
                                   classifier_version=lm.classifier_version if lm else "none",
                                   seed_version=load_seed()["version"]),
-            llm=M.HealthLLM(llm_mode=s.llm_mode, chain_extract=getattr(self.llm, "chain_names", []), chain_judge=[],
+            llm=M.HealthLLM(llm_mode=s.llm_mode, chain_extract=getattr(self.llm, "chain_names", []),
+                            chain_judge=getattr(self.draft_llm, "chain_names", []),
                             primary=getattr(self.llm, "primary", "rules"), fallback_active=fb is not None,
                             fallback_reason=f"recent path {fb['path']}" if fb else None,
                             last_path=recent["path"] if recent else None,
