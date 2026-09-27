@@ -38,10 +38,23 @@ web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make
 web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make run` or `make up` first)
 	cd web && npm run dev
 
+# ---- hosting without Docker (docs/deploy-cloudflare.md): the app runs with make, Cloudflare Tunnel publishes it
+serve: ## host run: API + web UI, no reload, settings from .env (unset APP_MODE = public), on HOST:PORT (127.0.0.1:8000)
+	@set -a; [ -f .env ] && . ./.env; set +a; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn app.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
+
+tunnel: ## publish `make serve` on your Cloudflare hostname (named tunnel; CLOUDFLARE_TUNNEL_TOKEN in .env)
+	@set -a; [ -f .env ] && . ./.env; set +a; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/deploy-cloudflare.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
+
+deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `make serve` and run `make smoke URL=<public url>`
+	git pull --ff-only
+	$(MAKE) setup web
+	@echo "updated to $$(git rev-parse --short HEAD). Restart the server (systemctl restart wasel, or Ctrl-C + make serve),"
+	@echo "then check it from outside: make smoke URL=<your public URL>"
+
 wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (STATUS O-9/G5; docs/whatsapp-live-test.md)
 	bash scripts/wa_webhook_up.sh
 
-.PHONY: help setup run up ui web web-dev wa-up test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks docker clean
+.PHONY: help setup run up ui web web-dev serve tunnel deploy wa-up test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
@@ -109,9 +122,6 @@ smoke: ## deployed/local URL: health+mode, try hero, reply, 409 (no key)
 
 mocks: ## dump mocks/*.json from a seeded in-process app (C3 contract for the frontend)
 	$(PY) -m scripts.dump_mocks
-
-docker: ## build the image exactly as the host will
-	docker build -t cod-risk:local .
 
 clean: ## remove caches and local DBs
 	rm -rf .pytest_cache .ruff_cache htmlcov var/*.db var/*.db-wal var/*.db-shm

@@ -7,7 +7,7 @@ bad=$(git ls-files . | grep -E '(^|/)\.env$|\.db$|\.db-(wal|shm)$|\.sqlite3?$|(^
 [ -n "$bad" ] && say "tracked files that must be ignored:\n$bad"
 
 # key-shaped strings [VERIFY Groq/Gemini/Meta prefixes]
-git grep -nIE '(gsk_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|EAA[A-Za-z0-9]{50,})' -- . ':!scripts/hygiene.sh' \
+git grep -nIE '(gsk_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|EAA[A-Za-z0-9]{50,}|eyJhIjoi[A-Za-z0-9+/=_-]{40,})' -- . ':!scripts/hygiene.sh' \
   && say "key-shaped string in a tracked file"
 
 # phone numbers in fixtures/data/mocks must be allowlisted 21600000001..21600000009

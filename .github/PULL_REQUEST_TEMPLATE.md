@@ -6,7 +6,7 @@
 
 - [ ] Omar: AI/ML (`app/llm`, `app/extraction`, `app/scoring`, `app/outbound`, `ml/`, `prompts/`, `schemas/`)
 - [ ] Jesser: backend (`app/db`, `app/api`, `app/ingress`, `worker.py`, `state.py`)
-- [ ] Montassar: frontend + infra (`dashboard/`, `Makefile`, `Dockerfile`, CI, `settings.py`, `mode.py`)
+- [ ] Montassar: frontend + infra (`dashboard/`, `Makefile`, `deploy/`, CI, `settings.py`, `mode.py`)
 - [ ] Fedi: content (`data/phrase_banks.yaml`, templates wording, README prose)
 
 ## Checklist

@@ -1,4 +1,5 @@
-# 05 §4. Runs on every push and PR: make check with no API keys, then (main only) the image boots in safe public mode.
+# 05 §4. Runs on every push and PR: make check with no API keys, then the host path (make, no Docker):
+# build the web UI, start `make serve` with no .env, and require safe public mode + the UI + the smoke test.
 name: ci
 on: [push, pull_request, workflow_dispatch]
 concurrency: { group: "ci-${{ github.ref }}", cancel-in-progress: true }
@@ -15,18 +16,25 @@ jobs:
         with: { python-version-file: .python-version, cache: pip }
       - run: make setup
       - run: make check PYTEST_ARGS="--junitxml=reports/junit.xml"
-  image:
-    name: image boots safe (public, no secrets)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+  serve:
+    name: host path (make web + make serve) boots safe and serves the UI
     needs: [backend]
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    env: { GROQ_API_KEY: "", GEMINI_API_KEY: "", WA_TOKEN: "", WA_APP_SECRET: "", WA_VERIFY_TOKEN: "" }
     steps:
       - uses: actions/checkout@v4
-      - run: docker build -t cod-risk:ci .
+      - uses: actions/setup-python@v5
+        with: { python-version-file: .python-version, cache: pip }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: make setup
+      - run: make web
       - run: |
-          docker run -d --name app -p 8000:8000 -e PORT=8000 cod-risk:ci
-          for i in $(seq 1 120); do curl -fsS localhost:8000/api/health >/dev/null 2>&1 && break; sleep 1; done
-          curl -fsS localhost:8000/api/health | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["mode"]=="public" and d["wa_send"] is False and d["webhook"]=="disabled", d; print("safe defaults ok")'
+          make serve > serve.log 2>&1 &
+          python3 scripts/wait_health.py http://localhost:8000
+          curl -fsS localhost:8000/api/health | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["mode"]=="public" and d["wa_send"] is False and d["webhook"]=="disabled" and d["wa_auto_send"] is False, d; print("safe defaults ok")'
+          curl -fsS localhost:8000/dashboard/ | grep -q "Wasel" && echo "web UI served"
+          make smoke
       - if: failure()
-        run: docker logs app || true
+        run: cat serve.log || true
