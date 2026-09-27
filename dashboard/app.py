@@ -434,8 +434,15 @@ def page_detail():
         st.markdown(f"{'✅' if ok else '⛔'} **{src}** `{dr['template_id']}` · {dr['language']} · route "
                     f"`{dr['route']}`" + ("" if dr["prefilter"]["passed"]
                                           else f" · blocked by checks: {', '.join(dr['prefilter']['failures'])}"))
-        if dr.get("judge"):
-            st.caption(f"Judge: {dr['judge']}")
+        if j := dr.get("judge"):
+            clf = j.get("classifier") or {}
+            if j.get("unavailable"):
+                verdict = "LLM judge unavailable, a person must check it"
+            else:
+                verdict = ("approved" if j.get("approved") else f"rejected ({j.get('overreach', 'other')})") + \
+                    f" by {j.get('judge_model', 'the LLM judge')}"
+            st.caption(f"Judge: {verdict} · guard classifier risk {clf.get('p_unsafe', 0):.0%}"
+                       + (f" ({clf.get('label')})" if clf.get("label") not in (None, "ok") else ""))
         st.markdown(f'<div dir="auto" style="background:#dcf8c6;color:#111;padding:10px 14px;border-radius:10px">'
                     f'{e(dr["text"])}</div>', unsafe_allow_html=True)
         where = "on WhatsApp" if o["channel"] == "whatsapp" and health["wa_send"] else "(recorded, not sent)"

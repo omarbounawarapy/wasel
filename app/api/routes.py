@@ -105,7 +105,8 @@ def action(order_id: str, body: M.SellerActionRequest, request: Request, vid: st
 def send_draft(draft_id: str, request: Request, vid: str | None = Depends(visitor_id)):
     st = _s(request)
     vid = require_visitor(request, vid)
-    return M.SendDraftResponse(**commands.send_draft(st.conn(), st.ids, st.clock.now(), st.settings, vid, draft_id))
+    return M.SendDraftResponse(**commands.send_draft(st.conn(), st.ids, st.clock.now(), st.settings, vid, draft_id,
+                                                         st.sender))
 
 
 @router.get("/events")

@@ -34,8 +34,9 @@ The repo follows the spec's tree (01 §1). The old `poc/` folder and the standal
 | Dashboard (Streamlit, 06 §1.5): queue, order detail, paste, WhatsApp inbox, activity, impact, all through `/api` | ✅ built + 18 tests against the real backend + browser check | `dashboard/` ([README](dashboard/README.md)) |
 | UI: React SPA | ⏳ not started (`web/` per the spec) | — |
 | WhatsApp webhook (S-1): verify, HMAC, dedupe, statuses, fail closed | ✅ built + tested (offline and with the real secrets); ⏳ not yet reached by Meta | `app/api/routes_webhook.py`, `app/ingress/whatsapp.py` |
-| WhatsApp send from the app (S-2) | ⏳ not built (`send_draft` returns 502 for WhatsApp) | — |
-| LLM rewrite + judge (S-3), cascade (S-6), text baseline (S-11) | ⏳ not built | — |
+| WhatsApp send from the app (S-2): Cloud API send, 24 h window, wamid → delivery statuses, optional `WA_AUTO_SEND` | ✅ built + tested offline (mock Meta); ⏳ not tried on a real number | `app/outbound/whatsapp_send.py`, `app/api/commands.py` |
+| LLM rewrite + judge (S-3) + draft guard classifier (TF-IDF + LR): flag `DRAFT_LLM` | ✅ built + tested offline and live (Groq judge rejects 6/6 G4 bad drafts, approves the good one; classifier alone flags 5/6, the wrong price is the prefilter's) | `app/outbound/{judge,guard_clf,make_draft}.py`, `data/draft_guard.yaml` |
+| Cascade (S-6), text baseline (S-11) | ⏳ not built | — |
 
 ## 2. What's tested
 

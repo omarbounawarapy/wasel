@@ -41,6 +41,10 @@ class ParseError(LLMError):           # JSON/shape failure after repair
     outcome = "parse_error"
 
 
+class InputTooLarge(LLMError):        # per-request cap: refused before any provider call
+    outcome = "schema_rejected"
+
+
 class FixtureMissing(LookupError):
     """NOT an LLMError: an offline test with no fixture fails loudly instead of silently going to rules."""
 
@@ -55,6 +59,8 @@ class TaskSpec:
     prompt_version: str
     max_output_tokens: int
     temperature: float
+    max_input_chars: int | None = None   # per-request cap (config/llm.yaml); over it -> InputTooLarge, no call
+    cache: bool = False                  # in-process response cache (rewrite/judge only)
 
 
 @dataclass(frozen=True)

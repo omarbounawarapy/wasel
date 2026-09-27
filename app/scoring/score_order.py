@@ -30,6 +30,7 @@ from app.extraction.cross_field import Processed, postprocess
 from app.extraction.repair import OrderExtraction, parse_extraction
 from app.extraction.rules_extractor import rules_extract
 from app.extraction.window import Window, build_window
+from app.llm import trace
 from app.llm.prompts import PROMPT_VERSION, extraction_task
 from app.outbound.templates import choose_template
 from app.scoring.catalog import match_product
@@ -166,6 +167,7 @@ def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: U
                 config: ScoringConfig | None = None) -> ScoreResult:
     config = config or default_config()
     cfg = config.raw
+    trace.bind(order_id=inp.order_id, sandbox_id=inp.sandbox_id, trigger=inp.trigger)
     win = cfg.get("window", {})
     w = build_window(inp, win.get("max_messages", 12), win.get("max_chars", 2000))
     events: list[CoreEvent] = []

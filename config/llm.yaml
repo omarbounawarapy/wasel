@@ -1,0 +1,34 @@
+# LLM registry: the ONE place that says which prompt, schema, model and limits each LLM role uses.
+# Prompt text lives in prompts/ (sha256-locked by prompts/VERSIONS), output schemas in schemas/, message
+# templates in data/templates/. None of it is in application code. Changes need a CODEOWNERS review.
+#
+# Rollback in one step: set a role's `active` back to an earlier version (one line), e.g.
+#   python -m scripts.rollback judge judge-v1        # or edit the line below and redeploy
+# `make eval` must stay green on the version you roll to; every version listed here is kept loadable.
+version: 1
+roles:
+  extract:
+    active: extract-v1
+    versions:
+      extract-v1: { system: extract_v1.system.txt, fewshot: extract_v1.fewshot.jsonl, schema: order_extraction_v1 }
+    limits: { max_input_chars: 6000, max_output_tokens: 1024, temperature: 0.0 }
+    cache: false                  # extraction has its own persistent cache (extraction_cache table)
+  rewrite:
+    active: rewrite-v2
+    versions:
+      rewrite-v1: { system: rewrite_v1.system.txt, schema: outbound_rewrite_v1 }
+      rewrite-v2: { system: rewrite_v2.system.txt, schema: outbound_rewrite_v1 }   # name placeholder, feedback, no pressure
+    limits: { max_input_chars: 2000, max_output_tokens: 500, temperature: 0.3 }
+    cache: true
+  judge:
+    active: judge-v2
+    versions:
+      judge-v1: { system: judge_v1.system.txt, schema: outbound_judge_v1 }
+      judge-v2: { system: judge_v2.system.txt, schema: outbound_judge_v1 }     # placeholders, arabizi digits, <=5 claims
+    limits: { max_input_chars: 3000, max_output_tokens: 700, temperature: 0.0 }
+    cache: true
+routing:                          # env EXTRACT_MODEL / FALLBACK_MODEL / GEMINI_MODEL still override (01 §7)
+  primary: openai/gpt-oss-120b
+  fallback_model: openai/gpt-oss-20b
+  deadline_s: 20
+  cache_size: 512                 # in-process LRU for rewrite/judge responses

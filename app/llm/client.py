@@ -18,6 +18,7 @@ import hashlib
 import json
 import os
 import time
+from collections import OrderedDict
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -25,6 +26,7 @@ from pathlib import Path
 from typing import Literal
 
 from app.contracts import Attempt, CapDecision, UsageMeter, UsageRecord
+from app.llm import trace
 from app.llm.base import (
     CallMeta,
     FixtureMissing,
@@ -74,8 +76,10 @@ class ChainResult:
 
 class ChainClient:
     def __init__(self, steps: list[ChainStep], *, deadline_s: float = 20.0, breaker_s: float = 60.0,
-                 monotonic: Callable[[], float] = time.monotonic):
+                 monotonic: Callable[[], float] = time.monotonic, cache_size: int = 512):
         self.steps = steps
+        self._cache: OrderedDict[str, ChainResult] = OrderedDict()
+        self.cache_size = cache_size
         self.deadline_s, self.breaker_s = deadline_s, breaker_s
         self._mono = monotonic
         self._breaker_until: dict[str, float] = {}
@@ -91,6 +95,37 @@ class ChainClient:
     def extract(self, task: TaskSpec, user: str, *, parse: Callable[[str], object],
                 meter: UsageMeter | None, sandbox_id: str | None, now: datetime,
                 role: Literal["extract", "rewrite", "judge"] = "extract") -> ChainResult:
+        """The one LLM entry point: per-request input cap, response cache, then the chain; one trace per call."""
+        key = hashlib.sha256(f"{task.name}\0{task.prompt_version}\0{user}".encode()).hexdigest()
+        base = {"trace_id": trace.new_id(), "role": role, "prompt_version": task.prompt_version,
+                "schema": task.schema_name, "input_sha": key[:16], "input_chars": len(user),
+                "max_output_tokens": task.max_output_tokens}
+        if task.max_input_chars and len(user) > task.max_input_chars:
+            trace.emit({**base, "outcome": "input_too_large", "path": "rules", "attempts": []})
+            return ChainResult(None, None, "rules", None, None, errors=["input_too_large"])
+        if task.cache and key in self._cache:
+            self._cache.move_to_end(key)
+            hit = self._cache[key]
+            trace.emit({**base, "outcome": "cache_hit", "cache_hit": True, "path": hit.path,
+                        "provider": hit.provider, "model": hit.model, "latency_ms": 0, "attempts": [],
+                        "output": hit.raw if role != "extract" else None})
+            return ChainResult(hit.parsed, hit.raw, hit.path, hit.provider, hit.model, meta=hit.meta)
+        res = self._run(task, user, parse=parse, meter=meter, sandbox_id=sandbox_id, now=now, role=role)
+        ok = res.parsed is not None
+        trace.emit({**base, "outcome": "ok" if ok else ("cap" if res.cap else "failed"), "cache_hit": False,
+                    "path": res.path, "provider": res.provider, "model": res.model,
+                    "attempts": [f"{a.provider}:{a.model}:{a.outcome}" for a in res.attempts],
+                    "latency_ms": sum(u.latency_ms or 0 for u in res.usage),
+                    "tokens_in": sum(u.tokens_in or 0 for u in res.usage),
+                    "tokens_out": sum(u.tokens_out or 0 for u in res.usage),
+                    "errors": res.errors[:3], "output": res.raw if ok and role != "extract" else None})
+        if ok and task.cache:
+            self._cache[key] = res
+            if len(self._cache) > self.cache_size:
+                self._cache.popitem(last=False)
+        return res
+
+    def _run(self, task: TaskSpec, user: str, *, parse, meter, sandbox_id, now, role) -> ChainResult:
         t0 = self._mono()
         res = ChainResult(None, None, "rules", None, None)
         skip_same_provider_fallback = False
@@ -188,7 +223,7 @@ class FailingBackend:
 
 
 # ---------------------------------------------------------------- selection by LLM_MODE
-EXTRACT_MODEL = "openai/gpt-oss-120b"
+EXTRACT_MODEL = "openai/gpt-oss-120b"            # defaults; config/llm.yaml routing and env override
 FALLBACK_MODEL = "openai/gpt-oss-20b"
 
 
@@ -196,6 +231,9 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
                  allow_hand_crafted: bool = False, deadline_s: float = 20.0) -> ChainClient:
     mode = mode or os.environ.get("LLM_MODE", "live")
     replay_dirs = replay_dirs or []
+    from app.llm.prompts import registry
+    routing = registry().get("routing", {})
+    primary, fallback = routing.get("primary", EXTRACT_MODEL), routing.get("fallback_model", FALLBACK_MODEL)
     gem_model = os.environ.get("GEMINI_MODEL", "gemini")
 
     def replay(provider="groq"):
@@ -224,13 +262,14 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
     steps: list[ChainStep] = []
     if os.environ.get("GROQ_API_KEY"):
         g = groq_backend(os.environ["GROQ_API_KEY"])
-        steps.append(ChainStep("primary", "groq", os.environ.get("EXTRACT_MODEL", EXTRACT_MODEL), g, 6))
+        steps.append(ChainStep("primary", "groq", os.environ.get("EXTRACT_MODEL", primary), g, 6))
         if os.environ.get("GROQ_FALLBACK_ENABLED", "true").lower() == "true":   # false if buckets are per org
             steps.append(ChainStep("fallback_model", "groq",
-                                   os.environ.get("FALLBACK_MODEL", FALLBACK_MODEL), g, 5))
+                                   os.environ.get("FALLBACK_MODEL", fallback), g, 5))
     if os.environ.get("GEMINI_API_KEY") and os.environ.get("GEMINI_MODEL") and \
             os.environ.get("GEMINI_ENABLED", "false").lower() == "true":
         gb = gemini_backend(os.environ["GEMINI_API_KEY"], os.environ["GEMINI_MODEL"],
                             load_probe(os.environ.get("PROBE_FILE", "config/probe.json")))
         steps.append(ChainStep("fallback_provider", "gemini", os.environ["GEMINI_MODEL"], gb, 8))
-    return ChainClient(steps, deadline_s=float(os.environ.get("LLM_DEADLINE_S", deadline_s)))
+    return ChainClient(steps, deadline_s=float(os.environ.get("LLM_DEADLINE_S", routing.get("deadline_s", deadline_s))),
+                       cache_size=int(routing.get("cache_size", 512)))

@@ -1,5 +1,6 @@
-"""Prompt + schema loading. The app refuses to start if a prompt file's sha256 doesn't match
-prompts/VERSIONS, so a prompt can't change silently without a version bump (02 §2)."""
+"""Prompt + schema + limits loading from the LLM registry (config/llm.yaml). The app refuses to start if a
+prompt file's sha256 doesn't match prompts/VERSIONS, so a prompt can't change silently without a version bump
+(02 §2). Which version each role runs is one line in config/llm.yaml, so a rollback is one edit."""
 from __future__ import annotations
 
 import hashlib
@@ -8,10 +9,12 @@ import os
 from functools import lru_cache
 from pathlib import Path
 
+import yaml
+
 from app.llm.base import TaskSpec
 
 ROOT = Path(__file__).resolve().parents[2]
-PROMPT_VERSION = os.environ.get("PROMPT_VERSION", "extract-v1")
+REGISTRY = Path(os.environ.get("LLM_REGISTRY", ROOT / "config" / "llm.yaml"))
 
 
 class PromptVersionMismatch(RuntimeError):
@@ -33,14 +36,58 @@ def check_versions(root: Path = ROOT) -> dict[str, str]:
     return out
 
 
-@lru_cache(maxsize=2)
+@lru_cache(maxsize=4)
+def registry(path: Path = REGISTRY) -> dict:
+    reg = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+    locked = check_versions(ROOT)
+    for role, r in reg["roles"].items():
+        if r["active"] not in r["versions"]:
+            raise PromptVersionMismatch(f"config/llm.yaml: {role}.active={r['active']} is not a listed version")
+        for v, spec in r["versions"].items():
+            for f in (spec["system"], spec.get("fewshot")):
+                if f and locked.get(f) != v:
+                    raise PromptVersionMismatch(f"prompts/{f} is not locked as {v} in prompts/VERSIONS")
+    return reg
+
+
+def active_version(role: str) -> str:
+    if role == "extract" and os.environ.get("PROMPT_VERSION"):
+        return os.environ["PROMPT_VERSION"]
+    return registry()["roles"][role]["active"]
+
+
+def active_versions() -> dict[str, str]:
+    return {role: active_version(role) for role in registry()["roles"]}
+
+
+@lru_cache(maxsize=8)
+def task(role: str, version: str | None = None, root: Path = ROOT) -> TaskSpec:
+    r = registry()["roles"][role]
+    version = version or active_version(role)
+    spec, lim = r["versions"][version], r["limits"]
+    shots: tuple = ()
+    if spec.get("fewshot"):
+        shots = tuple((d["user"], d["assistant"]) for d in
+                      (json.loads(line) for line in
+                       (root / "prompts" / spec["fewshot"]).read_text(encoding="utf-8").splitlines() if line.strip()))
+    return TaskSpec(name=role, schema_name=spec["schema"], prompt_version=version, few_shot=shots,
+                    system_prompt=(root / "prompts" / spec["system"]).read_text(encoding="utf-8"),
+                    schema=json.loads((root / "schemas" / f"{spec['schema']}.json").read_text(encoding="utf-8")),
+                    max_output_tokens=lim["max_output_tokens"], temperature=lim["temperature"],
+                    max_input_chars=lim.get("max_input_chars"), cache=bool(r.get("cache")))
+
+
+PROMPT_VERSION = active_version("extract")
+
+
 def extraction_task(root: Path = ROOT) -> TaskSpec:
-    check_versions(root)
-    system = (root / "prompts" / "extract_v1.system.txt").read_text(encoding="utf-8")
-    shots = tuple((d["user"], d["assistant"]) for d in
-                  (json.loads(line) for line in
-                   (root / "prompts" / "extract_v1.fewshot.jsonl").read_text(encoding="utf-8").splitlines()
-                   if line.strip()))
-    schema = json.loads((root / "schemas" / "order_extraction_v1.json").read_text(encoding="utf-8"))
-    return TaskSpec(name="extract", schema_name="order_extraction_v1", schema=schema, system_prompt=system,
-                    few_shot=shots, prompt_version=PROMPT_VERSION, max_output_tokens=1024, temperature=0.0)
+    return task("extract", PROMPT_VERSION, root)
+
+
+def rewrite_task(root: Path = ROOT) -> TaskSpec:
+    """02 §8.2: no customer text in the user turn."""
+    return task("rewrite", root=root)
+
+
+def judge_task(root: Path = ROOT) -> TaskSpec:
+    return task("judge", root=root)

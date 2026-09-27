@@ -24,6 +24,7 @@ class Settings(BaseSettings):
     admin_token: str = ""
     # mode and safety
     wa_send_enabled: bool = False
+    wa_auto_send: bool = False           # S-2: auto_send drafts go out without a click (never in public mode)
     webhook_enabled: bool = False
     seed_on_boot: Literal["auto", "always", "if_empty", "never"] = "auto"
     db_path: str = "var/app.db"

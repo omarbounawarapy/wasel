@@ -5,6 +5,8 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 ## [Unreleased]
 
 ### Added
+- Outbound LLM-as-judge (S-3, flag `DRAFT_LLM`): the LLM rewrites the template, then prefilter → local draft-guard classifier (char n-gram TF-IDF + logistic regression, `data/draft_guard.yaml`) → LLM judge (`judge-v1`, approval re-checked in code). One retry with feedback, then the static template; judge down → needs review, never auto-send. The dashboard shows the verdict and classifier risk. (27 Sept)
+- WhatsApp send (S-2): drafts go out through the Cloud API from the dashboard, only inside the 24 h window; the returned wamid picks up delivered/read statuses from the webhook. `WA_AUTO_SEND` sends judge-approved `auto_send` drafts without a click (never in public mode). (27 Sept)
 - Repository presentation: README rewrite with screenshots and diagrams, [architecture](docs/architecture.md) and [team guide](docs/team-guide.md) with Mermaid diagrams, runnable [`examples/`](examples/), LICENSE (all rights reserved, Z-Team), CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates, this changelog.
 - Streamlit dashboard in `dashboard/`, ported from the `cod-risk-poc` prototype: risk queue, order detail with highlighted evidence, paste an order, WhatsApp inbox, activity, simulated impact. Every read and action goes through the API. (26 Sept)
 - `make up` starts the API (:8000) and the dashboard (:8501) together, seeded. (26 Sept)
