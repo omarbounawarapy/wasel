@@ -30,7 +30,7 @@ up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set
 ui: ## dashboard only on :8501 (06 §1.5), against API_BASE_URL (default :8000)
 	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
 
-.PHONY: help setup run up ui test lint fmt hygiene check seed demo generate train warm eval drill smoke mocks docker clean
+.PHONY: help setup run up ui test lint fmt hygiene check seed demo generate train warm eval eval-live golden drill smoke mocks docker clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
@@ -56,7 +56,16 @@ fmt: ## autofix
 hygiene: ## no tracked secrets/DBs, fixture phones allowlisted, one clock, one LLM entry point
 	bash scripts/hygiene.sh
 
-check: hygiene lint test ## THE pre-merge gate. CI runs exactly this.
+eval: ## offline golden sets (455 cases, no keys) gated on eval/thresholds.yaml -> reports/eval.json
+	$(TEST_ENV) $(PY) -m eval.run
+
+eval-live: ## same golden sets through the live LLM extractor + judge (needs GROQ_API_KEY) -> reports/eval_live.json
+	$(PY) -m eval.run --live
+
+golden: ## rebuild eval/golden/*.jsonl from committed synthetic sources (deterministic, 0 LLM calls)
+	$(PY) -m eval.build_golden
+
+check: hygiene lint test eval ## THE pre-merge gate. CI runs exactly this.
 	@echo "check: green, ok to merge"
 
 generate: ## 10,000 synthetic rows, seeded, zero LLM calls (lints 1-8)
