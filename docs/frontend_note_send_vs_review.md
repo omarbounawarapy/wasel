@@ -1,6 +1,6 @@
 # Frontend note: the draft guard now names send / owner-approval / blocked
 
-**For:** Montassar (dashboard) · **From:** Omar · **Land:** merged to main, commit `4d9989e` · **Gate:** `make check` green (337 passed, eval unchanged)
+**For:** Montassar (dashboard) · **From:** Omar · **Land:** on main as of 2026-09-27 (guard-classifier change + this note) · **Gate:** `make check` green (337 passed, eval unchanged)
 
 ## What changed, one paragraph
 

@@ -7,6 +7,7 @@ SDK. Both speak the same HTTP API, so this uses plain httpx and avoids one more 
 """
 from __future__ import annotations
 
+import os
 import time
 from collections.abc import Callable
 
@@ -26,6 +27,9 @@ from app.llm.base import (
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_REASONING_KWARGS = {"reasoning_effort": "low", "reasoning_format": "hidden"}   # [VERIFY] §16 check #2
+# Self-hosted OpenAI-compatible servers (Brev GPU + vLLM, docs/brev-live-test.md) reject the
+# Groq-only `reasoning_format` field with a 400; `reasoning_effort` is honored for gpt-oss.
+SELFHOST_REASONING_KWARGS = {"reasoning_effort": "low"}
 
 
 def _int(v) -> int | None:
@@ -104,6 +108,13 @@ class OpenAICompatBackend:
 
 
 def groq_backend(api_key: str, models: tuple[str, ...] = ("openai/gpt-oss-120b", "openai/gpt-oss-20b"),
-                 transport: httpx.BaseTransport | None = None) -> OpenAICompatBackend:
-    return OpenAICompatBackend("groq", GROQ_BASE_URL, api_key,
-                               extra={m: GROQ_REASONING_KWARGS for m in models}, transport=transport)
+                 transport: httpx.BaseTransport | None = None,
+                 base_url: str | None = None) -> OpenAICompatBackend:
+    """base_url: explicit arg wins, then GROQ_BASE_URL env (self-hosted vLLM), then Groq.
+
+    Env read at call time (not import) so tests and the demo can flip providers in-process.
+    """
+    url = (base_url or os.environ.get("GROQ_BASE_URL") or GROQ_BASE_URL).rstrip("/")
+    kwargs = GROQ_REASONING_KWARGS if url == GROQ_BASE_URL else SELFHOST_REASONING_KWARGS
+    return OpenAICompatBackend("groq", url, api_key,
+                               extra={m: kwargs for m in models}, transport=transport)
