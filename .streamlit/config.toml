@@ -1,6 +1,6 @@
 [theme]
 base = "light"
-primaryColor = "#d93025"
+primaryColor = "#12386b"   # Wasel navy
 
 [server]
 headless = true

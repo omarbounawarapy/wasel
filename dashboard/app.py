@@ -1,4 +1,4 @@
-"""COD Risk Queue: the Streamlit dashboard (06 §1.5), backed by the FastAPI app in app/.
+"""Wasel: the Streamlit dashboard (06 §1.5), backed by the FastAPI app in app/.
 
     make up                                   # backend :8000 + this dashboard :8501
     API_BASE_URL=http://localhost:8000 streamlit run dashboard/app.py
@@ -8,17 +8,21 @@ and every button is a backend command. Customer text reaches unsafe_allow_html o
 import html
 import re
 import time
+from pathlib import Path
 
 import altair as alt
 import api_client as backend
 import pandas as pd
 import streamlit as st
 
-st.set_page_config(page_title="COD Risk Queue", page_icon="📦", layout="wide")
+LOGO = Path(__file__).resolve().parent.parent / "web" / "public"
+st.set_page_config(page_title="Wasel · COD order risk", layout="wide",
+                   page_icon=str(LOGO / "wasel-mark.png") if (LOGO / "wasel-mark.png").exists() else None)
 
 PAGES = ["Risk Queue", "Order Detail", "Paste an order", "WhatsApp inbox", "Activity", "Impact (simulated)",
          "AI quality", "Hidden failures"]
-TIER = {"high": ("High", "#d93025", "🔴"), "medium": ("Med", "#f29900", "🟠"), "low": ("Low", "#188038", "🟢")}
+# shape + text for each tier, never colour alone
+TIER = {"high": ("High", "#d93025", "●"), "medium": ("Med", "#f29900", "◆"), "low": ("Low", "#188038", "▲")}
 ACTION_LABELS = {"confirm": "Confirm with the customer", "prepay": "Ask for prepayment", "ship": "Ship normally",
                  "review": "Needs your review", "cancelled": "Cancelled"}
 SELLER_ACTIONS = {"approve": "Approve for shipping", "request_confirmation": "Ask the customer to confirm",
@@ -33,12 +37,12 @@ PATH = {"llm": "LLM extraction", "fallback_model": "backup LLM model", "fallback
         "rules": "rules only (no LLM)"}
 TRIGGER = {"initial": "First score", "customer_reply": "Customer replied", "no_reply_timeout": "No reply in time",
            "manual": "Manual rescore"}
-TICKS = {"queued": "🕓 queued", "sent": "✓ sent", "delivered": "✓✓ delivered",
-         "read": '<span style="color:#34b7f1">✓✓ read</span>', "failed": "⚠️ failed"}
+TICKS = {"queued": "queued", "sent": "sent", "delivered": "delivered",
+         "read": '<span style="color:#1a73e8">read</span>', "failed": "failed"}
 ORIGIN = {"simulated": "simulated", "seed": "sample data", "dashboard": "recorded, not sent", "whatsapp": "WhatsApp",
           "paste": "pasted", "csv": "CSV"}
-CONFIRMATION = {"confirmed": "✅ confirmed", "declined": "❌ declined", "reschedule": "🕓 reschedule",
-                "ambiguous": "💬 unclear", "none": ""}
+CONFIRMATION = {"confirmed": "confirmed", "declined": "declined", "reschedule": "reschedule",
+                "ambiguous": "unclear", "none": ""}
 INJECTION_HINT = re.compile(r"ignore|instruction|low risk|system prompt|تجاهل|oublie", re.IGNORECASE)
 CSS = """<style>
 mark.hl-risk{background:#fde293;border-bottom:2px dotted #b06000;color:#111;padding:0 2px;border-radius:3px}
@@ -72,7 +76,7 @@ def call(fn, *a, quiet: bool = False, **kw):
 
 health = call(api.health)
 if health is None:
-    st.title("📦 COD Risk")
+    st.title("Wasel")
     st.error("The backend isn't reachable, so there's nothing to show. Start it with `make run` (or `make up` for both), "
              f"then set `API_BASE_URL` (now `{api.base_url}`).")
     st.stop()
@@ -123,7 +127,7 @@ def event_watch() -> None:
         return
     ev = call(api.events, after=st.session_state.events_seen, limit=200, quiet=True)
     if not ev or not ev["events"]:
-        st.caption("🔄 Watching the backend for new messages")
+        st.caption("Watching the backend for new messages")
         return
     st.session_state.events_seen = ev["last_seq"]
     news = [x for x in ev["events"] if x["type"] in ("message.received", "order.rescored", "injection.suspected")]
@@ -131,7 +135,7 @@ def event_watch() -> None:
         st.session_state.toasts = [f"{x['order_ref'] or ''} {x['title']}" + (f" · {x['detail']}" if x["detail"] else "")
                                    for x in news[-3:]]
         st.rerun()
-    st.caption("🔄 Watching the backend for new messages")
+    st.caption("Watching the backend for new messages")
 
 
 def backend_last_seq() -> int:
@@ -143,7 +147,10 @@ for _t in st.session_state.pop("toasts", []):
     st.toast(_t)
 
 with st.sidebar:
-    st.title("📦 COD Risk")
+    if (LOGO / "wasel-logo.png").exists():
+        st.image(str(LOGO / "wasel-logo.png"), width=200)
+    else:
+        st.title("Wasel")
     st.radio("Screen", PAGES, key="page", label_visibility="collapsed")
     st.divider()
     st.caption({"public": "Public demo", "event": "Live pilot · a person approves every send",
@@ -223,7 +230,7 @@ def page_queue():
         return
     df = pd.DataFrame([{
         "Order": r["order_ref"] + owner(r),
-        "Risk": f"{TIER[r['score']['tier']][2]} {TIER[r['score']['tier']][0]}" if r["score"] else "⏳ scoring",
+        "Risk": f"{TIER[r['score']['tier']][2]} {TIER[r['score']['tier']][0]}" if r["score"] else "scoring…",
         "Score": r["score"]["final_score"] if r["score"] else None,
         "Customer": r["customer"]["display_name"] or "",
         "Product": r["product_name"] or "",
@@ -232,7 +239,7 @@ def page_queue():
         "Recommended action": ACTION_LABELS[r["score"]["action"]] if r["score"] else "",
         "Why": r["score"]["reason_short"] if r["score"] else "",
         "Status": STATUS[r["status"]],
-        "⚠": "injection?" if r["injection_suspected"] else "",
+        "Injection": "check" if r["injection_suspected"] else "",
     } for r in shown])
     st.caption("Click a row to open the order.")
     ev = st.dataframe(
@@ -256,9 +263,9 @@ def thread(d: dict) -> None:
         t = m["provider_ts"][11:16]
         if m["kind"] == "location" and m.get("location"):
             lat, lng = m["location"]["lat"], m["location"]["lng"]
-            body = f'📍 <a href="https://maps.google.com/?q={lat},{lng}" target="_blank">{lat:.5f}, {lng:.5f}</a>'
+            body = f'Location: <a href="https://maps.google.com/?q={lat},{lng}" target="_blank">{lat:.5f}, {lng:.5f}</a>'
         elif m["kind"] in ("audio", "image", "unsupported"):
-            body = {"audio": "🎤 voice note", "image": "🖼️ image"}.get(m["kind"], "📎 unsupported message")
+            body = {"audio": "[voice note]", "image": "[image]"}.get(m["kind"], "[unsupported message]")
             body += f"<br><i>{e(m['transcript'])}</i>" if m.get("transcript") else " (not read by the scorer)"
         else:
             body = segments_html(m)
@@ -362,20 +369,20 @@ def draft_checks(dr: dict, oid: str) -> None:
     else:
         st.caption(f"Standard template, checked by the rules · route: {ROUTE.get(dr['route'], dr['route'])}")
     with st.expander("How this message was checked", expanded=False):
-        rows = [{"Layer": "1 · Rules prefilter", "Result": "✅ passed" if pf["passed"] else "⛔ failed",
+        rows = [{"Layer": "1 · Rules prefilter", "Result": "passed" if pf["passed"] else "failed",
                  "Detail": ", ".join(pf["failures"]) or "numbers, links, phone, payment/discount/promise words, "
                  "question count, length"}]
         if dr["source"] == "llm_rewrite":
             rows.append({"Layer": "2 · Guard classifier (local, no LLM)",
-                         "Result": "⛔ veto" if j.get("decided_by") == "classifier" and not j.get("unavailable")
-                         else "✅ passed", "Detail": f"risk {clf.get('p_unsafe', 0):.0%}"
+                         "Result": "veto" if j.get("decided_by") == "classifier" and not j.get("unavailable")
+                         else "passed", "Detail": f"risk {clf.get('p_unsafe', 0):.0%}"
                          + (f", looks like: {clf.get('label')}" if clf.get("label") not in (None, "ok") else "")})
             if j.get("unavailable"):
-                rows.append({"Layer": "3 · LLM judge", "Result": "⚠️ unavailable",
+                rows.append({"Layer": "3 · LLM judge", "Result": "unavailable",
                              "Detail": f"{j.get('reason', '')}: a person must check it (never auto-sent)"})
             elif j.get("decided_by") == "llm":
                 rows.append({"Layer": f"3 · LLM judge ({j.get('judge_model', '')})",
-                             "Result": "✅ approved" if j.get("approved") else "⛔ rejected",
+                             "Result": "approved" if j.get("approved") else "rejected",
                              "Detail": f"model said {j.get('verdict')}; approval recomputed in code"})
         st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
         if j.get("decided_by") == "llm":
@@ -477,7 +484,7 @@ def page_detail():
         rec = RECOMMENDED.get(a["action"]) if a else None
         cols = st.columns(len(caps["actions"]))
         for col, act in zip(cols, caps["actions"], strict=True):
-            label = SELLER_ACTIONS[act] + ("  ★ recommended" if act == rec else "")
+            label = SELLER_ACTIONS[act] + (" (recommended)" if act == rec else "")
             if col.button(label, key=f"act-{act}", type="primary" if act == rec else "secondary", width="stretch"):
                 if call(api.action, oid, act):
                     st.toast(f"{o['order_ref']}: {SELLER_ACTIONS[act]}")
@@ -494,14 +501,14 @@ def page_detail():
         st.markdown("##### Customer message")
         src = {"llm_rewrite": "LLM rewrite", "static_template": "standard template"}[dr["source"]]
         ok = dr["prefilter"]["passed"] and dr["route"] != "blocked"
-        st.markdown(f"{'✅' if ok else '⛔'} **{src}** `{dr['template_id']}` · {dr['language']} · route "
+        st.markdown(f"{'Checks passed' if ok else 'Blocked'} · **{src}** `{dr['template_id']}` · {dr['language']} · route "
                     f"`{dr['route']}`" + ("" if dr["prefilter"]["passed"]
                                           else f" · blocked by checks: {', '.join(dr['prefilter']['failures'])}"))
         draft_checks(dr, oid)
         st.markdown(f'<div dir="auto" style="background:#dcf8c6;color:#111;padding:10px 14px;border-radius:10px">'
                     f'{e(dr["text"])}</div>', unsafe_allow_html=True)
         where = "on WhatsApp" if o["channel"] == "whatsapp" and health["wa_send"] else "(recorded, not sent)"
-        if caps["can_send_drafts"] and ok and st.button(f"📤 Send {where}", type="primary"):
+        if caps["can_send_drafts"] and ok and st.button(f"Send message {where}", type="primary"):
             r = call(api.send_draft, dr["draft_id"])
             if r:
                 st.toast("Sent on WhatsApp" if r["delivery"] == "whatsapp_sent" else "Recorded as sent (no WhatsApp)")
@@ -518,7 +525,7 @@ def page_detail():
                    + (" The unsent message above is recorded as sent first, so the reply answers it."
                       if pending else ""))
         for i, sr in enumerate(d["scripted_replies"]):
-            if st.button(f"💬 {sr[:90]}", key=f"sr-{i}"):
+            if st.button(f"Reply: {sr[:90]}", key=f"sr-{i}"):
                 if call(api.simulate_text, o["conversation_id"], sr):
                     st.rerun()
         with st.form(f"reply-{oid}", clear_on_submit=True, border=False):
@@ -528,7 +535,7 @@ def page_detail():
             if c[1].form_submit_button("Send reply", width="stretch") and text.strip():
                 if call(api.simulate_text, o["conversation_id"], text.strip()):
                     st.rerun()
-            if c[2].form_submit_button("📍 Send a pin", width="stretch"):
+            if c[2].form_submit_button("Send a location pin", width="stretch"):
                 if call(api.simulate_location, o["conversation_id"], 36.8065, 10.1815):
                     st.rerun()
 
@@ -598,20 +605,20 @@ def score_paste(text: str, name: str | None, structured: dict) -> dict | None:
     Returns the ids only: the result is redrawn from the backend on every rerun (the event watcher reruns
     the page when the new order's events arrive)."""
     with st.status("Scoring…", expanded=True) as status:
-        status.write("📨 Sending the message to the backend…")
+        status.write("Sending the message to the backend…")
         r = call(api.ingest_paste, text, name, structured)
         if r is None:
             status.update(label="Not stored", state="error")
             return None
         ref = r["created"][0]
         status.write(f"   → stored as order {ref['order_ref']}; scoring in about {r['rescore_eta_s']:.0f} s")
-        status.write("📊 Extraction → classifier → rules (the LLM doesn't decide the score)…")
+        status.write("Extraction → classifier → rules (the LLM doesn't decide the score)…")
         d = wait_until_scored(ref["order_id"], status=status)
         twin_id = None
         if d and d["order"]["score"] and (d["order"]["injection_suspected"] or INJECTION_HINT.search(text)):
             clean = ". ".join(p.strip() for p in re.split(r"[.\n]", text) if p.strip() and not INJECTION_HINT.search(p))
             if clean and clean != text:
-                status.write("🧪 Injection check: scoring the same order without the instruction…")
+                status.write("Injection check: scoring the same order without the instruction…")
                 twin = call(api.ingest_paste, clean, name, structured)
                 if twin:
                     twin_id = twin["created"][0]["order_id"]
@@ -650,7 +657,7 @@ def show_paste(res: dict) -> None:
         if t and t["order"]["score"]:
             s2 = t["order"]["score"]
             verdict = ("The instruction did not lower the risk." if s["final_score"] >= s2["final_score"]
-                       else "⚠️ The instruction LOWERED the score: review this order by hand.")
+                       else "Warning: the instruction LOWERED the score: review this order by hand.")
             st.info(f"**Injection check:** the message contains text aimed at the AI{flagged}. The same order "
                     f"without that sentence ({t['order']['order_ref']}) scores **{TIER[s2['tier']][0]} "
                     f"{s2['final_score']}**; with it: **{TIER[s['tier']][0]} {s['final_score']}**. {verdict} "
@@ -686,7 +693,8 @@ def inbox_table() -> list[dict]:
         "Updated (UTC)": r["updated_at"][5:16].replace("T", " "),
         "From": r["customer"]["display_name"] or r["customer"]["phone_masked"] or "?",
         "Order": r["order_ref"],
-        "Risk": f"{TIER[r['score']['tier']][2]} {r['score']['final_score']}" if r["score"] else "⏳",
+        "Risk": (f"{TIER[r['score']['tier']][2]} {TIER[r['score']['tier']][0]} {r['score']['final_score']}"
+                 if r["score"] else "scoring…"),
         "Status": STATUS[r["status"]],
         "Last message": r["last_message_preview"] or ""} for r in rows]), hide_index=True, width="stretch")
     return rows
@@ -715,7 +723,7 @@ def page_inbox():
 
 # --- Activity ----------------------------------------------------------------------------------
 
-LEVEL = {"info": "ℹ️", "success": "✅", "warning": "⚠️", "error": "⛔"}
+LEVEL = {"info": "info", "success": "done", "warning": "warning", "error": "error"}
 
 
 def page_activity():
@@ -805,7 +813,7 @@ def page_quality():
         if not off:
             st.info("No eval report yet: run `make eval`.")
         else:
-            gate = "✅ green" if not off["gate_failures"] else "⛔ " + "; ".join(off["gate_failures"])
+            gate = "passed" if not off["gate_failures"] else "failed: " + "; ".join(off["gate_failures"])
             c = st.columns(3)
             c[0].metric("CI gate (offline, every push)", "green" if not off["gate_failures"] else "failing")
             c[1].metric("Golden cases", sum(m.get("n", 0) for m in off["results"].values()))
@@ -815,7 +823,7 @@ def page_quality():
             st.dataframe(eval_table(off), hide_index=True, width="stretch")
         if live:
             st.markdown("##### Live run (LLM extraction + LLM judge)")
-            gate = "✅ green" if not live["gate_failures"] else "⛔ " + "; ".join(live["gate_failures"])
+            gate = "passed" if not live["gate_failures"] else "failed: " + "; ".join(live["gate_failures"])
             st.caption(f"`make eval-live` · {gate} · {live['runtime_s']} s · versions "
                        + ", ".join(f"`{k}={v}`" for k, v in live["versions"].items()))
             st.dataframe(eval_table(live), hide_index=True, width="stretch")
@@ -915,8 +923,8 @@ def evidence_line(x: dict) -> str:
     if x["type"] in ("agent", "user"):
         return f"**{'Agent' if x['type'] == 'agent' else 'Customer'}:** {e(x.get('text'))}"
     if x["type"] == "tool_call":
-        return f"🔧 `{x['tool']}({', '.join(f'{k}={v}' for k, v in (x.get('args') or {}).items())})`"
-    ok = "✅" if x.get("ok") else "⛔"
+        return f"`{x['tool']}({', '.join(f'{k}={v}' for k, v in (x.get('args') or {}).items())})`"
+    ok = "ok" if x.get("ok") else "failed"
     return f"{ok} `{x['tool']}` → `{e(x.get('result'))}`"
 
 
