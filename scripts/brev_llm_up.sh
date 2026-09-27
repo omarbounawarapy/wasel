@@ -32,6 +32,7 @@ WAIT_MINS="$(cfg WAIT_MINS 25)"          # first boot pulls weights (~13GB for 2
 BASE="$(cfg GROQ_BASE_URL)"              # check: e.g. http://<instance-ip>:8001/v1
 TOKEN="$(cfg GROQ_API_KEY)"              # the vLLM --api-key value (must exist even for vLLM)
 CONTAINER="$(cfg CONTAINER brev-vllm)"
+VLLM_IMAGE="$(cfg VLLM_IMAGE vllm/vllm-openai:latest)"  # pin older (cu12) on 12.4 drivers: vllm/vllm-openai:v0.10.1
 VLLM_ARGS="$(cfg VLLM_ARGS)"            # only from caller env or .env; unquoted on purpose
 
 die() { echo "brev_llm_up: $*" >&2; exit 1; }
@@ -55,8 +56,8 @@ case "${1:-check}" in
       docker rm -f "$CONTAINER" >/dev/null 2>&1 || true
       docker run -d --name "$CONTAINER" --gpus all --restart unless-stopped \
         -p "$VLLM_PORT:8000" -v "$HOME/.cache/huggingface:/root/.cache/huggingface" \
-        vllm/vllm-openai:latest --model "$MODEL" --api-key "$TOKEN" ${VLLM_ARGS:-} >/dev/null
-      echo "docker container '$CONTAINER' up (vllm/vllm-openai:latest)"
+        "$VLLM_IMAGE" --model "$MODEL" --api-key "$TOKEN" ${VLLM_ARGS:-} >/dev/null
+      echo "docker container '$CONTAINER' up ($VLLM_IMAGE)"
     else
       command -v python3 >/dev/null || die "need docker or python3 on the instance"
       VENV="$HOME/brev-vllm-venv"
