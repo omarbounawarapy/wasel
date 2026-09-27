@@ -68,7 +68,6 @@ def make_draft(req: DraftRequest, *, llm=None, meter: UsageMeter | None = None,
 
 def _rewrite_and_judge(req, llm, meter, config, lang, canonical, used, expected, check, route, events, usage):
     jc = config.raw.get("outbound", {}).get("judge", {})
-    block_at, hold_at = jc.get("classifier_block_at", 0.5), jc.get("classifier_hold_at", 0.2)
     form = formality(lang, req.customer_recent)
     name = used.get("first_name")
     llm_slots = {**used, "first_name": NAME} if name else dict(used)
@@ -93,12 +92,12 @@ def _rewrite_and_judge(req, llm, meter, config, lang, canonical, used, expected,
                                                                   "failures": fails}))
             feedback = {"prefilter_fails": fails}
             continue
-        v = J.judge(raw, facts, llm=llm, meter=meter, sandbox_id=req.sandbox_id, now=req.now,
-                    block_at=block_at, hold_at=hold_at, final_text=text)
+        v = J.judge(raw, facts, llm=llm, meter=meter, sandbox_id=req.sandbox_id, now=req.now, final_text=text)
         usage += v.usage
         summary = {"attempt": attempt, "decided_by": v.judge_json.get("decided_by"), "approved": v.approved,
                    "hold": v.hold, "unavailable": v.unavailable,
                    "p_unsafe": v.judge_json["classifier"]["p_unsafe"],
+                   "decision": v.judge_json["classifier"].get("decision"),
                    "overreach": v.judge_json.get("overreach", v.feedback.get("overreach"))}
         events.append(CoreEvent("draft.judged", "success" if v.approved else "warning", summary))
         if v.unavailable and v.hold:

@@ -17,7 +17,7 @@ from app.contracts import UsageMeter, UsageRecord
 from app.extraction.normalize import DEFUSE
 from app.llm.base import ParseError
 from app.llm.prompts import judge_task, rewrite_task
-from app.outbound.guard_clf import GuardResult, classify
+from app.outbound.guard_clf import decide
 
 JUDGE_KEYS = {"unsupported_claims", "grounded", "language_ok", "tone_ok", "overreach", "question_count", "verdict"}
 OVERREACH = {"none", "discount_or_price_change", "payment_request", "delivery_commitment", "instructions_in_draft",
@@ -86,24 +86,26 @@ def rewrite(llm, *, template_text: str, slots: dict, language: str, formality: s
 
 
 def judge(draft: str, facts: dict, *, llm, meter: UsageMeter | None, sandbox_id: str | None, now: datetime,
-          block_at: float, hold_at: float, final_text: str | None = None) -> Verdict:
+          block_at: float | None = None, hold_at: float | None = None,
+          final_text: str | None = None) -> Verdict:
     """`draft` is what the LLM judge sees (the customer's name as a {first_name} placeholder); `final_text` is the
-    text that would be sent, which the local classifier scores."""
-    g: GuardResult = classify(final_text or draft)
-    clf = {"p_unsafe": g.p_unsafe, "label": g.label, "top": g.top}
-    if g.p_unsafe >= block_at:                            # the veto: don't spend a judge call on it
+    text that would be sent, which the local classifier scores and turns into the send/review/block decision.
+    block_at/hold_at default to scoring.yaml; pass 1.01/1.01 to measure the judge layer alone."""
+    d = decide(final_text or draft, block_at=block_at, hold_at=hold_at)
+    clf = {"p_unsafe": d.p_unsafe, "label": d.label, "top": d.top, "decision": d.decision}
+    if d.decision == "block":                             # the veto: don't spend a judge call on it
         return Verdict(False, False, False, {"decided_by": "classifier", "classifier": clf},
-                       {"overreach": g.label, "unsupported_claims": []})
+                       {"overreach": d.label, "unsupported_claims": []})
     user = (f"<order_facts>{json.dumps(facts, ensure_ascii=False)}</order_facts>\n"
             f"<draft>{draft.translate(DEFUSE)}</draft>")
     j, usage, who = (None, [], "no_llm") if llm is None else \
         _call(llm, judge_task(), user, parse_judge, role="judge", meter=meter, sandbox_id=sandbox_id, now=now)
     if j is None:
-        return Verdict(False, g.p_unsafe >= hold_at, True,
+        return Verdict(False, d.decision != "send", True,
                        {"unavailable": True, "reason": who, "decided_by": "classifier", "classifier": clf},
                        {}, usage)
     ok = approved_in_code(j, facts["expected_questions"])
-    return Verdict(ok, ok and g.p_unsafe >= hold_at, False,
+    return Verdict(ok, ok and d.decision != "send", False,
                    {**j, "approved": ok, "decided_by": "llm", "judge_model": who, "classifier": clf},
                    {"overreach": j["overreach"], "unsupported_claims": [c[:80] for c in j["unsupported_claims"][:3]]},
                    usage)

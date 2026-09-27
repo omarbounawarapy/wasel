@@ -4,9 +4,12 @@ binary LogisticRegression (ok vs unsafe) for p_unsafe, plus a multinomial one na
 {discount, payment, promise, instructions, contact, pushy, extra_question} for the activity feed.
 
 Trained at first use, deterministically, from data/draft_guard.yaml + the static templates (a few thousand
-rows, well under a second), so there is no binary artifact to version. It never approves anything on its
-own: it can only block (p_unsafe >= block_at) or hold for review. The LLM judge, when available, decides
-approval; this stays a veto that can't be prompt-injected.
+rows, well under a second), so there is no binary artifact to version. decide() turns p_unsafe into the
+three-way send / review / block call: >= block_at blocks the draft, >= hold_at routes it to the owner's
+approval queue, below hold_at it is cleared to send. "send" is this classifier's recommendation only: an
+auto_send still needs the LLM judge's approval and the route guards (02 §8.2 rule 6); the classifier on its
+own can only take approval away, and it can't be prompt-injected because it never sees the customer text.
+calibrate() measures the decision on bank phrases the classifier never trained on.
 """
 from __future__ import annotations
 
@@ -26,6 +29,7 @@ from ml.textnorm import normalize
 ROOT = Path(__file__).resolve().parents[2]
 BANK = ROOT / "data" / "draft_guard.yaml"
 OK = "ok"
+SEND, REVIEW, BLOCK = "send", "review", "block"
 
 
 @dataclass(frozen=True)
@@ -33,6 +37,22 @@ class GuardResult:
     p_unsafe: float                  # 1 - P(ok)
     label: str                       # argmax class
     top: list[tuple[str, float]]     # 3 most likely unsafe classes, for the activity feed
+
+
+@dataclass(frozen=True)
+class GuardDecision:
+    decision: str                    # send | review | block
+    p_unsafe: float
+    label: str
+    top: list[tuple[str, float]]
+    reason: str                      # plain English, shown with the draft in the owner-approval queue
+
+
+def thresholds(cfg: dict | None = None) -> tuple[float, float]:
+    """(block_at, hold_at) from scoring.yaml outbound.judge; the same numbers everywhere (02 §8.2)."""
+    from app.scoring.config import default_config
+    jc = (cfg if cfg is not None else default_config().raw).get("outbound", {}).get("judge", {})
+    return float(jc.get("classifier_block_at", 0.5)), float(jc.get("classifier_hold_at", 0.2))
 
 
 def _render(templates: dict, tid: str, lang: str, slots: dict[str, str]) -> str:
@@ -110,3 +130,73 @@ def classify(draft: str) -> GuardResult:
     top = sorted(((str(c), round(float(q), 3)) for c, q in zip(kind.classes_, kind.predict_proba(m)[0], strict=True)),
                  key=lambda t: -t[1])[:3]
     return GuardResult(p, top[0][0] if p >= 0.5 else OK, top)
+
+
+def decide(draft: str, *, block_at: float | None = None, hold_at: float | None = None) -> GuardDecision:
+    """The send-vs-owner-approval call on a generated draft. block_at/hold_at default to scoring.yaml;
+    pass explicit values (e.g. 1.01/1.01) to score with the decision layers disabled."""
+    g = classify(draft)
+    if block_at is None or hold_at is None:
+        b, h = thresholds()
+        block_at = b if block_at is None else block_at
+        hold_at = h if hold_at is None else hold_at
+    likely = g.top[0]
+    if g.p_unsafe >= block_at:
+        d = BLOCK
+        reason = f"risk {g.p_unsafe:.0%} >= {block_at:.0%} block line, most likely {likely[0]} ({likely[1]:.0%})"
+    elif g.p_unsafe >= hold_at:
+        d = REVIEW
+        reason = f"risk {g.p_unsafe:.0%} in the {hold_at:.0%}-{block_at:.0%} review band, most likely {likely[0]}"
+    else:
+        d = SEND
+        reason = f"risk {g.p_unsafe:.0%} below the {hold_at:.0%} review line"
+    return GuardDecision(d, g.p_unsafe, g.label, g.top, reason)
+
+
+def calibrate(*, block_at: float | None = None, hold_at: float | None = None, n_base: int = 300,
+              seed: int = 99, grid: bool = True) -> dict:
+    """Measure the three-way decision on text the classifier never trained on: the bank's `holdout` unsafe
+    phrases inserted into rendered templates, against safe drafts built from the static templates + `safe`
+    phrases. Reports the counts per decision and the rates that gate the design (how much untrained unsafe
+    text is cleared to send; whether any safe draft is held or blocked), plus the smallest hold_at on a 5%
+    grid that clears at most 5% of the unsafe holdout while blocking no safe draft, with block_at fixed.
+    Deterministic; no training happens here."""
+    import yaml
+
+    from app.scoring.config import default_config
+    cfg = default_config()
+    bank = yaml.safe_load(BANK.read_text(encoding="utf-8"))
+    if block_at is None or hold_at is None:
+        b, h = thresholds(cfg.raw)
+        block_at = b if block_at is None else block_at
+        hold_at = h if hold_at is None else hold_at
+    X_unsafe, _ = build_corpus(cfg.templates, bank, split="holdout")
+    X_all, y_all = build_corpus(cfg.templates, bank, n_base=n_base, seed=seed)
+    X_safe = [x for x, y in zip(X_all, y_all, strict=True) if y == OK]
+
+    def counts(texts: list[str], at: tuple[float, float]) -> dict[str, int]:
+        out = {SEND: 0, REVIEW: 0, BLOCK: 0}
+        for t in texts:
+            out[decide(t, block_at=at[0], hold_at=at[1]).decision] += 1
+        return out
+
+    def report(at: tuple[float, float]) -> dict:
+        u, s = counts(X_unsafe, at), counts(X_safe, at)
+        return {"thresholds": {"block_at": at[0], "hold_at": at[1]}, "n": {"unsafe_holdout": len(X_unsafe),
+                "safe": len(X_safe)}, "unsafe_decisions": u, "safe_decisions": s,
+                "unsafe_sent": u[SEND] / len(X_unsafe), "unsafe_stopped": (u[REVIEW] + u[BLOCK]) / len(X_unsafe),
+                "safe_sent": s[SEND] / len(X_safe), "safe_held": s[REVIEW] / len(X_safe),
+                "safe_blocked": s[BLOCK] / len(X_safe)}
+
+    rep = report((block_at, hold_at))
+    if grid:
+        # Smallest hold_at that clears at most 5% of untrained unsafe text while still blocking no safe draft.
+        # (It only moves the send/review line; block_at stays fixed, so the veto never loosens.)
+        candidates = []
+        for h in [round(0.05 * i, 2) for i in range(1, int(block_at * 20))]:
+            r = report((block_at, h))
+            if r["unsafe_sent"] <= 0.05 and r["safe_blocked"] == 0:
+                candidates.append(h)
+        rep["suggested_hold_at"] = candidates[0] if candidates else None
+        rep["grid"] = [report((block_at, round(0.05 * i, 2))) for i in range(1, int(block_at * 20), 2)]
+    return rep
