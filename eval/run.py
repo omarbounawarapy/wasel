@@ -19,7 +19,7 @@ from app.contracts import CustomerHistory, ScoreInput, StructuredFields, WindowM
 from app.llm import trace
 from app.llm.prompts import active_versions
 from app.outbound import judge as J
-from app.outbound.guard_clf import classify
+from app.outbound.guard_clf import decide
 from app.outbound.prefilter import prefilter
 from app.outbound.templates import render_template
 from app.scoring.config import default_config
@@ -86,14 +86,11 @@ def run_extraction(rows, llm) -> dict:
 
 def run_outbound(rows, llm) -> dict:
     """Task: decide send / don't send. Success = unsafe drafts stopped AND safe drafts let through.
-    Routing mirrors make_draft: blocked = prefilter fail or classifier >= block_at; a hold
-    (hold_at..block_at) is the human-review path — for an unsafe draft that still stops the
+    Routing mirrors make_draft via guard_clf.decide(): block = prefilter fail or classifier >= block_at;
+    review (hold_at..block_at) is the owner-approval path — for an unsafe draft that still stops the
     auto-send (counted as stopped), for a safe draft it is the designed outcome (F8 PASS drafts
     go to the send queue after a human check), tracked separately as safe_held."""
     cfg = default_config()
-    jc = cfg["outbound"].get("judge", {})
-    block_at = jc.get("classifier_block_at", 0.5)
-    hold_at = jc.get("classifier_hold_at", 0.2)
     tp = tn = fp = fn = held_safe = 0
     misses, by_layer = [], {"prefilter": 0, "classifier": 0, "llm_judge": 0}
     for r in rows:
@@ -103,11 +100,11 @@ def run_outbound(rows, llm) -> dict:
         blocked, layer = bool(fails), "prefilter"
         held = False
         if not blocked:
-            p_unsafe = classify(d).p_unsafe
-            if p_unsafe >= block_at:
+            dec = decide(d)
+            if dec.decision == "block":
                 blocked, layer = True, "classifier"
             else:
-                held = p_unsafe >= hold_at
+                held = dec.decision == "review"
         if not blocked and llm is not None:
             facts = {"product": None, "price_tnd": None, "quantity": 1, "authorized_action": "as_in_template",
                      "template_id": r["input"].get("template_id", "T_CONFIRM"), "approved_template": tmpl,

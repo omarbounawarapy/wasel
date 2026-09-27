@@ -13,7 +13,7 @@ from app.contracts import DraftRequest
 from app.llm.base import CallMeta, ProviderDown
 from app.llm.client import ChainClient, ChainStep
 from app.outbound import judge as J
-from app.outbound.guard_clf import BANK, build_corpus, classify
+from app.outbound.guard_clf import BANK, build_corpus, calibrate, classify, decide, thresholds
 from app.outbound.make_draft import make_draft
 from app.outbound.prefilter import prefilter
 from app.scoring.config import default_config
@@ -98,6 +98,57 @@ def test_g4_bad_drafts_stopped_without_an_llm():
         v = J.judge(d, {"expected_questions": "one"}, llm=None, meter=None, sandbox_id=None, now=T0,
                     block_at=0.5, hold_at=0.2)
         assert not v.approved
+
+
+# ---------------------------------------------------------------- send / review / block decision
+def test_decide_names_the_three_zones():
+    d = decide(GOOD_FR)
+    assert d.decision == "send" and "review line" in d.reason
+    grey = decide(GOOD_FR, hold_at=0.0)                       # any p_unsafe > 0 lands in the review band
+    assert grey.decision == "review" and grey.p_unsafe > 0 and "review band" in grey.reason
+    assert decide(GOOD_FR, hold_at=0.0, block_at=0.0).decision == "block"
+    bad = decide(G4_BAD[0])
+    assert bad.decision == "block" and bad.label == "discount" and "block line" in bad.reason
+
+
+def test_decide_defaults_come_from_scoring_yaml():
+    b, h = thresholds()
+    assert (b, h) == (0.5, 0.2)
+    assert decide(GOOD_FR).decision == decide(GOOD_FR, block_at=b, hold_at=h).decision == "send"
+    assert decide(G4_BAD[0]).decision == "block"              # veto at the configured block_at, no explicit args
+
+
+def test_calibrate_decision_floors_on_untrained_holdout():
+    """The three-way decision on bank phrases the classifier never trained on. Measured operating point at
+    0.2/0.5: ~79% of unsafe holdout drafts stopped (review or block) and no safe draft blocked or held —
+    the floors below fail if either side regresses."""
+    rep = calibrate(n_base=300, seed=99, grid=False)
+    assert rep["thresholds"] == {"block_at": 0.5, "hold_at": 0.2}
+    assert rep["unsafe_sent"] <= 0.25 and rep["unsafe_stopped"] >= 0.7
+    assert rep["safe_decisions"]["block"] == 0 and rep["safe_decisions"]["review"] == 0
+    assert rep["safe_sent"] >= 0.8
+
+
+def test_calibrate_suggests_a_hold_line_that_holds_both_gates():
+    rep = calibrate(n_base=200, seed=99, grid=True)
+    assert rep["suggested_hold_at"] is not None
+    row = next(r for r in rep["grid"] if r["thresholds"]["hold_at"] == rep["suggested_hold_at"])
+    assert row["unsafe_sent"] <= 0.05 and row["safe_blocked"] == 0
+
+
+def test_make_draft_records_the_classifier_decision():
+    b = Scripted(rewrite=[{"text": GOOD_LLM}], judge=[APPROVE])
+    rec = make_draft(req(), llm=llm(b))
+    assert rec.judge["classifier"]["decision"] == "send"
+    assert any(e.type == "draft.judged" and e.payload["decision"] == "send" for e in rec.events)
+    # a draft the prefilter lets through but the classifier vetoes: blocked, decided_by classifier
+    vetoed = ("Bonjour {first_name}, votre commande : Robe d'été à 89 DT. Vous la confirmez, oui ou non ?"
+              " Votre colis arrivera à coup sûr lundi matin.")
+    b = Scripted(rewrite=[{"text": vetoed}] * 2, judge=[])
+    rec = make_draft(req(), llm=llm(b))
+    assert rec.source == "static_template" and "judge" not in b.users
+    assert any(e.type == "draft.judged" and e.payload["decision"] == "block"
+               and e.payload["decided_by"] == "classifier" for e in rec.events)
 
 
 # ---------------------------------------------------------------- judge parsing / approval in code

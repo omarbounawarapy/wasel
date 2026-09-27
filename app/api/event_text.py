@@ -44,9 +44,11 @@ def event_text(type_: str, payload_json: str) -> tuple[str, str | None]:
     elif type_ == "draft.judged":
         verdict = "approved" if p.get("approved") else "unavailable" if p.get("unavailable") else "rejected"
         by = {"llm": "LLM judge", "classifier": "guard classifier"}.get(p.get("decided_by"), p.get("decided_by"))
+        decision = {"send": "classifier: clear to send", "review": "classifier: owner approval",
+                    "block": "classifier: blocked"}.get(p.get("decision"))
         detail = (f"attempt {p.get('attempt')} · {verdict} by {by} · classifier risk {p.get('p_unsafe', 0):.0%}"
                   + (f" · {p['overreach']}" if p.get("overreach") not in (None, "none", "ok") else "")
-                  + (" · held for review" if p.get("hold") else ""))
+                  + (f" · {decision}" if decision else (" · held for review" if p.get("hold") else "")))
     elif type_ == "draft.rejected":
         detail = f"attempt {p.get('attempt')} · {p.get('layer')}: {', '.join(p.get('failures', []))}"
     elif type_ == "draft.fallback_static":
