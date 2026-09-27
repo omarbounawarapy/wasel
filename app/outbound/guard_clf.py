@@ -18,6 +18,7 @@ from pathlib import Path
 import yaml
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
+from threadpoolctl import threadpool_limits
 
 from app.outbound.templates import TEMPLATE_LANGS
 from ml.textnorm import normalize
@@ -93,9 +94,12 @@ def _model(bank_path: str = str(BANK)) -> tuple[TfidfVectorizer, LogisticRegress
     vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 5), min_df=2, sublinear_tf=True,
                           preprocessor=normalize)
     M = vec.fit_transform(X)
-    binary = LogisticRegression(max_iter=3000, C=10.0, class_weight="balanced").fit(M, [int(c != OK) for c in y])
     bad = [i for i, c in enumerate(y) if c != OK]
-    kind = LogisticRegression(max_iter=3000, C=10.0).fit(M[bad], [y[i] for i in bad])
+    # One BLAS thread: the problem is tiny, and the default pool (one thread per core) burns ~10x the CPU for
+    # the same result and pegs every core on a laptop.
+    with threadpool_limits(limits=1):
+        binary = LogisticRegression(max_iter=3000, C=10.0, class_weight="balanced").fit(M, [int(c != OK) for c in y])
+        kind = LogisticRegression(max_iter=3000, C=10.0).fit(M[bad], [y[i] for i in bad])
     return vec, binary, kind
 
 

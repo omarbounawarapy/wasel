@@ -5,6 +5,7 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 ## [Unreleased]
 
 ### Added
+- Golden sets + eval gate: 455 cases (279 extraction, 144 outbound drafts, 32 injection) built deterministically from synthetic data (`make golden`); `make eval` gates them on `eval/thresholds.yaml` and is part of `make check`, so CI blocks a PR that drops under a floor. `make eval-live` runs the same sets through the LLM extractor and judge. LLM registry `config/llm.yaml` with one-step rollback (`scripts/rollback.py`), per-request input caps and trace records. (27 Sept)
 - Outbound LLM-as-judge (S-3, flag `DRAFT_LLM`): the LLM rewrites the template, then prefilter → local draft-guard classifier (char n-gram TF-IDF + logistic regression, `data/draft_guard.yaml`) → LLM judge (`judge-v1`, approval re-checked in code). One retry with feedback, then the static template; judge down → needs review, never auto-send. The dashboard shows the verdict and classifier risk. (27 Sept)
 - WhatsApp send (S-2): drafts go out through the Cloud API from the dashboard, only inside the 24 h window; the returned wamid picks up delivered/read statuses from the webhook. `WA_AUTO_SEND` sends judge-approved `auto_send` drafts without a click (never in public mode). (27 Sept)
 - Repository presentation: README rewrite with screenshots and diagrams, [architecture](docs/architecture.md) and [team guide](docs/team-guide.md) with Mermaid diagrams, runnable [`examples/`](examples/), LICENSE (all rights reserved, Z-Team), CONTRIBUTING, SECURITY, CODE_OF_CONDUCT, issue and PR templates, this changelog.
@@ -23,5 +24,6 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 - WhatsApp ingestion switched from chat exports to the Meta Cloud API sandbox webhook. (25 Sept)
 
 ### Fixed
+- CPU: numeric libraries now run single-threaded (`app/__init__.py`, guard classifier training). The default one-thread-per-core pools burned ~7x the CPU for the same result and pinned the laptop; the offline eval went from 46 s to 6 s of CPU. (27 Sept)
 - `make up` waits up to 180 s for the API, since a cold start with seeding takes more than 60 s. (27 Sept)
 - Working tree forced to LF line endings; CRLF checkouts broke the prompt sha lock. (26 Sept)

@@ -1,0 +1,45 @@
+{
+  "mode": "offline",
+  "versions": {
+    "extract": "extract-v1",
+    "rewrite": "rewrite-v2",
+    "judge": "judge-v2"
+  },
+  "config_hash": "4021f195",
+  "runtime_s": 5.7,
+  "results": {
+    "extraction": {
+      "n": 279,
+      "is_order_acc": 1.0,
+      "address_exact_acc": 0.8637992831541219,
+      "address_within1_acc": 0.967741935483871,
+      "language_acc": 0.8817204301075269,
+      "flag_precision": 1.0,
+      "flag_recall": 0.957345971563981,
+      "flag_f1": 0.9782082324455207,
+      "hallucinated_quotes_per_order": 0.0,
+      "paths": {
+        "rules": 279
+      }
+    },
+    "outbound": {
+      "n": 144,
+      "task_success": 1.0,
+      "unsafe_blocked": 1.0,
+      "safe_passed": 1.0,
+      "blocked_by_layer": {
+        "prefilter": 38,
+        "classifier": 31,
+        "llm_judge": 0
+      },
+      "misses": []
+    },
+    "injection": {
+      "n": 32,
+      "flagged_rate": 1.0,
+      "still_scored_rate": 1.0,
+      "not_promoted_rate": 1.0
+    }
+  },
+  "gate_failures": []
+}
