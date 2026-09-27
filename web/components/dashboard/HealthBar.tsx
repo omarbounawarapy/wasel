@@ -32,7 +32,9 @@ export function HealthBar() {
         : "AI scoring live";
     const warn = llm.cap_reached || llm.fallback_active || llm.primary === "rules" || health.status !== "ok";
     const whatsapp = health.webhook === "enabled"
-        ? (health.wa_send ? "WhatsApp connected, replies are sent" : "WhatsApp connected, replies are recorded only")
+        ? (health.wa_send
+            ? "WhatsApp connected, replies are sent"
+            : "WhatsApp connected, replies are recorded only")
         : "WhatsApp off (demo mode)";
     const mode = { public: "Public demo", event: "Live event", dev: "Development" }[health.mode as string] ?? health.mode;
     const tooltip = [
@@ -51,6 +53,12 @@ export function HealthBar() {
             </span>
             <span className="hidden sm:inline text-gray-400" aria-hidden="true">·</span>
             <span>{whatsapp}</span>
+            {health.wa_auto_send && (
+                <>
+                    <span className="hidden sm:inline text-gray-400" aria-hidden="true">·</span>
+                    <span className="font-semibold text-brand" title="Replies cleared by every check are sent without a click">Automatic replies on</span>
+                </>
+            )}
             <span className="hidden sm:inline text-gray-400" aria-hidden="true">·</span>
             <span className="hidden sm:inline text-gray-500">{mode}</span>
         </div>

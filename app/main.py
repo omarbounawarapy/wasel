@@ -156,7 +156,8 @@ class AppState:
                                   last_purge_at=utc_iso(self.last_purge_at) if self.last_purge_at else None),
             wa_token_present=bool(s.wa_token),
             real_rows=conn.execute("SELECT COUNT(*) FROM conversations WHERE channel='whatsapp'").fetchone()[0],
-            sandbox_orders=conn.execute("SELECT COUNT(*) FROM orders WHERE sandbox_id IS NOT NULL").fetchone()[0])
+            sandbox_orders=conn.execute("SELECT COUNT(*) FROM orders WHERE sandbox_id IS NOT NULL").fetchone()[0],
+            wa_auto_send=s.wa_auto_send and not s.is_public)
 
 
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,

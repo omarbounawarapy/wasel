@@ -51,6 +51,22 @@ def test_public_forces_sends_off_even_with_token(tmp_path):
         assert core.settings.wa_send_effective is False and core.settings.webhook_mounted is False
 
 
+def test_auto_send_state_is_visible_to_the_ui(tmp_path):
+    """health.wa_auto_send is the effective flag (never in public mode); a draft says who sent it."""
+    for mode, flag, expected in (("dev", False, False), ("dev", True, True), ("public", True, False)):
+        c, _, _ = make_client(tmp_path / f"{mode}{flag}", mode, wa_auto_send=flag)
+        with c:
+            assert c.get("/api/health").json()["wa_auto_send"] is expected
+    c, _, _ = make_client(tmp_path / "send")
+    with c:
+        d = c.get(f"/api/orders/{hero_id(c)['order_id']}").json()
+        draft = next(x for x in d["drafts"] if not x["sent_message_id"])
+        assert draft["decided_by"] is None
+        assert c.post(f"/api/drafts/{draft['draft_id']}/send").status_code == 200
+        d = c.get(f"/api/orders/{hero_id(c)['order_id']}").json()
+        assert next(x for x in d["drafts"] if x["draft_id"] == draft["draft_id"])["decided_by"] == "human"
+
+
 # ---------------------------------------------------------------- C3
 def test_responses_validate_against_models(dev):
     c, core, _ = dev

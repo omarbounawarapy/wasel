@@ -170,7 +170,8 @@ with st.sidebar:
                    f"{llm['live_calls_today']}{cap}")
     else:
         st.info(f"**LLM mode:** `{llm['llm_mode']}` (recorded results + rules, no live calls)")
-    wa_line = "sends **on**" if health["wa_send"] else "sends **off** (recorded only)"
+    wa_line = ("sends **on**" + (", cleared replies go out **automatically**" if health.get("wa_auto_send") else "")
+               if health["wa_send"] else "sends **off** (recorded only)")
     hook = health["webhook"]
     last = health["whatsapp"]["last_webhook_at"]
     st.caption(f"WhatsApp: {wa_line} · webhook **{hook}**" + (f" · last delivery {last[11:19]} UTC" if last else ""))
@@ -523,7 +524,8 @@ def page_detail():
                 st.toast("Sent on WhatsApp" if r["delivery"] == "whatsapp_sent" else "Recorded as sent (no WhatsApp)")
                 st.rerun()
     for dr in sent:
-        st.caption(f"Sent {dr['sent_at'][11:16]} UTC: {dr['template_id']} "
+        st.caption(f"Sent {'automatically ' if dr.get('decided_by') == 'system' else ''}{dr['sent_at'][11:16]} UTC: "
+                   f"{dr['template_id']} "
                    f"({'WhatsApp' if dr['delivery'] == 'whatsapp_sent' else 'recorded only'})"
                    + (f" · {JUDGE_SHORT(dr['judge'])}" if dr.get("judge") else ""))
 
@@ -1020,5 +1022,5 @@ def page_failures():
 
 st.divider()
 st.caption("Synthetic data only, no real customer data. The LLM extracts flags; the classifier scores and the "
-           "rules decide. A human clicks Send." + (" This demo never sends WhatsApp messages." if MODE == "public"
-                                                 else ""))
+           "rules decide. A human clicks Send unless automatic sending is on and every check clears the reply."
+           + (" This demo never sends WhatsApp messages." if MODE == "public" else ""))

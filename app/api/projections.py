@@ -161,7 +161,7 @@ def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailRespo
         language=d["language"], text=d["rendered_text"], canonical_text=d["canonical_text"], source=d["source"],
         route=d["route"], prefilter=M.PrefilterView(**json.loads(d["prefilter_json"])),
         judge=json.loads(d["judge_json"]) if d["judge_json"] else None, sent_message_id=d["sent_message_id"],
-        sent_at=d["sent_at"], delivery=d["delivery"], created_at=d["created_at"])
+        sent_at=d["sent_at"], delivery=d["delivery"], created_at=d["created_at"], decided_by=d["decided_by"])
         for d in repo.rows(conn, "SELECT * FROM outbound_drafts WHERE order_id=? ORDER BY created_at DESC",
                            o["order_id"])]
     ro = s.read_only

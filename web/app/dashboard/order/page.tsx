@@ -235,12 +235,12 @@ const DECISION: Record<string, { label: string, tone: "green" | "amber" | "gray"
     block: { label: "Blocked", tone: "amber" },
 };
 const ROUTE_TEXT: Record<string, string> = {
-    auto_send: "Cleared by the checks: it can go out without a click when automatic sending is on.",
+    auto_send: "Cleared by the checks. It would go out without a click, but automatic sending is off on this server.",
     needs_review: "Waiting for your approval: you decide when it is sent.",
     blocked: "Blocked by the checks: the standard message is used instead.",
 };
 
-function DraftChecks({ draft }: { draft: any }) {
+function DraftChecks({ draft, autoSend }: { draft: any, autoSend: boolean }) {
     const j = draft.judge || {};
     const clf = j.classifier || {};
     const decision = clf.decision ? DECISION[clf.decision] : null;
@@ -261,7 +261,16 @@ function DraftChecks({ draft }: { draft: any }) {
                 {judge && <Chip tone={judge.tone}>{judge.label}</Chip>}
                 <span className="text-gray-500">{rewrite ? "AI-adapted wording" : "Standard approved wording"}</span>
             </div>
-            {rewrite && ROUTE_TEXT[draft.route] && <p className="text-xs text-gray-700">{ROUTE_TEXT[draft.route]}</p>}
+            {rewrite && ROUTE_TEXT[draft.route] && !draft.sent_message_id && (
+                <p className="text-xs text-gray-700">
+                    {draft.route === "auto_send" && autoSend
+                        ? "Cleared by the checks: Wasel sends it automatically within a few seconds. You can also send it now."
+                        : ROUTE_TEXT[draft.route]}
+                </p>
+            )}
+            {clf.decision === "send" && draft.route === "needs_review" && !draft.sent_message_id && (
+                <p className="text-xs text-gray-700">The safety model cleared the wording, but another rule keeps it for you: a high price, low confidence in the score, or too many automatic messages already.</p>
+            )}
             {clf.decision === "review" && (
                 <p className="text-xs text-amber-800">Owner approval: the safety model has doubts about this wording, so it waits for you even if the AI judge approved it.</p>
             )}
@@ -504,6 +513,7 @@ function OrderDetailContent() {
                                                     <div className="text-[11px] mt-1 text-gray-500 flex items-center gap-1.5 flex-wrap">
                                                         <span>{tunisTime(m.provider_ts)}</span>
                                                         {!isCustomer && <span>· {sentDraft?.source === "llm_rewrite" ? "AI-adapted message" : sentDraft ? "Standard message" : "You"}</span>}
+                                                        {!isCustomer && sentDraft?.decided_by === "system" && <Chip tone="blue">Sent automatically</Chip>}
                                                         {m.origin === "simulated" && <Chip tone="amber">Simulated</Chip>}
                                                         {m.origin === "paste" && <Chip>Pasted</Chip>}
                                                         {m.origin === "whatsapp" && isCustomer && <Chip tone="green">WhatsApp</Chip>}
@@ -532,7 +542,7 @@ function OrderDetailContent() {
                                 <p dir="auto" className="text-sm text-gray-900 whitespace-pre-wrap break-words bg-gray-50 rounded-xl p-4 border border-gray-200">
                                     {currentDraft.text}
                                 </p>
-                                <DraftChecks draft={currentDraft} />
+                                <DraftChecks draft={currentDraft} autoSend={health?.wa_auto_send === true} />
                                 {unsentDraft ? (
                                     capabilities?.can_send_drafts ? (
                                         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-100 pt-4">
@@ -551,7 +561,7 @@ function OrderDetailContent() {
                                 ) : (
                                     <p className="mt-4 text-sm text-emerald-800 flex items-center gap-1.5">
                                         <Check className="w-4 h-4" />
-                                        Sent{currentDraft.delivery === "recorded_only" ? " (simulated)" : " on WhatsApp"} at {tunisTime(currentDraft.sent_at)}
+                                        {currentDraft.decided_by === "system" ? "Sent automatically" : "Sent"}{currentDraft.delivery === "recorded_only" ? " (simulated)" : " on WhatsApp"} at {tunisTime(currentDraft.sent_at)}
                                     </p>
                                 )}
                             </Section>
