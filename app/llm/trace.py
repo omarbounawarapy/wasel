@@ -13,8 +13,9 @@ import os
 import threading
 import uuid
 from collections import deque
-from datetime import UTC, datetime
 from pathlib import Path
+
+from app.clock import SystemClock
 
 TRACE_CTX: contextvars.ContextVar[dict | None] = contextvars.ContextVar("trace_ctx", default=None)
 _lock = threading.Lock()
@@ -31,7 +32,7 @@ def new_id() -> str:
 
 
 def emit(rec: dict) -> None:
-    rec = {"ts": datetime.now(UTC).isoformat(timespec="milliseconds"), **(TRACE_CTX.get() or {}), **rec}
+    rec = {"ts": SystemClock().now().isoformat(timespec="milliseconds"), **(TRACE_CTX.get() or {}), **rec}
     with _lock:
         _ring.append(rec)
         path = os.environ.get("TRACE_FILE")

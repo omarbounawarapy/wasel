@@ -38,7 +38,7 @@ def extraction_rows(n_per_cell: int = 15) -> list[dict]:
     d = pd.read_csv(ROOT / "data" / "synth_v1.csv")
     h = d[d.split == "holdout"]
     rows = []
-    for (lang, lvl), g in sorted(h.groupby(["language", "address_level"]), key=lambda t: t[0]):
+    for _cell, g in sorted(h.groupby(["language", "address_level"]), key=lambda t: t[0]):
         for _, r in g.sample(min(n_per_cell, len(g)), random_state=20260927).sort_values("row_id").iterrows():
             rows.append({"id": f"ext-{int(r.row_id):05d}", "task": "extraction",
                          "input": {"messages": [m["text"] for m in json.loads(r.messages_json)],
