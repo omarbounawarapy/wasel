@@ -346,6 +346,10 @@ def rescoring_banner(order_id: str) -> None:
 
 ROUTE = {"auto_send": "can go out without a click", "needs_review": "a person checks and clicks Send",
          "blocked": "blocked: the standard template is used"}
+# guard classifier decision on a generated draft (docs/frontend_note_send_vs_review.md); old drafts have none
+DECISION = {"send": "Clear to send", "review": "Owner approval", "block": "Blocked"}
+CLASSIFIER_EXPLAINER = ("A small local model scores how risky this message is. Below 10% it's cleared, 10–50% goes to "
+                        "you for approval, above 50% it's blocked and the standard template is used.")
 OVERREACH = {"none": "none", "discount_or_price_change": "discount or price change", "payment_request": "payment request",
              "delivery_commitment": "delivery promise", "instructions_in_draft": "instructions in the draft",
              "other": "other"}
@@ -365,7 +369,8 @@ def draft_checks(dr: dict, oid: str) -> None:
     clf = j.get("classifier") or {}
     pf = dr["prefilter"]
     if dr["source"] == "llm_rewrite":
-        st.caption(f"Checked by 3 layers · {JUDGE_SHORT(j)} · route: {ROUTE.get(dr['route'], dr['route'])}")
+        st.caption(f"Checked by 3 layers · {JUDGE_SHORT(j)} · route: {ROUTE.get(dr['route'], dr['route'])}"
+                   + (" · **Owner approval**: the classifier has doubts" if clf.get("decision") == "review" else ""))
     else:
         st.caption(f"Standard template, checked by the rules · route: {ROUTE.get(dr['route'], dr['route'])}")
     with st.expander("How this message was checked", expanded=False):
@@ -374,17 +379,21 @@ def draft_checks(dr: dict, oid: str) -> None:
                  "question count, length"}]
         if dr["source"] == "llm_rewrite":
             rows.append({"Layer": "2 · Guard classifier (local, no LLM)",
-                         "Result": "veto" if j.get("decided_by") == "classifier" and not j.get("unavailable")
-                         else "passed", "Detail": f"risk {clf.get('p_unsafe', 0):.0%}"
+                         "Result": DECISION.get(clf.get("decision"))
+                         or ("veto" if j.get("decided_by") == "classifier" and not j.get("unavailable") else "passed"),
+                         "Detail": f"risk {clf.get('p_unsafe', 0):.0%}"
                          + (f", looks like: {clf.get('label')}" if clf.get("label") not in (None, "ok") else "")})
             if j.get("unavailable"):
                 rows.append({"Layer": "3 · LLM judge", "Result": "unavailable",
-                             "Detail": f"{j.get('reason', '')}: a person must check it (never auto-sent)"})
+                             "Detail": f"{j.get('reason', '')}: " + ("sent on the classifier's clear"
+                                       if clf.get("decision") == "send" else "a person must check it (never auto-sent)")})
             elif j.get("decided_by") == "llm":
                 rows.append({"Layer": f"3 · LLM judge ({j.get('judge_model', '')})",
                              "Result": "approved" if j.get("approved") else "rejected",
                              "Detail": f"model said {j.get('verdict')}; approval recomputed in code"})
         st.dataframe(pd.DataFrame(rows), hide_index=True, width="stretch")
+        if dr["source"] == "llm_rewrite":
+            st.caption(CLASSIFIER_EXPLAINER)
         if j.get("decided_by") == "llm":
             c = st.columns(5)
             c[0].metric("Grounded in the order", "yes" if j.get("grounded") else "no")

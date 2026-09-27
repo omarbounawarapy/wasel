@@ -227,6 +227,62 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
     );
 }
 
+// The draft guard (docs/frontend_note_send_vs_review.md): rules -> local classifier decision -> AI judge.
+// Drafts from before the classifier change carry no `decision`: shown as not applicable, never a crash.
+const DECISION: Record<string, { label: string, tone: "green" | "amber" | "gray" }> = {
+    send: { label: "Clear to send", tone: "green" },
+    review: { label: "Owner approval", tone: "amber" },
+    block: { label: "Blocked", tone: "amber" },
+};
+const ROUTE_TEXT: Record<string, string> = {
+    auto_send: "Cleared by the checks: it can go out without a click when automatic sending is on.",
+    needs_review: "Waiting for your approval: you decide when it is sent.",
+    blocked: "Blocked by the checks: the standard message is used instead.",
+};
+
+function DraftChecks({ draft }: { draft: any }) {
+    const j = draft.judge || {};
+    const clf = j.classifier || {};
+    const decision = clf.decision ? DECISION[clf.decision] : null;
+    const rewrite = draft.source === "llm_rewrite";
+    const judge = !rewrite ? null
+        : j.unavailable ? { label: "AI judge unavailable", tone: "gray" as const }
+        : j.decided_by === "llm" ? (j.approved ? { label: "AI judge approved", tone: "green" as const } : { label: "AI judge rejected", tone: "amber" as const })
+        : null;
+    return (
+        <div className="mt-3 space-y-2">
+            <div className="flex flex-wrap items-center gap-2 text-xs">
+                {draft.prefilter?.passed
+                    ? <Chip tone="green"><Check className="w-3 h-3" /> Rule checks passed</Chip>
+                    : (draft.prefilter?.failures || []).map((f: string) => <Chip key={f} tone="amber"><X className="w-3 h-3" /> {f}</Chip>)}
+                {rewrite && (decision
+                    ? <Chip tone={decision.tone}>{decision.label}</Chip>
+                    : <Chip>Classifier: n/a</Chip>)}
+                {judge && <Chip tone={judge.tone}>{judge.label}</Chip>}
+                <span className="text-gray-500">{rewrite ? "AI-adapted wording" : "Standard approved wording"}</span>
+            </div>
+            {rewrite && ROUTE_TEXT[draft.route] && <p className="text-xs text-gray-700">{ROUTE_TEXT[draft.route]}</p>}
+            {clf.decision === "review" && (
+                <p className="text-xs text-amber-800">Owner approval: the safety model has doubts about this wording, so it waits for you even if the AI judge approved it.</p>
+            )}
+            {rewrite && (
+                <Details label="How this message was checked">
+                    <p>1. Rules: numbers, links, phone numbers, payment or discount words, one question only.</p>
+                    <p>2. Safety model (runs locally, no AI service): risk {typeof clf.p_unsafe === "number" ? `${Math.round(clf.p_unsafe * 100)}%` : "n/a"}
+                        {clf.label && clf.label !== "ok" ? `, looks like: ${String(clf.label).replace(/_/g, " ")}` : ""}.
+                        Below 10% it's cleared, 10–50% goes to you for approval, above 50% it's blocked and the standard message is used.</p>
+                    <p>3. AI judge: {j.unavailable
+                        ? `unavailable (${j.reason ?? "no answer"}), ${clf.decision === "send" ? "sent on the safety model's clear" : "a person must check it"}.`
+                        : j.decided_by === "llm" ? `${j.approved ? "approved" : "rejected"}${j.judge_model ? ` by ${j.judge_model}` : ""}; the decision is re-checked in code.`
+                        : "not reached (the safety model decided)."}</p>
+                    {j.unsupported_claims?.length > 0 && <p>Claims the order doesn't support: {j.unsupported_claims.join("; ")}</p>}
+                    {draft.canonical_text && <p>Adapted from the approved message: <bdi dir="auto">{draft.canonical_text}</bdi></p>}
+                </Details>
+            )}
+        </div>
+    );
+}
+
 function OrderDetailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
@@ -472,18 +528,11 @@ function OrderDetailContent() {
                     {currentDraft && (
                         <div id="message-to-customer">
                             <Section step={2} title="Message to the customer"
-                                     hint={`Written in ${LANGUAGE[currentDraft.language] ?? currentDraft.language}, the customer's own language. You always choose when it is sent.`}>
+                                     hint={`Written in ${LANGUAGE[currentDraft.language] ?? currentDraft.language}, the customer's own language.`}>
                                 <p dir="auto" className="text-sm text-gray-900 whitespace-pre-wrap break-words bg-gray-50 rounded-xl p-4 border border-gray-200">
                                     {currentDraft.text}
                                 </p>
-                                <div className="mt-3 flex flex-wrap items-center gap-2 text-xs">
-                                    {currentDraft.prefilter?.passed
-                                        ? <Chip tone="green"><Check className="w-3 h-3" /> Safety checks passed</Chip>
-                                        : (currentDraft.prefilter?.failures || []).map((f: string) => <Chip key={f} tone="amber"><X className="w-3 h-3" /> {f}</Chip>)}
-                                    <span className="text-gray-500">
-                                        {currentDraft.source === "static_template" ? "Standard approved wording" : "AI-adapted wording, checked before sending"}
-                                    </span>
-                                </div>
+                                <DraftChecks draft={currentDraft} />
                                 {unsentDraft ? (
                                     capabilities?.can_send_drafts ? (
                                         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-100 pt-4">
