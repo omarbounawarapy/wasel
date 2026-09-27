@@ -376,6 +376,46 @@ def test_send_failure_is_502_and_draft_stays_unsent(wa_send):
     assert repo.unsent_draft(conn, o["order_id"])["draft_id"] == d["draft_id"]
 
 
+def test_send_retries_transient_5xx_then_succeeds(wa_send):
+    import httpx
+
+    from app.outbound.whatsapp_send import WhatsAppSender
+
+    c, core, clock = wa_send
+    calls: list = []
+
+    def handler(request):
+        calls.append(json.loads(request.content))
+        if len(calls) < 3:
+            return httpx.Response(503, json={"error": {"code": 131030}})
+        return httpx.Response(200, json={"messages": [{"id": "wamid.OUT1"}]})
+
+    core.sender = WhatsAppSender("test-token", PNID, "v21.0", transport=httpx.MockTransport(handler),
+                                 backoff_s=0.0)
+    conn, o, d = _draft_for(c, core, clock)
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 200 and r.json()["delivery"] == "whatsapp_sent" and len(calls) == 3
+
+
+def test_send_does_not_retry_permanent_4xx(wa_send):
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls, status=400)
+    conn, o, d = _draft_for(c, core, clock)
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 502 and len(calls) == 1
+
+
+def test_send_gives_up_after_max_retries(wa_send):
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls, status=503)                       # every attempt fails, retryable
+    conn, o, d = _draft_for(c, core, clock)
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 502 and r.json()["error"]["code"] == "WHATSAPP_SEND_FAILED" and len(calls) == 3
+    assert repo.unsent_draft(conn, o["order_id"])["draft_id"] == d["draft_id"]
+
+
 def test_send_refused_outside_24h_window(wa_send):
     c, core, clock = wa_send
     calls: list = []
