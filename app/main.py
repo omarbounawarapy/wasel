@@ -199,9 +199,11 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         if cl and cl.isdigit() and int(cl) > MAX_BODY and request.url.path != "/webhook/whatsapp":   # W-3: 1 MiB there
             return JSONResponse({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "body over 64 KB"}}, status_code=413)
         resp = await call_next(request)
-        resp.headers["Content-Security-Policy"] = ("default-src 'self'; img-src 'self' data:; style-src 'self' "
-                                                   "'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; "
-                                                   "base-uri 'none'")
+        # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags (04 §
+        # [VERIFY] answered). XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule (06 §1.2).
+        resp.headers["Content-Security-Policy"] = ("default-src 'self'; script-src 'self' 'unsafe-inline'; "
+                                                   "img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+                                                   "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
         resp.headers["X-Content-Type-Options"] = "nosniff"
         resp.headers["Referrer-Policy"] = "no-referrer"
         return resp
