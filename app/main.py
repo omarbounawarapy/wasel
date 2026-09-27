@@ -86,7 +86,7 @@ class AppState:
                              meter=meter, config=self.config)
         process_due(conn, now, scorer, self.drafter, ids=self.ids, meter=meter,
                     no_reply_s=self.no_reply_s if self.settings.no_reply_enabled else None)
-        if self.sender is not None and self.settings.wa_auto_send:
+        if self.settings.wa_auto_send and not self.settings.is_public:
             from app.api.commands import auto_send_due
             auto_send_due(conn, self.ids, now, self.settings, self.sender)
 

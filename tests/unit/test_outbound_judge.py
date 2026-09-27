@@ -16,11 +16,15 @@ from app.outbound import judge as J
 from app.outbound.guard_clf import BANK, build_corpus, calibrate, classify, decide, thresholds
 from app.outbound.make_draft import make_draft
 from app.outbound.prefilter import prefilter
+from app.outbound.route import route_draft
 from app.scoring.config import default_config
 from tests.conftest import T0
 
 GOOD_LLM = "Bonjour {first_name}, votre commande de Robe d'été est à 89 TND. Confirmez-vous que vous souhaitez la recevoir ? Merci 🙏"
 GOOD_FR = GOOD_LLM.replace("{first_name}", "Amira")
+# prefilter-clean rewrite the classifier puts in the review band (risk 0.212, measured): never auto-sends
+REVIEW_LLM = ("Bonjour {first_name}, votre commande de Robe d'été est à 89 TND. "
+              "Confirmez-vous que vous souhaitez la recevoir ? أكيد توصل نهار الاثنين.")
 APPROVE = {"unsupported_claims": [], "grounded": True, "language_ok": True, "tone_ok": True, "overreach": "none",
            "question_count": "one", "verdict": "approve"}
 REJECT = {**APPROVE, "unsupported_claims": ["remise 10%"], "grounded": False,
@@ -52,6 +56,15 @@ class Scripted:
 
 def llm(backend) -> ChainClient:
     return ChainClient([ChainStep("primary", "groq", "openai/gpt-oss-120b", backend, 6)])
+
+
+def gate_config(gate: str):
+    """default_config with scoring.yaml's auto_send.gate overridden (the copy is per-call, cache untouched)."""
+    from dataclasses import replace
+    cfg = default_config()
+    raw = dict(cfg.raw)
+    raw["auto_send"] = {**raw["auto_send"], "gate": gate}
+    return replace(cfg, raw=raw)
 
 
 def req(**over) -> DraftRequest:
@@ -213,10 +226,51 @@ def test_classifier_veto_skips_the_judge():
     assert rec.source == "static_template" and "judge" not in b.users
 
 
-def test_judge_down_is_needs_review_never_auto_send():
+def test_judge_down_cleared_draft_auto_sends_on_the_threshold_gate():
+    """auto_send.gate=classifier (the scoring.yaml default): the classifier's send decision alone routes
+    auto_send, judge up or down."""
     b = Scripted(rewrite=[{"text": GOOD_LLM}], judge=[ProviderDown("5xx")])
     rec = make_draft(req(), llm=llm(b))
-    assert rec.source == "llm_rewrite" and rec.route == "needs_review" and rec.judge["unavailable"] is True
+    assert rec.source == "llm_rewrite" and rec.route == "auto_send" and rec.judge["unavailable"] is True
+
+
+def test_judge_down_review_decision_falls_back_to_the_static_template():
+    b = Scripted(rewrite=[{"text": REVIEW_LLM}], judge=[ProviderDown("5xx")])
+    rec = make_draft(req(), llm=llm(b))
+    assert rec.source == "static_template" and rec.route == "needs_review"
+    d = decide(REVIEW_LLM.replace("{first_name}", "Amira"))
+    assert d.decision == "review"            # the reason the rewrite was not kept
+
+
+def test_judge_gate_config_needs_the_judge_again():
+    b = Scripted(rewrite=[{"text": GOOD_LLM}], judge=[ProviderDown("5xx")])
+    rec = make_draft(req(), llm=llm(b), config=gate_config("judge"))
+    assert rec.route == "needs_review" and rec.judge["unavailable"] is True
+
+
+def test_route_threshold_gate_decides_on_the_classifier_alone():
+    base = dict(source="llm_rewrite", prefilter_passed=True, judge_approved=None, confidence="high",
+                price_tnd=89.0, auto_messages_sent=0, last_inbound_at=T0 - timedelta(minutes=5),
+                now=T0, cfg=default_config().raw)
+    assert route_draft(**base, clf_decision="send") == "auto_send"
+    assert route_draft(**{**base, "judge_approved": False}, clf_decision="send") == "auto_send"  # judge not required
+    assert route_draft(**base, clf_decision="review") == "needs_review"
+    assert route_draft(**{**base, "judge_approved": True}, clf_decision=None) == "needs_review"
+    assert route_draft(**base, clf_decision="block") == "needs_review"
+    assert route_draft(**{**base, "source": "static_template"}, clf_decision="send") == "needs_review"
+    assert route_draft(**{**base, "prefilter_passed": False}, clf_decision="send") == "blocked"
+    for over in ({"confidence": "low"}, {"price_tnd": 400.0}, {"auto_messages_sent": 2},
+                 {"last_inbound_at": T0 - timedelta(hours=25)}):
+        assert route_draft(**{**base, **over}, clf_decision="send") == "needs_review", over
+
+
+def test_route_judge_gate_requires_both_layers():
+    base = dict(source="llm_rewrite", prefilter_passed=True, confidence="high", price_tnd=89.0,
+                auto_messages_sent=0, last_inbound_at=T0 - timedelta(minutes=5), now=T0,
+                cfg=gate_config("judge").raw)
+    assert route_draft(**base, judge_approved=True, clf_decision="send") == "auto_send"
+    assert route_draft(**base, judge_approved=False, clf_decision="send") == "needs_review"
+    assert route_draft(**base, judge_approved=True, clf_decision="review") == "needs_review"
 
 
 def test_rewrite_down_uses_static_template():

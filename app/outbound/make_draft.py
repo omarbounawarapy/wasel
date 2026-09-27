@@ -3,7 +3,8 @@ the S-3 rewrite + judge flow of 02 §8.2:
 
   rewrite -> prefilter -> guard classifier -> LLM judge      (at most `max_attempts` rewrites, with feedback)
   any rewrite that doesn't pass every layer -> the static template, which a human sends
-  judge unavailable -> the rewrite goes to needs_review (never auto_send), unless the classifier holds it
+  the route then comes from route.py's auto_send.gate: "classifier" auto-sends whatever the classifier
+  cleared (decision "send"), judge down or up; "judge" also requires the judge's approval
 """
 from __future__ import annotations
 
@@ -41,11 +42,11 @@ def make_draft(req: DraftRequest, *, llm=None, meter: UsageMeter | None = None,
     def check(text: str) -> list[str]:
         return prefilter(text, canonical, used, expected, config["prefilter"], config["lexicons"].get("injection"))
 
-    def route(source: str, passed: bool, approved: bool | None) -> str:
+    def route(source: str, passed: bool, approved: bool | None, clf_decision: str | None = None) -> str:
         return route_draft(source=source, prefilter_passed=passed, judge_approved=approved,
                            confidence=req.confidence, price_tnd=req.price_tnd,
                            auto_messages_sent=req.auto_messages_sent, last_inbound_at=req.last_inbound_at,
-                           now=req.now, cfg=config.raw)
+                           now=req.now, cfg=config.raw, clf_decision=clf_decision)
 
     events: list[CoreEvent] = []
     usage: list = []
@@ -103,7 +104,7 @@ def _rewrite_and_judge(req, llm, meter, config, lang, canonical, used, expected,
         if v.unavailable and v.hold:
             return None                                   # no judge and a doubtful classifier: send the template
         if v.approved or v.unavailable:
-            r = route("llm_rewrite", True, v.approved and not v.hold)
+            r = route("llm_rewrite", True, v.approved, clf_decision=v.judge_json["classifier"]["decision"])
             events.insert(0, CoreEvent("draft.created", "info", {"template_id": req.template_id, "language": lang,
                                                                  "route": r, "source": "llm_rewrite"}))
             return DraftRecord(req.template_id, lang, canonical, text, "llm_rewrite", PrefilterResult(True, []),

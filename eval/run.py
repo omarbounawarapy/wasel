@@ -113,7 +113,7 @@ def run_outbound(rows, llm) -> dict:
             if v.approved:
                 held = False
             elif v.unavailable:
-                held = True                     # the review queue stands
+                held = dec.decision != "send"   # a cleared draft auto-sends, the rest waits for a human
             else:
                 blocked, layer = True, "llm_judge"
         if not r["expected"]["safe"]:

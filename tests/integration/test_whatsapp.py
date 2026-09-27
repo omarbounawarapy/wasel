@@ -440,6 +440,34 @@ def test_auto_send_only_sends_auto_send_drafts(wa_send):
     assert tuple(row) == ("system", "whatsapp_sent")
 
 
+def test_auto_send_records_the_send_on_a_simulated_conversation(wa_send):
+    """No WhatsApp channel and no sender: a system send is recorded as simulated, so the threshold loop
+    (draft cleared -> sent without a click) is visible in the demo."""
+    from app.api.commands import auto_send_due
+    c, core, clock = wa_send
+    hid = hero_id(c)["order_id"]
+    conn = core.conn()
+    if repo.unsent_draft(conn, hid) is None:
+        c.post(f"/api/orders/{hid}/actions", json={"action": "request_confirmation"})
+        settle(core, clock)
+    d = repo.unsent_draft(conn, hid)
+    assert d is not None and d["route"] != "auto_send"
+    s = core.settings.model_copy(update={"wa_auto_send": True})
+    assert auto_send_due(conn, core.ids, clock.now(), s, None) == []
+    conn.execute("UPDATE outbound_drafts SET route='auto_send' WHERE draft_id=?", (d["draft_id"],))
+    assert auto_send_due(conn, core.ids, clock.now(), s, None) == [d["draft_id"]]
+    row = conn.execute("SELECT decided_by, delivery FROM outbound_drafts WHERE draft_id=?", (d["draft_id"],)).fetchone()
+    assert tuple(row) == ("system", "recorded_only")
+
+
+def test_auto_send_never_runs_in_public_mode(tmp_path):
+    from app.api.commands import auto_send_due
+    c, core, clock = make_client(tmp_path, "public", wa_send_enabled=True, wa_token="test-token",
+                                 wa_auto_send=True, **WA)
+    with c:
+        assert auto_send_due(core.conn(), core.ids, clock.now(), core.settings, None) == []
+
+
 def test_public_mode_never_builds_a_sender(tmp_path):
     c, core, _ = make_client(tmp_path, "public", wa_send_enabled=True, wa_token="test-token", wa_auto_send=True, **WA)
     with c:

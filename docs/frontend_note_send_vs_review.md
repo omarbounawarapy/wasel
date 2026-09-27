@@ -57,3 +57,27 @@ pytest tests/unit/test_outbound_judge.py -q  # 26 passed — includes the new de
 
 Then `make demo` → open a sample order → the activity feed's `draft.judged` line shows
 "classifier: …". Seeded/old drafts may show no decision — that's the n/a case above.
+
+---
+
+## UPDATE (same day): the threshold now auto-sends
+
+Omar's call after the note above: `scoring.yaml` → `auto_send.gate: classifier`. What it means for you:
+
+- **`decision == "send"` now means the draft goes out without a click** (once `WA_AUTO_SEND` is on):
+  the classifier clearing it is enough — the LLM judge is *not* required anymore (it still runs when
+  available, and a judge **rejection** still kills the rewrite). `review` and `block` behave exactly as
+  before: owner-approval queue / veto.
+- **What still never auto-sends:** static templates (human click), drafts over 150 TND, low confidence,
+  more than 2 auto messages per order, outside the 24 h window, anything in **public mode**, and
+  sandbox copies. On non-WhatsApp channels a system send is **recorded as simulated**
+  (`delivery: "recorded_only"`, `decided_by: "system"`) so the loop is visible in the demo.
+- **API shape unchanged** — same `route` values (`auto_send | needs_review | blocked`), same
+  `decision` key. Only the mapping from decision to route changed.
+- **One dashboard copy to fix:** in `draft_checks()`, the layer-3 "unavailable" row says
+  *"a person must check it (never auto-sent)"* — no longer true for a `send` decision. Suggested:
+  *"judge unavailable — sent on the classifier's clear"* when `decision == "send"`, keep the old text
+  otherwise. `JUDGE_SHORT()`'s "vetoed by the guard classifier" is still correct.
+
+The old rule stays available: set `auto_send.gate: judge` in `scoring.yaml` and the judge approval is
+required again — no code change.
