@@ -77,6 +77,11 @@ budget — most of the overrun was 120b infra dead-ends (driver, disk), not eval
       the repo (instance-side `~/.env` died with the disks).
 - [x] `reports/eval_live.json` committed as the session's evidence.
 - [ ] Before demo day: `warm_cache.py LIVE=1` vs Groq (F3), then `make test` + `make eval`.
+- [ ] **main is red independent of the GPU work**: the 11 failures (outbound-judge unit,
+      6 backend/whatsapp integration, 4 dashboard e2e) reproduce on bare 7d812cc
+      (Montassar's hosting merge) — merge a10add3 adds none. Also: running the suite
+      mutates tracked files (`config/llm.yaml`, `data/seed/extraction_cache.jsonl`,
+      `prompts/VERSIONS` get left dirty by `make check`). Fix both before demo day.
 - [ ] Decide: retry 120b self-hosted on a verified-≥200 GB box (P0 demo insurance per
       `docs/brev_gpu_plan.md`), or accept Groq-120b primary + rerun the A6000 20b box
       as the flip target (`make brev-serve` rebuilds it in ~15 min).
