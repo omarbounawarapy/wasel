@@ -19,15 +19,22 @@ CACHE_FILE = ROOT / "data" / "seed" / "extraction_cache.jsonl"
 
 
 def load_seed(path: Path = SEED_FILE) -> dict:
+    """Parse the demo seed file (demo conversation fixtures and a version number)."""
     return json.loads(path.read_text(encoding="utf-8"))
 
 
 def seed_catalog(conn, catalog: dict) -> None:
+    """Write the product catalog to the database in one transaction."""
     with tx(conn):
         repo.upsert_catalog(conn, catalog)
 
 
 def seed_cache(conn, now: datetime, path: Path = CACHE_FILE) -> int:
+    """Load the committed extraction cache (JSONL) into the database. Returns the number of entries loaded, 0 if the file
+    is missing.
+
+    Entries replace existing rows with the same input hash. Only 'llm' entries are stored as primary.
+    """
     if not path.exists():
         return 0
     n = 0
@@ -66,6 +73,10 @@ def seed_conversation(conn, ids: IdGen, now: datetime, fx: dict, sandbox_id: str
 
 
 def seed_all(conn, ids: IdGen, now: datetime, scorer, drafter, catalog: dict) -> int:
+    """Load catalog, cache and every demo conversation as seeded (non-sandbox) orders, then score them.
+
+    Scoring uses the given scorer; with the committed cache that needs no LLM call. Returns the number of orders scored.
+    """
     from wasel.worker import drain
     seed_catalog(conn, catalog)
     seed_cache(conn, now)
@@ -76,4 +87,5 @@ def seed_all(conn, ids: IdGen, now: datetime, scorer, drafter, catalog: dict) ->
 
 
 def fixture_for(seed_key: str) -> dict | None:
+    """The demo conversation fixture with this `seed_key`, or None. Re-reads the seed file on each call."""
     return next((c for c in load_seed()["conversations"] if c["key"] == seed_key), None)

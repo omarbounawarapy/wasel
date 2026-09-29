@@ -1,4 +1,5 @@
-"""One connection per thread, with the PRAGMAs set in schema.sql. The DB is rebuilt from schema.sql (no migrations)."""
+"""SQLite connections and transactions. connect() applies the PRAGMAs that schema.sql lists in its header.
+The DB is rebuilt from schema.sql (no migrations)."""
 from __future__ import annotations
 
 import sqlite3
@@ -8,6 +9,11 @@ SCHEMA = Path(__file__).with_name("schema.sql")
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
+    """Open the SQLite file with autocommit, WAL, foreign keys on, a 5 s busy timeout and synchronous=NORMAL.
+
+    The connection may be used from any thread, but callers keep one per thread (see AppState.conn). Transactions are
+    explicit, via `tx`.
+    """
     conn = sqlite3.connect(str(path), check_same_thread=False, isolation_level=None)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
@@ -18,6 +24,7 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
 
 def create_schema(conn: sqlite3.Connection) -> None:
+    """Run schema.sql on the connection. The schema has no migrations."""
     conn.executescript(SCHEMA.read_text(encoding="utf-8"))
 
 

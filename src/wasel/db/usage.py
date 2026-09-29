@@ -15,6 +15,12 @@ from wasel.clock import utc_iso
 
 
 class SqliteUsageMeter:
+    """Enforces the LLM call caps from the llm_usage table.
+
+    `daily_cap` is the global daily limit on provider calls (None = unlimited); in public mode the per-visitor limits
+    and the per-model daily token guard also apply.
+    """
+
     def __init__(self, conn: sqlite3.Connection, *, daily_cap: int | None, public: bool,
                  visitor_10min: int = 6, visitor_day: int = 20, tokens_per_model_day: int | None = None):
         self.conn, self.daily_cap, self.public = conn, daily_cap, public
@@ -27,9 +33,16 @@ class SqliteUsageMeter:
         return int(self.conn.execute(sql, args).fetchone()[0] or 0)
 
     def calls_today(self, now: datetime) -> int:
+        """Persisted provider calls on the UTC day of `now`. Calls only reserved by allow() are not counted."""
         return self._count("SELECT COUNT(*) FROM llm_usage WHERE day=?", now.strftime("%Y-%m-%d"))
 
     def allow(self, role, sandbox_id, now: datetime):
+        """Return 'ok', 'global_cap' or 'visitor_cap' for one more provider call.
+
+        On 'ok' the call is reserved, so later checks in the same scoring run count it before it is persisted. `role`
+        does
+        not affect the decision. `sandbox_id` None (seeded/event traffic) skips the visitor limits.
+        """
         day = now.strftime("%Y-%m-%d")
         pending_all = sum(self._pending.values())
         if self.daily_cap is not None and self.calls_today(now) + pending_all >= self.daily_cap:
@@ -49,4 +62,5 @@ class SqliteUsageMeter:
         return "ok"
 
     def settle(self) -> None:
+        """Drop the reservations. Call after the scoring transaction has persisted the usage rows."""
         self._pending.clear()

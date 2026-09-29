@@ -19,15 +19,22 @@ def _j(x) -> str:
 
 
 def row(conn, sql, *args) -> sqlite3.Row | None:
+    """First row of the query, or None. `args` are the positional SQL parameters."""
     return conn.execute(sql, args).fetchone()
 
 
 def rows(conn, sql, *args) -> list[sqlite3.Row]:
+    """All rows of the query, as a list. `args` are the positional SQL parameters."""
     return conn.execute(sql, args).fetchall()
 
 
 # ---------------------------------------------------------------- catalog
 def upsert_catalog(conn, catalog: dict) -> None:
+    """Insert or update the product catalog from the parsed catalog config, keyed by product_id.
+
+    `aliases_json` holds the aliases of every language merged into one sorted, de-duplicated list. Does not open a
+    transaction.
+    """
     for p in catalog["products"]:
         aliases = sorted({a for v in p["aliases"].values() for a in v})
         conn.execute("INSERT INTO catalog VALUES (?,?,?,?,?) ON CONFLICT(product_id) DO UPDATE SET name=excluded.name,"
@@ -38,6 +45,12 @@ def upsert_catalog(conn, catalog: dict) -> None:
 # ---------------------------------------------------------------- customers / conversations / messages
 def get_or_create_customer(conn, ids: IdGen, now: datetime, *, sandbox_id, display_name=None, external_ref=None,
                            phone_e164=None, completed_orders=0, refusals_total=0) -> str:
+    """Return the customer id, creating the customer if there is no match.
+
+    Lookup is by `phone_e164` when given (global, across sandboxes), otherwise by `external_ref` within `sandbox_id`;
+    with neither, a new customer is always created. A match only has `last_seen_at` refreshed: the other arguments
+    (name, counters) are ignored. `sandbox_id` None means seeded/event data rather than a visitor's sandbox.
+    """
     r = None
     if phone_e164:
         r = row(conn, "SELECT customer_id FROM customers WHERE phone_e164=?", phone_e164)
@@ -56,6 +69,7 @@ def get_or_create_customer(conn, ids: IdGen, now: datetime, *, sandbox_id, displ
 
 
 def create_conversation(conn, ids: IdGen, now: datetime, *, customer_id, sandbox_id, channel, seed_key=None) -> str:
+    """Insert a conversation for a customer and return its id. `seed_key` links it to a demo fixture, if any."""
     cid = ids("cnv")
     conn.execute("INSERT INTO conversations (conversation_id, customer_id, sandbox_id, channel, seed_key, opened_at)"
                  " VALUES (?,?,?,?,?,?)", (cid, customer_id, sandbox_id, channel, seed_key, utc_iso(now)))
@@ -66,6 +80,11 @@ def insert_message(conn, ids: IdGen, now: datetime, *, conversation_id, directio
                    text=None, canonical_text=None, template_id=None, transcript=None, lat=None, lng=None,
                    provider_ts: datetime | None = None, channel_message_id=None, delivery_status=None,
                    reply_to_message_id=None) -> str | None:
+    """Insert a message and return its id, or None if it duplicates an existing `channel_message_id` (the row is skipped).
+
+    Does not link the message to an order. `provider_ts` is the time the provider stamped the message and defaults to
+    `now`; `received_at` is always `now`.
+    """
     mid = ids("msg")
     cur = conn.execute(
         "INSERT OR IGNORE INTO messages (message_id, conversation_id, channel_message_id, direction, author, origin,"
@@ -78,11 +97,19 @@ def insert_message(conn, ids: IdGen, now: datetime, *, conversation_id, directio
 
 # ---------------------------------------------------------------- orders
 def open_order(conn, conversation_id) -> sqlite3.Row | None:
+    """The conversation's order that is not in a terminal status, or None.
+
+    Ingestion only opens a new order when there is none.
+    """
     return row(conn, f"SELECT * FROM orders WHERE conversation_id=? AND status IN {OPEN}", conversation_id)
 
 
 def create_order(conn, ids: IdGen, now: datetime, *, conversation_id, customer_id, sandbox_id,
                  structured: dict | None = None, order_no: int | None = None) -> str:
+    """Insert an order for a conversation and return its id. `structured` holds the seller-entered fields.
+
+    Without `order_no`, numbering continues from the highest existing number (the first order is #2601).
+    """
     oid = ids("ord")
     if order_no is None:
         order_no = (row(conn, "SELECT COALESCE(MAX(order_no), 2600) FROM orders")[0]) + 1
@@ -94,6 +121,7 @@ def create_order(conn, ids: IdGen, now: datetime, *, conversation_id, customer_i
 
 
 def link(conn, order_id, message_id) -> None:
+    """Attach a message to an order's thread. Idempotent."""
     conn.execute("INSERT OR IGNORE INTO order_messages VALUES (?,?)", (order_id, message_id))
 
 
@@ -105,15 +133,21 @@ def arm_rescore(conn, order_id, trigger: str, due: datetime, now: datetime, *, k
 
 
 def get_order(conn, order_id) -> sqlite3.Row | None:
+    """The order row, or None."""
     return row(conn, "SELECT * FROM orders WHERE order_id=?", order_id)
 
 
 def order_messages(conn, order_id) -> list[sqlite3.Row]:
+    """Messages linked to the order, oldest first by provider timestamp, then by arrival."""
     return rows(conn, "SELECT m.* FROM messages m JOIN order_messages om ON om.message_id=m.message_id"
                       " WHERE om.order_id=? ORDER BY m.provider_ts, m.received_at", order_id)
 
 
 def window_messages(conn, order_id, prior_created_at: datetime | None) -> list[WindowMessage]:
+    """The order's messages as scorer input, oldest first.
+
+    `is_new` marks messages stamped after `prior_created_at` (all of them when there is no prior assessment).
+    """
     out = []
     for m in order_messages(conn, order_id):
         ts = parse_utc(m["provider_ts"])
@@ -126,24 +160,32 @@ def window_messages(conn, order_id, prior_created_at: datetime | None) -> list[W
 
 
 def customer_history(conn, customer_id) -> CustomerHistory:
+    """The customer's delivered-plus-refused count and refusal count. Assumes the customer exists."""
     c = row(conn, "SELECT completed_orders, refusals_total FROM customers WHERE customer_id=?", customer_id)
     return CustomerHistory(c["completed_orders"], c["refusals_total"])
 
 
 def structured(order: sqlite3.Row) -> StructuredFields:
+    """The seller-entered fields stored on the order. Fields that were not given come back as None."""
     d = json.loads(order["structured_json"] or "{}")
     return StructuredFields(**{k: d.get(k) for k in ("product_name", "price_tnd", "zone", "quantity")})
 
 
 def assessments(conn, order_id) -> list[sqlite3.Row]:
+    """All assessment rows of the order, ascending by version."""
     return rows(conn, "SELECT * FROM risk_assessments WHERE order_id=? ORDER BY version", order_id)
 
 
 def current_assessment(conn, order_id) -> sqlite3.Row | None:
+    """The order's latest assessment row (highest version), or None if it was never scored."""
     return row(conn, "SELECT * FROM risk_assessments WHERE order_id=? ORDER BY version DESC LIMIT 1", order_id)
 
 
 def prior_assessment(conn, order_id) -> PriorAssessment | None:
+    """The latest assessment converted to the scorer's PriorAssessment, or None if the order was never scored.
+
+    `extraction` is the validated extraction of that version, or None when it has none stored.
+    """
     a = current_assessment(conn, order_id)
     if a is None:
         return None
@@ -161,6 +203,14 @@ def prior_assessment(conn, order_id) -> PriorAssessment | None:
 # ---------------------------------------------------------------- persist one rescore (one transaction)
 def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger: str, result: ScoreResult,
                    prior: PriorAssessment | None, next_status: str | None, rescore_state: str) -> str | None:
+    """Write one rescore's ScoreResult and update the order. The caller wraps it in a transaction.
+
+    Writes the extraction run and cache entry (a cache row is only replaced by an entry that is at least as primary),
+    the next assessment version (prior.version + 1, or 1), the order columns (`rescore_state`, current assessment, the
+    resolved order patch, and `status` when `next_status` is given), usage rows, the result's events, and an
+    'order.rescored' event. A result without an extraction (no-reply timeout) reuses the prior extraction id.
+    Returns the new assessment id, or None when the result has no assessment (not an order).
+    """
     oid, sid = order["order_id"], order["sandbox_id"]
     ext_id = None
     if result.extraction is not None:
@@ -229,6 +279,7 @@ def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger:
 
 
 def insert_usage(conn, u, *, sandbox_id, order_id) -> None:
+    """Record one LLM provider attempt in llm_usage. `day` is the UTC date of `u.ts`."""
     conn.execute("INSERT INTO llm_usage (ts, day, sandbox_id, order_id, role, provider, model, outcome, tokens_in,"
                  " tokens_out, latency_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
                  (utc_iso(u.ts), u.ts.strftime("%Y-%m-%d"), sandbox_id, order_id, u.role, u.provider, u.model,
@@ -237,10 +288,12 @@ def insert_usage(conn, u, *, sandbox_id, order_id) -> None:
 
 # ---------------------------------------------------------------- drafts
 def unsent_draft(conn, order_id) -> sqlite3.Row | None:
+    """An unsent draft of the order, or None. Orders are expected to hold at most one."""
     return row(conn, "SELECT * FROM outbound_drafts WHERE order_id=? AND sent_message_id IS NULL", order_id)
 
 
 def insert_draft(conn, ids: IdGen, now: datetime, order_id, assessment_id, d: DraftRecord) -> str:
+    """Store a drafted message for the order, tied to the assessment it was made from. Returns the draft id."""
     did = ids("drf")
     conn.execute(
         "INSERT INTO outbound_drafts (draft_id, order_id, assessment_id, template_id, language, canonical_text,"
@@ -252,6 +305,13 @@ def insert_draft(conn, ids: IdGen, now: datetime, order_id, assessment_id, d: Dr
 
 def mark_draft_sent(conn, ids: IdGen, now: datetime, draft: sqlite3.Row, *, origin: str, delivery: str,
                     decided_by: str, channel_message_id: str | None = None) -> str:
+    """Record a draft as sent and return the new outbound message id.
+
+    Adds the message (author 'ai', text as sent, canonical text kept) to the order's thread, stamps the draft, sets
+    `last_outbound_at` on the conversation and `awaiting_reply_since` on the order, and counts it in
+    `auto_messages_sent` only when `decided_by` is 'system'. `delivery_status` starts as 'sent' only for
+    'whatsapp_sent'. This does not send anything: the caller has already sent (or decided not to send) the message.
+    """
     order = get_order(conn, draft["order_id"])
     mid = insert_message(conn, ids, now, conversation_id=order["conversation_id"], direction="outbound", author="ai",
                          origin=origin, text=draft["rendered_text"], canonical_text=draft["canonical_text"],
@@ -271,5 +331,6 @@ def mark_draft_sent(conn, ids: IdGen, now: datetime, draft: sqlite3.Row, *, orig
 # ---------------------------------------------------------------- events
 def add_event(conn, now: datetime, type_: str, level: str = "info", *, order_id=None, sandbox_id=None, entity_id=None,
               payload: dict | None = None) -> None:
+    """Append a row to the activity log. `entity_id` is the id of the related row (message, draft, assessment)."""
     conn.execute("INSERT INTO events (ts, type, level, order_id, sandbox_id, entity_id, payload) VALUES (?,?,?,?,?,?,?)",
                  (utc_iso(now), type_, level, order_id, sandbox_id, entity_id, _j(payload or {})))
