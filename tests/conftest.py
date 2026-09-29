@@ -3,19 +3,15 @@ from __future__ import annotations
 
 import json
 import socket
-import sys
 from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
-
-from app.clock import FrozenClock  # noqa: E402
-from app.contracts import CustomerHistory, ScoreInput, StructuredFields, WindowMessage  # noqa: E402
-from app.scoring.config import load_config  # noqa: E402
-from app.settings import Settings  # noqa: E402
+from wasel.clock import FrozenClock
+from wasel.contracts import CustomerHistory, ScoreInput, StructuredFields, WindowMessage
+from wasel.scoring.config import load_config
+from wasel.settings import Settings
 
 # Tests never read a developer's .env (auto-send, webhook, DRAFT_LLM, keys...): only the process env, which
 # `make test` sets, and each test's explicit Settings(...). Same results on every laptop as in CI (no .env).
@@ -74,7 +70,7 @@ def make_input(texts, *, seller_at: int | None = None, seller_text: str = "Vous 
 
 def envelope(render: str, extraction: dict | str, *, source: str = "hand_crafted", provider: str = "groq",
              model: str = "openai/gpt-oss-120b", status: int = 200) -> dict:
-    from app.llm.client import replay_key
+    from wasel.llm.client import replay_key
     content = extraction if isinstance(extraction, str) else json.dumps(extraction, ensure_ascii=False)
     return {"meta": {"source": source, "provider": provider, "model": model, "prompt_version": "extract-v1",
                      "recorded_at": "2026-09-26"},

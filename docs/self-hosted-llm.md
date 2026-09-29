@@ -1,6 +1,6 @@
 # Self-hosted LLM (vLLM on a GPU host)
 
-The LLM layer speaks the OpenAI-compatible chat-completions protocol (`app/llm/groq_backend.py`), so a single environment variable moves it from Groq's hosted API to a model you serve yourself. The request shape is unchanged. You get no provider rate limits or daily cap, evaluation runs without pacing, and a fallback when the hosted provider is throttled. `scripts/vllm_serve.sh` (`make llm-serve`, `make llm-check`) sets up the GPU host and verifies the client side. No application code changes beyond `GROQ_BASE_URL` in `.env`.
+The LLM layer speaks the OpenAI-compatible chat-completions protocol (`src/wasel/llm/groq_backend.py`), so a single environment variable moves it from Groq's hosted API to a model you serve yourself. The request shape is unchanged. You get no provider rate limits or daily cap, evaluation runs without pacing, and a fallback when the hosted provider is throttled. `scripts/ops/vllm_serve.sh` (`make llm-serve`, `make llm-check`) sets up the GPU host and verifies the client side. No application code changes beyond `GROQ_BASE_URL` in `.env`.
 
 ## Prerequisites
 
@@ -18,7 +18,7 @@ The LLM layer speaks the OpenAI-compatible chat-completions protocol (`app/llm/g
 
 ## Run
 
-On the **GPU host** (clone the repository, or copy `scripts/vllm_serve.sh`):
+On the **GPU host** (clone the repository, or copy `scripts/ops/vllm_serve.sh`):
 
 ```bash
 make llm-serve                                   # MODEL=openai/gpt-oss-20b by default
@@ -30,7 +30,7 @@ On the **client**:
 
 ```bash
 make llm-check                                   # /v1/models, one JSON completion, round-trip time
-.venv/bin/python -m eval.run --live              # unpaced live evaluation; add --sample 279 for the full set
+.venv/bin/python -m wasel.evaluation.run --live              # unpaced live evaluation; add --sample 279 for the full set
 ```
 
 If the GPU host has no reachable public address, tunnel it: run `cloudflared tunnel --url http://localhost:8001` on the host and put the printed URL in `GROQ_BASE_URL`.
@@ -59,8 +59,8 @@ After swapping the model, re-record the offline extraction cache with `LIVE=1 ma
 - Values in `.env` that contain spaces must be quoted (`VLLM_ARGS="--gpu-memory-utilization 0.92 …"`); the loader only rewrites variable names.
 - Do not run an evaluation while other SSH-multiplexed commands (port-forward, exec, copy) use the same connection to the host: the added latency can push calls past the step deadline, and cases then fall through to the rules extractor and misrepresent the model.
 - Never expose the endpoint without its `--api-key` token. Anyone with the URL and token can use your GPU.
-- Cloud GPU instances bill while they exist. `bash scripts/vllm_serve.sh stop` stops the server, but stop or delete the instance itself with your provider as well; some providers do not support "stop" and need a delete.
+- Cloud GPU instances bill while they exist. `bash scripts/ops/vllm_serve.sh stop` stops the server, but stop or delete the instance itself with your provider as well; some providers do not support "stop" and need a delete.
 
 ## Measured behaviour
 
-A live run of the golden sets against gpt-oss-20b on a 48 GB card completed in about 6.5 minutes (104 extraction and 114 judge requests, no cache hits). On the 40-case extraction sample it scored `is_order` 0.875, address exact-match 0.650, address within one level 0.775 and flag F1 0.833, against 0.961 / 0.907 / 0.971 / 0.964 for the recorded gpt-oss-120b outputs the offline suite replays. The misses on `is_order` were cases where the LLM step failed inside the step deadline and the chain fell through to the rules extractor, not wrong model answers; address quality is the real gap of the smaller model. Treat gpt-oss-120b as the reference model for extraction, and the 20b as a throttling fallback. The record of that run is [`reports/eval_live.json`](../reports/eval_live.json); regenerate it with `eval.run --live` against any serving endpoint.
+A live run of the golden sets against gpt-oss-20b on a 48 GB card completed in about 6.5 minutes (104 extraction and 114 judge requests, no cache hits). On the 40-case extraction sample it scored `is_order` 0.875, address exact-match 0.650, address within one level 0.775 and flag F1 0.833, against 0.961 / 0.907 / 0.971 / 0.964 for the recorded gpt-oss-120b outputs the offline suite replays. The misses on `is_order` were cases where the LLM step failed inside the step deadline and the chain fell through to the rules extractor, not wrong model answers; address quality is the real gap of the smaller model. Treat gpt-oss-120b as the reference model for extraction, and the 20b as a throttling fallback. The record of that run is [`data/reports/eval_live.json`](../reports/eval_live.json); regenerate it with `eval.run --live` against any serving endpoint.

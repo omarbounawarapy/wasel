@@ -7,10 +7,10 @@ from __future__ import annotations
 
 import pytest
 
-from app.extraction.window import build_window
-from app.llm.client import ChainClient, ChainStep, ReplayBackend
-from app.scoring.score_order import score_order
 from tests.conftest import make_input
+from wasel.extraction.window import build_window
+from wasel.llm.client import ChainClient, ChainStep, ReplayBackend
+from wasel.scoring.score_order import score_order
 
 TIERS = {"low": 0, "medium": 1, "high": 2}
 BASES = {

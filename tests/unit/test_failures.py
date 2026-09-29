@@ -1,16 +1,16 @@
-"""Hidden-failure analyzer (failures/): dataset, detectors, recoveries vs failures, grouping, the LLM language
+"""Hidden-failure analyzer (src/wasel/failures/): dataset, detectors, recoveries vs failures, grouping, the LLM language
 layer (scripted backend, no network) and the app adapter + API."""
 from __future__ import annotations
 
 import json
 
-from app.llm.base import CallMeta
-from app.llm.client import ChainClient, ChainStep
-from failures import dataset
-from failures.detect import REPORT_AT, detect
-from failures.rank import group
-from failures.run import analyze, score
-from failures.semantics import LLMSemantics
+from wasel.failures import dataset
+from wasel.failures.detect import REPORT_AT, detect
+from wasel.failures.rank import group
+from wasel.failures.run import analyze, score
+from wasel.failures.semantics import LLMSemantics
+from wasel.llm.base import CallMeta
+from wasel.llm.client import ChainClient, ChainStep
 
 
 def test_committed_datasets_match_the_generator():

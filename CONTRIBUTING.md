@@ -8,7 +8,7 @@ You need Python 3.11, `make`, and Node 22 if you work on the web UI.
 
 ```bash
 python3.11 -m venv .venv
-make setup        # pinned Python dependencies
+make setup        # pinned Python dependencies + the wasel package (editable install)
 make check        # hygiene + ruff + offline tests + offline eval gate; needs no API keys
 make up           # API on :8000 + Streamlit dashboard on :8501, seeded
 make web          # build the Next.js UI into web/dist (served by the API at /)
@@ -25,15 +25,15 @@ make web-dev      # Next.js dev server on :5173 against the API on :8000
 4. Rebase on `main` and run `make check` again. CI runs the same target, and on `main` it also builds the web UI and boots the server in public mode.
 5. Open a pull request and fill in the template.
 
-When changing a shared interface (`app/contracts.py`, `app/api/models.py`, `app/db/schema.sql`, `scoring.yaml`, `Makefile`, `requirements*.txt`), update its consumers in the same pull request.
+When changing a shared interface (`src/wasel/contracts.py`, `src/wasel/api/models.py`, `src/wasel/db/schema.sql`, `config/scoring.yaml`, `Makefile`, `requirements*.txt`), update its consumers in the same pull request.
 
 ## House rules the checks enforce
 
-- Read time through `app/clock.py`, never `datetime.now()`.
-- No LLM SDKs: providers are called with `httpx` from `app/llm/` only.
+- Read time through `src/wasel/clock.py`, never `datetime.now()`.
+- No LLM SDKs: providers are called with `httpx` from `src/wasel/llm/` only.
 - No secrets, `.env` or `*.db` files in git.
-- Editing a prompt means bumping its version in `config/llm.yaml` and `prompts/VERSIONS` (prompt files are sha-locked).
-- Every number the UI shows comes from code or `reports/*.json`, never from the LLM.
+- Editing a prompt means bumping its version in `config/llm.yaml` and `config/prompts/VERSIONS` (prompt files are sha-locked).
+- Every number the UI shows comes from code or `data/reports/*.json`, never from the LLM.
 - Public mode must never send WhatsApp messages or bypass the visitor sandbox.
 
 ## Style

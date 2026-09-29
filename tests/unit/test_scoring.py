@@ -6,16 +6,16 @@ import json
 
 import pytest
 
-from app.contracts import Adjustment, StructuredFields
-from app.extraction.window import build_window
-from app.llm.base import FixtureMissing
-from app.llm.client import ChainClient, ChainStep, FailingBackend, ReplayBackend
-from app.llm.prompts import extraction_task
-from app.outbound.prefilter import numbers_in, prefilter
-from app.outbound.templates import TEMPLATE_LANGS, choose_template, expected_questions, render_template
-from app.scoring.reason import points
-from app.scoring.score_order import _action, _adjust, _confidence, _tier, score_order
 from tests.conftest import CountingMeter, make_input
+from wasel.contracts import Adjustment, StructuredFields
+from wasel.extraction.window import build_window
+from wasel.llm.base import FixtureMissing
+from wasel.llm.client import ChainClient, ChainStep, FailingBackend, ReplayBackend
+from wasel.llm.prompts import extraction_task
+from wasel.outbound.prefilter import numbers_in, prefilter
+from wasel.outbound.templates import TEMPLATE_LANGS, choose_template, expected_questions, render_template
+from wasel.scoring.reason import points
+from wasel.scoring.score_order import _action, _adjust, _confidence, _tier, score_order
 
 GOOD = {"is_order": True, "is_order_change": False, "product_quote": "casque bluetooth", "quantity": None,
         "address_quotes": ["Sfax"], "address_level": "city_only", "red_flags": [], "tone_evidence": None,
@@ -167,7 +167,7 @@ def test_not_order_writes_no_assessment(replay_dir):
 
 
 def test_cache_hit_needs_no_llm(replay_dir):
-    from app.contracts import CachedExtraction
+    from wasel.contracts import CachedExtraction
     inp = make_input(["nheb el casque bluetooth, Sfax"])
     key = build_window(inp).cache_key(extraction_task().prompt_version)
 
@@ -238,9 +238,9 @@ def test_choose_template():
 
 
 def test_make_draft_static_routes_to_review(config):
-    from app.contracts import DraftRequest
-    from app.outbound.make_draft import make_draft
     from tests.conftest import T0
+    from wasel.contracts import DraftRequest
+    from wasel.outbound.make_draft import make_draft
     slots = {"first_name": "Sami", "product": "casque bluetooth", "price_tnd": "220"}     # all slots, as the worker sends
     d = make_draft(DraftRequest("o", None, "T_ADDRESS", "arabizi", slots, [], "high", 220.0, 0, T0, T0))
     assert d.source == "static_template" and d.prefilter.passed and d.route == "needs_review" and d.judge is None

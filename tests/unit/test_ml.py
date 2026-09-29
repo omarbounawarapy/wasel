@@ -11,7 +11,7 @@ from pathlib import Path
 import pandas as pd
 import pytest
 
-from ml.features import (
+from wasel.ml.features import (
     FEATURES,
     LEVEL_TO_SPEC,
     TONE_ENC,
@@ -23,8 +23,8 @@ from ml.features import (
     tone_gate,
     zone_from_text,
 )
-from ml.generate import COLUMNS, TEXT_COLUMNS, generate, lint_banks, lint_rows, load_inputs, to_csv
-from ml.textnorm import passes_exact_guard, standalone_numbers
+from wasel.ml.generate import COLUMNS, TEXT_COLUMNS, generate, lint_banks, lint_rows, load_inputs, to_csv
+from wasel.ml.textnorm import passes_exact_guard, standalone_numbers
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -109,7 +109,7 @@ def test_feature_mapping_and_imputation():
 
 
 def test_catalog_price_ignores_text_price(config):
-    from app.scoring.catalog import match_product
+    from wasel.scoring.catalog import match_product
     p, _ = match_product("el casque bluetooth", config.catalog)
     assert p["product_id"] == "P12" and p["price_tnd"] == 220
     assert match_product("un truc inconnu", config.catalog)[0] is None
@@ -121,7 +121,7 @@ def test_generator_deterministic_and_bank_edit_changes_only_text(tmp_path):
     b, _ = generate(400, 20260927)
     assert hashlib.sha256(to_csv(a).encode()).hexdigest() == hashlib.sha256(to_csv(b).encode()).hexdigest()
     root = tmp_path / "r"
-    for p in ("data", "prompts"):
+    for p in ("data", "config/prompts"):
         (root / p).mkdir(parents=True)
     for p in ("data/catalog.yaml", "data/zones.yaml"):
         (root / p).write_text((ROOT / p).read_text(encoding="utf-8"), encoding="utf-8")
@@ -181,17 +181,17 @@ def _imports(path: Path) -> set[str]:
 
 
 def test_generator_no_llm_imports():
-    banned = ("app.llm", "groq", "google.genai", "openai", "httpx")
-    for f in ("ml/generate.py", "ml/train.py", "ml/features.py", "ml/textnorm.py"):
+    banned = ("wasel.llm", "groq", "google.genai", "openai", "httpx")
+    for f in ("src/wasel/ml/generate.py", "src/wasel/ml/train.py", "src/wasel/ml/features.py", "src/wasel/ml/textnorm.py"):
         mods = _imports(ROOT / f)
         assert not [m for m in mods if any(m == b or m.startswith(b + ".") for b in banned)], f
 
 
 def test_layering():
     """The core never imports sqlite3, fastapi or the persistence/API/worker modules."""
-    banned = ("sqlite3", "fastapi", "app.db", "app.api", "app.ingress", "app.worker")
-    for d in ("app/llm", "app/extraction", "app/scoring", "app/outbound", "ml"):
-        for f in (ROOT / d).rglob("*.py"):
+    banned = ("sqlite3", "fastapi", "wasel.db", "wasel.api", "wasel.ingress", "wasel.worker")
+    for d in ("src/wasel/llm", "src/wasel/extraction", "src/wasel/scoring", "src/wasel/outbound", "src/wasel/ml"):
+        for f in (ROOT / "src" / "wasel" / d).rglob("*.py"):
             mods = _imports(f)
             assert not [m for m in mods if any(m == b or m.startswith(b + ".") for b in banned)], f
 
@@ -210,7 +210,7 @@ def test_feature_contract_parity():
 
 
 def test_model_artifact_matches_card():
-    from app.scoring.model import classifier_version_of
+    from wasel.scoring.model import classifier_version_of
     card, p = _card(), ROOT / "models/risk_xgb_v1.json"
     assert hashlib.sha256(p.read_bytes()).hexdigest() == card["model_sha256"]
     assert card["monotone"] == [-1, 1, 1, 1, 1, 1]
@@ -220,14 +220,14 @@ def test_model_artifact_matches_card():
 
 
 def test_model_gates_and_holdout_tier_ordering():
-    m = json.loads((ROOT / "reports/train_metrics.json").read_text())
+    m = json.loads((ROOT / "data/reports/train_metrics.json").read_text())
     assert set(m["gates"].values()) == {"pass"}
     r = m["tier_refusal_rate"]
     assert r["low"] < r["medium"] < r["high"]
 
 
 def test_classifier_monotone(config):
-    from app.scoring.model import load_model
+    from wasel.scoring.model import load_model
     lm = load_model(str(ROOT / "models/risk_xgb_v1.json"))
     grid = dict(address_specificity=[0, .25, .5, .75, 1], red_flag_count=[0, 1, 2, 3], tone_score=[-1, 0, 1, 2],
                 price_tnd=[25, 69, 149, 220, 450], zone_encoded=[0, 1, 2], customer_refusal_rate=[0.1, .3, .6])
@@ -249,7 +249,7 @@ def test_classifier_monotone(config):
                    "card, or by changing the catalog/generator; never tune the model to pass.")
 def test_fairness_invariant(config):
     """Rural, exact, 0 flags, neutral, new customer, any catalog price <= 450 -> tier low."""
-    from app.scoring.model import load_model
+    from wasel.scoring.model import load_model
     lm = load_model(str(ROOT / "models/risk_xgb_v1.json"))
     for p in config.catalog["products"]:
         f = dict(address_specificity=1.0, red_flag_count=0, tone_score=0, price_tnd=float(p["price_tnd"]),

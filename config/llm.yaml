@@ -1,9 +1,9 @@
 # LLM registry: the ONE place that says which prompt, schema, model and limits each LLM role uses.
-# Prompt text lives in prompts/ (sha256-locked by prompts/VERSIONS), output schemas in schemas/, message
+# Prompt text lives in config/prompts/ (sha256-locked by config/prompts/VERSIONS), output schemas in config/schemas/, message
 # templates in data/templates/. None of it is in application code. Changes need a CODEOWNERS review.
 #
 # Rollback in one step: set a role's `active` back to an earlier version (one line), e.g.
-#   python -m scripts.rollback judge judge-v1        # or edit the line below and redeploy
+#   python scripts/ops/rollback.py judge judge-v1        # or edit the line below and redeploy
 # `make eval` must stay green on the version you roll to; every version listed here is kept loadable.
 version: 1
 roles:
@@ -27,7 +27,7 @@ roles:
       judge-v2: { system: judge_v2.system.txt, schema: outbound_judge_v1 }     # placeholders, arabizi digits, <=5 claims
     limits: { max_input_chars: 3000, max_output_tokens: 700, temperature: 0.0 }
     cache: true
-  failure_label:                  # hidden-failure analyzer's language layer (failures/semantics.py); offline tool
+  failure_label:                  # hidden-failure analyzer's language layer (src/wasel/failures/semantics.py); offline tool
     active: failure-label-v1
     versions:
       failure-label-v1: { system: failure_label_v1.system.txt, schema: failure_label_v1 }

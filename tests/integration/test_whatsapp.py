@@ -10,9 +10,9 @@ from pathlib import Path
 
 import pytest
 
-from app.db import repo
-from app.ingress.whatsapp import parse_payload, verify_signature
 from tests.integration.conftest import hero_id, make_client, settle
+from wasel.db import repo
+from wasel.ingress.whatsapp import parse_payload, verify_signature
 
 FX = Path(__file__).resolve().parents[1] / "fixtures" / "whatsapp"
 GOLDEN = json.loads((Path(__file__).resolve().parents[1] / "golden" / "hero.json").read_text(encoding="utf-8"))
@@ -255,7 +255,7 @@ def test_sender_phone_never_leaves_the_db(wa, caplog):
 
 
 def test_access_log_never_carries_the_verify_token(wa):
-    from app.api.routes_webhook import RedactVerifyToken
+    from wasel.api.routes_webhook import RedactVerifyToken
     assert any(isinstance(f, RedactVerifyToken) for f in logging.getLogger("uvicorn.access").filters)
     rec = logging.LogRecord("uvicorn.access", logging.INFO, "", 0, '%s - "%s %s HTTP/%s" %d',
                             ("1.2.3.4:5", "GET", f"{URL}?hub.mode=subscribe&hub.verify_token={VERIFY}&hub.challenge=1",
@@ -324,7 +324,7 @@ def test_hero_loop_webhook_parity(wa):
 def _sender(calls, status=200):
     import httpx
 
-    from app.outbound.whatsapp_send import WhatsAppSender
+    from wasel.outbound.whatsapp_send import WhatsAppSender
 
     def handler(request):
         calls.append(json.loads(request.content))
@@ -379,7 +379,7 @@ def test_send_failure_is_502_and_draft_stays_unsent(wa_send):
 def test_send_retries_transient_5xx_then_succeeds(wa_send):
     import httpx
 
-    from app.outbound.whatsapp_send import WhatsAppSender
+    from wasel.outbound.whatsapp_send import WhatsAppSender
 
     c, core, clock = wa_send
     calls: list = []
@@ -427,7 +427,7 @@ def test_send_refused_outside_24h_window(wa_send):
 
 
 def test_auto_send_only_sends_auto_send_drafts(wa_send):
-    from app.api.commands import auto_send_due
+    from wasel.api.commands import auto_send_due
     c, core, clock = wa_send
     calls: list = []
     core.sender = _sender(calls)
@@ -443,7 +443,7 @@ def test_auto_send_only_sends_auto_send_drafts(wa_send):
 def test_auto_send_records_the_send_on_a_simulated_conversation(wa_send):
     """No WhatsApp channel and no sender: a system send is recorded as simulated, so the threshold loop
     (draft cleared -> sent without a click) is visible in the demo."""
-    from app.api.commands import auto_send_due
+    from wasel.api.commands import auto_send_due
     c, core, clock = wa_send
     hid = hero_id(c)["order_id"]
     conn = core.conn()
@@ -461,7 +461,7 @@ def test_auto_send_records_the_send_on_a_simulated_conversation(wa_send):
 
 
 def test_auto_send_never_runs_in_public_mode(tmp_path):
-    from app.api.commands import auto_send_due
+    from wasel.api.commands import auto_send_due
     c, core, clock = make_client(tmp_path, "public", wa_send_enabled=True, wa_token="test-token",
                                  wa_auto_send=True, **WA)
     with c:

@@ -5,7 +5,7 @@ SHELL         := /bin/bash
 
 # the project venv if there is one (.venv/bin on Linux/macOS, .venv/Scripts on Windows, where
 # `python3` is only the Microsoft Store stub), else python3 on PATH
-PY          ?= $(firstword $(wildcard .venv/bin/python .venv/Scripts/python.exe) python3)
+PY          ?= $(firstword $(abspath $(wildcard .venv/bin/python .venv/Scripts/python.exe)) python3)
 PYTEST      := $(PY) -m pytest
 RUFF        := $(PY) -m ruff
 URL         ?= http://localhost:8000
@@ -13,7 +13,6 @@ API_PORT    ?= 8000
 UI_PORT     ?= 8501
 DB          ?= var/app.db
 PYTEST_ARGS ?=
-export PYTHONPATH := .
 
 # Offline, keyless, deterministic: the ONLY environment tests run under (CI runs this too).
 TEST_ENV := APP_MODE=dev LLM_MODE=fail_all WORKER_ENABLED=false DEMO_MODE=true GEMINI_ENABLED=false \
@@ -22,15 +21,15 @@ TEST_ENV := APP_MODE=dev LLM_MODE=fail_all WORKER_ENABLED=false DEMO_MODE=true G
 up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set; reads .env). Ctrl-C stops both
 	@set -a; [ -f .env ] && . ./.env; set +a; \
 	APP_MODE=$${APP_MODE:-dev} SEED_ON_BOOT=$${SEED_ON_BOOT:-always} \
-	  $(PY) -m uvicorn app.main:create_app --factory --port $(API_PORT) & api=$$!; \
+	  $(PY) -m uvicorn wasel.main:create_app --factory --port $(API_PORT) & api=$$!; \
 	trap 'kill $$api 2>/dev/null; wait $$api 2>/dev/null || true' EXIT; trap 'exit 0' INT TERM; \
-	$(PY) scripts/wait_health.py http://localhost:$(API_PORT) || exit 1; \
+	$(PY) scripts/dev/wait_health.py http://localhost:$(API_PORT) || exit 1; \
 	echo "API        http://localhost:$(API_PORT)   (docs: /docs)"; \
 	echo "Dashboard  http://localhost:$(UI_PORT)"; \
-	API_BASE_URL=http://localhost:$(API_PORT) $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
+	cd dashboard && API_BASE_URL=http://localhost:$(API_PORT) $(PY) -m streamlit run app.py --server.port $(UI_PORT)
 
 ui: ## dashboard only on :8501, against API_BASE_URL (default :8000)
-	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
+	cd dashboard && API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run app.py --server.port $(UI_PORT)
 
 web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make demo` then serve it at :8000/
 	cd web && npm ci --no-audit --no-fund && npm run build
@@ -40,7 +39,7 @@ web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make
 
 # ---- hosting with make and Cloudflare Tunnel (docs/deployment.md): the app runs with make, Cloudflare Tunnel publishes it
 serve: ## host run: API + web UI, no reload, settings from .env (unset APP_MODE = public), on HOST:PORT (127.0.0.1:8000)
-	@set -a; [ -f .env ] && . ./.env; set +a; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn app.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
+	@set -a; [ -f .env ] && . ./.env; set +a; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn wasel.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
 
 tunnel: ## publish `make serve` on your Cloudflare hostname (named tunnel; CLOUDFLARE_TUNNEL_TOKEN in .env)
 	@set -a; [ -f .env ] && . ./.env; set +a; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/deployment.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
@@ -52,27 +51,28 @@ deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `m
 	@echo "then check it from outside: make smoke URL=<your public URL>"
 
 wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (docs/whatsapp.md)
-	bash scripts/wa_webhook_up.sh
+	bash scripts/ops/wa_webhook_up.sh
 
 llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_ARGS; docs/self-hosted-llm.md)
-	bash scripts/vllm_serve.sh serve
+	bash scripts/ops/vllm_serve.sh serve
 
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)
-	bash scripts/vllm_serve.sh check
+	bash scripts/ops/vllm_serve.sh check
 
 .PHONY: help setup run up ui web web-dev serve tunnel deploy wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
 
-setup: ## pinned deps
+setup: ## pinned deps + the wasel package (editable, src/ layout)
 	$(PY) -m pip install -q -r requirements.txt -r requirements-dev.txt
+	$(PY) -m pip install -q --no-deps -e .
 
 run: ## API on :8000 (APP_MODE=dev unless set; live LLM only if GROQ_API_KEY is set)
-	APP_MODE=$${APP_MODE:-dev} $(PY) -m uvicorn app.main:create_app --factory --reload --port 8000
+	APP_MODE=$${APP_MODE:-dev} $(PY) -m uvicorn wasel.main:create_app --factory --reload --port 8000
 
 demo: ## the full app offline, no keys: public mode, seeded, rules path for new text
-	APP_MODE=public SEED_ON_BOOT=always $(PY) -m uvicorn app.main:create_app --factory --port 8000
+	APP_MODE=public SEED_ON_BOOT=always $(PY) -m uvicorn wasel.main:create_app --factory --port 8000
 
 test: ## full offline suite, no keys, no network
 	$(TEST_ENV) $(PYTEST) -m "not live" $(PYTEST_ARGS)
@@ -84,50 +84,50 @@ fmt: ## autofix
 	$(RUFF) check --fix .
 
 hygiene: ## no tracked secrets/DBs, fixture phones allowlisted, one clock, one LLM entry point
-	bash scripts/hygiene.sh
+	bash scripts/dev/hygiene.sh
 
-eval: ## offline golden sets (476 cases, no keys) gated on eval/thresholds.yaml -> reports/eval.json
-	$(TEST_ENV) $(PY) -m eval.run
+eval: ## offline golden sets (476 cases, no keys) gated on config/eval.yaml -> data/reports/eval.json
+	$(TEST_ENV) $(PY) -m wasel.evaluation.run
 
-eval-live: ## same golden sets through the live LLM extractor + judge (needs GROQ_API_KEY) -> reports/eval_live.json
-	$(PY) -m eval.run --live
+eval-live: ## same golden sets through the live LLM extractor + judge (needs GROQ_API_KEY) -> data/reports/eval_live.json
+	$(PY) -m wasel.evaluation.run --live
 
-golden: ## rebuild eval/golden/*.jsonl from committed synthetic sources (deterministic, 0 LLM calls)
-	$(PY) -m eval.build_golden
+golden: ## rebuild data/eval/golden/*.jsonl from committed synthetic sources (deterministic, 0 LLM calls)
+	$(PY) -m wasel.evaluation.build_golden
 
 sessions: ## rebuild data/agent_sessions{,_holdout}.jsonl: labeled synthetic agent runs (deterministic)
-	$(PY) -m failures.dataset
+	$(PY) -m wasel.failures.dataset
 
-failures: ## hidden-failure analyzer, rules only, on the train + holdout sets and this app's DB -> reports/failures_*.json
-	$(PY) -m failures.run && $(PY) -m failures.run --source holdout && $(PY) -m failures.run --source db --db $(DB)
+failures: ## hidden-failure analyzer, rules only, on the train + holdout sets and this app's DB -> data/reports/failures_*.json
+	$(PY) -m wasel.failures.run && $(PY) -m wasel.failures.run --source holdout && $(PY) -m wasel.failures.run --source db --db $(DB)
 
-failures-llm: ## same with the LLM language layer (needs GROQ_API_KEY) -> reports/failures_*_llm.json
-	$(PY) -m failures.run --llm && $(PY) -m failures.run --source holdout --llm
+failures-llm: ## same with the LLM language layer (needs GROQ_API_KEY) -> data/reports/failures_*_llm.json
+	$(PY) -m wasel.failures.run --llm && $(PY) -m wasel.failures.run --source holdout --llm
 
 check: hygiene lint test eval ## THE pre-merge gate. CI runs exactly this.
 	@echo "check: green, ok to merge"
 
 generate: ## 10,000 synthetic rows, seeded, zero LLM calls (lints 1-8)
-	$(PY) -m ml.generate --seed 20260927 --n 10000
+	$(PY) -m wasel.ml.generate --seed 20260927 --n 10000
 
-train: ## monotone XGBoost -> models/ + reports/ + tests/golden/hero.json (gates enforced)
-	$(PY) -m ml.train
+train: ## monotone XGBoost -> models/ + data/reports/ + tests/golden/hero.json (gates enforced)
+	$(PY) -m wasel.ml.train
 
 warm: ## rebuild data/seed/extraction_cache.jsonl (hand mode; LIVE=1 records with the dev key)
-	$(PY) -m scripts.warm_cache $${LIVE:+--live}
+	$(PY) scripts/data/warm_cache.py $${LIVE:+--live}
 
 seed: ## fresh $(DB): schema + catalog + demo_seed + committed cache (0 tokens)
 	mkdir -p var && APP_MODE=dev SEED_ON_BOOT=always DB_PATH=$(DB) WORKER_ENABLED=false \
-	  $(PY) -c "from app.main import create_app; from fastapi.testclient import TestClient; TestClient(create_app()).__enter__()"
+	  $(PY) -c "from wasel.main import create_app; from fastapi.testclient import TestClient; TestClient(create_app()).__enter__()"
 
 drill: ## fallback drill, no keys
 	$(TEST_ENV) $(PYTEST) tests/integration/test_backend.py -k fallback_drill -q
 
 smoke: ## deployed/local URL: health+mode, try hero, reply, 409 (no key)
-	$(PY) -m scripts.smoke $(URL)
+	$(PY) scripts/ops/smoke.py $(URL)
 
-mocks: ## rewrite mocks/*.json (frozen API responses checked by the API contract test) from a seeded in-process app
-	$(PY) -m scripts.dump_mocks
+mocks: ## rewrite tests/fixtures/api/*.json (frozen API responses checked by the API contract test) from a seeded in-process app
+	$(PY) scripts/data/dump_mocks.py
 
 clean: ## remove caches and local DBs
 	rm -rf .pytest_cache .ruff_cache htmlcov var/*.db var/*.db-wal var/*.db-shm

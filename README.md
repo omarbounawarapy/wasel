@@ -26,7 +26,7 @@ It is built for e-commerce sellers and delivery aggregators who pay for every wa
 ## Key features
 
 - **Reads messy North African chat.** It handles Arabizi (`9rib el jemaa`), Arabic-script Darija and French, including mixed messages. An LLM (Groq, with Gemini as a fallback) fills a strict 12-field JSON schema, and a rules extractor takes over when no LLM is available.
-- **Code scores, not the LLM.** A monotone XGBoost model on six features plus the rules in [`scoring.yaml`](scoring.yaml) produce the score. The tiers are fixed: low < 35 ≤ medium < 65 ≤ high. Each tier maps to an action: ship, confirm, prepay or review.
+- **Code scores, not the LLM.** A monotone XGBoost model on six features plus the rules in [`config/scoring.yaml`](config/scoring.yaml) produce the score. The tiers are fixed: low < 35 ≤ medium < 65 ≤ high. Each tier maps to an action: ship, confirm, prepay or review.
 - **Explains itself with the customer's words.** Each score comes with a reason such as `vague address ("Thala") +30 · rural delivery zone +11`. The quoted phrases are highlighted in the message, and quotes that are not in the original text are dropped.
 - **Rescores when the customer replies.** Assessments are versioned. The sample order goes from **HIGH 87 to LOW 16** once the customer gives a full address, and the app shows why.
 - **Checks every outgoing message.** Questions are drafted from templates in the customer's language. With `DRAFT_LLM=true` an LLM adapts the wording, then three layers check it: deterministic prefilter rules, a local TF-IDF classifier (no LLM, so it cannot be prompt-injected) and an LLM judge whose verdict is re-checked in code. Anything that fails falls back to the approved template, which a person sends. With the default `auto_send.gate: classifier`, a draft the classifier clears (risk under 10%) goes out automatically once `WA_AUTO_SEND` is on; drafts in the 10–50% review band always wait for a person, and automatic sending never happens in public mode.
@@ -41,7 +41,7 @@ You need Python 3.11 and `make`. The web UI additionally needs Node 22.
 ```bash
 git clone https://github.com/omarbounawarapy/wasel.git && cd wasel
 python3.11 -m venv .venv
-make setup      # pinned dependencies
+make setup      # pinned dependencies + the wasel package (editable)
 make up         # API on :8000 + Streamlit dashboard on :8501, seeded. Ctrl-C stops both
 ```
 
@@ -69,7 +69,7 @@ flowchart LR
     IN --> DB[("SQLite")]
     W["worker<br/>(debounced)"] --> DB
     W --> X["LLM extraction<br/>strict schema, quotes checked"]
-    X --> S["XGBoost + scoring.yaml<br/>score · tier · action · reason"]
+    X --> S["XGBoost + config/scoring.yaml<br/>score · tier · action · reason"]
     S --> D["draft question<br/>template + safeguards"]
     D --> DB
     DB --> UI["web UI / dashboard"]
@@ -124,28 +124,25 @@ curl -s -X POST localhost:8000/api/conversations/<conversation_id>/simulate-repl
 | `GET /api/events` · `GET /api/metrics/impact` | activity log · simulated impact |
 | `GET /api/monitor` · `/api/traces` · `/api/eval` · `/api/failures` | drift and safety rates · LLM call traces · evaluation report · failure analysis |
 
-Interactive reference: http://localhost:8000/docs (not exposed in public mode). Request and response models are in [`app/api/models.py`](app/api/models.py).
+Interactive reference: http://localhost:8000/docs (not exposed in public mode). Request and response models are in [`src/wasel/api/models.py`](src/wasel/api/models.py).
 
 ## Project layout
 
 ```
-app/          FastAPI backend: api/ db/ ingress/ llm/ extraction/ scoring/ outbound/, worker.py, state.py
-web/          Next.js web UI (static export served by the API at /)
-dashboard/    Streamlit UI; talks to the API over HTTP only (dashboard/README.md)
-ml/           synthetic data generator and XGBoost training (offline)
-eval/         golden sets, evaluation runner and quality thresholds
-failures/     rules-based failure analysis for agent sessions and this app's own data
-prompts/ schemas/ scoring.yaml     extraction prompts, JSON schemas, every scoring knob
-config/       LLM registry (models, prompt versions) and monitor thresholds
-data/         catalog, zones, phrase banks, message templates, seed conversations, synthetic dataset
-models/       trained risk model and its card
-reports/      training metrics, evaluation reports, simulated impact
-examples/     runnable API scripts
-mocks/        frozen API responses checked by the API contract test
-scripts/      warm_cache, smoke, hygiene, wait_health, vllm_serve, wa_webhook_up, rollback, ...
-tests/        unit/ integration/ e2e/ golden/ fixtures/
-deploy/       systemd unit for a Linux host
-docs/         architecture, deployment, WhatsApp, self-hosted LLM
+src/wasel/        the Python package (installed editable by `make setup`)
+  api/ db/ ingress/ llm/ extraction/ scoring/ outbound/   FastAPI routes, SQLite, WhatsApp, LLM chain, rules, scoring, drafts
+  ml/  evaluation/  failures/                             synthetic data + XGBoost training, golden-set runner, failure analyzer
+  main.py worker.py settings.py paths.py ...              app factory, background worker, settings, repo paths
+web/              Next.js web UI (static export served by the API at /)
+dashboard/        Streamlit UI; talks to the API over HTTP only (dashboard/README.md)
+config/           scoring.yaml, llm.yaml (model/prompt registry), monitor.yaml, eval.yaml (gates), prompts/, schemas/
+data/             catalog, zones, phrase banks, templates, seed/, synthetic dataset, eval/ golden sets, reports/
+models/           trained risk model and its card
+tests/            unit/ integration/ e2e/ plus fixtures/ (whatsapp/, api/, hero/) and golden/
+scripts/          data/ (warm_cache, expand_phrase_bank, dump_mocks)  ops/ (smoke, rollback, vllm, webhook)  dev/ (hygiene, wait_health)
+examples/         runnable API scripts
+deploy/           systemd unit for a Linux host
+docs/             architecture, deployment, WhatsApp, self-hosted LLM
 ```
 
 ## Development
@@ -153,7 +150,7 @@ docs/         architecture, deployment, WhatsApp, self-hosted LLM
 ```bash
 make check      # hygiene + ruff + offline tests + eval gate; what CI runs
 make test       # offline suite only
-make eval       # golden sets gated on eval/thresholds.yaml
+make eval       # golden sets gated on config/eval.yaml
 make eval-live  # the same sets through a live LLM (needs GROQ_API_KEY)
 make train      # retrain the risk model on the synthetic dataset
 ```
@@ -172,7 +169,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and house rules.
 | [CHANGELOG.md](CHANGELOG.md) | notable changes |
 | [SECURITY.md](SECURITY.md) | reporting problems, safety model |
 
-Model numbers come from [`reports/train_metrics.json`](reports/train_metrics.json): holdout AUC 0.784 on synthetic data. [`reports/impact.json`](reports/impact.json) is a simulation on the same synthetic holdout, not a field result.
+Model numbers come from [`data/reports/train_metrics.json`](data/reports/train_metrics.json): holdout AUC 0.784 on synthetic data. [`data/reports/impact.json`](data/reports/impact.json) is a simulation on the same synthetic holdout, not a field result.
 
 ## License
 

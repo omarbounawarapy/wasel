@@ -1,4 +1,4 @@
-"""Wasel: the Streamlit dashboard, backed by the FastAPI app in app/.
+"""Wasel: the Streamlit dashboard, backed by the FastAPI app in src/wasel/.
 
     make up                                   # backend :8000 + this dashboard :8501
     API_BASE_URL=http://localhost:8000 streamlit run dashboard/app.py
@@ -765,7 +765,7 @@ def page_impact():
     st.markdown("#### Impact (simulated)")
     m = call(api.impact)
     if not m or not m["n_orders"]:
-        st.info("No impact report on the backend yet (`reports/impact.json`, written by `python -m ml.train`).")
+        st.info("No impact report on the backend yet (`data/reports/impact.json`, written by `python -m wasel.ml.train`).")
         return
     c = st.columns(3)
     c[0].metric("Refusal rate, synthetic labels", f"{m['baseline_refusal_rate']:.0%}")
@@ -830,7 +830,7 @@ def page_quality():
             c[1].metric("Golden cases", sum(m.get("n", 0) for m in off["results"].values()))
             c[2].metric("Runtime", f"{off['runtime_s']} s")
             st.caption(f"`make eval` · rules extractor + prefilter + guard classifier, no keys · {gate} · "
-                       "floors in `eval/thresholds.yaml`, a drop under any floor blocks the merge")
+                       "floors in `config/eval.yaml`, a drop under any floor blocks the merge")
             st.dataframe(eval_table(off), hide_index=True, width="stretch")
         if live:
             st.markdown("##### Live run (LLM extraction + LLM judge)")
@@ -911,12 +911,13 @@ def page_quality():
                          hide_index=True, width="stretch", height=460)
     with tabs[3]:
         vers = (ev.get("offline") or {}).get("versions") or {}
-        st.caption("Prompts live in `prompts/` (sha256-locked in `prompts/VERSIONS`), output schemas in `schemas/`, "
+        st.caption("Prompts live in `config/prompts/` (sha256-locked in `config/prompts/VERSIONS`), "
+                   "output schemas in `config/schemas/`, "
                    "the role → version → model map in `config/llm.yaml`. None of it is in application code, and "
                    "changes need a CODEOWNERS review.")
         if vers:
             st.dataframe(pd.DataFrame([{"Role": k, "Active version": v,
-                                        "Roll back in one step": f"python -m scripts.rollback {k} <version>"}
+                                        "Roll back in one step": f"python scripts/ops/rollback.py {k} <version>"}
                                        for k, v in vers.items()]), hide_index=True, width="stretch")
         st.caption(f"Scoring config `{health['config']['config_hash']}` · classifier "
                    f"`{health['config']['classifier_version']}`")

@@ -1,4 +1,4 @@
-# This repo runs in Linux containers and sha-pins its prompt files (prompts/VERSIONS),
+# This repo runs in Linux containers and sha-pins its prompt files (config/prompts/VERSIONS),
 # so CRLF checkouts break the hash checks. Force LF everywhere.
 * text=auto eol=lf
 

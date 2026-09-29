@@ -1,5 +1,5 @@
 {
-  "_comment": "Hand-written stand-ins for recorded LLM extractions, keyed by seed key. scripts/warm_cache.py turns them into data/seed/extraction_cache.jsonl with model 'hand-crafted'. Replace with `python -m scripts.warm_cache --live` (dev key) once the prompt is frozen.",
+  "_comment": "Hand-written stand-ins for recorded LLM extractions, keyed by seed key. scripts/data/warm_cache.py turns them into data/seed/extraction_cache.jsonl with model 'hand-crafted'. Replace with `python scripts/data/warm_cache.py --live` (dev key) once the prompt is frozen.",
   "hero": {
     "v1": {
       "is_order": true,

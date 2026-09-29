@@ -1,4 +1,4 @@
-"""HTTP client for the FastAPI backend (app/). The frontend reads and writes only through this module.
+"""HTTP client for the FastAPI backend (src/wasel/). The frontend reads and writes only through this module.
 
 API_BASE_URL points at the backend (default http://localhost:8000). Tests set OVERRIDE to an in-process
 TestClient so the real backend runs without a socket."""

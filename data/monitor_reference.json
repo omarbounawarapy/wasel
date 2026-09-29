@@ -20,5 +20,5 @@
       "none": 0.0394
     }
   },
-  "source": "eval/golden/extraction.jsonl (279 rows, offline pipeline)"
+  "source": "data/eval/golden/extraction.jsonl (279 rows, offline pipeline)"
 }

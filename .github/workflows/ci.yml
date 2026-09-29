@@ -15,7 +15,7 @@ jobs:
       - uses: actions/setup-python@v5
         with: { python-version-file: .python-version, cache: pip }
       - run: make setup
-      - run: make check PYTEST_ARGS="--junitxml=reports/junit.xml"
+      - run: make check PYTEST_ARGS="--junitxml=var/junit.xml"
   serve:
     name: host path (make web + make serve) boots safe and serves the UI
     needs: [backend]
@@ -32,7 +32,7 @@ jobs:
       - run: make web
       - run: |
           make serve > serve.log 2>&1 &
-          python3 scripts/wait_health.py http://localhost:8000
+          python3 scripts/dev/wait_health.py http://localhost:8000
           curl -fsS localhost:8000/api/health | python3 -c 'import json,sys; d=json.load(sys.stdin); assert d["mode"]=="public" and d["wa_send"] is False and d["webhook"]=="disabled" and d["wa_auto_send"] is False, d; print("safe defaults ok")'
           curl -fsS localhost:8000/dashboard/ | grep -q "Wasel" && echo "web UI served"
           make smoke

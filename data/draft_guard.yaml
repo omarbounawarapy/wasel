@@ -1,4 +1,4 @@
-# Training bank for the outbound draft guard (app/outbound/guard_clf.py): a char n-gram TF-IDF +
+# Training bank for the outbound draft guard (src/wasel/outbound/guard_clf.py): a char n-gram TF-IDF +
 # logistic regression that scores "is this draft safe to send?". Synthetic, constructed by hand.
 # Good drafts = the static templates in data/templates/outbound.yaml + `safe` additions.
 # Bad drafts  = a good draft + one phrase from an unsafe class, inserted at the start, middle or end.

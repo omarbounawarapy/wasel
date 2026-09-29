@@ -7,12 +7,12 @@ import uuid
 import pytest
 from fastapi.testclient import TestClient
 
-from app.clock import FrozenClock
-from app.ids import SeqIds
-from app.llm.client import build_client
-from app.main import create_app
-from app.settings import Settings
 from tests.conftest import T0
+from wasel.clock import FrozenClock
+from wasel.ids import SeqIds
+from wasel.llm.client import build_client
+from wasel.main import create_app
+from wasel.settings import Settings
 
 VID_A = str(uuid.UUID(int=0xA, version=4))
 VID_B = str(uuid.UUID(int=0xB, version=4))

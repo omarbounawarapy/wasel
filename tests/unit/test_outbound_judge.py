@@ -9,16 +9,16 @@ from datetime import timedelta
 import pytest
 import yaml
 
-from app.contracts import DraftRequest
-from app.llm.base import CallMeta, ProviderDown
-from app.llm.client import ChainClient, ChainStep
-from app.outbound import judge as J
-from app.outbound.guard_clf import BANK, build_corpus, calibrate, classify, decide, thresholds
-from app.outbound.make_draft import make_draft
-from app.outbound.prefilter import prefilter
-from app.outbound.route import route_draft
-from app.scoring.config import default_config
 from tests.conftest import T0
+from wasel.contracts import DraftRequest
+from wasel.llm.base import CallMeta, ProviderDown
+from wasel.llm.client import ChainClient, ChainStep
+from wasel.outbound import judge as J
+from wasel.outbound.guard_clf import BANK, build_corpus, calibrate, classify, decide, thresholds
+from wasel.outbound.make_draft import make_draft
+from wasel.outbound.prefilter import prefilter
+from wasel.outbound.route import route_draft
+from wasel.scoring.config import default_config
 
 GOOD_LLM = "Bonjour {first_name}, votre commande de Robe d'été est à 89 TND. Confirmez-vous que vous souhaitez la recevoir ? Merci 🙏"
 GOOD_FR = GOOD_LLM.replace("{first_name}", "Amira")
@@ -59,7 +59,7 @@ def llm(backend) -> ChainClient:
 
 
 def gate_config(gate: str):
-    """default_config with scoring.yaml's auto_send.gate overridden (the copy is per-call, cache untouched)."""
+    """default_config with config/scoring.yaml's auto_send.gate overridden (the copy is per-call, cache untouched)."""
     from dataclasses import replace
     cfg = default_config()
     raw = dict(cfg.raw)
@@ -147,7 +147,7 @@ def test_calibrate_decision_floors_on_untrained_holdout():
 
 def test_calibrate_suggests_a_hold_line_that_holds_both_gates():
     """The suggestion weighs both sides: little unsafe text cleared AND auto-send still viable (holding
-    most safe drafts would defeat it). It must also agree with the line actually shipped in scoring.yaml."""
+    most safe drafts would defeat it). It must also agree with the line actually shipped in config/scoring.yaml."""
     rep = calibrate(n_base=200, seed=99, grid=True)
     assert rep["suggested_hold_at"] == thresholds()[1]
     row = next(r for r in rep["grid"] if r["thresholds"]["hold_at"] == rep["suggested_hold_at"])
@@ -232,7 +232,7 @@ def test_classifier_veto_skips_the_judge():
 
 
 def test_judge_down_cleared_draft_auto_sends_on_the_threshold_gate():
-    """auto_send.gate=classifier (the scoring.yaml default): the classifier's send decision alone routes
+    """auto_send.gate=classifier (the config/scoring.yaml default): the classifier's send decision alone routes
     auto_send, judge up or down."""
     b = Scripted(rewrite=[{"text": GOOD_LLM}], judge=[ProviderDown("5xx")])
     rec = make_draft(req(), llm=llm(b))
@@ -300,7 +300,7 @@ def test_identical_judge_request_is_served_from_cache():
 
 
 def test_every_llm_request_is_traced_without_personal_data():
-    from app.llm import trace
+    from wasel.llm import trace
     trace.clear()
     b = Scripted(rewrite=[{"text": GOOD_LLM}], judge=[APPROVE])
     make_draft(req(order_id="ord_trace"), llm=llm(b))
@@ -311,7 +311,7 @@ def test_every_llm_request_is_traced_without_personal_data():
 
 
 def test_input_over_the_per_request_cap_is_refused_before_any_call():
-    from app.llm.prompts import judge_task
+    from wasel.llm.prompts import judge_task
     b = Scripted(judge=[APPROVE])
     res = llm(b).extract(judge_task(), "x" * 5000, parse=J.parse_judge, meter=None, sandbox_id=None, now=T0,
                          role="judge")

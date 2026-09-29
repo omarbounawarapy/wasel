@@ -8,8 +8,8 @@ import json
 
 import httpx
 
-from app.llm.base import TaskSpec
-from app.llm.groq_backend import groq_backend
+from wasel.llm.base import TaskSpec
+from wasel.llm.groq_backend import groq_backend
 
 TASK = TaskSpec(name="extract", schema_name="extraction", schema={"type": "object"},
                 system_prompt="sys", few_shot=(), prompt_version="extract-v1",

@@ -1,11 +1,11 @@
-"""Monitor (app/monitor.py) and the AI-quality read endpoints: /api/monitor, /api/traces, /api/eval."""
+"""Monitor (src/wasel/monitor.py) and the AI-quality read endpoints: /api/monitor, /api/traces, /api/eval."""
 from __future__ import annotations
 
 import json
 import sqlite3
 
-from app import monitor as mon
-from app.llm import trace
+from wasel import monitor as mon
+from wasel.llm import trace
 
 
 def test_psi_zero_for_same_mix_and_large_for_a_shift():

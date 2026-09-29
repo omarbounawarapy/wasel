@@ -7,16 +7,16 @@ from datetime import timedelta
 
 import pytest
 
-from app.api import models as M
-from app.contracts import CustomerHistory, ScoreInput, StructuredFields
-from app.db import repo
-from app.db.conn import fresh_db, tx
-from app.db.purge import purge_sandboxes
-from app.ids import SeqIds
-from app.scoring import stub
-from app.state import ACTIONS, next_status
 from tests.conftest import T0
 from tests.integration.conftest import VID_A, VID_B, hero_id, make_client, settle
+from wasel.api import models as M
+from wasel.contracts import CustomerHistory, ScoreInput, StructuredFields
+from wasel.db import repo
+from wasel.db.conn import fresh_db, tx
+from wasel.db.purge import purge_sandboxes
+from wasel.ids import SeqIds
+from wasel.scoring import stub
+from wasel.state import ACTIONS, next_status
 
 HERO_V2 = ("ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. "
            "ghodwa ba3d 17h nkoun fi dar")
@@ -101,7 +101,7 @@ def test_segments_join_and_highlight_exact_quotes(dev):
 
 
 def test_script_tag_in_customer_text_stays_text(dev):
-    from app.api.projections import build_segments
+    from wasel.api.projections import build_segments
     t = "<script>alert(1)</script> 9rib el jemaa ‮evil"
     segs = build_segments(t, [{"start": 26, "end": 39, "kind": "red_flag", "code": "vague_location"}])
     assert "".join(s.text for s in segs) == t.replace("‮", "")
@@ -242,7 +242,7 @@ def test_seller_actions_and_invalid_transition(dev):
 
 def _result(tier="high", conf="none", path="llm", inj=False, change=False):
     inp = ScoreInput("o", None, "paste", "initial", [], StructuredFields(), CustomerHistory(0, 0), None, T0)
-    from app.contracts import WindowMessage
+    from wasel.contracts import WindowMessage
     inp = ScoreInput("o", None, "paste", "initial",
                      [WindowMessage("m0", "inbound", "customer", "paste", "text", "nheb sac", None, None, None, False,
                                     T0, True)], StructuredFields(), CustomerHistory(0, 0), None, T0)
@@ -277,16 +277,16 @@ def test_actions_table_shape():
 def test_stub_scorer_satisfies_contract(tmp_path):
     conn = fresh_db(tmp_path / "c2.db")
     ids = SeqIds()
-    from app.db.seed import seed_catalog
-    from app.scoring.config import default_config
+    from wasel.db.seed import seed_catalog
+    from wasel.scoring.config import default_config
     seed_catalog(conn, default_config().catalog)
     with tx(conn):
         cus = repo.get_or_create_customer(conn, ids, T0, sandbox_id=None, display_name="x")
         cnv = repo.create_conversation(conn, ids, T0, customer_id=cus, sandbox_id=None, channel="paste")
-        from app.ingress.ingest import store_inbound
+        from wasel.ingress.ingest import store_inbound
         st = store_inbound(conn, ids, T0, conversation_id=cnv, origin="paste", text="salam nheb sac", no_debounce=True)
-    from app.outbound.make_draft import make_draft
-    from app.worker import drain
+    from wasel.outbound.make_draft import make_draft
+    from wasel.worker import drain
     assert drain(conn, T0, stub.score_order, lambda r: make_draft(r), ids=ids) == 1
     conn.execute("UPDATE orders SET pending_rescore_at=?, pending_trigger='customer_reply' WHERE order_id=?",
                  (repo.utc_iso(T0), st.order_id))
@@ -321,9 +321,9 @@ def test_admin_reset_reseeds(dev):
 
 
 def test_committed_mocks_match_api_models():
-    """mocks/*.json validate against the Pydantic response models (regenerate with `make mocks`)."""
+    """tests/fixtures/api/*.json validate against the Pydantic response models (regenerate with `make mocks`)."""
     from pathlib import Path
-    root = Path(__file__).resolve().parents[2] / "mocks"
+    root = Path(__file__).resolve().parents[1] / "fixtures" / "api"
     M.OrderListResponse.model_validate_json((root / "orders.json").read_text(encoding="utf-8"))
     M.OrderDetailResponse.model_validate_json((root / "order_detail.json").read_text(encoding="utf-8"))
     M.OrderDetailResponse.model_validate_json((root / "order_detail_ar.json").read_text(encoding="utf-8"))

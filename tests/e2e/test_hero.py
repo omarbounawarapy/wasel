@@ -7,11 +7,11 @@ from pathlib import Path
 
 import pytest
 
-from app.extraction.window import build_window
-from app.llm.client import ChainClient, ChainStep, ReplayBackend
-from app.scoring.score_order import score_order
-from ml.features import FEATURES
-from ml.hero import HERO_DIR, hero_input, prior_from
+from wasel.extraction.window import build_window
+from wasel.llm.client import ChainClient, ChainStep, ReplayBackend
+from wasel.ml.features import FEATURES
+from wasel.ml.hero import HERO_DIR, hero_input, prior_from
+from wasel.scoring.score_order import score_order
 
 ROOT = Path(__file__).resolve().parents[2]
 GOLDEN = json.loads((ROOT / "tests/golden/hero.json").read_text(encoding="utf-8"))
@@ -65,7 +65,7 @@ def test_hero_matches_pinned_golden(replay_dir, config, v1):
     assert v1.assessment.reason == g["v1"]["reason"]
     r = run(replay_dir, "v2", fx("v2a"), prior_from(v1), config)
     assert r.assessment.final_score == g["v2a"]["final"] and r.assessment.reason_diff == g["diff_reason"]
-    assert g["classifier_version"] == v1.assessment.classifier_version, "re-run `python -m ml.train` to re-pin"
+    assert g["classifier_version"] == v1.assessment.classifier_version, "re-run `python -m wasel.ml.train` to re-pin"
 
 
 # ---------------------------------------------------------------- ML13 robustness (tier only)

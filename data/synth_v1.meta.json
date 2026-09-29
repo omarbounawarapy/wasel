@@ -19,7 +19,7 @@
     "data/phrase_banks.yaml": "3ce748d8863b43d6d26ffca9678ef07b5c89e1fe7445402fe8e92d8320660624",
     "data/catalog.yaml": "4c99d6221736dc23d90b0e6dcb7d60c535274ce12fa900e8ee257644ec1596b3",
     "data/zones.yaml": "ab4f9435f0afc333b878b954b3ccf26fefcc52fdf81d69e9a44833c0039b1bc3",
-    "ml/features.py": "37d18f34d76523f83a53a62cce1d01fc9d6ef97c614748d103ce6947b6db94db"
+    "src/wasel/ml/features.py": "37d18f34d76523f83a53a62cce1d01fc9d6ef97c614748d103ce6947b6db94db"
   },
   "csv_sha256": "e6d36cc1efb6013d5cdcb8f77bf5e7a19d74a8e0d9e50d8eeb9556be0b9f6414",
   "git_sha": "364644152c5e91009b1c341c5bc451cde072ba68"

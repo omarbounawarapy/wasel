@@ -223,8 +223,6 @@ __marimo__/
 !web/src/lib/
 !frontend/src/lib/
 
-# CI test report
-reports/junit.xml
 
 # App state and personal data (SQLite lives in var/app.db)
 var/
@@ -237,7 +235,7 @@ var/
 app.db*
 seed/raw/
 data/raw/
-reports/raw/
+data/reports/raw/
 exports/
 
 # Media: voice notes, screen recordings, raw screenshots

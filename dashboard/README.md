@@ -1,9 +1,9 @@
 # Streamlit dashboard
 
-A Streamlit UI for Wasel in which every read and every button goes through the FastAPI backend in `app/`. It has no database, model or LLM of its own. The production web UI is the Next.js app in [`web/`](../web), served by the API at `/` after `make web`; this dashboard is a lightweight alternative that runs with `make up`.
+A Streamlit UI for Wasel in which every read and every button goes through the FastAPI backend in `src/wasel/`. It has no database, model or LLM of its own. The production web UI is the Next.js app in [`web/`](../web), served by the API at `/` after `make web`; this dashboard is a lightweight alternative that runs with `make up`.
 
 ```
-browser ──► dashboard/app.py ──HTTP──► app/ FastAPI  /api/*  ──► SQLite, worker, LLM chain, classifier, rules
+browser ──► dashboard/app.py ──HTTP──► src/wasel/ FastAPI  /api/*  ──► SQLite, worker, LLM chain, classifier, rules
             (api_client.py)            ▲
                                        └── /webhook/whatsapp ◄── Meta (customer messages)
 ```
@@ -40,7 +40,7 @@ The sidebar shows the backend's health (mode, LLM chain and budget, WhatsApp sen
 - Scores are the backend's 0–100 `final_score` and tiers `high / medium / low`.
 - An order is a conversation, not an address plus a note: the detail page shows the thread with the backend's highlight segments.
 - Customer replies are simulated (**Simulate the customer's reply**); real replies arrive through the WhatsApp webhook.
-- Savings figures come from the backend's `reports/impact.json` and are simulated.
+- Savings figures come from the backend's `data/reports/impact.json` and are simulated.
 
 ## Tests
 

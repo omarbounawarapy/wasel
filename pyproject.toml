@@ -1,4 +1,25 @@
-# Tool config only.
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wasel"
+version = "0.1.0"
+description = "Wasel: WhatsApp COD order risk scoring, hold-line drafting and review UI"
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+dynamic = ["dependencies"]
+
+[tool.setuptools.dynamic]
+dependencies = { file = ["requirements.txt"] }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+wasel = ["db/schema.sql"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-q -ra --strict-markers --durations=5"
@@ -7,6 +28,7 @@ markers = ["live: needs real API keys; never in CI (set RUN_LIVE=1)"]
 [tool.ruff]
 line-length = 125
 target-version = "py311"
+src = ["src"]
 extend-exclude = ["web", ".venv", "var"]
 
 [tool.ruff.lint]
@@ -14,5 +36,5 @@ select = ["E", "F", "I", "B", "UP", "DTZ"]   # DTZ catches naive datetimes
 ignore = ["E221", "E241", "E272", "UP040", "UP047"]   # aligned contract columns
 
 [tool.ruff.lint.per-file-ignores]
-"app/contracts.py" = ["E501"]
+"src/wasel/contracts.py" = ["E501"]
 "tests/*" = ["E501", "B023"]

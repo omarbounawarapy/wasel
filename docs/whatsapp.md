@@ -1,6 +1,6 @@
 # WhatsApp integration and local testing
 
-The WhatsApp path is complete end to end: a signed Cloud API webhook, deduplication, debounce, LLM extraction and scoring, and sending through the Cloud API. Running locally, the only missing piece is a public URL Meta can deliver to. `scripts/wa_webhook_up.sh` (`make wa-up`) provides one for as long as it runs: a cloudflared quick tunnel plus Graph API registration of the callback URL and the `messages` field. It needs no deployment and no Cloudflare account, and it is idempotent on re-run. For a permanent deployment see [deployment.md](deployment.md).
+The WhatsApp path is complete end to end: a signed Cloud API webhook, deduplication, debounce, LLM extraction and scoring, and sending through the Cloud API. Running locally, the only missing piece is a public URL Meta can deliver to. `scripts/ops/wa_webhook_up.sh` (`make wa-up`) provides one for as long as it runs: a cloudflared quick tunnel plus Graph API registration of the callback URL and the `messages` field. It needs no deployment and no Cloudflare account, and it is idempotent on re-run. For a permanent deployment see [deployment.md](deployment.md).
 
 ## Prerequisites
 
@@ -35,7 +35,7 @@ Send a WhatsApp message to the business number. If Meta prompts for a join code 
 
 ## What registration does
 
-The script obtains an app access token (`META_APP_ID` and `WA_APP_SECRET`, never printed) and calls `POST /{app}/subscriptions` with `object=whatsapp_business_account`, `callback_url=<tunnel>/webhook/whatsapp`, the verify token from `.env` and `fields=messages`. Meta verifies the callback with a `hub.challenge` GET, which `app/api/routes_webhook.py` echoes only for the matching token (403 otherwise). Each run replaces the previous callback, so a new tunnel URL after a restart only needs the script re-run.
+The script obtains an app access token (`META_APP_ID` and `WA_APP_SECRET`, never printed) and calls `POST /{app}/subscriptions` with `object=whatsapp_business_account`, `callback_url=<tunnel>/webhook/whatsapp`, the verify token from `.env` and `fields=messages`. Meta verifies the callback with a `hub.challenge` GET, which `src/wasel/api/routes_webhook.py` echoes only for the matching token (403 otherwise). Each run replaces the previous callback, so a new tunnel URL after a restart only needs the script re-run.
 
 ## Checks and caveats
 

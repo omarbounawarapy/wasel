@@ -4,7 +4,7 @@
 # outbound golden set. B04's wrong price (199) is judged against the record's 250.
 # P05 is valid only for high risk + price >= 250 (its template condition); P03 assumes a recorded
 # confirmation; P04 is an address-completion request, not a credential request ("code postal" is
-# allowlisted in scoring.yaml). Expected labels are the author's; measured outputs live in reports/eval.json.
+# allowlisted in config/scoring.yaml). Expected labels are the author's; measured outputs live in data/reports/eval.json.
 version: 1
 order_record: {product: "casque bluetooth", price_tnd: 250}
 should_block:

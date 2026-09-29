@@ -8,12 +8,12 @@ import pytest
 from fastapi.testclient import TestClient
 from streamlit.testing.v1 import AppTest
 
-from app.clock import FrozenClock
-from app.ids import SeqIds
-from app.llm.client import build_client
-from app.main import create_app
-from app.settings import Settings
 from tests.conftest import T0
+from wasel.clock import FrozenClock
+from wasel.ids import SeqIds
+from wasel.llm.client import build_client
+from wasel.main import create_app
+from wasel.settings import Settings
 
 REPO = Path(__file__).resolve().parents[2]
 APP = str(REPO / "dashboard" / "app.py")

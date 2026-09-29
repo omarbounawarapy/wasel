@@ -1,5 +1,5 @@
 # Phrase banks: native-speaker Tunisian phrasings (Arabizi, Arabic-script Darija, French) per label.
-# The generator (ml/generate.py) draws from `train`; `eval_only` lines are held out for evaluation.
+# The generator (src/wasel/ml/generate.py) draws from `train`; `eval_only` lines are held out for evaluation.
 #
 # Conventions:
 # - city-only phrases use the {place} slot rather than literal cities, so the generator can render
@@ -34,7 +34,7 @@ address:
     fr: {train: ["je vous envoie l'adresse plus tard", "adresse à confirmer"], eval_only: ["je n'ai pas encore l'adresse"]}
     darija_arabic_script: {train: ["العنوان نبعثهولك من بعد", "مازلت ما عنديش العنوان"], eval_only: ["العنوان نقلك عليه"]}
   city_only:                 # literal cities -> {place}. lint6: "ena fi" and "livraison à" appear
-                             # in prompts/ (FS8 / FS4), so those two stay train-side (they were authored in
+                             # in config/prompts/ (FS8 / FS4), so those two stay train-side (they were authored in
                              # both columns); the placeholder "ab3athha l" / "j'habite" cover the eval side.
     arabizi: {train: ["fi {place}", "ena fi {place}", "nosken fi {place}"],
               eval_only: ["livraison fi {place}", "ab3athha l {place}"]}
@@ -54,7 +54,7 @@ address:
     darija_arabic_script: {train: ["طريق {street} قدّام {landmark}", "نهج {street} حذا {landmark}", "في {street}، قريب {landmark}"],
                            eval_only: ["في زنقة {street} قدّام {landmark}", "في {street} حذا {landmark}"]}
   exact:                     # MUST contain {number} or a building token (lint 2). lint6: any
-                             # eval_only line containing "immeuble" collides with prompts/ (FS2, FS7 and
+                             # eval_only line containing "immeuble" collides with config/prompts/ (FS2, FS7 and
                              # the system prompt quote "immeuble Yasmine"), so the two immeuble lines
                              # are train-side; the placeholder dar/n° lines cover the eval side.
     arabizi: {train: ["dar {number}", "imm {number}, {place}", "bloc {number}, {place}", "immeuble {number}, 3e etage"],
