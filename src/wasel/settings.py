@@ -31,6 +31,8 @@ class Settings(BaseSettings):
     webhook_enabled: bool = False
     seed_on_boot: Literal["auto", "always", "if_empty", "never"] = "auto"
     db_path: str = "var/app.db"
+    snapshot_url: str = ""               # file:// or http(s):// store for the DB on hosts with an ephemeral disk
+    snapshot_interval_s: int = 60
     demo_mode: bool = True
     worker_enabled: bool = True
     # WhatsApp non-secret

@@ -160,6 +160,7 @@ async def run_loop(state) -> None:
         try:
             await asyncio.to_thread(state.tick, now)
             state.last_tick_at = now
+            await asyncio.to_thread(state.snapshot, now)
             if state.settings.is_public and (last_purge is None or
                                              (now - last_purge).total_seconds() >= state.settings.purge_interval_s):
                 await asyncio.to_thread(state.purge, now)

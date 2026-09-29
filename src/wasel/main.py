@@ -23,6 +23,7 @@ from wasel.db.cache import SqliteExtractionCache
 from wasel.db.conn import connect, create_schema, fresh_db
 from wasel.db.purge import purge_sandboxes, reset_all
 from wasel.db.seed import load_seed, seed_all
+from wasel.db.snapshot import Snapshotter, restore, store_from_url
 from wasel.db.usage import SqliteUsageMeter
 from wasel.ids import IdGen, UlidIds
 from wasel.llm.client import build_client
@@ -37,6 +38,16 @@ from wasel.worker import drain, process_due, run_loop
 
 log = logging.getLogger("cod.main")
 MAX_BODY = 64 * 1024
+# script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
+# XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.
+# web/public/_headers repeats these for assets served at the edge on Cloudflare; a test keeps the two equal.
+SECURITY_HEADERS = {
+    "Content-Security-Policy": ("default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                                "style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; "
+                                "base-uri 'none'"),
+    "X-Content-Type-Options": "nosniff",
+    "Referrer-Policy": "no-referrer",
+}
 
 
 class AppState:
@@ -56,6 +67,12 @@ class AppState:
         self.last_purge_at = None
         self.last_webhook_at = None                     # last POST with a valid signature
         self.no_reply_s = self.config.raw["timeouts"]["no_reply_s"]["demo" if settings.demo_mode else "prod"]
+        self.snapshot_store = store_from_url(settings.snapshot_url)     # set only on hosts with an ephemeral disk
+        if self.snapshot_store is not None and settings.seed_mode == "always":
+            log.warning("SNAPSHOT_URL ignored: SEED_ON_BOOT resolves to 'always', so the DB is rebuilt at every boot")
+            self.snapshot_store = None
+        self.snapshotter = Snapshotter(self.snapshot_store, settings.snapshot_interval_s) if self.snapshot_store \
+            else None
         self.sender = None                              # only when sending is effective (never public mode)
         if settings.wa_send_effective and settings.wa_phone_number_id:
             from wasel.outbound.whatsapp_send import WhatsAppSender
@@ -121,11 +138,13 @@ class AppState:
         'idle'). Seeds the demo orders when the mode is 'always', or 'if_empty' and there are no orders.
         """
         mode = self.settings.seed_mode
+        restored = False
         if mode == "always":
             conn = fresh_db(self.db_path)
             self._local.conn = conn
         else:
             Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+            restored = self.snapshot_store is not None and restore(self.snapshot_store, self.db_path)
             conn = self.conn()
             if not conn.execute("SELECT name FROM sqlite_master WHERE name='orders'").fetchone():
                 create_schema(conn)
@@ -135,6 +154,12 @@ class AppState:
         if mode == "always" or (mode == "if_empty" and empty):
             n = seed_all(conn, self.ids, self.clock.now(), self.scorer_for(conn), self.drafter, self.config.catalog)
             log.info("seeded %d orders", n)
+        if restored:
+            self.snapshotter.seed_digest(conn)          # what was just restored is already stored
+
+    def snapshot(self, now, *, force: bool = False) -> bool:
+        """Save the DB to the snapshot store if one is configured and a save is due (or `force`). Never raises."""
+        return self.snapshotter is not None and self.snapshotter.tick(self.conn(), now, force=force)
 
     def reset(self) -> tuple[int, int]:
         """Delete every order and its related rows, then reseed. Returns (orders deleted, orders reseeded)."""
@@ -157,8 +182,9 @@ class AppState:
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))
         cap = s.daily_cap
         worker_stale = s.worker_enabled and (self.last_tick_at is None or (now - self.last_tick_at).total_seconds() > 10)
+        degraded = fb or worker_stale or (self.snapshotter is not None and self.snapshotter.failing)
         return M.HealthResponse(
-            status="degraded" if (fb or worker_stale) else "ok", mode=s.app_mode, wa_send=s.wa_send_effective,
+            status="degraded" if degraded else "ok", mode=s.app_mode, wa_send=s.wa_send_effective,
             webhook="enabled" if s.webhook_mounted else "disabled", db=True, demo_mode=s.demo_mode,
             build=M.HealthBuild(git_sha=s.git_sha, started_at=utc_iso(self.started_at)),
             config=M.HealthConfig(config_hash=self.config.short_hash, prompt_version=PROMPT_VERSION,
@@ -208,6 +234,8 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         yield
         if task:
             task.cancel()
+            await asyncio.gather(task, return_exceptions=True)
+        await asyncio.to_thread(state.snapshot, state.clock.now(), force=True)     # last write before the disk goes
 
     app = FastAPI(title="Wasel", lifespan=lifespan, docs_url=None if settings.is_public else "/docs",
                   redoc_url=None)
@@ -231,13 +259,8 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         if cl and cl.isdigit() and int(cl) > MAX_BODY and request.url.path != "/webhook/whatsapp":   # 1 MiB there
             return JSONResponse({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "body over 64 KB"}}, status_code=413)
         resp = await call_next(request)
-        # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
-        # XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.
-        resp.headers["Content-Security-Policy"] = ("default-src 'self'; script-src 'self' 'unsafe-inline'; "
-                                                   "img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
-                                                   "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
-        resp.headers["X-Content-Type-Options"] = "nosniff"
-        resp.headers["Referrer-Policy"] = "no-referrer"
+        for k, v in SECURITY_HEADERS.items():
+            resp.headers[k] = v
         return resp
 
     if settings.app_mode == "dev":
