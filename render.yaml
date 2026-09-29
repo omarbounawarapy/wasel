@@ -1,0 +1,17 @@
+# Render Blueprint: Wasel on the free web service (public demo mode). See docs/operations/render.md.
+services:
+  - type: web
+    name: wasel
+    runtime: docker
+    plan: free
+    dockerfilePath: ./deploy/render/Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: APP_MODE
+        value: public
+      - key: GROQ_API_KEY
+        sync: false
+      - key: ADMIN_TOKEN
+        sync: false
