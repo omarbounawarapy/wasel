@@ -16,7 +16,7 @@ def visitor_id(x_visitor_id: str | None = Header(default=None)) -> str | None:
 
 
 def require_visitor(request: Request, vid: str | None) -> str | None:
-    """Public-mode mutations need a visitor id (R4: 400 VISITOR_ID_REQUIRED). Ignored in event/dev."""
+    """Public-mode mutations need a visitor id (400 VISITOR_ID_REQUIRED otherwise). Ignored in event/dev."""
     if request.app.state.core.settings.is_public and vid is None:
         raise ApiError(400, "VISITOR_ID_REQUIRED", "X-Visitor-Id (uuid v4) is required in the public demo",
                        {"X-Visitor-Id": ["missing or malformed"]})

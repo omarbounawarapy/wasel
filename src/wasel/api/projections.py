@@ -20,6 +20,7 @@ BIDI_CONTROLS = {chr(c) for c in [*range(0x202A, 0x202F), *range(0x2066, 0x206A)
 
 
 def strip_bidi(s: str | None) -> str | None:
+    """Remove Unicode bidi embedding/override/isolate controls from customer text; None passes through."""
     return None if s is None else "".join(ch for ch in s if ch not in BIDI_CONTROLS)
 
 
@@ -49,6 +50,10 @@ def _display_name(settings: Settings, cust: sqlite3.Row, order: sqlite3.Row) -> 
 
 
 def order_summary(conn, settings: Settings, o: sqlite3.Row) -> M.OrderSummary:
+    """Build the queue row for order row `o`. Read-only.
+
+    In public mode, sandbox orders show "Customer #<order_no>" instead of the customer's name.
+    """
     cust = repo.row(conn, "SELECT * FROM customers WHERE customer_id=?", o["customer_id"])
     conv = repo.row(conn, "SELECT channel, seed_key FROM conversations WHERE conversation_id=?", o["conversation_id"])
     asm = repo.assessments(conn, o["order_id"])
@@ -80,6 +85,11 @@ def order_summary(conn, settings: Settings, o: sqlite3.Row) -> M.OrderSummary:
 
 def list_orders(conn, settings: Settings, vid: str | None, *, tier=None, status=None,
                 include_collecting=False, limit=100) -> M.OrderListResponse:
+    """The order queue: riskiest first, unscored last, ties by most recently updated.
+
+    In public mode only seeded orders and the visitor `vid`'s own sandbox orders are visible. Orders still collecting with
+    no rescore pending are hidden unless `include_collecting`. `limit` is applied here; the route caps it at 500.
+    """
     where, args = [], []
     if settings.is_public:
         where.append("(o.sandbox_id IS NULL OR o.sandbox_id = ?)")
@@ -112,6 +122,11 @@ def _reply_to(q: sqlite3.Row | None) -> M.ReplyTo | None:
 
 
 def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailResponse:
+    """Build the full detail view for order row `o`. Read-only.
+
+    Segments come from the spans of the current assessment's extraction run, so evidence markup always matches the
+    latest score. `capabilities` is derived from mode, seeded state and order status.
+    """
     s = order_summary(conn, settings, o)
     cust = repo.row(conn, "SELECT * FROM customers WHERE customer_id=?", o["customer_id"])
     conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", o["conversation_id"])
@@ -185,6 +200,10 @@ def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailRespo
 
 def list_events(conn, settings: Settings, vid: str | None, *, after: int = 0, order_id: str | None = None,
                 limit: int = 50) -> M.EventsResponse:
+    """Events with seq greater than `after`, oldest first, at most `limit`.
+
+    In public mode only global events and the visitor's own are returned. `last_seq` is `after` when the page is empty.
+    """
     where, args = ["e.seq > ?"], [after]
     if settings.is_public:
         where.append("(e.sandbox_id IS NULL OR e.sandbox_id = ?)")

@@ -23,6 +23,7 @@ class RedactVerifyToken(logging.Filter):
     """uvicorn's access log prints the full query string; Meta's verify GET carries hub.verify_token in it."""
 
     def filter(self, record: logging.LogRecord) -> bool:
+        """Replace the query string of a logged verify request with `?<redacted>`. Always keeps the record."""
         args = record.args
         if isinstance(args, tuple) and len(args) >= 3 and isinstance(args[2], str) and "hub." in args[2]:
             record.args = (*args[:2], args[2].split("?", 1)[0] + "?<redacted>", *args[3:])
@@ -30,6 +31,7 @@ class RedactVerifyToken(logging.Filter):
 
 
 def install_log_redaction() -> None:
+    """Attach RedactVerifyToken to the uvicorn access logger once (idempotent)."""
     access = logging.getLogger("uvicorn.access")
     if not any(isinstance(f, RedactVerifyToken) for f in access.filters):
         access.addFilter(RedactVerifyToken())
@@ -37,6 +39,7 @@ def install_log_redaction() -> None:
 
 @webhook.get("/webhook/whatsapp")
 def verify(request: Request):
+    """Meta's webhook verification handshake: echo the challenge, or 403 if the verify token doesn't match."""
     challenge = wa.verify_challenge(request.query_params, request.app.state.core.settings.wa_verify_token)
     if challenge is None:
         log.warning("webhook verify refused")
@@ -52,6 +55,11 @@ def _too_large() -> JSONResponse:
 
 @webhook.post("/webhook/whatsapp")
 async def receive(request: Request, background: BackgroundTasks):
+    """Accept a WhatsApp webhook POST.
+
+    Checks the size cap and the X-Hub-Signature-256 signature on the raw body (401 and a webhook.rejected event on
+    failure), then acknowledges with 200 and processes the payload in a background task.
+    """
     core = request.app.state.core
     cl = request.headers.get("content-length")
     if cl and (not cl.isdigit() or int(cl) > MAX_WEBHOOK_BODY):

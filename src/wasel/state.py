@@ -17,6 +17,7 @@ ACTIONS = {                       # action -> (allowed from, to)
 
 
 def allowed_actions(status: str) -> list[str]:
+    """Seller actions valid from `status`, in ACTIONS order."""
     return [a for a, (frm, _) in ACTIONS.items() if status in frm]
 
 

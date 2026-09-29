@@ -219,7 +219,7 @@ admin = APIRouter(prefix="/api/admin")
 
 @admin.post("/reset")
 def reset(request: Request, x_admin_token: str | None = Header(default=None)):
-    """Purge sandbox rows and reseed the demo data. Needs the X-Admin-Token header."""
+    """Delete every order and reseed the demo data. Needs the X-Admin-Token header."""
     st = _s(request)
     if not x_admin_token or not hmac.compare_digest(x_admin_token, st.settings.admin_token):
         raise ApiError(401, "UNAUTHORIZED", "admin token required")

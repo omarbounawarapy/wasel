@@ -28,6 +28,11 @@ TITLES = {
 
 
 def event_text(type_: str, payload_json: str) -> tuple[str, str | None]:
+    """Render an event's (title, detail) for the activity feed.
+
+    `payload_json` is the events.payload column (a JSON object string). Unknown types get a title derived from the type
+    name and no detail. draft.sent titles reflect whether it was a real WhatsApp send and whether the system sent it.
+    """
     p = json.loads(payload_json or "{}")
     title = TITLES.get(type_, type_.replace(".", " ").capitalize())
     detail = None

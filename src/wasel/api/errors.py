@@ -3,11 +3,14 @@ from __future__ import annotations
 
 
 class ApiError(Exception):
+    """An error that the app turns into `{"error": {"code", "message", "details"?}}` with HTTP `status`."""
+
     def __init__(self, status: int, code: str, message: str, details: dict | None = None):
         super().__init__(message)
         self.status, self.code, self.message, self.details = status, code, message, details
 
     def body(self) -> dict:
+        """The JSON error envelope; `details` is included only when non-empty."""
         err = {"code": self.code, "message": self.message}
         if self.details:
             err["details"] = self.details
@@ -15,13 +18,16 @@ class ApiError(Exception):
 
 
 def not_found(what: str = "order") -> ApiError:
+    """404. Also used for rows owned by another visitor, so their existence is not revealed."""
     return ApiError(404, "NOT_FOUND", f"{what} not found")
 
 
 def seeded_read_only() -> ApiError:
+    """409: mutation attempted on a sample order in public mode."""
     return ApiError(409, "SEEDED_READ_ONLY", "Sample orders are read-only so every visitor starts from the same "
                                              "point. Try this order to work on your own copy.")
 
 
 def invalid_transition(allowed: list[str]) -> ApiError:
+    """409. `allowed` lists the seller actions valid from the order's current status."""
     return ApiError(409, "INVALID_TRANSITION", "not allowed from the current status", {"allowed": allowed})

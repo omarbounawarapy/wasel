@@ -43,6 +43,7 @@ CapDecision  = Literal["ok", "visitor_cap", "global_cap"]
 # ---------------------------------------------------------------- input
 @dataclass(frozen=True)
 class WindowMessage:
+    """One stored message as the scorer sees it (built by repo.window_messages). Immutable."""
     message_id: str
     direction: Direction
     author: Author
@@ -61,6 +62,7 @@ class WindowMessage:
 
 @dataclass(frozen=True)
 class StructuredFields:           # seller-entered (CSV/paste form); wins over catalog/gazetteer
+    """Order fields the seller entered (CSV or paste form). They win over catalog and gazetteer values."""
     product_name: str | None = None
     price_tnd: float | None = None
     zone: Zone | None = None
@@ -69,12 +71,16 @@ class StructuredFields:           # seller-entered (CSV/paste form); wins over c
 
 @dataclass(frozen=True)
 class CustomerHistory:
+    """Outcome counts for the customer."""
     completed_orders: int         # delivered + refused, excluding this order, outcomes known before opened_at
     refusals_total: int
 
 
 @dataclass(frozen=True)
 class PriorAssessment:
+    """The order's latest stored assessment, passed back in so the next rescore can compute a reason diff and keep the
+    prior confirmation on T_ACK. None (in ScoreInput) for a first score.
+    """
     version: int
     created_at: datetime
     extraction_id: str | None
@@ -86,14 +92,14 @@ class PriorAssessment:
     tier: Tier
     path: Path
     reason: str
-    # ADDITIVE: the per-feature points of that version, so reason_diff can compare
-    # v(k-1) with v(k). Empty dict when unknown.
+    # Per-feature points of that version, so reason_diff can compare v(k-1) with v(k). Empty dict when unknown.
     points: dict[str, float] = field(default_factory=dict)
-    confirmation: Confirmation = "none"     # ADDITIVE: T_ACK keeps the prior confirmation
+    confirmation: Confirmation = "none"     # T_ACK keeps the prior confirmation
 
 
 @dataclass(frozen=True)
 class ScoreInput:
+    """Everything the scorer needs for one rescore of one order; it does no DB access."""
     order_id: str
     sandbox_id: str | None        # budget key for the per-visitor LLM cap; None = seeded/event traffic
     channel: Channel
@@ -108,6 +114,7 @@ class ScoreInput:
 # ---------------------------------------------------------------- injected dependencies
 @dataclass(frozen=True)
 class CachedExtraction:
+    """A stored LLM extraction, keyed by the hash of the extraction input."""
     input_hash: str
     provider: Provider            # 'groq' | 'gemini' only
     model: str
@@ -115,22 +122,33 @@ class CachedExtraction:
     extraction: dict              # after repair + evidence check + tone gate; evidence carries msg_idx, no ids/offsets
 
 
-class ExtractionCache(Protocol):  # SqliteExtractionCache; tests: dict-backed
-    def get(self, input_hash: str) -> CachedExtraction | None: ...
+class ExtractionCache(Protocol):
+    """Read side of the extraction cache. Implemented by SqliteExtractionCache; tests use a dict-backed version."""
+
+    def get(self, input_hash: str) -> CachedExtraction | None:
+        """The cached extraction for `input_hash`, or None."""
+        ...
 
 
-class UsageMeter(Protocol):       # SqliteUsageMeter over llm_usage; tests: counter
-    def allow(self, role: Role, sandbox_id: str | None, now: datetime) -> CapDecision: ...
+class UsageMeter(Protocol):
+    """Gate on LLM provider calls. Implemented by SqliteUsageMeter (over llm_usage); tests use a counter."""
+
+    def allow(self, role: Role, sandbox_id: str | None, now: datetime) -> CapDecision:
+        """Return 'ok' or the cap that refuses the call. A refusal means 'score with rules', never an error."""
+        ...
 
 
-class LLMClient(Protocol):        # src/wasel/llm/client.py. Implementations:
-    primary: str                  #   ChainClient(live) | ReplayClient(tests/fixtures/llm) | FailingClient(kind)
+class LLMClient(Protocol):
+    """The LLM chain the scorer calls for extraction. The implementation is llm.client.ChainClient: over live
+    providers, or over recorded fixtures or forced failures when LLM_MODE selects them (build_client)."""
+    primary: str                  # "provider:model" of the first step, or "rules" when the chain is empty
     # full method set lives in src/wasel/llm/base.py; the worker never calls it directly
 
 
 # ---------------------------------------------------------------- output
 @dataclass(frozen=True)
 class EvidenceSpan:
+    """A verified span of a customer message: `message_id[start:end] == quote` on the original text."""
     message_id: str
     start: int                    # code-point offset into the ORIGINAL message text
     end: int                      # exclusive
@@ -141,6 +159,7 @@ class EvidenceSpan:
 
 @dataclass(frozen=True)
 class Attempt:
+    """One provider call within an extraction run."""
     provider: Literal["groq", "gemini"]
     model: str
     outcome: AttemptOutcome
@@ -149,6 +168,7 @@ class Attempt:
 
 @dataclass(frozen=True)
 class ExtractionRecord:           # -> one extraction_runs row
+    """One extraction run, persisted as an extraction_runs row."""
     input_message_ids: list[str]  # msg_idx k in `validated` refers to element k
     input_hash: str
     provider: Provider
@@ -171,6 +191,7 @@ class ExtractionRecord:           # -> one extraction_runs row
 
 @dataclass(frozen=True)
 class CacheEntry:                 # -> upsert into extraction_cache (only valid LLM results; never rules/cascade)
+    """A valid LLM extraction to upsert into the extraction cache. Never produced for rules or cascade results."""
     input_hash: str
     prompt_version: str
     provider: Literal["groq", "gemini"]
@@ -181,6 +202,7 @@ class CacheEntry:                 # -> upsert into extraction_cache (only valid 
 
 @dataclass(frozen=True)
 class Adjustment:
+    """A post-model rule that changed the score (from the customer's reply or a timeout)."""
     rule: Literal["confirmed", "declined", "reschedule", "ambiguous", "no_reply_timeout"]
     label: str                    # "Customer confirmed ×0.6 (starting assumption)"
     effect: str                   # "x0.6" | "+15" | "none"
@@ -190,6 +212,7 @@ class Adjustment:
 
 @dataclass(frozen=True)
 class Factor:                     # top-3 SHAP contributions
+    """One feature's contribution to the model score, in score points."""
     feature: str                  # one of ml.features.FEATURES
     label: str
     value: float | int | None
@@ -198,6 +221,7 @@ class Factor:                     # top-3 SHAP contributions
 
 @dataclass(frozen=True)
 class FlagView:
+    """A risk flag that survived evidence checking."""
     code: FlagCode
     quote: str
     message_id: str
@@ -205,6 +229,11 @@ class FlagView:
 
 @dataclass(frozen=True)
 class AssessmentRecord:           # -> one risk_assessments row (ids, version, trigger, created_at added by the persistence layer)
+    """One scoring result, persisted as a risk_assessments row.
+
+    Persistence adds ids, version, trigger and created_at. `final_score` is never None; a declined order is scored
+    normally and gets action 'cancelled'.
+    """
     path: Path
     is_order_change: bool
     has_unsupported_media: bool
@@ -223,7 +252,7 @@ class AssessmentRecord:           # -> one risk_assessments row (ids, version, t
     confidence: Literal["high", "low"]
     confidence_reasons: list[str]             # near_tier_boundary | not_primary_model | product_not_in_catalog |
                                               # dropped_flags | clarity_unclear | rules_path | llm_cap_reached |
-                                              # text_clf_disagrees (S-11b, additive)
+                                              # text_clf_disagrees
     reason: str                               # quotes wrapped in U+2068 … U+2069
     reason_short: str                         # ≤ 90 chars, same builder
     reason_diff: str | None                   # None on version 1
@@ -231,12 +260,13 @@ class AssessmentRecord:           # -> one risk_assessments row (ids, version, t
     classifier_version: str
     config_hash: str
     prompt_version: str
-    injection_suspected: bool = False         # ADDITIVE (R8)
-    points: dict[str, float] = field(default_factory=dict)   # ADDITIVE: all 6 feature points, feeds the next reason_diff
+    injection_suspected: bool = False
+    points: dict[str, float] = field(default_factory=dict)   # all 6 feature points, feeds the next reason_diff
 
 
 @dataclass(frozen=True)
 class OrderPatch:                 # -> resolved columns on `orders`
+    """Columns to write back onto `orders` after scoring. `price_tnd` comes from the seller or the catalog, never the LLM."""
     product_id: str | None
     product_name: str | None
     price_tnd: float | None       # structured > catalog > None; never from the LLM
@@ -249,6 +279,7 @@ class OrderPatch:                 # -> resolved columns on `orders`
 
 @dataclass(frozen=True)
 class UsageRecord:                # -> one llm_usage row per provider attempt
+    """One LLM provider attempt, persisted as an llm_usage row."""
     ts: datetime
     role: Role
     provider: Literal["groq", "gemini"]
@@ -261,6 +292,7 @@ class UsageRecord:                # -> one llm_usage row per provider attempt
 
 @dataclass(frozen=True)
 class CoreEvent:                  # -> events row; the persistence layer adds seq, ts, order_id, sandbox_id
+    """An event emitted by the scorer or drafter; persistence adds seq, timestamp and order/sandbox ids."""
     type: str                     # 'llm.fallback' | 'llm.cap_reached' | 'cascade.hit' | 'cache.hit' |
                                   # 'evidence.dropped' | 'flags.resolved' | 'extraction.not_order' | 'injection.suspected'
     level: Literal["info", "success", "warning", "error"]
@@ -269,6 +301,10 @@ class CoreEvent:                  # -> events row; the persistence layer adds se
 
 @dataclass(frozen=True)
 class ScoreResult:
+    """Everything the scorer produced. The persistence layer writes it in one transaction (repo.persist_result).
+
+    With `is_order` False, `assessment` and `order_patch` are None.
+    """
     is_order: bool
     extraction: ExtractionRecord | None   # None only for trigger='no_reply_timeout' (reuses prior.extraction_id)
     cache_put: CacheEntry | None
@@ -277,7 +313,7 @@ class ScoreResult:
     template_id: TemplateId | None        # rule: vague_location -> T_ADDRESS, prepay -> T_PREPAY, else T_CONFIRM
     usage: list[UsageRecord] = field(default_factory=list)
     events: list[CoreEvent] = field(default_factory=list)
-    injection_suspected: bool = False     # read by the state machine (rule 0: result.injection_suspected)
+    injection_suspected: bool = False     # read by the state machine (next_status checks it first)
 
 
 # ---------------------------------------------------------------- the calls
@@ -289,6 +325,7 @@ Scorer = Callable[[ScoreInput], ScoreResult]
 # ---------------------------------------------------------------- drafts (pure; the worker persists)
 @dataclass(frozen=True)
 class DraftRequest:
+    """Inputs to make_draft. Slots come from the order record only, never from customer text."""
     order_id: str
     sandbox_id: str | None
     template_id: TemplateId
@@ -304,12 +341,14 @@ class DraftRequest:
 
 @dataclass(frozen=True)
 class PrefilterResult:
+    """Outcome of the deterministic draft checks."""
     passed: bool
     failures: list[str]
 
 
 @dataclass(frozen=True)
 class DraftRecord:                # -> one outbound_drafts row
+    """One drafted outbound message, persisted as an outbound_drafts row (see make_draft)."""
     template_id: TemplateId
     language: Language
     canonical_text: str           # static template rendered; becomes messages.canonical_text on send

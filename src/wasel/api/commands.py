@@ -20,6 +20,7 @@ from wasel.state import ACTIONS, TERMINAL, allowed_actions
 
 # ---------------------------------------------------------------- visibility
 def visible_order(conn, order_id: str, settings: Settings, vid: str | None):
+    """Return the order row, or raise 404 if it doesn't exist or (public mode) belongs to another visitor."""
     o = repo.get_order(conn, order_id)
     if o is None:
         raise not_found()
@@ -29,6 +30,7 @@ def visible_order(conn, order_id: str, settings: Settings, vid: str | None):
 
 
 def writable_order(conn, order_id: str, settings: Settings, vid: str | None):
+    """visible_order plus a write check: raises 409 SEEDED_READ_ONLY for seeded orders in public mode."""
     o = visible_order(conn, order_id, settings, vid)
     if settings.is_public and o["sandbox_id"] is None:
         raise seeded_read_only()
@@ -36,6 +38,9 @@ def writable_order(conn, order_id: str, settings: Settings, vid: str | None):
 
 
 def _sandbox_limits(conn, settings: Settings, vid: str | None) -> None:
+    """Public mode only: refuse (429) when this visitor already has `sandbox_max_orders` orders (SANDBOX_LIMIT) or the
+    demo holds `sandbox_global_max` sandbox orders in total (DEMO_BUSY).
+    """
     if not settings.is_public:
         return
     mine = conn.execute("SELECT COUNT(*) FROM orders WHERE sandbox_id=?", (vid,)).fetchone()[0]
@@ -53,6 +58,13 @@ def _debounce(settings: Settings, cfg: dict) -> float:
 # ---------------------------------------------------------------- ingest
 def ingest_paste(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, vid: str | None, *, text: str,
                  customer_name: str | None = None, structured: dict | None = None) -> dict:
+    """Create a customer, conversation and order from one pasted message and arm a debounced rescore.
+    Returns the created ids.
+
+    Raises ApiError 422/413 when `text` is empty or over 2000 characters, and 429 when a public-mode sandbox limit
+    is hit.
+    In public mode the order belongs to visitor `vid` and `customer_name` is ignored. Runs in one transaction.
+    """
     if not 1 <= len(text) <= 2000:
         raise ApiError(413 if len(text) > 2000 else 422, "PAYLOAD_TOO_LARGE" if len(text) > 2000 else "VALIDATION_ERROR",
                        "paste text must be 1..2000 characters")
@@ -74,6 +86,11 @@ CSV_HEADER = ["customer_id", "customer_name", "product", "price_tnd", "zone", "a
 
 
 def ingest_csv(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, vid: str | None, csv_text: str) -> tuple:
+    """Ingest up to 10 (public) or 200 rows via ingest_paste. Returns (created, rejected).
+
+    Each row's text is address + note. Rows with no text, an unknown zone or a non-numeric price are rejected with a
+    1-based row number and the rest go on; a larger file raises 413. Each accepted row commits on its own.
+    """
     reader = csv.DictReader(io.StringIO(csv_text))
     rows_ = list(reader)
     limit = 10 if settings.is_public else 200
@@ -103,6 +120,10 @@ def ingest_csv(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, v
 
 # ---------------------------------------------------------------- try this order (zero LLM calls)
 def try_order(conn, ids: IdGen, now: datetime, settings: Settings, order_id: str, vid: str) -> dict:
+    """Copy a seeded sample order into the visitor's sandbox, without an LLM call. Returns the new order's ids.
+
+    Raises 409 NOT_SEEDED if the order has no seed fixture. The copy is not scored here; the caller drains the worker.
+    """
     o = visible_order(conn, order_id, settings, vid)
     conv = repo.row(conn, "SELECT seed_key FROM conversations WHERE conversation_id=?", o["conversation_id"])
     fx = fixture_for(conv["seed_key"]) if conv["seed_key"] else None
@@ -118,6 +139,12 @@ def try_order(conn, ids: IdGen, now: datetime, settings: Settings, order_id: str
 def simulate_reply(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, vid: str | None,
                    conversation_id: str, *, text: str | None = None, lat: float | None = None,
                    lng: float | None = None) -> dict:
+    """Add a simulated customer reply (text or location pin) to a conversation and arm a rescore.
+
+    If the order has an unsent draft it is first recorded as sent, since the reply implies it went out. Raises 404 for
+    unknown or foreign conversations, 409 on seeded ones (public), 413 above 600 characters, 429 past `reply_limit` in
+    public mode. Returns the message id and when the rescore is due.
+    """
     conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", conversation_id)
     if conv is None or (settings.is_public and conv["sandbox_id"] not in (None, vid)):
         raise not_found("conversation")
@@ -149,6 +176,10 @@ def simulate_reply(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dic
 
 # ---------------------------------------------------------------- rescore / actions / send
 def rescore(conn, now: datetime, settings: Settings, vid: str | None, order_id: str) -> dict:
+    """Schedule an immediate manual rescore (state 'debouncing', due now); the worker does the scoring.
+
+    Raises 409 INVALID_TRANSITION for orders in a terminal status.
+    """
     o = writable_order(conn, order_id, settings, vid)
     if o["status"] in TERMINAL:
         raise invalid_transition(allowed_actions(o["status"]))
@@ -159,6 +190,12 @@ def rescore(conn, now: datetime, settings: Settings, vid: str | None, order_id: 
 
 def apply_action(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | None, order_id: str, action: str,
                  drafter: Drafter) -> None:
+    """Apply a seller action: move the order to the action's target status and log an order.<action> event.
+
+    Raises 409 if the action is unknown or not allowed from the current status. 'approve' stamps seller_approved_at,
+    'mark_delivered'/'mark_refused' update the customer's history counters, and 'request_confirmation' creates a draft.
+    One transaction.
+    """
     o = writable_order(conn, order_id, settings, vid)
     if action not in ACTIONS or o["status"] not in ACTIONS[action][0]:
         raise invalid_transition(allowed_actions(o["status"]))
@@ -182,6 +219,13 @@ WA_WINDOW = timedelta(hours=24)
 
 def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | None, draft_id: str,
                sender=None, *, decided_by: str = "human") -> dict:
+    """Send a draft: record it as an outbound message, or send it through WhatsApp when that is effective.
+
+    Real sends happen only for WhatsApp conversations when sending is effective and `sender` is given, and only within the
+    customer's 24 h window. Otherwise the draft is recorded as sent ('recorded_only') without leaving the system.
+    `decided_by='system'` is only accepted for auto_send drafts. Raises 404/409 (already sent, blocked, needs review,
+    outside the 24 h window, no recipient) and 502 if WhatsApp refuses; the failure is logged as an event.
+    """
     d = repo.row(conn, "SELECT * FROM outbound_drafts WHERE draft_id=?", draft_id)
     if d is None:
         raise not_found("draft")
