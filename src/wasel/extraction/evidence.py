@@ -12,6 +12,11 @@ from wasel.ml.textnorm import normalize_with_map
 
 @dataclass(frozen=True)
 class EvidenceSpan:                 # contract type + msg_idx and the product/tone kinds
+    """A verified span of a customer message, with the message's position in the window.
+
+    Offsets index the original text; the LLM view has the same length, so they apply to it unchanged. `quote` comes
+    from the LLM view, so phone numbers stay masked.
+    """
     message_id: str
     msg_idx: int
     start: int                      # code-point offset into the ORIGINAL text (== text_llm offset)
@@ -23,6 +28,12 @@ class EvidenceSpan:                 # contract type + msg_idx and the product/to
 
 def locate(quote: str, msgs: Sequence[WindowMsg], *, min_chars: int = 3, after: int | None = None
            ) -> tuple[int, int, WindowMsg] | None:
+    """Find `quote` in the customer lines of `msgs`; returns (start, end, message) or None.
+
+    Matching ignores case, diacritics and spacing variants (see normalize), searches the newest message first and
+    returns offsets in the original text. Quotes shorter than `min_chars` (spaces ignored) never match. With `after`,
+    only messages whose idx is greater than it are searched. Seller lines and location pins are never searched.
+    """
     q, _ = normalize_with_map(quote.strip())
     q = q.strip()
     if len(q.replace(" ", "")) < min_chars:

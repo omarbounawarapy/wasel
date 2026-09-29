@@ -36,6 +36,9 @@ def template_language(language: str | None, last_customer_text: str | None = Non
 
 
 def sanitize_first_name(display_name: str | None) -> str | None:
+    """The customer's first word if it looks like a name (Latin or Arabic letters, up to 20 characters), else None.
+    Keeps stray text out of messages.
+    """
     if not display_name:
         return None
     first = display_name.strip().split()[0] if display_name.strip() else ""
@@ -43,6 +46,7 @@ def sanitize_first_name(display_name: str | None) -> str | None:
 
 
 def format_price(price: float | None) -> str | None:
+    """The price as text without trailing zeros (89.0 -> "89"), or None."""
     return None if price is None else f"{price:g}"
 
 
@@ -54,10 +58,16 @@ def template_slots(templates: dict, template_id: str, lang: str, slots: dict[str
 
 
 def render_template(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> str:
+    """Render a template in `lang` with the slots.
+
+    Uses the variant with the name when `first_name` is set, otherwise the `no_name` variant. None slot values render
+    as empty text.
+    """
     t = templates["templates"][template_id][lang]
     body = t["text"] if slots.get("first_name") else t["no_name"]
     return body.format(**{k: (v if v is not None else "") for k, v in slots.items()})
 
 
 def expected_questions(templates: dict, template_id: str) -> str:
+    """How many questions the template asks: 'none' or 'one'. The prefilter checks a rewrite against it."""
     return templates["expected_questions"][template_id]

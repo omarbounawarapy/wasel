@@ -17,10 +17,10 @@ from wasel.extraction.window import Window
 from wasel.ml.textnorm import find_span, has_building_token, has_phrase, normalize, standalone_numbers, tokens
 
 STREET = ("rue", "avenue", "av", "nahj", "ne7j", "شارع", "نهج", "زنقة", "zen9et",
-          "triq", "طريق")                                    # triq/طريق: ADDITIVE (hero v2 uses "triq")
+          "triq", "طريق")                                    # triq/طريق: "road" (used by the hero conversation)
 AREA = ("cité", "cite", "hay", "7ay", "حي", "douar", "دوار", "9rib", "قريب", "à côté", "près", "9odem", "قدام",
         "jemaa", "جامع", "pharmacie", "صيدلية", "poste", "quartier",
-        "7dhe", "7dha", "حذا", "حدا", "jihet", "جهة")        # native-speaker vocabulary
+        "7dhe", "7dha", "حذا", "حدا", "jihet", "جهة")        # Tunisian Arabic vocabulary
 _SENT = re.compile(r"[^.\n!?؟]+")
 _SLOT = re.compile(r"\{(\w+)\}")
 
@@ -74,6 +74,11 @@ def _language(texts: list[str]) -> str:
 
 
 def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicons: dict) -> OrderExtraction:
+    """Extract an order from the window with the rules in the module docstring. Returns an OrderExtraction.
+
+    Used when no LLM answer is available. It never reports a tone, quantity or order change (neutral, None, False),
+    sets clarity to 'partial', and guesses the language from the script and Arabizi markers.
+    """
     cust = [m for m in w.messages if m.role == "customer" and m.kind != "location_pin" and m.text_orig]
     texts = [m.text_orig for m in cust]
     # product: the alias must appear in a NON-interrogative sentence — "vous avez des casques ?"

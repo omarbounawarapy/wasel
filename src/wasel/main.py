@@ -39,6 +39,12 @@ MAX_BODY = 64 * 1024
 
 
 class AppState:
+    """Process-wide application state, held at `app.state.core`: settings, clock, id generator, LLM client and scoring
+    config, plus the worker's bookkeeping (last tick, purge and webhook times).
+
+    Database connections are per thread. Created by create_app.
+    """
+
     def __init__(self, settings: Settings, clock: Clock, ids: IdGen, llm):
         self.settings, self.clock, self.ids, self.llm = settings, clock, ids, llm
         self.config = load_config(settings.scoring_config)
@@ -56,17 +62,20 @@ class AppState:
 
     # one connection per thread (see src/wasel/db/conn.py)
     def conn(self):
+        """This thread's database connection, opened on first use."""
         c = getattr(self._local, "conn", None)
         if c is None:
             c = self._local.conn = connect(self.db_path)
         return c
 
     def meter(self, conn=None):
+        """A new usage meter for `conn` (default: this thread's) with the caps from settings."""
         s = self.settings
         return SqliteUsageMeter(conn or self.conn(), daily_cap=s.daily_cap, public=s.is_public,
                                 visitor_10min=s.visitor_llm_cap_10min, visitor_day=s.visitor_llm_cap_day)
 
     def scorer_for(self, conn):
+        """A Scorer using `conn`'s extraction cache, the LLM client and a usage meter on the same connection."""
         return make_scorer(cache=SqliteExtractionCache(conn, self.settings.prompt_version), llm=self.llm,
                            meter=self.meter(conn), config=self.config)
 
@@ -76,6 +85,9 @@ class AppState:
         return self.llm if self.settings.draft_llm and getattr(self.llm, "steps", None) else None
 
     def drafter(self, req):
+        """Draft a message with make_draft. LLM rewrite and judge are used only when draft_llm is enabled; otherwise
+        static templates.
+        """
         return make_draft(req, llm=self.draft_llm, meter=self.meter() if self.draft_llm else None,
                           config=self.config)
 
@@ -92,13 +104,21 @@ class AppState:
             auto_send_due(conn, self.ids, now, self.settings, self.sender)
 
     def purge(self, now) -> int:
+        """Delete visitor sandbox rows older than the TTL. Returns the number of orders purged."""
         return purge_sandboxes(self.conn(), now, self.settings.sandbox_ttl_s)
 
     def drain(self, conn=None):
+        """Score everything that is due now, repeatedly, until nothing is left. Returns the number of orders scored."""
         conn = conn or self.conn()
         return drain(conn, self.clock.now(), self.scorer_for(conn), self.drafter, ids=self.ids)
 
     def boot(self) -> None:
+        """Prepare the database at startup.
+
+        With seed mode 'always' the DB is rebuilt from schema.sql and reseeded; otherwise the schema is created if
+        missing. Rescore states left over from a previous run are reset ('debouncing' if a rescore is pending, else
+        'idle'). Seeds the demo orders when the mode is 'always', or 'if_empty' and there are no orders.
+        """
         mode = self.settings.seed_mode
         if mode == "always":
             conn = fresh_db(self.db_path)
@@ -116,12 +136,14 @@ class AppState:
             log.info("seeded %d orders", n)
 
     def reset(self) -> tuple[int, int]:
+        """Delete every order and its related rows, then reseed. Returns (orders deleted, orders reseeded)."""
         conn = self.conn()
         purged = reset_all(conn)
         n = seed_all(conn, self.ids, self.clock.now(), self.scorer_for(conn), self.drafter, self.config.catalog)
         return purged, n
 
     def health(self, conn) -> M.HealthResponse:
+        """Build the /api/health payload from settings, this DB and the worker state."""
         s, now = self.settings, self.clock.now()
         day = now.strftime("%Y-%m-%d")
         calls = conn.execute("SELECT COUNT(*) FROM llm_usage WHERE day=?", (day,)).fetchone()[0]
@@ -163,6 +185,15 @@ class AppState:
 
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,
                ids: IdGen | None = None, worker_enabled: bool | None = None) -> FastAPI:
+    """Build the FastAPI app. `create_app()` with no arguments works as a uvicorn factory.
+
+    `settings` default to the environment. `llm` defaults to build_client for `settings.llm_mode`. `worker_enabled`
+    overrides `settings.worker_enabled`; when on, the lifespan starts the background worker loop after boot().
+    Requests declaring a body over 64 KB are refused (1 MiB for the webhook) and every response gets security headers.
+    Mode-dependent: /docs is off in public mode, CORS only in dev, the admin router mounts only with a long enough
+    admin token, the webhook router only when `settings.webhook_mounted`. The web bundle in web/dist, if built, is
+    served at /.
+    """
     settings = settings or Settings()
     if settings.is_public and settings.debug_raw:
         log.warning("DEBUG_RAW refused in public mode")

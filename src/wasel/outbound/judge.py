@@ -26,6 +26,12 @@ OVERREACH = {"none", "discount_or_price_change", "payment_request", "delivery_co
 
 @dataclass
 class Verdict:
+    """Outcome of judge().
+
+    `approved` means every available layer approved. `hold` means approved (or judge unavailable) but not trusted
+    enough to auto-send. `unavailable` means the LLM judge gave no answer. `judge_json` is stored on the draft and
+    `feedback` is passed to the one regeneration attempt.
+    """
     approved: bool                   # all available layers approve
     hold: bool                       # approved but not trusted enough for auto_send (classifier in the grey zone)
     unavailable: bool                # the LLM judge could not answer
@@ -35,6 +41,9 @@ class Verdict:
 
 
 def parse_judge(raw: str) -> dict:
+    """Validate the judge's JSON answer and return it. Raises ParseError unless it has exactly the expected keys and
+    value types.
+    """
     try:
         j = json.loads(raw)
     except ValueError as e:
@@ -48,6 +57,7 @@ def parse_judge(raw: str) -> dict:
 
 
 def parse_rewrite(raw: str) -> str:
+    """The rewritten text from the model's JSON answer, stripped. Raises ParseError if it is missing or blank."""
     try:
         j = json.loads(raw)
     except ValueError as e:
@@ -77,6 +87,11 @@ def _call(llm, task, user: str, parse, *, role: str, meter: UsageMeter | None, s
 
 def rewrite(llm, *, template_text: str, slots: dict, language: str, formality: str, tone_hint: str,
             expects_question: bool, feedback: dict | None, meter, sandbox_id, now):
+    """Ask the LLM to rewrite a template; returns (text or None, usage, who).
+
+    `who` is "provider:model" on success, otherwise a short failure reason. Never raises: any failure gives None and
+    the caller uses the static template. `feedback` lists the problems of the previous attempt.
+    """
     payload = {"template_text": template_text, "slots": slots, "language": language, "formality": formality,
                "tone_hint": tone_hint, "expects_question": expects_question}
     if feedback:

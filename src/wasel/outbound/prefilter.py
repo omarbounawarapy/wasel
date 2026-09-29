@@ -1,5 +1,5 @@
 """Deterministic draft prefilter. A draft is rejected if ANY rule fails. Runs on the
-static templates in CI (12/12) and on every rewritten draft. Numbers use the Arabizi-digit exception:
+static templates in CI and on every rewritten draft. Numbers use the Arabizi-digit exception:
 a digit touching a letter is a letter (3andek, 9rib, ta3tina yield no numbers)."""
 from __future__ import annotations
 
@@ -21,6 +21,11 @@ _AR_DIGITS = str.maketrans("٠١٢٣٤٥٦٧٨٩", "0123456789")
 
 
 def numbers_in(text: str) -> set[Decimal]:
+    """The numbers in a text as Decimals: standalone numbers and numbers with a unit (DT, h, %).
+
+    Arabic-Indic digits are converted and a comma counts as a decimal point. A digit touching a letter is part of a
+    word (Arabizi), not a number.
+    """
     vals = {m.group(0) for m in NUM.finditer(text)} | {m.group(1) for m in NUM_UNIT.finditer(text)}
     out = set()
     for v in vals:
@@ -33,6 +38,12 @@ def numbers_in(text: str) -> set[Decimal]:
 
 def prefilter(draft: str, template_text: str, slots: dict[str, str | None], expected_questions: str,
               lexicons: dict, injection_lexicon: dict | None = None) -> list[str]:
+    """Deterministic checks on a draft; returns failure codes, empty if it passes.
+
+    Codes: `slot_missing:<slot>` (a required slot value is absent), `number_not_allowed:[...]` (a number not in the
+    template or price), `url`, `phone`, `payment:`/`discount:`/`promise:<term>`, `instructions_in_draft`,
+    `question_count:<n>` against `expected_questions` ('none' or 'one'), and `too_long`.
+    """
     fails: list[str] = []
     for k, v in slots.items():
         if v and unicodedata.normalize("NFC", v) not in unicodedata.normalize("NFC", draft):

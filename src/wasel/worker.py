@@ -33,6 +33,7 @@ def fire_no_reply_timeouts(conn, now: datetime, no_reply_s: float) -> list[str]:
 
 
 def build_score_input(conn, order: sqlite3.Row, trigger: str, now: datetime) -> ScoreInput:
+    """Assemble the scorer's input for an order from the database. Read-only."""
     prior = repo.prior_assessment(conn, order["order_id"])
     conv = repo.row(conn, "SELECT channel FROM conversations WHERE conversation_id=?", order["conversation_id"])
     return ScoreInput(order_id=order["order_id"], sandbox_id=order["sandbox_id"], channel=conv["channel"],
@@ -43,6 +44,11 @@ def build_score_input(conn, order: sqlite3.Row, trigger: str, now: datetime) -> 
 
 
 def draft_request(conn, order_id: str, now: datetime, template_id: str) -> DraftRequest:
+    """Build the DraftRequest for an order's current assessment. Read-only.
+
+    Slots come from the order and customer records; `customer_recent` is the last 3 inbound texts with phone numbers
+    masked. Language defaults to 'mixed' when the order has none.
+    """
     o = repo.get_order(conn, order_id)
     cust = repo.row(conn, "SELECT display_name FROM customers WHERE customer_id=?", o["customer_id"])
     a = repo.current_assessment(conn, order_id)
@@ -59,6 +65,12 @@ def draft_request(conn, order_id: str, now: datetime, template_id: str) -> Draft
 
 
 def create_draft(conn, ids: IdGen, now: datetime, order_id: str, drafter: Drafter, template_id: str | None) -> str | None:
+    """Draft a message for the order and store it. Returns the draft id, or None if there is nothing to do.
+
+    None means an unsent draft already exists or the order was never assessed. The template is `template_id`, else the
+    one recorded on the current assessment, else T_CONFIRM. Also records the drafter's LLM usage and events. The caller
+    holds the transaction.
+    """
     if repo.unsent_draft(conn, order_id):
         return None
     a = repo.current_assessment(conn, order_id)
@@ -78,6 +90,13 @@ def create_draft(conn, ids: IdGen, now: datetime, order_id: str, drafter: Drafte
 
 def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, limit: int = 10,
                 no_reply_s: float | None = None, meter=None) -> list[str]:
+    """Score every order whose rescore is due at `now`, up to `limit`, and return the ids that were scored.
+
+    Each order is claimed atomically, scored outside a transaction, then its result, next status and events are written
+    in one transaction; a draft is created afterwards if the order is now awaiting a reply. With `no_reply_s`, orders
+    that have waited that long for a reply are first queued for a no-reply rescore. A failure in one order puts it in
+    'needs_review' (unless already terminal), logs an error event and does not re-arm it; other orders continue.
+    """
     if no_reply_s is not None:
         with tx(conn):
             fire_no_reply_timeouts(conn, now, no_reply_s)
@@ -112,7 +131,7 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
                     create_draft(conn, ids, now, oid, drafter, result.template_id)
                     conn.execute("UPDATE orders SET rescore_state='idle' WHERE order_id=?", (oid,))
             done.append(oid)
-        except Exception as e:                              # step 7: never re-armed automatically
+        except Exception as e:                              # a failed rescore is never re-armed automatically
             log.exception("rescore failed for %s", oid)
             with tx(conn):
                 conn.execute("UPDATE orders SET status=CASE WHEN status IN ('shipped','delivered','refused','cancelled')"

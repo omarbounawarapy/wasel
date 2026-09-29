@@ -13,6 +13,11 @@ TRIGGER_FOR = {"collecting": "initial", "awaiting_reply": "customer_reply", "nee
 
 @dataclass(frozen=True)
 class Stored:
+    """Result of store_inbound.
+
+    `message_id` is None for a duplicate (nothing stored, no rescore armed), in which case `order_id` is the open
+    order's id or an empty string if there is none. `created_order` is True when the message opened a new order.
+    """
     order_id: str
     message_id: str | None
     conversation_id: str

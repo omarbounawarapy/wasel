@@ -17,11 +17,18 @@ def _compile(normalized: tuple[str, ...], defused: tuple[str, ...]):
 
 
 def injection_hit_text(text_orig: str, text_llm: str, lexicon: dict) -> bool:
+    """True if `lexicon` matches one customer text.
+
+    `lexicon["normalized"]` patterns run on the normalized original with format characters removed;
+    `lexicon["defused"]` patterns run on the LLM view. Patterns are regexes from config/scoring.yaml
+    (lexicons.injection).
+    """
     norm, defu = _compile(tuple(lexicon.get("normalized", [])), tuple(lexicon.get("defused", [])))
     view = lexicon_view(text_orig)
     return any(p.search(view) for p in norm) or any(p.search(text_llm) for p in defu)
 
 
 def injection_hit(w: Window, lexicon: dict) -> bool:
+    """True if any customer text or voice line in the window matches the injection lexicon."""
     return any(injection_hit_text(m.text_orig, m.text_llm, lexicon)
                for m in w.messages if m.role == "customer" and m.kind in ("text", "voice"))

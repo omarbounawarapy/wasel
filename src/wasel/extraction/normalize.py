@@ -21,10 +21,17 @@ DEFUSE = str.maketrans({
 
 
 def mask_phones(s: str) -> str:
+    """Replace every digit of phone-number-like text (Tunisian 8-digit numbers, optional +216/00216 prefix) with •.
+    The length is unchanged.
+    """
     return PHONE.sub(lambda m: re.sub(rf"[{D}]", "•", m.group(0)), s)
 
 
 def sanitize_llm_view(s: str) -> str:
+    """The text as sent to the LLM: phones masked, brackets, newlines, tabs and invisible characters replaced.
+
+    Same length as the input (asserted), so evidence offsets found on this view are valid on the original.
+    """
     out = mask_phones(s).translate(DEFUSE)
     assert len(out) == len(s)
     return out

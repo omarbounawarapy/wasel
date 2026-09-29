@@ -15,6 +15,13 @@ from wasel.ml.textnorm import passes_exact_guard
 
 @dataclass(frozen=True)
 class Processed:
+    """An extraction after every deterministic check (see postprocess). Immutable.
+
+    `address_level_raw` is what the model said; `address_level` is the final level after the evidence check, exact
+    guard and pin override. `flags` are the surviving flags in FLAG_ORDER, `resolved_flags` the codes dropped as
+    resolved, and `verified_flags` the evidence-checked flags before dedupe and resolve (what the cache stores).
+    `warnings` are short codes for repairs and overrides.
+    """
     is_order: bool
     is_order_change: bool
     product_quote: str | None
@@ -41,6 +48,7 @@ class Processed:
 
     @property
     def flag_codes(self) -> list[str]:
+        """Codes of the surviving flags, in FLAG_ORDER."""
         return [f.code for f in self.flags]
 
     def cache_extraction(self) -> dict:
@@ -58,7 +66,7 @@ class Processed:
 
     def validated(self) -> dict:
         """The final 12-field extraction after every deterministic step (-> validated_json).
-        Quotes are original text; evidence carries msg_idx (01 CachedExtraction)."""
+        Quotes are original text; each flag carries its msg_idx."""
         return {
             "is_order": self.is_order, "is_order_change": self.is_order_change,
             "product_quote": self.product_quote, "quantity": self.quantity,
@@ -71,6 +79,15 @@ class Processed:
 
 def postprocess(ext: OrderExtraction, w: Window, *, prior_confirmation: str = "none",
                 injection_lexicon: dict | None = None) -> Processed:
+    """Verify a parsed extraction against the window and apply the deterministic rules. Pure.
+
+    Quotes (product, address, flags, tone) must be found verbatim in a customer message; unverified ones are dropped
+    and counted. Then: the tone gate; confirmation rules (needs a seller line followed by a customer line, T_ACK keeps
+    `prior_confirmation`, a 'confirmed' reply to T_ADDRESS with no address or pin after it becomes 'ambiguous'); the exact-
+    address guard; a location pin forces address level 'exact'; one flag per code, minus resolved ones. `is_order` is
+    forced true when an injection is detected or a product or address was verified, and an injection also clears the
+    confirmation.
+    """
     warn: list[str] = []
     spans: list[EvidenceSpan] = []
     k = w.k

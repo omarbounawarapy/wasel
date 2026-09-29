@@ -15,12 +15,18 @@ GRAPH = "https://graph.facebook.com"
 
 
 class SendFailed(Exception):
+    """The WhatsApp send failed. `reason` is a short code: an HTTP status (`http_400:131047` with the Graph error code
+    when there is one), an exception class name, or `bad_response`.
+    """
+
     def __init__(self, reason: str):
         super().__init__(reason)
         self.reason = reason
 
 
 class WhatsAppSender:
+    """Sends text messages through the WhatsApp Cloud (Graph) API. Blocking."""
+
     def __init__(self, token: str, phone_number_id: str, api_version: str = "v21.0", *, timeout_s: float = 10.0,
                  transport: httpx.BaseTransport | None = None, retries: int = 2, backoff_s: float = 0.5):
         self.token, self.phone_number_id = token, phone_number_id

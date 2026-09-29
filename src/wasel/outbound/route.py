@@ -12,6 +12,13 @@ from datetime import datetime, timedelta
 def route_draft(*, source: str, prefilter_passed: bool, judge_approved: bool | None, confidence: str,
                 price_tnd: float | None, auto_messages_sent: int, last_inbound_at: datetime | None,
                 now: datetime, cfg: dict, clf_decision: str | None = None) -> str:
+    """Decide what happens to a draft: 'blocked', 'needs_review' or 'auto_send'.
+
+    A failed prefilter blocks it and a static template always needs a person. An LLM rewrite auto-sends only when the
+    configured gate clears it (the classifier alone, or the judge plus the classifier), confidence is high, the price
+    is known and at or under the auto-send limit, the per-order auto-message limit is not reached, and the last
+    customer message is within 24 hours.
+    """
     if not prefilter_passed:
         return "blocked"
     if source == "static_template":

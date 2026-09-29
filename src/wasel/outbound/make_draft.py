@@ -33,6 +33,13 @@ def formality(lang: str, customer_recent: list[str]) -> str:
 
 def make_draft(req: DraftRequest, *, llm=None, meter: UsageMeter | None = None,
                config: ScoringConfig | None = None) -> DraftRecord:
+    """Build the outbound draft for an order. Pure; the worker persists the result.
+
+    The canonical text is the static template rendered with the slots. With `llm` (DRAFT_LLM=true) it first tries an
+    LLM rewrite that must pass the prefilter, the guard classifier and the LLM judge; any rewrite that doesn't, or
+    `llm` None, gives the static template. `route` on the record says whether it may auto-send, needs a person, or is
+    blocked. The customer's name never reaches the LLM: it is a placeholder that code fills in.
+    """
     config = config or default_config()
     lang = template_language(req.language, req.customer_recent[-1] if req.customer_recent else None)
     canonical = render_template(config.templates, req.template_id, lang, req.slots)

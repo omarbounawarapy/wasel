@@ -34,15 +34,21 @@ SCHEMA_PATH = ROOT / "config" / "schemas" / "order_extraction_v1.json"
 
 
 class Strict(BaseModel):
+    """Base model for extraction types: strict types, no extra fields, immutable."""
     model_config = ConfigDict(extra="forbid", strict=True, frozen=True)
 
 
 class RedFlag(Strict):
+    """A flag code with the customer quote that supports it. The quote is not verified yet."""
     evidence: str
     code: FlagCode
 
 
 class OrderExtraction(Strict):
+    """The structured reading of the conversation (order_extraction_v1), from the LLM or the rules extractor.
+
+    Quotes are only claims until postprocess finds them in the messages.
+    """
     is_order: bool
     is_order_change: bool
     product_quote: str | None
@@ -58,6 +64,7 @@ class OrderExtraction(Strict):
 
 
 def load_schema() -> dict:
+    """The order_extraction_v1 JSON schema (config/schemas), as sent to providers."""
     return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
 
 
@@ -71,6 +78,13 @@ def _s(v, max_len: int) -> str | None:
 
 
 def repair(raw: object) -> tuple[dict, list[str]]:
+    """Clean a decoded LLM answer into exactly the 12 schema fields. Returns (dict, warnings).
+
+    Fixable problems are repaired and reported as warnings: overlong quotes are truncated, duplicate or invalid flags
+    dropped, an out-of-range quantity set to None, unknown tone/confirmation/language/clarity values replaced by a
+    default. Raises ParseError when the shape is unusable: not an object, a missing field, a non-boolean is_order, or
+    an invalid address_level.
+    """
     if not isinstance(raw, dict):
         raise ParseError("not_an_object")
     missing = [k for k in FIELD_ORDER if k not in raw]
@@ -86,7 +100,7 @@ def repair(raw: object) -> tuple[dict, list[str]]:
         if not isinstance(d[k], bool):
             raise ParseError(f"type:{k}")
     if d["address_level"] not in get_args(AddressLevel):
-        raise ParseError("enum:address_level")          # feature 0: never guessed
+        raise ParseError("enum:address_level")          # address_level drives the first model feature: never guessed
 
     pq = _s(d["product_quote"], MAX_PRODUCT_CHARS)
     if d["product_quote"] is not None and pq != d["product_quote"]:
@@ -150,6 +164,11 @@ def repair(raw: object) -> tuple[dict, list[str]]:
 
 
 def parse_extraction(raw_text: str) -> tuple[OrderExtraction, list[str]]:
+    """Parse and repair the raw model text into an OrderExtraction. Returns (extraction, warnings).
+
+    Raises ParseError for invalid JSON or an unusable shape. This is the `parse` function passed to
+    ChainClient.extract.
+    """
     try:
         obj = json.loads(raw_text)
     except json.JSONDecodeError as e:

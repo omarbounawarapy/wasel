@@ -37,6 +37,10 @@ def verify_challenge(params, verify_token: str) -> str | None:
 
 @dataclass(frozen=True)
 class Inbound:
+    """One inbound customer message from a webhook payload.
+
+    `kind` is 'text' or 'location' when the content is usable, otherwise 'unsupported' (media, reactions, ...).
+    """
     wamid: str
     wa_id: str                       # sender; stored as customers.phone_e164 only, never logged
     profile_name: str | None
@@ -51,6 +55,7 @@ class Inbound:
 
 @dataclass(frozen=True)
 class Status:
+    """A delivery status update for a message we sent."""
     wamid: str
     status: str                      # sent | delivered | read | failed
     ts: datetime
@@ -58,6 +63,7 @@ class Status:
 
 @dataclass
 class Batch:
+    """What parse_payload found: messages and statuses oldest first, plus counts of entries ignored or skipped."""
     messages: list[Inbound]
     statuses: list[Status]
     ignored_foreign: int = 0         # changes for another phone_number_id

@@ -34,6 +34,9 @@ SEND, REVIEW, BLOCK = "send", "review", "block"
 
 @dataclass(frozen=True)
 class GuardResult:
+    """Classifier output for one draft. `p_unsafe` is the probability that it is unsafe; `label` is 'ok' when that is
+    below 0.5, otherwise the most likely unsafe class; `top` holds the three most likely unsafe classes.
+    """
     p_unsafe: float                  # 1 - P(ok)
     label: str                       # argmax class
     top: list[tuple[str, float]]     # 3 most likely unsafe classes, for the activity feed
@@ -41,6 +44,10 @@ class GuardResult:
 
 @dataclass(frozen=True)
 class GuardDecision:
+    """The three-way call on a draft: `decision` is 'send', 'review' or 'block'.
+
+    `reason` is plain English, shown with the draft in the owner-approval queue.
+    """
     decision: str                    # send | review | block
     p_unsafe: float
     label: str
@@ -124,6 +131,7 @@ def _model(bank_path: str = str(BANK)) -> tuple[TfidfVectorizer, LogisticRegress
 
 
 def classify(draft: str) -> GuardResult:
+    """Score one draft with the local classifier. The first call trains the models (cached for the process)."""
     vec, binary, kind = _model()
     m = vec.transform([draft])
     p = round(float(binary.predict_proba(m)[0][1]), 3)

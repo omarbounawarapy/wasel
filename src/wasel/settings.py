@@ -12,6 +12,11 @@ log = logging.getLogger("cod.settings")
 
 
 class Settings(BaseSettings):
+    """Runtime settings from environment variables and `.env` (names are case-insensitive; unknown keys are ignored).
+
+    An unknown or missing APP_MODE resolves to 'public', the most restrictive mode. Values derived from several
+    settings are properties below, so code should use those rather than combining raw values itself.
+    """
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
     app_mode: Literal["dev", "event", "public"] = "public"
@@ -41,7 +46,7 @@ class Settings(BaseSettings):
     draft_llm: bool = False
     cascade_enabled: bool = False
     gemini_enabled: bool = False
-    # caps and sandbox (R6: public 80/day)
+    # caps and sandbox (daily_cap gives the per-mode default when live_llm_daily_cap is unset)
     live_llm_daily_cap: int | None = None
     visitor_llm_cap_10min: int = 6
     visitor_llm_cap_day: int = 20
@@ -74,19 +79,25 @@ class Settings(BaseSettings):
     # ---- derived (never read from env directly)
     @property
     def is_public(self) -> bool:
+        """True in public mode (visitor sandboxes, read-only samples, no webhook, no sending)."""
         return self.app_mode == "public"
 
     @property
     def wa_send_effective(self) -> bool:
+        """Whether WhatsApp sends can really happen: not public mode, WA_SEND_ENABLED, and a token present."""
         return self.app_mode != "public" and self.wa_send_enabled and bool(self.wa_token)
 
     @property
     def webhook_mounted(self) -> bool:
+        """Whether the WhatsApp webhook is served: not public mode, WEBHOOK_ENABLED, an app secret of at least 16
+        characters and a verify token of at least 24.
+        """
         return (self.app_mode != "public" and self.webhook_enabled and len(self.wa_app_secret) >= 16
                 and len(self.wa_verify_token) >= 24)
 
     @property
     def admin_mounted(self) -> bool:
+        """Whether the admin router is served: the admin token is at least 24 characters."""
         return len(self.admin_token) >= 24
 
     @property
@@ -98,10 +109,12 @@ class Settings(BaseSettings):
 
     @property
     def seed_mode(self) -> str:
+        """Resolved seeding: SEED_ON_BOOT when set, else 'always' in public mode and 'if_empty' otherwise."""
         if self.seed_on_boot != "auto":
             return self.seed_on_boot
         return "always" if self.is_public else "if_empty"
 
     @property
     def no_reply_enabled(self) -> bool:
+        """Whether no-reply timeouts fire: everywhere except public mode."""
         return not self.is_public

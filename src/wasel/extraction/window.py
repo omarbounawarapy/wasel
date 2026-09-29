@@ -16,6 +16,11 @@ MAX_CHARS = 2000
 
 @dataclass(frozen=True)
 class WindowMsg:
+    """One line of the extraction window. `idx` is its position in Window.messages.
+
+    `text_orig` is the stored text (for a seller line, the canonical template text) and `text_llm` is its sanitized
+    view of the same length.
+    """
     idx: int                                   # position in Window.messages (used as msg_idx)
     message_id: str
     role: Literal["customer", "seller"]
@@ -27,6 +32,7 @@ class WindowMsg:
 
 @dataclass(frozen=True)
 class Window:
+    """The messages that go into one extraction: customer lines plus the latest seller line."""
     order_id: str
     messages: tuple[WindowMsg, ...]
     has_geo_pin: bool
@@ -34,14 +40,19 @@ class Window:
 
     @property
     def k(self) -> int | None:                 # index of the latest seller line
+        """Index of the latest seller line, or None if there is none."""
         s = [m.idx for m in self.messages if m.role == "seller"]
         return s[-1] if s else None
 
     @property
     def message_ids(self) -> list[str]:
+        """Message ids in window order; `msg_idx` values elsewhere index this list."""
         return [m.message_id for m in self.messages]
 
     def render(self) -> str:
+        """The user prompt: one tagged line per message ([SELLER], [CUSTOMER], [CUSTOMER:voice],
+        [CUSTOMER:location_pin]) in the format the few-shot examples use.
+        """
         lines = ["<customer_messages>"]
         for m in self.messages:
             if m.role == "seller":
@@ -60,10 +71,12 @@ class Window:
         return hashlib.sha256(f"extract|{prompt_version}|order_extraction_v1|{self.render()}".encode()).hexdigest()
 
     def replay_key(self) -> str:
+        """SHA-256 of the rendered window, the key of recorded LLM fixtures."""
         return hashlib.sha256(self.render().encode()).hexdigest()
 
     @property
     def is_empty(self) -> bool:
+        """True if there is no customer text, transcript or location pin to extract from."""
         return not any(m.role == "customer" and (m.text_orig or m.kind == "location_pin") for m in self.messages)
 
 
@@ -79,6 +92,13 @@ def _customer_line(m: WindowMessage) -> tuple[str, str] | None:
 
 
 def build_window(inp: ScoreInput, max_messages: int = MAX_MESSAGES, max_chars: int = MAX_CHARS) -> Window:
+    """Build the extraction window from a ScoreInput.
+
+    Messages are ordered by provider timestamp. Customer text, audio transcripts and location pins are kept; only the
+    latest outbound message is kept, as a [SELLER] line using the canonical template text (AI messages without one are
+    skipped). When over `max_messages` or `max_chars`, the oldest customer messages before the seller line are dropped
+    first. `has_unsupported_media` is set for images, interactive messages and untranscribed audio.
+    """
     msgs = sorted(inp.messages, key=lambda m: m.provider_ts)
     outbound = [m for m in msgs if m.direction == "outbound"
                 and not (m.author == "ai" and not m.canonical_text)]

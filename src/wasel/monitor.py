@@ -23,6 +23,7 @@ EPS = 1e-4
 
 
 def load_config(path: Path = CONFIG) -> dict:
+    """Read the monitor thresholds (config/monitor.yaml)."""
     return yaml.safe_load(path.read_text(encoding="utf-8"))
 
 
@@ -37,6 +38,7 @@ def psi(ref: dict[str, float], cur: dict[str, float]) -> float:
 
 
 def dist(values: list) -> dict[str, float]:
+    """Relative frequency of each value (None counts as "none"), rounded to 4 places; empty for no values."""
     c = Counter(v if v is not None else "none" for v in values)
     n = sum(c.values())
     return {k: round(v / n, 4) for k, v in sorted(c.items())} if n else {}
@@ -54,6 +56,11 @@ def _j(s: str | None, default):
 
 
 def current_mix(conn: sqlite3.Connection, window: int) -> tuple[dict[str, list], list[sqlite3.Row]]:
+    """The categorical mix of the latest `window` assessments, plus the joined rows.
+
+    Returns ({language, address_level, tier, path: values}, rows). Language and address level come from the validated
+    extraction.
+    """
     rows = conn.execute(
         "SELECT a.tier, a.path, a.context_json, e.validated_json, e.valid, e.dropped_quotes, e.dropped_flags, "
         "e.injection_suspected, e.provider FROM risk_assessments a "
@@ -71,6 +78,11 @@ def current_mix(conn: sqlite3.Connection, window: int) -> tuple[dict[str, list],
 
 
 def drift(mix: dict[str, list], reference: dict, features: list[str], threshold: float, min_n: int) -> list[dict]:
+    """Population stability index per feature against the reference mix.
+
+    A feature counts as `drifted` only with at least `min_n` values and a PSI of at least `threshold`; PSI is None when
+    either distribution is empty.
+    """
     out = []
     for f in features:
         cur, ref = dist(mix.get(f, [])), reference.get(f, {})
@@ -82,6 +94,10 @@ def drift(mix: dict[str, list], reference: dict, features: list[str], threshold:
 
 
 def faithfulness(rows: list[sqlite3.Row]) -> dict:
+    """Extraction-quality rates over the assessment rows: hallucinated (dropped) quotes and dropped flags per
+    extraction, invalid extraction rate, injection rate and share of assessments that used a fallback path. Rates
+    are None when there is nothing to divide by.
+    """
     ext = [r for r in rows if r["validated_json"] is not None or r["valid"] is not None]
     n = len(ext)
     return {"n": n,
@@ -94,6 +110,9 @@ def faithfulness(rows: list[sqlite3.Row]) -> dict:
 
 
 def judge_safety(conn: sqlite3.Connection, window: int) -> dict:
+    """Rates from the latest `window` drafts and their judge results: routes, sources, judge reject/ungrounded/tone-
+    fail and unavailable rates, classifier vetoes and the overreach breakdown. Counts only, no draft text.
+    """
     drafts = conn.execute("SELECT source, route, judge_json FROM outbound_drafts ORDER BY created_at DESC LIMIT ?",
                           (window,)).fetchall()
     judged = [_j(d["judge_json"], {}) for d in drafts if d["judge_json"]]
@@ -113,6 +132,9 @@ def judge_safety(conn: sqlite3.Connection, window: int) -> dict:
 
 
 def llm_ops(conn: sqlite3.Connection, window: int) -> dict:
+    """Provider-call health from the latest `window` llm_usage rows: error and refusal rates, and per role attempts,
+    tokens, latency percentiles and models, plus the in-process trace summary.
+    """
     rows = conn.execute("SELECT role, provider, model, outcome, latency_ms, tokens_in, tokens_out FROM llm_usage "
                         "ORDER BY usage_id DESC LIMIT ?", (window,)).fetchall()
     roles: dict[str, dict] = {}
@@ -138,6 +160,11 @@ def llm_ops(conn: sqlite3.Connection, window: int) -> dict:
 
 
 def report(conn: sqlite3.Connection, cfg: dict | None = None, reference: dict | None = None) -> dict:
+    """The /api/monitor payload: drift, faithfulness, safety and ops, plus `alerts`.
+
+    Alerts are drifted features and any metric above its ceiling in `cfg`, the latter only with at least `min_samples`
+    data points. Uses the committed reference mix unless `reference` is given.
+    """
     cfg = cfg or load_config()
     if reference is None:
         reference = json.loads(REFERENCE.read_text(encoding="utf-8")) if REFERENCE.exists() else {}
