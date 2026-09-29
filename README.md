@@ -5,172 +5,121 @@
 ![license](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)
 ![data](https://img.shields.io/badge/data-synthetic%20only-orange)
 
-**Tunisian cash-on-delivery orders get refused at the door. Wasel reads what the customer wrote, in Darija, Arabizi, Arabic or French, scores the order's refusal risk, explains the score using the customer's own words, and drafts the confirmation question. A person approves every message before it goes out, unless a classifier clears it and automatic sending is switched on.**
+Wasel scores the refusal risk of cash-on-delivery (COD) orders that customers place in chat, and helps a seller resolve the risky ones before a courier is sent.
 
-It is built for e-commerce sellers and delivery aggregators who pay for every wasted trip. All data in this repository is synthetic.
+In Tunisian e-commerce a large share of COD parcels are refused at the door, and every refused parcel costs the seller a wasted trip. Customers order in Tunisian Darija (Arabic script or Arabizi), French or a mix, often with an address like "near the mosque". Wasel reads the conversation, scores the order from 0 to 100, explains the score with the customer's own words, and drafts the one question that would reduce the risk (confirm, complete the address, or pay first). When the customer answers, the order is rescored and the app shows what changed.
+
+All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
 
 ![Order detail: a HIGH 87 order with the risky phrases highlighted in the customer's message, the reason for the score and the drafted confirmation message](docs/assets/screenshots/order-detail.png)
 
 ![Order queue sorted by risk, with the tier, next step, status and one-line reason of each order](docs/assets/screenshots/queue.png)
 
-## Contents
+## What it does
 
-- [Key features](#key-features)
-- [Quick start](#quick-start)
-- [How it works](#how-it-works)
-- [Use the API](#use-the-api)
-- [Project layout](#project-layout)
-- [Development](#development)
-- [Documentation](#documentation)
-- [License](#license)
-
-## Key features
-
-- **Reads messy North African chat.** It handles Arabizi (`9rib el jemaa`), Arabic-script Darija and French, including mixed messages. An LLM (Groq, with Gemini as a fallback) fills a strict 12-field JSON schema, and a rules extractor takes over when no LLM is available.
-- **Code scores, not the LLM.** A monotone XGBoost model on six features plus the rules in [`config/scoring.yaml`](config/scoring.yaml) produce the score. The tiers are fixed: low < 35 ≤ medium < 65 ≤ high. Each tier maps to an action: ship, confirm, prepay or review.
-- **Explains itself with the customer's words.** Each score comes with a reason such as `vague address ("Thala") +30 · rural delivery zone +11`. The quoted phrases are highlighted in the message, and quotes that are not in the original text are dropped.
-- **Rescores when the customer replies.** Assessments are versioned. The sample order goes from **HIGH 87 to LOW 16** once the customer gives a full address, and the app shows why.
-- **Checks every outgoing message.** Questions are drafted from templates in the customer's language. With `DRAFT_LLM=true` an LLM adapts the wording, then three layers check it: deterministic prefilter rules, a local TF-IDF classifier (no LLM, so it cannot be prompt-injected) and an LLM judge whose verdict is re-checked in code. Anything that fails falls back to the approved template, which a person sends. With the default `auto_send.gate: classifier`, a draft the classifier clears (risk under 10%) goes out automatically once `WA_AUTO_SEND` is on; drafts in the 10–50% review band always wait for a person, and automatic sending never happens in public mode.
-- **One pipeline for every channel.** The WhatsApp Cloud API webhook (signed, deduplicated), paste, CSV and simulated replies all go through the same ingestion and worker.
-- **Safe by default.** The default public mode never sends WhatsApp messages, gives each visitor a sandbox that is deleted after 2 hours, and caps LLM spend. Prompt-injection attempts are flagged for review.
-- **Runs offline.** With no API keys, the app uses recorded LLM results plus the rules path, and the whole test suite runs without keys in CI.
-
-## Quick start
-
-You need Python 3.11 and `make`. The web UI additionally needs Node 22.
-
-```bash
-git clone https://github.com/omarbounawarapy/wasel.git && cd wasel
-python3.11 -m venv .venv
-make setup      # pinned dependencies + the wasel package (editable)
-make up         # API on :8000 + Streamlit dashboard on :8501, seeded. Ctrl-C stops both
-```
-
-Open http://localhost:8501 for the dashboard and http://localhost:8000/docs for the API. No keys are needed: seeded orders use recorded LLM results, and new text goes through the rules extractor.
-
-For the Next.js web UI, run `make web` once and `make demo`; the API then serves it at http://localhost:8000/.
-
-For live extraction, copy `.env.example` to `.env` and set `GROQ_API_KEY`. `make up` reads `.env`. Gemini is optional: set `GEMINI_API_KEY`, `GEMINI_ENABLED=true` and `GEMINI_MODEL`. Every variable is documented in [`.env.example`](.env.example).
-
-| Command | What it does |
-|---|---|
-| `make up` | API + dashboard together (`APP_MODE=dev` unless set) |
-| `make run` / `make ui` | API only / dashboard only (against `API_BASE_URL`) |
-| `make web` / `make web-dev` | build the web UI / run it with hot reload on :5173 |
-| `make demo` | API in public mode, the way a hosted deployment runs |
-| `make check` | hygiene + lint + offline tests + eval gate, no keys (CI runs exactly this) |
-| `make serve` / `make tunnel` | host run + publish it on Cloudflare ([deployment guide](docs/deployment.md)) |
-| `make help` | every target |
+- **Ingests orders from several channels through one path.** A signed WhatsApp Cloud API webhook, pasted text, CSV upload and simulated replies all end in the same `store_inbound()` function and are scored by the same background worker.
+- **Extracts structured facts, then verifies them.** An LLM (Groq, optionally Gemini, or a self-hosted OpenAI-compatible server) fills a 12-field schema. Code then checks every quote against the original text, repairs or drops what does not verify, and falls back to a rules extractor when no LLM is available.
+- **Scores in code, not in the LLM.** A monotone XGBoost model on six features, plus rules from [`config/scoring.yaml`](config/scoring.yaml), produces the score, tier (`low` < 35 ≤ `medium` < 65 ≤ `high`), recommended action and a reason string. The LLM never chooses a number.
+- **Explains and rescores.** Each score carries a reason such as `vague address ("9rib el jemaa") +17`. A customer reply creates a new assessment version with a reason diff (`v1 87 → v2 16 · full address given −32 · …`).
+- **Drafts and checks outgoing messages.** Questions come from approved templates in the customer's language. With `DRAFT_LLM=true` an LLM may reword them, and the rewrite must pass a deterministic prefilter, a local text classifier and an LLM judge. A person sends drafts unless automatic sending is explicitly enabled.
+- **Runs safely by default.** With no configuration the app starts in `public` mode: no WhatsApp webhook, no sending, read-only sample orders, per-visitor sandboxes that are purged after two hours, and a daily cap on LLM calls.
+- **Measures itself.** An offline evaluation gate (`make eval`) runs on every change, a monitor endpoint reports drift and safety rates, and a failure analyzer looks for silent failures in agent conversations.
+- **Runs offline.** With no API keys the app uses recorded extractions for the sample orders and the rules extractor for new text. The whole test suite runs without keys or network.
 
 ## How it works
 
 ```mermaid
 flowchart LR
     C(("Customer")) -- "WhatsApp / paste / CSV" --> IN["store_inbound()<br/>one ingestion path"]
-    IN --> DB[("SQLite")]
-    W["worker<br/>(debounced)"] --> DB
-    W --> X["LLM extraction<br/>strict schema, quotes checked"]
+    IN --> DB[("SQLite<br/>var/app.db")]
+    W["worker<br/>(1 s tick, debounced)"] --> DB
+    W --> X["extraction<br/>LLM chain or rules,<br/>quotes verified"]
     X --> S["XGBoost + config/scoring.yaml<br/>score · tier · action · reason"]
-    S --> D["draft question<br/>template + safeguards"]
+    S --> D["draft question<br/>template + checks"]
     D --> DB
-    DB --> UI["web UI / dashboard"]
+    DB --> UI["web UI / Streamlit dashboard<br/>(HTTP only)"]
     UI --> P(("Seller<br/>approves / sends"))
-    P -. "reply" .-> C
+    P -. "message" .-> C
 ```
 
-The customer's reply arms a rescore, and the new version shows a reason diff (`v1 87 → v2 16 · full address given −32 · …`). The [architecture document](docs/architecture.md) has the full set of diagrams (request sequence, scoring pipeline, LLM chain, order state machine, modes and the offline ML pipeline), the extraction and scoring guarantees, the outbound safeguards and the known limitations.
+One FastAPI process owns the database and runs the worker. The web UI, the Streamlit dashboard and the example scripts are plain HTTP clients of `/api`. The [architecture overview](docs/architecture/overview.md) and the [order pipeline](docs/architecture/order-pipeline.md) describe each step.
 
-## Use the API
+## Technology
 
-The web UI and the dashboard are API clients, and so are the [`examples/`](examples/) scripts. With the API running:
-
-```bash
-.venv/bin/python examples/02_customer_reply_rescore.py
-```
-```
-before the reply:
-  #2601  v1  HIGH 87  action=confirm  status=awaiting_reply  path=cascade_cache
-customer replies: 'ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ...'
-after the reply:
-  #2601  v2  LOW 16  action=ship  status=ready_to_ship  path=cascade_cache
-  diff:   v1 87 → v2 16 · full address given ("Douar Ouled Ali, triq el jemaa, dar 14") −32 · ...
-```
-
-Or with `curl`:
-
-```bash
-H='X-Visitor-Id: 3f2b8c1e-4a5d-4e6f-9a7b-1c2d3e4f5a6b'   # any uuid v4; required for writes in public mode
-
-# score a pasted message (scored by the worker after a few seconds)
-curl -s -X POST localhost:8000/api/orders/ingest -H "$H" -H 'Content-Type: application/json' \
-  -d '{"kind":"paste","text":"n7eb el casque, livraison l douar ouled ali 9rib el jemaa","customer_name":"Sami"}'
-
-# the queue, riskiest first
-curl -s localhost:8000/api/orders -H "$H"
-
-# a customer reply → a new assessment version
-curl -s -X POST localhost:8000/api/conversations/<conversation_id>/simulate-reply -H "$H" \
-  -H 'Content-Type: application/json' -d '{"kind":"text","text":"Douar Ouled Ali, triq el jemaa, dar 14"}'
-```
-
-| Endpoint | Purpose |
+| Area | Stack |
 |---|---|
-| `GET /api/health` | mode, LLM path, versions, worker state |
-| `GET /api/orders` · `GET /api/orders/{id}` | queue · full detail (messages, assessments, drafts, allowed actions) |
-| `POST /api/orders/ingest` | paste or CSV |
-| `POST /api/conversations/{id}/simulate-reply` | a customer reply (text or location pin) |
-| `POST /api/orders/{id}/actions` | `approve`, `request_confirmation`, `cancel`, `ship`, `mark_delivered`, `mark_refused` |
-| `POST /api/drafts/{id}/send` | a person sends the drafted message |
-| `POST /api/orders/{id}/try` · `/rescore` | copy a sample into your sandbox · force a rescore |
-| `GET /api/events` · `GET /api/metrics/impact` | activity log · simulated impact |
-| `GET /api/monitor` · `/api/traces` · `/api/eval` · `/api/failures` | drift and safety rates · LLM call traces · evaluation report · failure analysis |
+| Backend | Python 3.11, FastAPI, Uvicorn, Pydantic v2, SQLite (WAL), `httpx` |
+| Scoring | XGBoost (monotone constraints), NumPy, pandas, scikit-learn (guard classifier), RapidFuzz (catalog matching) |
+| LLM providers | Groq (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`), Gemini (optional), any OpenAI-compatible endpoint such as vLLM |
+| Web UI | Next.js 16 static export (React 19, Tailwind 4), served by FastAPI at `/` |
+| Dashboard | Streamlit 1.64 |
+| Tooling | pytest, ruff, GitHub Actions, GNU Make |
+| Hosting | systemd unit and a Cloudflare Tunnel; there is no Docker deployment |
 
-Interactive reference: http://localhost:8000/docs (not exposed in public mode). Request and response models are in [`src/wasel/api/models.py`](src/wasel/api/models.py).
+## Quick start
 
-## Project layout
-
-```
-src/wasel/        the Python package (installed editable by `make setup`)
-  api/ db/ ingress/ llm/ extraction/ scoring/ outbound/   FastAPI routes, SQLite, WhatsApp, LLM chain, rules, scoring, drafts
-  ml/  evaluation/  failures/                             synthetic data + XGBoost training, golden-set runner, failure analyzer
-  main.py worker.py settings.py paths.py ...              app factory, background worker, settings, repo paths
-web/              Next.js web UI (static export served by the API at /)
-dashboard/        Streamlit UI; talks to the API over HTTP only (dashboard/README.md)
-config/           scoring.yaml, llm.yaml (model/prompt registry), monitor.yaml, eval.yaml (gates), prompts/, schemas/
-data/             catalog, zones, phrase banks, templates, seed/, synthetic dataset, eval/ golden sets, reports/
-models/           trained risk model and its card
-tests/            unit/ integration/ e2e/ plus fixtures/ (whatsapp/, api/, hero/) and golden/
-scripts/          data/ (warm_cache, expand_phrase_bank, dump_mocks)  ops/ (smoke, rollback, vllm, webhook)  dev/ (hygiene, wait_health)
-examples/         runnable API scripts
-deploy/           systemd unit for a Linux host
-docs/             architecture, deployment, WhatsApp, self-hosted LLM
-```
-
-## Development
+You need Python 3.11 and `make`. The web UI build also needs Node 22.
 
 ```bash
-make check      # hygiene + ruff + offline tests + eval gate; what CI runs
-make test       # offline suite only
-make eval       # golden sets gated on config/eval.yaml
-make eval-live  # the same sets through a live LLM (needs GROQ_API_KEY)
-make train      # retrain the risk model on the synthetic dataset
+git clone https://github.com/omarbounawarapy/wasel.git && cd wasel
+python3.11 -m venv .venv
+make setup      # pinned dependencies + the wasel package (editable)
+make up         # API :8000 + Streamlit dashboard :8501, freshly seeded. Ctrl-C stops both
 ```
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the workflow and house rules.
+Open http://localhost:8501 for the dashboard and http://localhost:8000/docs for the interactive API reference. No keys are needed: the sample orders use recorded extractions and new text goes through the rules extractor.
+
+For the Next.js UI, run `make web` once and then `make demo`; the API serves the UI at http://localhost:8000/.
+
+To use a live LLM, copy `.env.example` to `.env`, set `GROQ_API_KEY`, and start with `make up` or `make serve`, which export `.env` to the process. See [configuration](docs/configuration/README.md) for every setting and [getting started](docs/getting-started.md) for the full walkthrough, health checks and first-run problems.
+
+To verify your checkout:
+
+```bash
+make check      # hygiene + ruff + offline tests + evaluation gate; needs no keys, about 5 minutes
+```
+
+`make help` lists every target; [development/commands.md](docs/development/commands.md) explains each one, including which ones overwrite committed files.
 
 ## Documentation
 
-| Doc | Contents |
+| Read this | To learn |
 |---|---|
-| [docs/architecture.md](docs/architecture.md) | system diagrams, extraction and scoring guarantees, outbound safeguards, configuration, limitations |
-| [docs/deployment.md](docs/deployment.md) | hosting with `make serve` and a Cloudflare Tunnel, modes, verification, updates |
-| [docs/whatsapp.md](docs/whatsapp.md) | connecting the WhatsApp Cloud API webhook, local testing |
-| [docs/self-hosted-llm.md](docs/self-hosted-llm.md) | serving the LLM yourself with vLLM |
-| [examples/](examples/) | runnable API walkthroughs (customer reply, paste, rescore) |
-| [CHANGELOG.md](CHANGELOG.md) | notable changes |
-| [SECURITY.md](SECURITY.md) | reporting problems, safety model |
+| [Getting started](docs/getting-started.md) | install, run, health checks, first-run problems |
+| [Architecture overview](docs/architecture/overview.md) | components, boundaries, modes, limitations |
+| [Order pipeline](docs/architecture/order-pipeline.md) | what happens to a message, scoring, order states |
+| [Data model](docs/architecture/data-model.md) | entities, tables, lifecycle, invariants |
+| [Configuration](docs/configuration/README.md) | environment variables, `scoring.yaml`, LLM registry, prompts, schemas |
+| [Subsystems](docs/subsystems/) | extraction, scoring, outbound drafts, LLM layer, WhatsApp, monitoring, failure analysis |
+| [Machine learning](docs/machine-learning.md) | synthetic data, features, training, model card, retraining |
+| [Evaluation](docs/evaluation.md) | golden sets, gate thresholds, how to read a failure |
+| [API](docs/api.md) | endpoints, auth, errors, public-mode rules |
+| [Web UI and dashboard](docs/interfaces.md) | the two front ends and how they reach the backend |
+| [Data directory](docs/data.md) | every file under `data/`, what produces it, whether to edit it |
+| [Commands](docs/development/commands.md), [testing](docs/development/testing.md), [extending](docs/development/extending.md) | day-to-day development |
+| [Deployment](docs/operations/deployment.md), [self-hosted LLM](docs/operations/self-hosted-llm.md), [troubleshooting](docs/operations/troubleshooting.md) | running it for other people |
+| [Security](SECURITY.md), [Contributing](CONTRIBUTING.md), [Changelog](CHANGELOG.md) | policy and process |
 
-Model numbers come from [`data/reports/train_metrics.json`](data/reports/train_metrics.json): holdout AUC 0.784 on synthetic data. [`data/reports/impact.json`](data/reports/impact.json) is a simulation on the same synthetic holdout, not a field result.
+The full index with reading order is in [docs/README.md](docs/README.md).
+
+## Repository layout
+
+```
+src/wasel/      the Python package (installed editable by `make setup`)
+  api/ db/ ingress/ extraction/ scoring/ outbound/ llm/    HTTP layer, SQLite, webhook, verification, scoring, drafts, providers
+  ml/ evaluation/ failures/ monitor.py                     training, golden-set runner, failure analyzer, drift monitor
+  main.py worker.py settings.py state.py                   app factory, background worker, settings, order state machine
+web/            Next.js UI (static export served by the API)
+dashboard/      Streamlit UI (HTTP client only)
+config/         scoring.yaml, llm.yaml, monitor.yaml, eval.yaml, prompts/, schemas/
+data/           catalog, zones, phrase banks, templates, seed/, synthetic dataset, eval/, reports/
+models/         trained risk model and its card
+tests/          unit/ integration/ e2e/, fixtures/, golden/
+scripts/        data/ ops/ dev/ helper scripts (see docs/development/commands.md)
+examples/       runnable API scripts
+deploy/         systemd unit
+docs/           documentation
+```
 
 ## License
 
