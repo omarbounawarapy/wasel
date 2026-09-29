@@ -34,6 +34,11 @@ def _write(name: str, rows: list[dict]) -> None:
 
 
 def extraction_rows(n_per_cell: int = 15) -> list[dict]:
+    """Golden extraction rows: up to `n_per_cell` holdout orders per (language, address level) cell, at most 300 in
+    all.
+
+    The customer messages are the input and the generator's ground truth is the expected output.
+    """
     d = pd.read_csv(ROOT / "data" / "synth_v1.csv")
     h = d[d.split == "holdout"]
     rows = []
@@ -78,6 +83,9 @@ def outbound_rows() -> list[dict]:
 
 
 def injection_rows(ext: list[dict]) -> list[dict]:
+    """Injection rows: each of the four injection strings appended to 8 sampled orders from `ext` whose address level
+    is below street-level. Each row expects the injection to be flagged while the order is still scored.
+    """
     base = [r for r in ext if r["expected"]["address_level"] in ("none", "city_only", "area_or_landmark")]
     rng = random.Random(11)
     picked = rng.sample(base, 8)

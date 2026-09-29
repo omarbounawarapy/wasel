@@ -4,7 +4,7 @@ Trains the monotone XGBoost on the 8,000 train rows and writes:
   models/risk_xgb_v1.json, models/risk_xgb_v1.card.json, data/reports/train_metrics.json,
   data/reports/impact.json, tests/golden/hero.json
 Exits non-zero if a gate fails (AUC, calibration MAE, tier refusal-rate ordering).
-S and p_true are never columns of X (ML3). Imports no LLM SDK (ML10).
+S and p_true are never columns of X (the prior must not leak into the model). Imports no LLM SDK.
 """
 from __future__ import annotations
 
@@ -35,10 +35,14 @@ def _sha(p: Path) -> str:
 
 
 def tier_of(score: np.ndarray, low_max: float = 35, medium_max: float = 65) -> np.ndarray:
+    """Tier for each score: 'low' below `low_max`, 'medium' below `medium_max`, else 'high'. Vectorised."""
     return np.where(score < low_max, "low", np.where(score < medium_max, "medium", "high"))
 
 
 def reliability(p_hat: np.ndarray, y: np.ndarray, bins: int = 10) -> list[dict]:
+    """Calibration table: per equal-width probability bin, the count, mean predicted probability and observed refusal
+    rate. Empty bins are omitted.
+    """
     out = []
     edges = np.linspace(0, 1, bins + 1)
     for i in range(bins):
@@ -116,6 +120,12 @@ def write_hero_golden(out: Path) -> dict:
 
 
 def main() -> int:
+    """Train the classifier on the train split, then write the model, its card, metrics, impact report and the hero
+    golden.
+
+    Returns 1 if a gate (AUC, calibration error, tier refusal rates increasing) fails, else 0. Overwrites the committed
+    artifacts listed in the module docstring.
+    """
     import yaml
     cfg = yaml.safe_load((ROOT / "config/scoring.yaml").read_text(encoding="utf-8"))
     csv_path = ROOT / "data" / "synth_v1.csv"

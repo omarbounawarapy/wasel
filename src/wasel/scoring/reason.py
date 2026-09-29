@@ -17,6 +17,9 @@ def points(phi: dict[str, float], p: float, p0: float, lin_below: float = 0.05) 
 
 
 def q(text: str | None, max_chars: int = 40) -> str:
+    """A customer quote for a reason string: truncated to `max_chars` with an ellipsis and wrapped in FSI/PDI isolates.
+    Empty for empty or None text.
+    """
     if not text:
         return ""
     t = text if len(text) <= max_chars else text[: max_chars - 1] + "…"
@@ -29,6 +32,11 @@ def _pts(x: float) -> str:
 
 
 def driver_label(feature: str, pts: float, ctx: dict) -> str:
+    """Plain-language label for one feature's contribution, e.g. "vague address (...)".
+
+    `pts` is the feature's points (its sign picks the wording) and `ctx` carries the quotes and values gathered by
+    score_order.
+    """
     up = pts > 0
     if feature == "address_specificity":
         quote = ctx.get("address_quote")
@@ -56,6 +64,11 @@ def driver_label(feature: str, pts: float, ctx: dict) -> str:
 
 
 def select_drivers(pts: dict[str, float], tier: str, cfg: dict) -> list[str]:
+    """Which features to name in the reason.
+
+    For medium and high tiers: the largest positive contributors of at least `min_pts`, up to `max_drivers`. For low:
+    up to two of the most negative. The zone is added whenever its points reach the configured threshold.
+    """
     mn, mx = cfg["min_pts"], cfg["max_drivers"]
     if tier in ("medium", "high"):
         chosen = [k for k, v in sorted(pts.items(), key=lambda kv: -kv[1]) if v >= mn][:mx]
@@ -67,6 +80,7 @@ def select_drivers(pts: dict[str, float], tier: str, cfg: dict) -> list[str]:
 
 
 def adjustment_text(adj) -> str:
+    """Reason wording for a score adjustment, with its size in points."""
     if adj.rule == "confirmed":
         return f"customer confirmed ×0.6 (cold-start rule) {_pts(adj.after - adj.before)}"
     if adj.rule == "no_reply_timeout":
@@ -76,6 +90,11 @@ def adjustment_text(adj) -> str:
 
 def build_reason(*, tier: str, final: int, p0: float, pts: dict[str, float], ctx: dict,
                  adjustments: list, cfg: dict) -> tuple[str, str]:
+    """Build the full reason and a short version (at most 90 characters) for an assessment.
+
+    Format: tier and final score, base rate, the selected drivers with their points, then applied adjustments. The
+    short form keeps as many leading parts as fit. Deterministic; no LLM writes it.
+    """
     parts = [f"{TIER_WORD[tier]} {final}", f"base {round(100 * p0)}"]
     drivers = [f"{driver_label(k, pts[k], ctx)} {_pts(pts[k])}" for k in select_drivers(pts, tier, cfg)]
     adj = [adjustment_text(a) for a in adjustments if a.after != a.before or a.rule in ("declined",)]
@@ -92,6 +111,11 @@ def build_reason(*, tier: str, final: int, p0: float, pts: dict[str, float], ctx
 def build_diff(*, v_prev: int, final_prev: int, v: int, final: int, pts_prev: dict[str, float],
                pts: dict[str, float], feats_prev: dict, feats: dict, ctx: dict, prev_codes: list[str],
                codes: list[str], resolved: list[str], adjustments: list, cfg: dict) -> str:
+    """One-line explanation of what changed since the previous version.
+
+    Lists features whose points moved by at least `diff_min_delta_pts`, largest change first, then adjustments, after a
+    "v<prev> <score> -> v<new> <score>" header. Features missing from either points dict are skipped.
+    """
     items = []
     for k in FEATURES:
         if k not in pts or k not in pts_prev:

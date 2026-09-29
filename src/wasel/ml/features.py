@@ -44,6 +44,12 @@ def smoothed_rate(refusals: int, completed: int) -> float:
 
 
 def S(f: dict) -> float:
+    """The prior's risk index for one feature dict: 0-100, higher means riskier.
+
+    `f` needs the FEATURES keys. Weights and scales come from PRIOR; price is scaled on a log axis between `price_lo`
+    and `price_hi`, and the flag count is capped at `flags_cap`. The generator uses it to draw labels, and score_prior
+    uses it as the fallback model.
+    """
     p = PRIOR
     price = max(float(f["price_tnd"]), 1e-9)
     price_c = min(1.0, max(0.0, (math.log(price) - math.log(p["price_lo"]))
@@ -57,6 +63,7 @@ def S(f: dict) -> float:
 
 
 def p_true(s: float) -> float:
+    """Refusal probability the prior assigns to index `s`: a logistic curve centred on S_mid with width S_scale."""
     return 1.0 / (1.0 + math.exp(-(s - PRIOR["S_mid"]) / PRIOR["S_scale"]))
 
 
@@ -90,6 +97,11 @@ def zone_from_text(texts: list[str], zones: dict) -> tuple[str, str] | None:
 # ---------------------------------------------------------------- flags and tone
 @dataclass(frozen=True)
 class VerifiedFlag:
+    """A red flag whose quote was checked against the original message text.
+
+    `msg_idx` is the position of the message in the extraction window, `start`/`end` are offsets in that message's
+    original text (end exclusive), and `quote` is the text between them.
+    """
     code: str
     msg_idx: int
     start: int
@@ -140,7 +152,10 @@ def tone_gate(tone: str, tone_span: tuple[int, int, int] | None,
 # ---------------------------------------------------------------- vector
 def build_features(*, address_level: str, flag_count: int, tone: str, price_tnd: float | None,
                    zone: str | None, refusals: int, completed: int) -> tuple[dict, list[str]]:
-    """Returns (features in FEATURES order, imputed names). Never returns NaN (ML9)."""
+    """Returns (features in FEATURES order, imputed names).
+
+    Never returns NaN: a missing price or zone is replaced by its SERVE_DEFAULTS value and named in the imputed list.
+    """
     imputed: list[str] = []
     f = {
         "address_specificity": LEVEL_TO_SPEC[address_level],

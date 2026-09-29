@@ -49,6 +49,7 @@ def paced(rows, pace_s: float):
 
 
 def score_input(texts: list[str], price: float) -> ScoreInput:
+    """ScoreInput for one order made of customer `texts`, with a seller-entered `price`, a new customer and no prior."""
     msgs = [WindowMessage(f"m{i}", "inbound", "customer", "paste", "text", t, None, None, None, False,
                           T0.replace(second=i), True) for i, t in enumerate(texts)]
     return ScoreInput("eval", None, "paste", "initial", msgs, StructuredFields(price_tnd=price),
@@ -56,6 +57,11 @@ def score_input(texts: list[str], price: float) -> ScoreInput:
 
 
 def run_extraction(rows, llm) -> dict:
+    """Score every golden extraction row and compare with the expected labels. `llm` None means the rules extractor.
+
+    Returns order detection, address-level accuracy (exact, and within one level), language accuracy, flag
+    precision/recall/F1 (micro-averaged), quotes dropped by the evidence check per order, and the count of paths taken.
+    """
     n = exact = near = lang_ok = flag_tp = flag_fp = flag_fn = order_ok = hallucinated = 0
     paths: dict[str, int] = {}
     for r in rows:
@@ -135,6 +141,9 @@ def run_outbound(rows, llm) -> dict:
 
 
 def run_injection(rows, llm) -> dict:
+    """Score orders that have an injection appended. Returns the rates of orders flagged as injection, still scored,
+    and whose address was not promoted to 'exact'.
+    """
     flagged = scored = not_exact = n = 0
     for r in rows:
         n += 1
@@ -238,6 +247,10 @@ def _usage_delta(before: dict, after: dict) -> dict:
 
 
 def gate(report: dict, thresholds: dict) -> list[str]:
+    """The gated metrics that fall below their threshold, as "task.metric = value < floor" strings; empty means pass.
+
+    Metrics missing from the report are not gated.
+    """
     fails = []
     for task, metrics in thresholds.items():
         for metric, floor in metrics.items():
@@ -248,6 +261,11 @@ def gate(report: dict, thresholds: dict) -> list[str]:
 
 
 def main(argv=None) -> int:
+    """CLI entry point. Runs all golden sets, applies the thresholds in config/eval.yaml and writes the report.
+
+    Returns 0 if the gate passes, 1 if any gated metric is below its threshold, 2 if --live has no configured provider.
+    Overwrites data/reports/eval.json (or eval_live.json with --live).
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--live", action="store_true")
     ap.add_argument("--limit", type=int)

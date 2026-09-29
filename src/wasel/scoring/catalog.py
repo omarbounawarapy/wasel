@@ -7,6 +7,12 @@ from wasel.ml.textnorm import normalize
 
 
 def match_product(text: str | None, catalog: dict, min_score: int = 80) -> tuple[dict | None, float]:
+    """Best catalog match for a product quote or seller-entered name, as (product, score).
+
+    Compares against the product name and its aliases in every language, after normalization; an exact match scores
+    100, otherwise RapidFuzz token_set_ratio. Returns (None, best_score) below `min_score`, and (None, 0.0) for empty
+    text.
+    """
     if not text:
         return None, 0.0
     q = normalize(text)

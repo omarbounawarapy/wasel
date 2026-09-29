@@ -17,6 +17,12 @@ from wasel.paths import ROOT
 
 @dataclass(frozen=True)
 class ScoringConfig:
+    """Immutable bundle of everything scoring reads from config and data files.
+
+    `raw` is the parsed config/scoring.yaml; `config_hash` is the SHA-256 over scoring.yaml, zones.yaml and
+    catalog.yaml (phrase banks and outbound templates are not part of it). `root` is the repository root the paths
+    resolve against. `config[key]` is shorthand for `config.raw[key]`.
+    """
     raw: dict
     zones: dict
     catalog: dict
@@ -27,6 +33,7 @@ class ScoringConfig:
 
     @property
     def short_hash(self) -> str:
+        """First 8 hex characters of `config_hash`; this is what assessments and /api/health show."""
         return self.config_hash[:8]
 
     def __getitem__(self, key):
@@ -38,6 +45,12 @@ def _read(p: Path) -> bytes:
 
 
 def load_config(scoring_path: str | Path | None = None, root: Path = ROOT) -> ScoringConfig:
+    """Read and validate the scoring config.
+
+    The scoring file is `scoring_path`, else the SCORING_CONFIG environment variable, else config/scoring.yaml
+    (relative paths resolve against `root`). Raises ValueError if a required section is missing or tiers.low_max is not
+    below tiers.medium_max, and FileNotFoundError if a data file is missing.
+    """
     scoring_path = Path(scoring_path or os.environ.get("SCORING_CONFIG") or root / "config/scoring.yaml")
     if not scoring_path.is_absolute():
         scoring_path = root / scoring_path
@@ -58,4 +71,5 @@ def load_config(scoring_path: str | Path | None = None, root: Path = ROOT) -> Sc
 
 @lru_cache(maxsize=1)
 def default_config() -> ScoringConfig:
+    """The default config, loaded once per process."""
     return load_config()

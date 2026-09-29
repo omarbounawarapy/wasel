@@ -7,7 +7,7 @@ are synthetic assumptions, not market facts. The renderer never sees S, p_true o
 the label never touches text, and text never touches the label.
 
 A rerun with the same seed and banks is byte-identical. A bank edit changes only the text columns
-(text, messages_json, gt_evidence_json). This module imports no LLM SDK (ML10).
+(text, messages_json, gt_evidence_json). This module imports no LLM SDK.
 """
 from __future__ import annotations
 
@@ -56,6 +56,7 @@ TEXT_COLUMNS = ("messages_json", "text", "gt_evidence_json")
 
 
 def load_inputs(root: Path = ROOT) -> tuple[dict, dict, dict]:
+    """The phrase banks, product catalog and zone gazetteer (parsed YAML) under `root`."""
     def y(p):
         return yaml.safe_load((root / p).read_text(encoding="utf-8"))
     return y("data/phrase_banks.yaml"), y("data/catalog.yaml"), y("data/zones.yaml")
@@ -68,6 +69,12 @@ def _choice(rng, options: dict):
 
 # ---------------------------------------------------------------- latents + label (stream "rows")
 def sample_latents(rng, catalog: dict, zones: dict, n: int) -> list[dict]:
+    """Draw `n` synthetic orders' hidden attributes and their refusal label.
+
+    Each row holds zone, address level, product, customer history, tone, ground-truth flags, the prior's S and p_true,
+    and `refused`, drawn as a Bernoulli(p_true). Keys starting with '_' are helpers for text rendering and are not
+    written to the CSV. The label depends only on the features, never on text.
+    """
     products = catalog["products"]
     prod_p = {p["product_id"]: p["weight"] for p in products}
     by_id = {p["product_id"]: p for p in products}
@@ -171,6 +178,12 @@ def _pick(rng, cell: dict, pool: str) -> str:
 
 
 def render_text(row: dict, banks: dict, text_seed: int) -> dict:
+    """Write the customer messages for one row from the phrase banks.
+
+    Deterministic for a given `text_seed` and row id. Phrases come from the row's `text_pool` ('train' or 'eval_only').
+    Returns `messages_json`, the joined `text`, and `gt_evidence_json` with the exact phrases planted for the address,
+    flags and tone. It never reads S, p_true or the label.
+    """
     rng = np.random.default_rng([text_seed, row["row_id"]])
     pool = row["text_pool"]
 
@@ -256,6 +269,12 @@ def _slot_variants(phrase: str, lang: str, banks: dict, places: list[str]) -> li
 
 
 def lint_banks(banks: dict, zones: dict, prompt_text: str = "") -> list[str]:
+    """Check the phrase banks; returns error strings (empty = clean).
+
+    Covers train/eval_only split sizes, label words in phrases, one phrase under two labels, 'exact' phrases that fail
+    (and 'street_and_landmark' phrases that pass) the exact guard, eval-only phrases leaking into the prompts in
+    `prompt_text`, and overlap between the uncertain-tone and flag phrases.
+    """
     errors = []
     places = [e["name"] for e in zones["entries"]]
     places_ar = [e.get("name_ar", e["name"]) for e in zones["entries"]]
@@ -298,6 +317,11 @@ def lint_banks(banks: dict, zones: dict, prompt_text: str = "") -> list[str]:
 
 
 def lint_rows(rows: list[dict]) -> list[str]:
+    """Check generated rows; returns error strings (empty = clean).
+
+    Every planted ground-truth phrase must be findable in its row's text, and the overall refusal base rate must be
+    within [0.25, 0.35].
+    """
     errors = []
     for r in rows:                                                                              # lint 1
         gt = r["gt_evidence_json"]
@@ -315,6 +339,11 @@ def lint_rows(rows: list[dict]) -> list[str]:
 
 # ---------------------------------------------------------------- driver
 def generate(n: int = 10000, seed: int = DEFAULT_SEED, root: Path = ROOT) -> tuple[list[dict], dict]:
+    """Generate `n` rows with `seed` and return (rows, inputs), where inputs holds the banks, catalog and zones used.
+
+    Deterministic. Random streams for rows, split, eval subset and text are independent, so changing a phrase bank
+    changes only the text columns.
+    """
     banks, catalog, zones = load_inputs(root)
     ss = np.random.SeedSequence(seed)
     s_rows, s_split, s_eval, s_text = ss.spawn(4)
@@ -338,6 +367,7 @@ def _fmt(v):
 
 
 def to_csv(rows: list[dict]) -> str:
+    """Serialize rows to CSV text in COLUMNS order, with fixed float rounding and JSON for list and dict cells."""
     buf = io.StringIO()
     w = csv.writer(buf, lineterminator="\n")
     w.writerow(COLUMNS)
@@ -347,10 +377,12 @@ def to_csv(rows: list[dict]) -> str:
 
 
 def sha256_file(p: Path) -> str:
+    """Hex SHA-256 of a file's bytes."""
     return hashlib.sha256(p.read_bytes()).hexdigest()
 
 
 def git_sha(root: Path = ROOT) -> str:
+    """The current git commit under `root`, or 'unknown' if it can't be read."""
     try:
         return subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     except Exception:
@@ -358,6 +390,10 @@ def git_sha(root: Path = ROOT) -> str:
 
 
 def main(argv=None) -> int:
+    """CLI entry point. Generates the dataset, runs the lints, then writes the CSV and its `.meta.json`.
+
+    Returns 1 without writing anything if a lint fails.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--seed", type=int, default=DEFAULT_SEED, help="random seed")
     ap.add_argument("--n", type=int, default=10000, help="number of synthetic orders")

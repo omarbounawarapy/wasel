@@ -71,6 +71,12 @@ def _from_cache(c: CachedExtraction) -> OrderExtraction:
 
 
 def _extract(inp: ScoreInput, w: Window, input_hash: str, *, cache, llm, meter, config: ScoringConfig) -> _Extracted:
+    """The extraction for a window, with where it came from.
+
+    Order of preference: a cache hit (reported as path 'cascade_cache', with the original path kept in `path_origin`),
+    then the LLM chain, then the rules extractor (path 'rules', which also records the failed chain attempts and any
+    cap).
+    """
     if cache is not None and (hit := cache.get(input_hash)) is not None:
         return _Extracted(_from_cache(hit), "cascade_cache", hit.provider, hit.model, hit.origin_path, True,
                           [], [], None, None, 0, 0, 0, None, [])
@@ -98,6 +104,9 @@ def _tier(final: float, t: dict) -> str:
 
 
 def _action(tier: str, price: float, confirmation: str, path: str, cfg: dict) -> str:
+    """Recommended action: 'cancelled' if the customer declined, 'review' on the rules path, 'ship' for low tier,
+    'prepay' for high tier at or above the prepay price, else 'confirm'.
+    """
     if confirmation == "declined":
         return "cancelled"
     if path == "rules":
@@ -110,6 +119,11 @@ def _action(tier: str, price: float, confirmation: str, path: str, cfg: dict) ->
 
 
 def _adjust(model_score: float, confirmation: str, trigger: str, cfg: dict) -> tuple[int, list[Adjustment]]:
+    """Apply the reply adjustments to the model score. Returns (final score, adjustments).
+
+    'confirmed' multiplies the score; 'declined', 'reschedule' and 'ambiguous' are recorded but leave it unchanged; a
+    no-reply timeout adds points. The result is clipped to the configured range and rounded to an int.
+    """
     ra = cfg["reply_adjustments"]
     lo, hi = cfg["final_score"]["clip"]
     adjs: list[Adjustment] = []
@@ -134,6 +148,10 @@ def _adjust(model_score: float, confirmation: str, trigger: str, cfg: dict) -> t
 
 def _confidence(*, path: str, path_origin: str, proc: Processed | None, product_matched: bool,
                 imputed: list[str], final: int, cap: str | None, cfg: dict) -> tuple[str, list[str]]:
+    """('high' | 'low', reasons). Confidence is low if any reason applies: rules path, not the primary model, LLM cap
+    reached, unclear clarity, too many dropped flags, suspected injection, product not in the catalog, imputed
+    inputs other than price, or a score near a tier boundary.
+    """
     reasons: list[str] = []
     if path == "rules":
         reasons.append("rules_path")
@@ -165,6 +183,17 @@ def _record_spans(proc: Processed) -> list[EvidenceSpan]:
 
 def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: UsageMeter | None,
                 config: ScoringConfig | None = None) -> ScoreResult:
+    """Score one order from its messages. Pure: no database, no clock, no network beyond `llm`.
+
+    Steps: build the window, look up `cache`, otherwise call `llm` (gated by `meter`), otherwise use the rules
+    extractor; then validate the extraction, resolve product, price and zone, run the model, apply reply adjustments,
+    and produce tier, action, confidence and the reasons. `cache`, `llm` and `meter` may each be None (no cache; rules
+    only; no caps).
+
+    A `no_reply_timeout` rescore skips extraction and reuses `inp.prior`. Provider failures never raise: the result
+    falls back to path 'rules'. Side effect: binds the order context on the trace context variable for the current
+    context.
+    """
     config = config or default_config()
     cfg = config.raw
     trace.bind(order_id=inp.order_id, sandbox_id=inp.sandbox_id, trigger=inp.trigger)
@@ -321,5 +350,6 @@ def _no_reply(inp: ScoreInput, config: ScoringConfig) -> ScoreResult:
 
 def make_scorer(*, cache: ExtractionCache | None, llm, meter: UsageMeter | None,
                 config: ScoringConfig | None = None):
+    """A Scorer bound to these dependencies: `make_scorer(...)(inp)` is score_order(inp, ...)."""
     return functools.partial(score_order, cache=cache, llm=llm, meter=meter, config=config)
 

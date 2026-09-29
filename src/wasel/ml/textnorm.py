@@ -36,6 +36,9 @@ def normalize_with_map(s: str) -> tuple[str, list[int]]:
 
 
 def normalize(s: str) -> str:
+    """Normalized form of `s` for matching: NFKC, casefolded, Arabic diacritics and tatweel removed, alef, ya and ta
+    marbuta variants unified, Arabic-Indic digits turned into ASCII, whitespace collapsed, stripped.
+    """
     return normalize_with_map(s)[0].strip()
 
 
@@ -85,15 +88,22 @@ def tokens(text: str) -> list[str]:
 
 
 def has_token(text: str, vocab) -> bool:
+    """True if any normalized token of `text` is in `vocab` (compared after normalizing the vocabulary too)."""
     vocab = {normalize(v) for v in vocab}
     return any(t in vocab for t in tokens(text))
 
 
 def has_building_token(text: str) -> bool:
+    """True if the text has a building word (apartment, floor, bloc, ...) or a "dar <number>" house number."""
     return any(t in BUILDING_TOKENS for t in tokens(text)) or bool(DAR_N_RE.search(normalize(text)))
 
 
 def passes_exact_guard(quotes: list[str]) -> bool:
+    """The check behind an 'exact' address level: at least one quote has a standalone 1-3 digit number or a building
+    word.
+
+    A model-claimed exact address that fails this is not trusted as exact.
+    """
     return any(standalone_numbers(q) or has_building_token(q) for q in quotes)
 
 

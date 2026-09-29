@@ -1,5 +1,6 @@
 """The hero scenario as ScoreInputs, shared by src/wasel/ml/train.py (writes tests/golden/hero.json) and
-the E1 golden test. The frozen extractions are served through the extraction cache, so no LLM runs."""
+the hero golden test (tests/e2e/test_hero.py). The frozen extractions are served through the extraction cache,
+so no LLM runs."""
 from __future__ import annotations
 
 import json
@@ -29,6 +30,11 @@ def _load(name: str) -> dict:
 
 
 def hero_messages(upto: int, templates: dict) -> list[WindowMessage]:
+    """The hero conversation as scorer messages, up to and including script message `upto`.
+
+    Seller lines become outbound 'ai' messages with the canonical template rendered in Arabizi; customer lines become
+    inbound pasted text. Timestamps are T0 plus 10 s per message index.
+    """
     script = _load("script")
     out = []
     for m in script["messages"]:
@@ -48,6 +54,10 @@ def hero_messages(upto: int, templates: dict) -> list[WindowMessage]:
 
 
 def hero_input(version: str, templates: dict, prior: PriorAssessment | None = None) -> ScoreInput:
+    """ScoreInput for the hero scenario: 'v1' is the first score (messages up to 2, trigger initial); any other value
+    is the rescore after the customer's reply (messages up to 4, trigger customer_reply). Pass the v1 result as
+    `prior` for the rescore.
+    """
     upto = 2 if version == "v1" else 4
     script = _load("script")
     return ScoreInput(
@@ -60,9 +70,11 @@ def hero_input(version: str, templates: dict, prior: PriorAssessment | None = No
 
 @dataclass
 class DictCache:
+    """Dict-backed ExtractionCache for tests, keyed by input hash."""
     entries: dict
 
     def get(self, input_hash: str) -> CachedExtraction | None:
+        """The entry for `input_hash`, or None."""
         return self.entries.get(input_hash)
 
 
@@ -73,6 +85,10 @@ def cache_for(version: str, inp: ScoreInput) -> DictCache:
 
 
 def prior_from(result: ScoreResult, version: int = 1) -> PriorAssessment:
+    """PriorAssessment built from a score result, as the worker would store and reload it.
+
+    `created_at` is T0 and the extraction id is a fixed placeholder. `version` is the version number to claim.
+    """
     a = result.assessment
     return PriorAssessment(version=version, created_at=T0, extraction_id="ext_v1",
                            extraction=result.extraction.validated if result.extraction else None,

@@ -16,6 +16,10 @@ from wasel.ml.features import FEATURES
 
 @dataclass(frozen=True)
 class ModelOutput:
+    """Model prediction for one order. `p` is the refusal probability, `model_score` is 100 x p rounded to one decimal,
+    and `phi` are per-feature contributions in log-odds (with `bias` the base term) that reason.points turns into
+    score points.
+    """
     model_score: float                 # round(100·p, 1)
     p: float
     p0: float                          # sigmoid(bias): the base rate the points are measured from
@@ -25,11 +29,16 @@ class ModelOutput:
 
 @dataclass(frozen=True)
 class LoadedModel:
+    """The XGBoost booster with its version string. Obtained from load_model."""
     booster: xgb.Booster
     classifier_version: str
     path: Path
 
     def predict(self, features: dict) -> ModelOutput:
+        """Score one feature dict (all FEATURES keys, no NaN) and return its ModelOutput.
+
+        A single booster call gives both the probability and the per-feature contributions.
+        """
         x = np.array([[float(features[k]) for k in FEATURES]], dtype=float)
         assert not np.isnan(x).any(), "NaN must never reach the booster (ML9)"
         c = self.booster.predict(xgb.DMatrix(x, feature_names=list(FEATURES)), pred_contribs=True)[0]
@@ -41,11 +50,13 @@ class LoadedModel:
 
 
 def classifier_version_of(path: Path) -> str:
+    """Version string for a model file: 'xgb_v1-' plus the first 8 hex characters of its SHA-256."""
     return "xgb_v1-" + hashlib.sha256(path.read_bytes()).hexdigest()[:8]
 
 
 @lru_cache(maxsize=4)
 def load_model(path: str) -> LoadedModel | None:
+    """Load the booster at `path`, or None if the file doesn't exist. Results are cached per path."""
     p = Path(path)
     if not p.exists():
         return None

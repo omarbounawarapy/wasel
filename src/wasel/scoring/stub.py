@@ -1,6 +1,6 @@
 """Stub scorer with score_order's signature: is_order, path 'llm', tier high, final 78, one
 vague_location span on the first customer message (start 0, end min(12, len)), template T_ADDRESS.
-Test C2 inserts its result into a fresh DB on day one."""
+The persistence tests insert its result into a fresh DB."""
 from __future__ import annotations
 
 from wasel.contracts import (
@@ -16,6 +16,10 @@ from wasel.ml.features import FEATURES
 
 
 def score_order(inp: ScoreInput, *, cache=None, llm=None, meter=None, config=None) -> ScoreResult:
+    """Fixed, deterministic result with score_order's signature. Ignores `cache`, `llm`, `meter` and `config`.
+
+    Raises StopIteration if the input has no inbound customer text.
+    """
     first = next(m for m in inp.messages if m.direction == "inbound" and m.text)
     end = min(12, len(first.text))
     span = EvidenceSpan(first.message_id, 0, end, "red_flag", "vague_location", first.text[:end])
