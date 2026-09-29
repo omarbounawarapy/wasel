@@ -32,9 +32,9 @@ def probe_row(r: dict, llm) -> dict:
 
 def main() -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--threads", type=int, default=8)
-    ap.add_argument("--sample", type=int, default=40)
-    ap.add_argument("--set", default="extraction.jsonl")
+    ap.add_argument("--threads", type=int, default=8, help="concurrent requests")
+    ap.add_argument("--sample", type=int, default=40, help="run about this many cases, taken evenly across the set")
+    ap.add_argument("--set", default="extraction.jsonl", help="golden set file name under data/eval/golden/")
     a = ap.parse_args()
 
     llm = build_client("live")

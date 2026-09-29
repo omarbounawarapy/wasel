@@ -55,8 +55,9 @@ class _HandCache(SqliteExtractionCache):
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--live", action="store_true")
-    ap.add_argument("--out", default=str(CACHE_FILE))
+    ap.add_argument("--live", action="store_true",
+                    help="record real outputs from the configured LLM chain instead of data/seed/hand_extractions.json")
+    ap.add_argument("--out", default=str(CACHE_FILE), help="cache file to write (default: data/seed/extraction_cache.jsonl)")
     a = ap.parse_args(argv)
     cfg = default_config()
     hand = json.loads((ROOT / "data/seed/hand_extractions.json").read_text(encoding="utf-8"))

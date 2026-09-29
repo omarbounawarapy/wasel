@@ -27,6 +27,7 @@ def _nocache(model) -> JSONResponse:
 
 @router.get("/health")
 def health(request: Request):
+    """Mode, LLM path, versions and worker state."""
     st = _s(request)
     return _nocache(st.health(st.conn()))
 
@@ -34,6 +35,7 @@ def health(request: Request):
 @router.get("/orders")
 def list_orders(request: Request, tier: str | None = None, status: str | None = None,
                 include_collecting: bool = False, limit: int = 100, vid: str | None = Depends(visitor_id)):
+    """The order queue, riskiest first; filter by tier or status. Capped at 500 rows."""
     st = _s(request)
     return _nocache(P.list_orders(st.conn(), st.settings, vid, tier=tier, status=status,
                                   include_collecting=include_collecting, limit=min(limit, 500)))
@@ -41,6 +43,7 @@ def list_orders(request: Request, tier: str | None = None, status: str | None = 
 
 @router.get("/orders/{order_id}")
 def get_order(order_id: str, request: Request, vid: str | None = Depends(visitor_id)):
+    """One order in full: messages, assessments, drafts and the actions allowed now."""
     st = _s(request)
     o = commands.visible_order(st.conn(), order_id, st.settings, vid)
     return _nocache(P.order_detail(st.conn(), st.settings, o))
@@ -48,6 +51,7 @@ def get_order(order_id: str, request: Request, vid: str | None = Depends(visitor
 
 @router.post("/orders/ingest", status_code=202)
 def ingest(body: M.PasteIngest | M.CsvIngest, request: Request, vid: str | None = Depends(visitor_id)):
+    """Queue a pasted message or a CSV for scoring; the worker scores it after the debounce (`rescore_eta_s`)."""
     st = _s(request)
     vid = require_visitor(request, vid)
     conn, now = st.conn(), st.clock.now()
@@ -64,6 +68,7 @@ def ingest(body: M.PasteIngest | M.CsvIngest, request: Request, vid: str | None 
 
 @router.post("/orders/{order_id}/try", status_code=201)
 def try_order(order_id: str, request: Request, vid: str | None = Depends(visitor_id)):
+    """Copy a seeded sample order into the visitor's sandbox and score it at once."""
     st = _s(request)
     if vid is None:
         raise ApiError(400, "VISITOR_ID_REQUIRED", "X-Visitor-Id (uuid v4) is required",
@@ -77,6 +82,7 @@ def try_order(order_id: str, request: Request, vid: str | None = Depends(visitor
 @router.post("/conversations/{conversation_id}/simulate-reply", status_code=202)
 def simulate_reply(conversation_id: str, body: M.SimulateText | M.SimulateLocation, request: Request,
                    vid: str | None = Depends(visitor_id)):
+    """Add a simulated customer reply (text or location pin); this arms a rescore."""
     st = _s(request)
     vid = require_visitor(request, vid)
     kw = {"text": body.text} if isinstance(body, M.SimulateText) else {"lat": body.lat, "lng": body.lng}
@@ -86,6 +92,7 @@ def simulate_reply(conversation_id: str, body: M.SimulateText | M.SimulateLocati
 
 @router.post("/orders/{order_id}/rescore", status_code=202)
 def rescore(order_id: str, request: Request, vid: str | None = Depends(visitor_id)):
+    """Force a rescore of the order."""
     st = _s(request)
     vid = require_visitor(request, vid)
     return M.RescoreResponse(**commands.rescore(st.conn(), st.clock.now(), st.settings, vid, order_id))
@@ -93,6 +100,7 @@ def rescore(order_id: str, request: Request, vid: str | None = Depends(visitor_i
 
 @router.post("/orders/{order_id}/actions")
 def action(order_id: str, body: M.SellerActionRequest, request: Request, vid: str | None = Depends(visitor_id)):
+    """Apply a seller action (approve, request_confirmation, cancel, ship, mark_delivered, mark_refused)."""
     st = _s(request)
     vid = require_visitor(request, vid)
     conn = st.conn()
@@ -103,6 +111,7 @@ def action(order_id: str, body: M.SellerActionRequest, request: Request, vid: st
 
 @router.post("/drafts/{draft_id}/send")
 def send_draft(draft_id: str, request: Request, vid: str | None = Depends(visitor_id)):
+    """Send a drafted message. A person triggers this; whether it goes out depends on the mode and WhatsApp settings."""
     st = _s(request)
     vid = require_visitor(request, vid)
     return M.SendDraftResponse(**commands.send_draft(st.conn(), st.ids, st.clock.now(), st.settings, vid, draft_id,
@@ -112,12 +121,14 @@ def send_draft(draft_id: str, request: Request, vid: str | None = Depends(visito
 @router.get("/events")
 def events(request: Request, after: int = 0, order_id: str | None = None, limit: int = 50,
            vid: str | None = Depends(visitor_id)):
+    """The activity log, optionally after an event id or for one order. Capped at 200 rows."""
     st = _s(request)
     return _nocache(P.list_events(st.conn(), st.settings, vid, after=after, order_id=order_id, limit=min(limit, 200)))
 
 
 @router.get("/metrics/impact")
 def impact(request: Request):
+    """Simulated impact on the synthetic holdout, read from data/reports/impact.json. Not a field result."""
     st = _s(request)
     p = st.config.root / "data" / "reports" / "impact.json"
     d = json.loads(p.read_text()) if p.exists() else {}
@@ -191,6 +202,7 @@ def failures(request: Request, source: str = "synthetic", vid: str | None = Depe
 @router.get("/failures/sessions/{session_id}")
 def failure_session(session_id: str, request: Request, source: str = "synthetic",
                     vid: str | None = Depends(visitor_id)):
+    """One failure-analysis session with its findings."""
     s = next((x for x in _failure_sessions(request, source, vid) if x["session_id"] == session_id), None)
     if s is None:
         raise ApiError(404, "NOT_FOUND", "no such session")
@@ -207,6 +219,7 @@ admin = APIRouter(prefix="/api/admin")
 
 @admin.post("/reset")
 def reset(request: Request, x_admin_token: str | None = Header(default=None)):
+    """Purge sandbox rows and reseed the demo data. Needs the X-Admin-Token header."""
     st = _s(request)
     if not x_admin_token or not hmac.compare_digest(x_admin_token, st.settings.admin_token):
         raise ApiError(401, "UNAUTHORIZED", "admin token required")

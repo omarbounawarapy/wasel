@@ -359,9 +359,9 @@ def git_sha(root: Path = ROOT) -> str:
 
 def main(argv=None) -> int:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--seed", type=int, default=DEFAULT_SEED)
-    ap.add_argument("--n", type=int, default=10000)
-    ap.add_argument("--out", default=str(ROOT / "data" / "synth_v1.csv"))
+    ap.add_argument("--seed", type=int, default=DEFAULT_SEED, help="random seed")
+    ap.add_argument("--n", type=int, default=10000, help="number of synthetic orders")
+    ap.add_argument("--out", default=str(ROOT / "data" / "synth_v1.csv"), help="output CSV path")
     a = ap.parse_args(argv)
     rows, inputs = generate(a.n, a.seed)
     prompt_text = " ".join(normalize(p.read_text(encoding="utf-8"))
