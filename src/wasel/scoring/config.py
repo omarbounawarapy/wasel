@@ -5,13 +5,13 @@ config_hash = sha256(config/scoring.yaml + b"\\0" + zones.yaml + b"\\0" + catalo
 from __future__ import annotations
 
 import hashlib
-import os
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
 
+from wasel.envutil import env
 from wasel.paths import ROOT
 
 
@@ -51,7 +51,7 @@ def load_config(scoring_path: str | Path | None = None, root: Path = ROOT) -> Sc
     (relative paths resolve against `root`). Raises ValueError if a required section is missing or tiers.low_max is not
     below tiers.medium_max, and FileNotFoundError if a data file is missing.
     """
-    scoring_path = Path(scoring_path or os.environ.get("SCORING_CONFIG") or root / "config/scoring.yaml")
+    scoring_path = Path(scoring_path or env("SCORING_CONFIG") or root / "config/scoring.yaml")
     if not scoring_path.is_absolute():
         scoring_path = root / scoring_path
     zones_p, catalog_p = root / "data" / "zones.yaml", root / "data" / "catalog.yaml"

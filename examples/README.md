@@ -40,7 +40,7 @@ ingested #2610 (ord_...), scoring in ~5 s
   #2610  v1  MEDIUM 64  action=review  status=needs_review  path=rules
 ```
 
-The rules path always ends in `needs_review` with `confidence=low`. With a live provider (`GROQ_API_KEY` exported in the shell that starts the API, or use `make up`/`make serve` with a `.env`) the same text goes to the model and the result carries `path=llm`.
+The rules path always ends in `needs_review` with `confidence=low`. With a live provider (`GROQ_API_KEY` in the environment or in `.env`) the same text goes to the model and the result carries `path=llm`.
 
 Example 03 prints the queue, sends the first drafted question it finds (`delivery: recorded_only` unless WhatsApp sending is enabled), and ships a low-risk order.
 

@@ -20,9 +20,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", case_sensitive=False)
 
     app_mode: Literal["dev", "event", "public"] = "public"
-    # secrets
-    groq_api_key: str = ""
-    gemini_api_key: str = ""
+    # secrets. Provider keys (GROQ_API_KEY, GEMINI_API_KEY) are read by wasel.envutil, not here.
     wa_token: str = ""
     wa_app_secret: str = ""
     wa_verify_token: str = ""
@@ -35,17 +33,12 @@ class Settings(BaseSettings):
     db_path: str = "var/app.db"
     demo_mode: bool = True
     worker_enabled: bool = True
-    debug_raw: bool = False
     # WhatsApp non-secret
     wa_phone_number_id: str = ""
     wa_api_version: str = ""
     # LLM
     llm_mode: Literal["live", "replay", "fail_primary", "fail_groq", "fail_all"] = "live"
-    llm_deadline_s: float = 20.0
-    prompt_version: str = "extract-v1"
     draft_llm: bool = False
-    cascade_enabled: bool = False
-    gemini_enabled: bool = False
     # caps and sandbox (daily_cap gives the per-mode default when live_llm_daily_cap is unset)
     live_llm_daily_cap: int | None = None
     visitor_llm_cap_10min: int = 6
@@ -58,7 +51,6 @@ class Settings(BaseSettings):
     # runtime
     git_sha: str = "dev"
     frontend_origin: str = "http://localhost:5173"
-    tz_display: str = "Africa/Tunis"
     scoring_config: str = "config/scoring.yaml"
 
     @field_validator("app_mode", mode="before")

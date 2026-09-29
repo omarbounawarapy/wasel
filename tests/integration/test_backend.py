@@ -328,3 +328,9 @@ def test_committed_mocks_match_api_models():
     M.OrderDetailResponse.model_validate_json((root / "order_detail.json").read_text(encoding="utf-8"))
     M.OrderDetailResponse.model_validate_json((root / "order_detail_ar.json").read_text(encoding="utf-8"))
     M.HealthResponse.model_validate_json((root / "health.json").read_text(encoding="utf-8"))
+
+
+def test_extraction_cache_is_read_with_the_active_prompt_version(dev):
+    from wasel.llm.prompts import PROMPT_VERSION
+    _, core, _ = dev
+    assert core.scorer_for(core.conn()).keywords["cache"].prompt_version == PROMPT_VERSION

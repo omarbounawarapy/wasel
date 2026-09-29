@@ -6,14 +6,13 @@ Every numeric value in the file is a cold-start assumption, labelled as such in 
 
 On load, the sections `tiers`, `confidence`, `actions`, `reply_adjustments`, `lexicons`, `prefilter` and `roi` must exist, and `tiers.low_max` must be below `tiers.medium_max`, otherwise start-up fails with a `ValueError`. Other sections that the code indexes directly (`model`, `final_score`, `catalog_match`, `reasons`, `timeouts`, `auto_send`) fail with a `KeyError` at first use if removed. `window` and `outbound` are optional and fall back to built-in defaults.
 
-Some keys in the file are currently not read by any code. They are marked below so nobody tunes them expecting an effect.
+Every key in the file is read by code. Keys that once existed without an effect were removed.
 
 ## `model`
 
 | Key | Effect |
 |---|---|
 | `file` | Path, relative to the repository root, of the XGBoost booster (`models/risk_xgb_v1.json`). Read by the scorer, `/api/health` and the trainer, which writes it. Pointing it at another file changes the `classifier_version` of every new assessment. |
-| `features` | Documentation only; the feature list is `FEATURES` in `ml/features.py` and the model file is bound to it. |
 
 ## `tiers`, `actions`, `confidence`
 
@@ -42,7 +41,7 @@ reply_adjustments:
 final_score:      { clip: [0, 100], round: 0 }
 ```
 
-`confirmed.multiply` scales the model score when the customer confirms. `no_reply_timeout.add` is added when a timeout rescore fires. `final_score.clip` bounds the result. The order of application and the effect on reasons are in [scoring](../subsystems/scoring.md#reply-adjustments-and-the-final-score). `no_reply_timeout.route` and `final_score.round` are not read: the timeout always sends the order to `needs_review` (rule 5 in `state.py`), and the score is always rounded to an integer. The reason text for both adjustments hard-codes "×0.6" and "+15", so editing the numbers changes scores but leaves that wording stale.
+`confirmed.multiply` scales the model score when the customer confirms. `no_reply_timeout.add` is added when a timeout rescore fires. `final_score.clip` bounds the result. The order of application and the effect on reasons are in [scoring](../subsystems/scoring.md#reply-adjustments-and-the-final-score). The timeout always sends the order to `needs_review` (rule 5 in `state.py`) and the score is always rounded to an integer. The reason text quotes the configured values.
 
 ## `auto_send` and `outbound`
 
@@ -61,7 +60,6 @@ outbound:
 | `outbound.judge.classifier_block_at` | Classifier `p_unsafe` at or above this blocks a rewrite |
 | `outbound.judge.classifier_hold_at` | At or above this (and below block) the draft goes to a person; below it the classifier clears it. Lower values hold more drafts. The comment in the file records the measured trade-off; `calibrate()` in `guard_clf.py` recomputes it, and a test pins the shipped value to the calibrated suggestion. |
 | `outbound.judge.max_attempts` | Number of rewrite attempts before falling back to the static template |
-| `outbound.static_insert_when_tier_at_least` | Not read by any code |
 
 Automatic sending also needs `WA_AUTO_SEND=true`, `DRAFT_LLM=true` and a non-public mode ([outbound](../subsystems/outbound.md#routing)). Tightening the thresholds is always safe; loosening them should come with a `make eval` run and a look at `calibrate()`.
 
@@ -76,7 +74,6 @@ Automatic sending also needs `WA_AUTO_SEND=true`, `DRAFT_LLM=true` and a non-pub
 | `reasons.always_show_zone_if_abs_pts_at_least` | The zone is always named when it moves the score this much |
 | `reasons.diff_min_delta_pts` | Smallest per-feature change listed in a reason diff |
 | `reasons.linearise_if_abs_sum_phi_below` | Switch to a linear points approximation when contributions nearly cancel |
-| `reasons.quote_max_chars` | Not read: quotes are cut at 40 characters by a constant in `reason.py` |
 | `window.max_messages`, `window.max_chars` | Extraction window caps (12 messages, 2,000 characters). Changing them alters what long conversations render, so the cache keys of conversations over a cap change and their cached extractions stop matching. Optional. |
 
 ## `timeouts`
@@ -86,10 +83,6 @@ timeouts: { debounce_s: { demo: 4, prod: 15 }, no_reply_s: { demo: 60, prod: 216
 ```
 
 `demo` applies when `DEMO_MODE=true` (the default), `prod` otherwise. `debounce_s` is how long after the last message the worker waits before scoring. `no_reply_s` is how long an order may sit in `awaiting_reply` before a timeout rescore adds points and sends it to review; it does not apply in public mode. Values are read at start.
-
-## `serve_defaults`
-
-Not read. The values that the scorer imputes for a missing price and zone are the `SERVE_DEFAULTS` constant in `ml/features.py` (69 TND, suburban, 0.30 refusal rate, and so on). Changing them means editing code and, for consistency, regenerating and retraining.
 
 ## `lexicons`
 
@@ -116,10 +109,6 @@ Adding a term only ever makes the check stricter. Adding an allowlist entry weak
 ## `roi`
 
 Assumptions for the simulated impact shown in the UI (`c_fail_tnd`, `prevent_rate` per action, `prepay_conversion_loss`, `gross_margin`, `msg_cost_tnd`, `sensitivity_confirm`). Only `make train` reads them, when it writes `data/reports/impact.json`. Runtime behaviour does not depend on them. The impact endpoint shows `simulated: true` and lists these as its assumptions.
-
-## `text_clf`
-
-Not read. It describes an optional text-baseline model file (`models/text_clf_v1.joblib`) that does not exist in the repository.
 
 ## What a change requires
 

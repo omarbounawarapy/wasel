@@ -7,7 +7,7 @@ Conventions used below:
 - **Mutates** names committed or persistent files a target rewrites. If `git status` shows them changed after a run, decide whether the change is intended before committing.
 - **Long-running** targets keep a process in the foreground until Ctrl-C.
 - The Makefile uses `.venv/bin/python` (or `.venv/Scripts/python.exe`) when it exists, otherwise `python3`. Override with `PY=...`.
-- Targets that start the API (`up`, `serve`) export `.env` first; the others do not. See [environment](../configuration/environment.md#how-values-are-loaded).
+- `.env` is read from the working directory by the application and by the LLM layer, whichever command starts them; `up` and `serve` also source it into the shell. See [environment](../configuration/environment.md#how-values-are-loaded).
 
 ## Setup and quality
 
@@ -31,9 +31,9 @@ Conventions used below:
 | Target | What it does | Mode and database | Long-running |
 |---|---|---|---|
 | `up` | Starts the API on `API_PORT` (8000), waits up to 180 s for `/api/health`, then starts the Streamlit dashboard on `UI_PORT` (8501) against it. Reads `.env`. Ctrl-C stops both. | `APP_MODE` default `dev`; `SEED_ON_BOOT` default **`always`**: the database is deleted and reseeded on every start | yes |
-| `run` | `uvicorn wasel.main:create_app --factory --reload --port 8000`. Does not export `.env` to the process (the settings class still reads the file, the LLM keys do not). Reloads on code changes. | `APP_MODE` default `dev`; database kept, seeded when empty | yes |
+| `run` | `uvicorn wasel.main:create_app --factory --reload --port 8000`. Reads `.env` from the working directory like every start command, without sourcing it into the shell. Reloads on code changes. | `APP_MODE` default `dev`; database kept, seeded when empty | yes |
 | `ui` | The dashboard on `UI_PORT` against `API_BASE_URL` (default `$(URL)`) | any | yes |
-| `demo` | The API in `public` mode with `SEED_ON_BOOT=always`, no reload, `.env` not exported. Serves `web/dist` at `/` if built. | public, reseeded | yes |
+| `demo` | The API in `public` mode with `SEED_ON_BOOT=always`, no reload. Serves `web/dist` at `/` if built. | public, reseeded | yes |
 | `serve` | Reads `.env`, then `uvicorn ... --host $HOST --port $PORT --workers 1`, no reload. Prints the mode. Unset `APP_MODE` means public. | from `.env`; public reseeds every start | yes |
 | `web` | `cd web && npm ci && npm run build`: Next.js static export into `web/dist` | Node 22, network | replaces `web/node_modules` and `web/dist` (both ignored by git) |
 | `web-dev` | `cd web && npm run dev`: Next.js dev server on :5173 with hot reload against the API on :8000 (needs `node_modules` and an API in `dev` mode) | | yes |
@@ -60,8 +60,8 @@ These targets regenerate committed files. Use them deliberately and commit the r
 | `golden` | `python -m wasel.evaluation.build_golden`: the three golden sets from the CSV, the classifier bank and the templates | `data/eval/golden/*.jsonl` | none |
 | `sessions` | `python -m wasel.failures.dataset`: the labelled agent sessions | `data/agent_sessions.jsonl`, `data/agent_sessions_holdout.jsonl` | none |
 | `failures` | The failure analyzer, rules only, on both synthetic files and on the database at `DB` | `data/reports/failures_synthetic.json`, `failures_holdout.json`, and a new untracked `failures_db.json` | needs `var/app.db` to exist |
-| `failures-llm` | The same with the LLM language layer | `data/reports/failures_synthetic_llm.json`, `failures_holdout_llm.json` (new files) | `GROQ_API_KEY` exported; LLM calls |
-| `eval-live` | The golden sets through the live extractor and judge (`python -m wasel.evaluation.run --live`) | `data/reports/eval_live.json` | `GROQ_API_KEY` exported; LLM calls |
+| `failures-llm` | The same with the LLM language layer | `data/reports/failures_synthetic_llm.json`, `failures_holdout_llm.json` (new files) | `GROQ_API_KEY` in the environment or `.env`; LLM calls |
+| `eval-live` | The golden sets through the live extractor and judge (`python -m wasel.evaluation.run --live`) | `data/reports/eval_live.json` | `GROQ_API_KEY` in the environment or `.env`; LLM calls |
 | `warm` | `scripts/data/warm_cache.py`: runs every sample conversation and scripted reply through the real worker in a scratch database and writes the extraction cache. Default mode uses `data/seed/hand_extractions.json` and labels the entries as hand-crafted, not model output. `LIVE=1 make warm` records real outputs from the live chain. | `data/seed/extraction_cache.jsonl` | live mode: `GROQ_API_KEY`, LLM calls |
 | `mocks` | `scripts/data/dump_mocks.py`: rewrites the frozen API responses from a seeded in-process app | `tests/fixtures/api/*.json` | none |
 

@@ -35,13 +35,13 @@ make llm-check                                   # /v1/models, one JSON completi
 .venv/bin/python -m wasel.evaluation.run --live  # unpaced live evaluation; add --sample 279 for the full extraction set
 ```
 
-Both read the connection details from `.env`, except that the evaluation command needs them exported in your shell ([why](../configuration/environment.md#how-values-are-loaded)).
+Both read the connection details from `.env` (or the environment).
 
 If the GPU host has no reachable public address, tunnel it: run `cloudflared tunnel --url http://localhost:8001` on the host and put the printed URL in `GROQ_BASE_URL`.
 
 ## Switching providers
 
-The LLM chain is built once, when the API process starts, from the environment at that moment. To switch, set `GROQ_BASE_URL`, `GROQ_API_KEY` and `EXTRACT_MODEL`, then restart the API (with `make serve` or `make up`, which export `.env`). The next message is extracted by the self-hosted model. Empty the values and restart to return to Groq. `GET /api/health` shows the models in `llm.chain_extract`.
+The LLM chain is built once, when the API process starts, from the environment at that moment. To switch, set `GROQ_BASE_URL`, `GROQ_API_KEY` and `EXTRACT_MODEL`, then restart the API . The next message is extracted by the self-hosted model. Empty the values and restart to return to Groq. `GET /api/health` shows the models in `llm.chain_extract`.
 
 When `GROQ_BASE_URL` is set, the Groq-only `reasoning_format` field is dropped from requests automatically, because vLLM rejects unknown fields; `reasoning_effort=low` is kept. `tests/unit/test_groq_backend_routing.py` pins which fields each path sends.
 

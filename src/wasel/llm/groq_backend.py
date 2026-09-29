@@ -6,12 +6,12 @@ avoids one more pinned dependency.
 """
 from __future__ import annotations
 
-import os
 import time
 from collections.abc import Callable
 
 import httpx
 
+from wasel.envutil import env
 from wasel.llm.base import (
     CallMeta,
     ModelGone,
@@ -127,7 +127,7 @@ def groq_backend(api_key: str, models: tuple[str, ...] = ("openai/gpt-oss-120b",
 
     Env read at call time (not import) so tests and the demo can flip providers in-process.
     """
-    url = (base_url or os.environ.get("GROQ_BASE_URL") or GROQ_BASE_URL).rstrip("/")
+    url = (base_url or env("GROQ_BASE_URL") or GROQ_BASE_URL).rstrip("/")
     kwargs = GROQ_REASONING_KWARGS if url == GROQ_BASE_URL else SELFHOST_REASONING_KWARGS
     return OpenAICompatBackend("groq", url, api_key,
                                extra={m: kwargs for m in models}, transport=transport)

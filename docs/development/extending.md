@@ -26,10 +26,9 @@ Prompts are locked by hash, versioned, and tied to cached extractions, so a chan
 1. Copy the prompt file to a new name with the next version (`extract_v2.system.txt`) and edit the copy. For `extract`, copy the few-shot file too (`extract_v2.fewshot.jsonl`): every file of a version must be locked under that version.
 2. In `config/llm.yaml`, add the version under the role's `versions:` and set `active`.
 3. Append the new files to `config/prompts/VERSIONS`: `<version> <sha256> <file>`, hash from `sha256sum`.
-4. For `extract`: set `PROMPT_VERSION` to the new version wherever the app runs (for local runs, export it; for a host, put it in `.env` and use `make serve`). The extraction cache is read with the version from `PROMPT_VERSION`, and written with the registry's active version, so they must agree.
-5. `make warm` to re-record the sample extractions (the cache keys contain the version), then `make test` and `make eval`.
-6. With a key, run `make eval-live` and compare with `data/reports/eval_live.json`.
-7. Keep the previous version listed so `scripts/ops/rollback.py` still works.
+4. `make warm` to re-record the sample extractions (the cache keys contain the version), then `make test` and `make eval`.
+5. With a key, run `make eval-live` and compare with `data/reports/eval_live.json`.
+6. Keep the previous version listed so `scripts/ops/rollback.py` still works.
 
 If the output shape changes, change the JSON schema and its Pydantic mirror in the same commit; a unit test compares them.
 

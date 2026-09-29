@@ -21,7 +21,7 @@ make web          # build the Next.js UI into web/dist (served by the API at /)
 make run && make web-dev    # API in dev mode + Next.js dev server on :5173
 ```
 
-`make help` lists every target, and [docs/development/commands.md](docs/development/commands.md) says what each does and which ones overwrite committed files. Live LLM behaviour needs `GROQ_API_KEY` exported in your shell (or `make up`/`make serve` with a `.env`); nothing in the normal workflow requires a key.
+`make help` lists every target, and [docs/development/commands.md](docs/development/commands.md) says what each does and which ones overwrite committed files. Live LLM behaviour needs `GROQ_API_KEY` in your environment or in a `.env` at the repository root; nothing in the normal workflow requires a key.
 
 ## Workflow
 

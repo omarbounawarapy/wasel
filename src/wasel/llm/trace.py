@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import contextvars
 import json
-import os
 import threading
 import uuid
 from collections import deque
 from pathlib import Path
 
 from wasel.clock import SystemClock
+from wasel.envutil import env
 
 TRACE_CTX: contextvars.ContextVar[dict | None] = contextvars.ContextVar("trace_ctx", default=None)
 _lock = threading.Lock()
@@ -39,7 +39,7 @@ def emit(rec: dict) -> None:
     rec = {"ts": SystemClock().now().isoformat(timespec="milliseconds"), **(TRACE_CTX.get() or {}), **rec}
     with _lock:
         _ring.append(rec)
-        path = os.environ.get("TRACE_FILE")
+        path = env("TRACE_FILE")
         if path:
             Path(path).parent.mkdir(parents=True, exist_ok=True)
             with open(path, "a", encoding="utf-8") as f:

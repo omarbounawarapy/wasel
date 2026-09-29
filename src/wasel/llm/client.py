@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 import time
 from collections import OrderedDict
 from collections.abc import Callable
@@ -27,6 +26,7 @@ from pathlib import Path
 from typing import Literal
 
 from wasel.contracts import Attempt, CapDecision, UsageMeter, UsageRecord
+from wasel.envutil import env
 from wasel.llm import trace
 from wasel.llm.base import (
     CallMeta,
@@ -41,6 +41,7 @@ from wasel.llm.base import (
     Timeout,
     Truncated,
 )
+from wasel.paths import ROOT
 
 StepKind = Literal["primary", "fallback_model", "fallback_provider"]
 _PATH = {"primary": "llm", "fallback_model": "fallback_model", "fallback_provider": "fallback_provider"}
@@ -221,7 +222,8 @@ class ReplayBackend:
         fx = self.fixtures.get(replay_key(user))
         if fx is None:
             preview = user.split("\n")[1][:60] if "\n" in user else user[:60]
-            raise FixtureMissing(f"no fixture for key {replay_key(user)[:12]}…: {preview!r}: run `make record`")
+            raise FixtureMissing(f"no fixture for key {replay_key(user)[:12]}…: {preview!r}: add a recorded envelope "
+                                 "for it under the replay directory (LLM_REPLAY_DIR; format in docs/subsystems/llm.md)")
         status = fx.get("status", 200)
         if status == 429:
             raise RateLimited(None)
@@ -272,16 +274,20 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
     GEMINI_API_KEY plus GEMINI_MODEL with GEMINI_ENABLED=true), so with no keys the chain is empty and every extraction
     falls back to rules. Raises ValueError for an unknown mode.
     """
-    mode = mode or os.environ.get("LLM_MODE", "live")
-    replay_dirs = replay_dirs or []
+    mode = mode or env("LLM_MODE", "live")
+    if replay_dirs is None:
+        replay_dirs = [Path(env("LLM_REPLAY_DIR", str(ROOT / "data" / "llm_replay")))]
     from wasel.llm.prompts import registry
     routing = registry().get("routing", {})
     primary, fallback = routing.get("primary", EXTRACT_MODEL), routing.get("fallback_model", FALLBACK_MODEL)
-    gem_model = os.environ.get("GEMINI_MODEL", "gemini")
+    gem_model = env("GEMINI_MODEL", "gemini")
 
     def replay(provider="groq"):
         return ReplayBackend(replay_dirs, allow_hand_crafted=allow_hand_crafted, as_provider=provider)
 
+    if mode == "replay" and not any(Path(d).is_dir() and any(Path(d).rglob("*.json")) for d in replay_dirs):
+        raise ValueError(f"LLM_MODE=replay needs recorded fixtures (*.json) in {[str(d) for d in replay_dirs]}; "
+                         "set LLM_REPLAY_DIR to a directory that has them")
     if mode == "replay":
         return ChainClient([ChainStep("primary", "groq", EXTRACT_MODEL, replay(), 6)], deadline_s=deadline_s)
     if mode == "fail_primary":
@@ -303,16 +309,15 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
     from wasel.llm.gemini_backend import gemini_backend, load_probe
     from wasel.llm.groq_backend import groq_backend
     steps: list[ChainStep] = []
-    if os.environ.get("GROQ_API_KEY"):
-        g = groq_backend(os.environ["GROQ_API_KEY"])
-        steps.append(ChainStep("primary", "groq", os.environ.get("EXTRACT_MODEL", primary), g, 6))
-        if os.environ.get("GROQ_FALLBACK_ENABLED", "true").lower() == "true":   # false if buckets are per org
+    if env("GROQ_API_KEY"):
+        g = groq_backend(env("GROQ_API_KEY"))
+        steps.append(ChainStep("primary", "groq", env("EXTRACT_MODEL", primary), g, 6))
+        if env("GROQ_FALLBACK_ENABLED", "true").lower() == "true":   # false if buckets are per org
             steps.append(ChainStep("fallback_model", "groq",
-                                   os.environ.get("FALLBACK_MODEL", fallback), g, 5))
-    if os.environ.get("GEMINI_API_KEY") and os.environ.get("GEMINI_MODEL") and \
-            os.environ.get("GEMINI_ENABLED", "false").lower() == "true":
-        gb = gemini_backend(os.environ["GEMINI_API_KEY"], os.environ["GEMINI_MODEL"],
-                            load_probe(os.environ.get("PROBE_FILE", "config/probe.json")))
-        steps.append(ChainStep("fallback_provider", "gemini", os.environ["GEMINI_MODEL"], gb, 8))
-    return ChainClient(steps, deadline_s=float(os.environ.get("LLM_DEADLINE_S", routing.get("deadline_s", deadline_s))),
+                                   env("FALLBACK_MODEL", fallback), g, 5))
+    if env("GEMINI_API_KEY") and env("GEMINI_MODEL") and env("GEMINI_ENABLED", "false").lower() == "true":
+        gb = gemini_backend(env("GEMINI_API_KEY"), env("GEMINI_MODEL"),
+                            load_probe(env("PROBE_FILE", "config/probe.json")))
+        steps.append(ChainStep("fallback_provider", "gemini", env("GEMINI_MODEL"), gb, 8))
+    return ChainClient(steps, deadline_s=float(env("LLM_DEADLINE_S", str(routing.get("deadline_s", deadline_s)))),
                        cache_size=int(routing.get("cache_size", 512)))

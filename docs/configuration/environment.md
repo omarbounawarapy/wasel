@@ -4,15 +4,14 @@ Every environment variable that Wasel, its scripts and its front ends read. [`.e
 
 ## How values are loaded
 
-There are three readers, and they do not all see `.env`:
+Values are read in two ways, and both see `.env`:
 
-| Reader | Sees process environment | Sees `.env` | Variables |
-|---|---|---|---|
-| `wasel.settings.Settings` (pydantic-settings) | yes | **yes**, the file `.env` in the current working directory; a real environment variable wins over the file | mode, safety, WhatsApp, caps, sandbox, runtime |
-| The LLM layer (`llm/client.py`, `llm/prompts.py`, `llm/trace.py`, `scoring/config.py`) | yes | **no** | `GROQ_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_ENABLED`, `EXTRACT_MODEL`, `FALLBACK_MODEL`, `GROQ_BASE_URL`, `GROQ_FALLBACK_ENABLED`, `LLM_DEADLINE_S`, `PROBE_FILE`, `PROMPT_VERSION`, `LLM_REGISTRY`, `TRACE_FILE`, `SCORING_CONFIG` |
-| Shell scripts and Makefile targets | yes | only where they source it | see below |
+| Reader | Sources | Variables |
+|---|---|---|
+| `wasel.settings.Settings` (pydantic-settings) | process environment, then the `.env` file in the current working directory | mode, safety, WhatsApp, caps, sandbox, runtime |
+| `wasel.envutil.env()`, used by the LLM layer, prompt registry, tracing and scoring config | process environment, then the same `.env` file | `GROQ_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_ENABLED`, `EXTRACT_MODEL`, `FALLBACK_MODEL`, `GROQ_BASE_URL`, `GROQ_FALLBACK_ENABLED`, `LLM_DEADLINE_S`, `LLM_MODE` (when called without a mode), `LLM_REPLAY_DIR`, `PROBE_FILE`, `PROMPT_VERSION`, `LLM_REGISTRY`, `TRACE_FILE`, `SCORING_CONFIG` |
 
-`make up` and `make serve` run `set -a; . ./.env; set +a` before starting, which exports every line of `.env` to the process, so both readers see it. `make run`, `make demo`, a bare `uvicorn wasel.main:create_app --factory`, `make eval-live`, `make warm LIVE=1` and `make failures-llm` do **not** source `.env`. With those, `Settings` values still come from `.env`, but the provider keys and model names must be exported in your shell (`export GROQ_API_KEY=...`), or the LLM chain will be empty and everything runs on the rules path. `make llm-check` and `scripts/ops/vllm_serve.sh` read `.env` themselves (with names rewritten, values untouched); `scripts/ops/wa_webhook_up.sh` sources it.
+In both, a real environment variable wins over the file, and an empty value counts as unset. So `make run`, `make demo`, a bare `uvicorn wasel.main:create_app --factory`, `make eval-live`, `make warm LIVE=1` and `make failures-llm` all see the provider keys in `.env`, run from the repository root. `make up` and `make serve` additionally source the file into the shell (`set -a; . ./.env; set +a`), which makes every variable, including ones the app never reads, visible to child processes. `make llm-check` and `scripts/ops/vllm_serve.sh` read `.env` themselves (names rewritten, values untouched); `scripts/ops/wa_webhook_up.sh` sources it. The test suite disables the file (`Settings.model_config["env_file"] = None`), which also disables the fallback in `env()`.
 
 Because `make` sources `.env` as shell code, a value containing spaces must be quoted (`VLLM_ARGS="--gpu-memory-utilization 0.92 --max-model-len 16384"`).
 
@@ -22,7 +21,7 @@ Relative paths behave differently by setting:
 |---|---|
 | `DB_PATH`, `SCORING_CONFIG`, the model file in `scoring.yaml` | the repository root |
 | `LLM_REGISTRY` | used as given (absolute, or relative to the working directory); default is `config/llm.yaml` under the root |
-| `PROBE_FILE`, `TRACE_FILE`, the `.env` file | the current working directory |
+| `PROBE_FILE`, `TRACE_FILE`, `LLM_REPLAY_DIR` (when relative), the `.env` file | the current working directory (`LLM_REPLAY_DIR` defaults to `data/llm_replay` under the repository root) |
 
 Run the API from the repository root and these all coincide. Invalid values (a bad enum, a non-numeric number) stop the app at start with a validation error rather than being ignored.
 
@@ -38,7 +37,6 @@ Run the API from the repository root and these all coincide. Invalid values (a b
 | `DB_PATH` | `var/app.db` | path | The SQLite file. Its parent directory is created if needed. |
 | `DEMO_MODE` | `true` | bool | Selects the short timings: debounce 4 s and no-reply timeout 60 s instead of 15 s and 6 h. Set `false` for a real deployment. |
 | `WORKER_ENABLED` | `true` | bool | `false` starts no worker loop. Tests and `make seed` use this. |
-| `DEBUG_RAW` | `false` | bool | Only logs a warning in `public` mode. Raw payload storage is not implemented, so it changes nothing else. |
 | `ADMIN_TOKEN` | empty | at least 24 characters | Mounts `POST /api/admin/reset`, checked in the `X-Admin-Token` header. Empty or short: the admin router does not exist. |
 
 ## Secrets
@@ -68,13 +66,11 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `GEMINI_MODEL` | empty | A Flash-class model id from your Gemini account |
 | `PROBE_FILE` | `config/probe.json` | Optional JSON describing how your Gemini account wants the schema written. The file is absent from the repository; built-in defaults apply. |
 | `LLM_DEADLINE_S` | `20` (or `routing.deadline_s`) | Total time budget of one chain run |
-| `PROMPT_VERSION` | `extract-v1` | Overrides the active extract prompt version, and is the version the extraction cache is read with. When you bump `active` for `extract` in `llm.yaml`, set this to the same value. |
+| `PROMPT_VERSION` | unset | Overrides the active extract prompt version from `llm.yaml`. Both the cache key and the cache lookup use the resulting version, so the cache stays consistent. Leave unset normally. |
 | `DRAFT_LLM` | `false` | Enables the LLM rewrite and judge for outbound drafts |
 | `LLM_REGISTRY` | `config/llm.yaml` | Alternative registry file |
 | `TRACE_FILE` | unset | Append every LLM trace record to this JSONL file |
-| `CASCADE_ENABLED` | `false` | Accepted by `Settings` but not read by any code |
-
-`LLM_DEADLINE_S`, `GEMINI_ENABLED`, `GROQ_API_KEY` and `GEMINI_API_KEY` also exist as `Settings` fields, but the chain reads the process environment directly; only an exported value has an effect.
+| `LLM_REPLAY_DIR` | `data/llm_replay` | Directory of recorded provider responses used by `LLM_MODE=replay`. Startup fails with a clear error if it has no `*.json` fixtures. |
 
 ## Caps and sandbox
 
@@ -109,7 +105,6 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `GIT_SHA` | `dev` | Shown in `/api/health` `build.git_sha` |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | CORS origin allowed in `dev` mode |
 | `SCORING_CONFIG` | `config/scoring.yaml` | Alternative scoring file |
-| `TZ_DISPLAY` | `Africa/Tunis` | Accepted by `Settings` but not read by any code |
 | `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS` | set to `1` at import if unset | Keeps NumPy and XGBoost single-threaded; an explicit value wins |
 
 ## Front ends and scripts

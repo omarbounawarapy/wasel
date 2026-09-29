@@ -115,7 +115,7 @@ The application configures no logging of its own. Uvicorn writes its access log 
 journalctl -u wasel -f
 ```
 
-What to look for: `unknown APP_MODE ... -> public` (a typo in the mode), `DEBUG_RAW refused in public mode`, `webhook rejected: <reason>` (bad signature), `webhook verify refused`, `webhook process_error: <ExceptionType>`, `rescore failed for <order>` with a traceback (an order was moved to `needs_review`), `worker tick failed`, and `whatsapp send ... failed`. The activity feed and `GET /api/events` carry the same information as `events` rows (`error`, `webhook.rejected`, `llm.fallback`, `llm.cap_reached`, `draft.send_failed`). Logs never contain message bodies, sender numbers or secrets, and the webhook's verify token is redacted from the access log. Set `TRACE_FILE` to keep every LLM trace record (no customer text) in a JSONL file.
+What to look for: `unknown APP_MODE ... -> public` (a typo in the mode), `webhook rejected: <reason>` (bad signature), `webhook verify refused`, `webhook process_error: <ExceptionType>`, `rescore failed for <order>` with a traceback (an order was moved to `needs_review`), `worker tick failed`, and `whatsapp send ... failed`. The activity feed and `GET /api/events` carry the same information as `events` rows (`error`, `webhook.rejected`, `llm.fallback`, `llm.cap_reached`, `draft.send_failed`). Logs never contain message bodies, sender numbers or secrets, and the webhook's verify token is redacted from the access log. Set `TRACE_FILE` to keep every LLM trace record (no customer text) in a JSONL file.
 
 ### Restart
 
@@ -188,6 +188,6 @@ To return to public mode: empty `APP_MODE`, remove the WhatsApp secrets, set `WE
 | `/` answers 404 or shows a blank page | `web/dist` is missing or stale: run `make web` after every pull |
 | The service restarts in a loop | `journalctl -u wasel`: a `PromptVersionMismatch`, an invalid `.env` value, or a missing `.venv` for `User` |
 | Data vanished after a restart | Public mode reseeds on start; see section 2 |
-| Every new order is `needs_review` with `path=rules` | No provider is configured or reachable. Check `llm.chain_extract` in `/api/health`, that `GROQ_API_KEY` reached the process (`make serve` exports `.env`; other launchers do not), and `llm.cap_reached` |
+| Every new order is `needs_review` with `path=rules` | No provider is configured or reachable. Check `llm.chain_extract` in `/api/health`, that `GROQ_API_KEY` is in the process environment or in the `.env` next to the working directory, and `llm.cap_reached` |
 
 More symptoms and how to diagnose them: [troubleshooting](troubleshooting.md).

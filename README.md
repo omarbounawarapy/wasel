@@ -71,7 +71,7 @@ Open http://localhost:8501 for the dashboard and http://localhost:8000/docs for 
 
 For the Next.js UI, run `make web` once and then `make demo`; the API serves the UI at http://localhost:8000/.
 
-To use a live LLM, copy `.env.example` to `.env`, set `GROQ_API_KEY`, and start with `make up` or `make serve`, which export `.env` to the process. See [configuration](docs/configuration/README.md) for every setting and [getting started](docs/getting-started.md) for the full walkthrough, health checks and first-run problems.
+To use a live LLM, copy `.env.example` to `.env`, set `GROQ_API_KEY`, and start with `make up`, `make run` or `make serve` from the repository root (the LLM layer reads `.env` itself). See [configuration](docs/configuration/README.md) for every setting and [getting started](docs/getting-started.md) for the full walkthrough, health checks and first-run problems.
 
 To verify your checkout:
 

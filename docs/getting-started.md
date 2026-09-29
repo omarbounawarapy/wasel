@@ -42,7 +42,7 @@ cp .env.example .env
 
 `.env.example` documents every variable it contains. The full reference, including variables that are not in the template, is [configuration/environment.md](configuration/environment.md). Two rules matter on day one:
 
-1. `make up` and `make serve` export `.env` to the process. `make run`, `make demo` and a bare `uvicorn` command do not: the backend's `Settings` class reads `.env` itself, but the LLM client reads real process environment variables. If you start the API another way and want a live LLM, export `GROQ_API_KEY` in your shell.
+1. The backend reads `.env` from the working directory for its settings, and the LLM layer reads provider keys from the process environment and then the same `.env`, so a key in `.env` works with every start command run from the repository root.
 2. `APP_MODE` decides what is safe to expose. Unset means `public` (the most restrictive mode). `make up` and `make run` default it to `dev`. See [modes](architecture/overview.md#modes).
 
 ## Run
@@ -125,7 +125,7 @@ make eval       # evaluation gate only
 | `make up` stops with `API at http://localhost:8000 did not answer /api/health within 180 s` | The API process crashed on start. Run `make run` to see the traceback. A common cause is a prompt file edited without a version bump, which raises `PromptVersionMismatch` at import ([LLM registry](configuration/llm-registry.md)). |
 | Port 8000 or 8501 already in use | `make up API_PORT=8001 UI_PORT=8502`. `make ui` needs `API_BASE_URL` to match the API port. |
 | `/` returns 404 | `web/dist` does not exist. Run `make web`. |
-| `GROQ_API_KEY` is in `.env` but orders still say `path=rules` | The API was started with `make run`, `make demo` or `uvicorn` directly, which do not export `.env`. Use `make up` or `make serve`, or export the variable. Also check `LLM_MODE=live` (`/api/health` shows `llm.chain_extract`, which is empty without a key). |
+| `GROQ_API_KEY` is in `.env` but orders still say `path=rules` | The API was not started from the repository root (the `.env` lookup is relative to the working directory), `LLM_MODE` is not `live`, or the provider is failing or capped. `/api/health` shows `llm.chain_extract` (empty means no key was found), `llm.cap_reached` and `llm.fallback_reason`. |
 | `POST` calls return `400 VISITOR_ID_REQUIRED` | The API is in `public` mode. Send an `X-Visitor-Id` header containing a UUID v4, or use `APP_MODE=dev`. |
 | `409 SEEDED_READ_ONLY` on a sample order | Public mode makes samples read-only. Call `POST /api/orders/{id}/try` to copy one into your sandbox. |
 | `/docs` returns 404 | `public` mode disables the Swagger page. `/openapi.json` is still served. |

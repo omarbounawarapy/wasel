@@ -82,9 +82,9 @@ def select_drivers(pts: dict[str, float], tier: str, cfg: dict) -> list[str]:
 def adjustment_text(adj) -> str:
     """Reason wording for a score adjustment, with its size in points."""
     if adj.rule == "confirmed":
-        return f"customer confirmed ×0.6 (cold-start rule) {_pts(adj.after - adj.before)}"
+        return f"customer confirmed {adj.effect.replace('x', '×')} (cold-start rule) {_pts(adj.after - adj.before)}"
     if adj.rule == "no_reply_timeout":
-        return f"no reply before the timeout +15 (cold-start rule) {_pts(adj.after - adj.before)}"
+        return f"no reply before the timeout {adj.effect} (cold-start rule) {_pts(adj.after - adj.before)}"
     return adj.label
 
 

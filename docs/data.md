@@ -81,6 +81,6 @@ Do not edit a report by hand. When a run changes one, commit the new file togeth
 | Path | Content | Committed |
 |---|---|---|
 | `var/app.db` (+ `-wal`, `-shm`) | The SQLite database: everything the app stores at runtime | no (git-ignored) |
-| `data/llm_replay/` | Where `LLM_MODE=replay` looks for recorded provider responses. It does not exist in the repository. | n/a |
+| `data/llm_replay/` (or `LLM_REPLAY_DIR`) | Where `LLM_MODE=replay` looks for recorded provider responses. Not in the repository; you supply the JSON envelopes. | n/a |
 | `data/phrase_banks_candidates.yaml` | Output of `scripts/data/expand_phrase_bank.py`: LLM-drafted paraphrases awaiting native-speaker review | no; do not merge without review |
 | `models/` | The trained risk model and its card | yes |

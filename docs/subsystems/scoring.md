@@ -36,7 +36,7 @@ A gazetteer match by keyword (for example "douar") is stored as `zone_source = g
 | `zone_encoded` | 0 urban, 1 suburban, 2 rural | resolved zone | increasing |
 | `customer_refusal_rate` | `(refusals + 0.6) / (completed + 2)` | customer history; a new customer is 0.30 | increasing |
 
-A missing price or zone is imputed with a default (`price_tnd` 69 TND, the catalog median; `zone_encoded` 1) and named in the assessment's `imputed` list. The features are never NaN. The defaults are the `SERVE_DEFAULTS` constant in `ml/features.py`; the `serve_defaults` block in `scoring.yaml` is not read by the code.
+A missing price or zone is imputed with a default (`price_tnd` 69 TND, the catalog median; `zone_encoded` 1) and named in the assessment's `imputed` list. The features are never NaN. The defaults are the `SERVE_DEFAULTS` constant in `ml/features.py`, not configuration.
 
 ## Model
 
@@ -54,7 +54,7 @@ After the model, `reply_adjustments` in `scoring.yaml` apply, in this order:
 | Customer `declined`, `reschedule` or `ambiguous` | recorded in `adjustments`, score unchanged |
 | Trigger `no_reply_timeout` | score + `add` (15), no extraction |
 
-`final_score = round(clip(score, 0, 100))` (`final_score.clip`). These two numbers are cold-start assumptions, labelled as such in the reason text. The wording of the confirmed and timeout reasons is fixed in `reason.py` ("×0.6", "+15"); changing the values in the config changes the score and the adjustment record, but not that sentence.
+`final_score = round(clip(score, 0, 100))` (`final_score.clip`). These two numbers are cold-start assumptions, labelled as such in the reason text. The reason text for the confirmed and timeout adjustments quotes the configured values.
 
 ## Tier, action and template
 

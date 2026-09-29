@@ -3,7 +3,6 @@
 version: 1
 model:
   file: models/risk_xgb_v1.json
-  features: [address_specificity, red_flag_count, tone_score, price_tnd, zone_encoded, customer_refusal_rate]
   # model_score = 100 · P(refused), from simulated outcomes (see card). Not a real-world refusal rate.
 
 tiers:            { low_max: 35, medium_max: 65 }          # low < 35 <= medium < 65 <= high; fixed, not percentiles
@@ -21,11 +20,10 @@ auto_send:        { max_tnd: 150, max_auto_messages_per_order: 2, gate: classifi
 
 reply_adjustments:                                           # cold-start priors, not evidence
   confirmed:        { multiply: 0.6 }
-  no_reply_timeout: { add: 15, route: needs_review }
-final_score:      { clip: [0, 100], round: 0 }               # final = round(clip(model_score*mult + add, 0, 100))
+  no_reply_timeout: { add: 15 }
+final_score:      { clip: [0, 100] }                         # final = round(clip(model_score*mult + add, 0, 100))
 
 outbound:
-  static_insert_when_tier_at_least: medium
   # draft judge: guard classifier p_unsafe >= block_at vetoes the rewrite; >= hold_at never auto_sends.
   # hold_at 0.1 (was 0.2, tightened when auto_send.gate became classifier and this line became the only
   # backstop with the judge down). Measured on the never-trained holdout bank: unsafe text cleared to send
@@ -34,21 +32,12 @@ outbound:
   # never fire. calibrate() weighs both sides when it suggests the line.
   judge: { classifier_block_at: 0.5, classifier_hold_at: 0.1, max_attempts: 2 }
 
-serve_defaults:
-  address_specificity: 0.0
-  red_flag_count: 0
-  tone_score: 0
-  price_tnd: 69
-  zone_encoded: 1
-  customer_refusal_rate: 0.30
-
 catalog_match:    { min_score: 80, quantity_clamp: [1, 5] }
 
 reasons:
   max_drivers: 3
   min_pts: 3
   always_show_zone_if_abs_pts_at_least: 3
-  quote_max_chars: 40
   diff_min_delta_pts: 3
   linearise_if_abs_sum_phi_below: 0.05
 
@@ -104,5 +93,3 @@ roi:                                                         # every value is an
   gross_margin: 0.25
   msg_cost_tnd: 0.0                                          # WhatsApp service-window pricing
   sensitivity_confirm: [0.15, 0.30, 0.45]
-
-text_clf: { enabled: false, file: models/text_clf_v1.joblib, min_prob: 0.6, disagree_levels: 2 }

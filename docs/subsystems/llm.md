@@ -80,7 +80,7 @@ Which steps exist depends on the environment at start (`build_client`):
 - **Gemini step** exists only with `GEMINI_API_KEY`, `GEMINI_MODEL` and `GEMINI_ENABLED=true`.
 - **No key at all** yields an empty chain: every extraction goes straight to the rules extractor. That is the intended offline behaviour, not a misconfiguration.
 
-The provider variables are read from the process environment when the app starts, not from `.env` (see [environment](../configuration/environment.md#how-values-are-loaded)).
+The provider variables are read when the app starts, from the process environment and then from `.env` ([environment](../configuration/environment.md#how-values-are-loaded)). The chain is built once, so changes need a restart.
 
 ## Prompt registry
 
@@ -139,7 +139,7 @@ Calls approved during a scoring run but not yet written to `llm_usage` are held 
 | `fail_groq` | both Groq steps answer 5xx, Gemini replays | provider-outage drill |
 | `fail_all` | every step fails | fully offline behaviour: everything lands on the rules path |
 
-`make test`, `make eval` and `make drill` run with `LLM_MODE=fail_all`. Fixtures are JSON envelopes keyed by the SHA-256 of the rendered window (`meta`, `key`, `window`, `status`, `response`). `ReplayBackend` ignores fixtures marked `source: hand_crafted` unless a test asks for them. The application loads fixtures from `data/llm_replay/`, which does not exist in the repository, and there is no command that records into it; in practice `replay` is used by tests, which build temporary fixture directories. A missing fixture raises `FixtureMissing`, a deliberate loud failure.
+`make test`, `make eval` and `make drill` run with `LLM_MODE=fail_all`. Fixtures are JSON envelopes keyed by the SHA-256 of the rendered window (`meta`, `key`, `window`, `status`, `response`). `ReplayBackend` ignores fixtures marked `source: hand_crafted` unless a test asks for them. `LLM_MODE=replay` loads fixtures from `LLM_REPLAY_DIR` (default `data/llm_replay`) and refuses to start if that directory holds no `*.json` files. The repository ships no recordings and no command that records; you supply envelopes yourself (the tests build them with the `replay_dir` helper in `tests/conftest.py`). A request with no matching fixture raises `FixtureMissing`, a deliberate loud failure.
 
 ## When the LLM is unavailable
 

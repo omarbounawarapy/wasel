@@ -26,6 +26,7 @@ from wasel.db.seed import load_seed, seed_all
 from wasel.db.usage import SqliteUsageMeter
 from wasel.ids import IdGen, UlidIds
 from wasel.llm.client import build_client
+from wasel.llm.prompts import PROMPT_VERSION
 from wasel.outbound.make_draft import make_draft
 from wasel.paths import ROOT
 from wasel.scoring.config import load_config
@@ -76,7 +77,7 @@ class AppState:
 
     def scorer_for(self, conn):
         """A Scorer using `conn`'s extraction cache, the LLM client and a usage meter on the same connection."""
-        return make_scorer(cache=SqliteExtractionCache(conn, self.settings.prompt_version), llm=self.llm,
+        return make_scorer(cache=SqliteExtractionCache(conn, PROMPT_VERSION), llm=self.llm,
                            meter=self.meter(conn), config=self.config)
 
     @property
@@ -95,7 +96,7 @@ class AppState:
         """One worker step on this thread's connection."""
         conn = self.conn()
         meter = self.meter(conn)
-        scorer = make_scorer(cache=SqliteExtractionCache(conn, self.settings.prompt_version), llm=self.llm,
+        scorer = make_scorer(cache=SqliteExtractionCache(conn, PROMPT_VERSION), llm=self.llm,
                              meter=meter, config=self.config)
         process_due(conn, now, scorer, self.drafter, ids=self.ids, meter=meter,
                     no_reply_s=self.no_reply_s if self.settings.no_reply_enabled else None)
@@ -160,7 +161,7 @@ class AppState:
             status="degraded" if (fb or worker_stale) else "ok", mode=s.app_mode, wa_send=s.wa_send_effective,
             webhook="enabled" if s.webhook_mounted else "disabled", db=True, demo_mode=s.demo_mode,
             build=M.HealthBuild(git_sha=s.git_sha, started_at=utc_iso(self.started_at)),
-            config=M.HealthConfig(config_hash=self.config.short_hash, prompt_version=s.prompt_version,
+            config=M.HealthConfig(config_hash=self.config.short_hash, prompt_version=PROMPT_VERSION,
                                   classifier_version=lm.classifier_version if lm else "none",
                                   seed_version=load_seed()["version"]),
             llm=M.HealthLLM(llm_mode=s.llm_mode, chain_extract=getattr(self.llm, "chain_names", []),
@@ -195,10 +196,8 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
     served at /.
     """
     settings = settings or Settings()
-    if settings.is_public and settings.debug_raw:
-        log.warning("DEBUG_RAW refused in public mode")
     if llm is None:
-        llm = build_client(settings.llm_mode, replay_dirs=[ROOT / "data" / "llm_replay"])
+        llm = build_client(settings.llm_mode)
     state = AppState(settings, clock or SystemClock(), ids or UlidIds(), llm)
     run_worker = settings.worker_enabled if worker_enabled is None else worker_enabled
 

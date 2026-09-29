@@ -252,7 +252,7 @@ class AssessmentRecord:           # -> one risk_assessments row (ids, version, t
     confidence: Literal["high", "low"]
     confidence_reasons: list[str]             # near_tier_boundary | not_primary_model | product_not_in_catalog |
                                               # dropped_flags | clarity_unclear | rules_path | llm_cap_reached |
-                                              # text_clf_disagrees
+                                              # injection_suspected | imputed_inputs | no_reply_timeout
     reason: str                               # quotes wrapped in U+2068 … U+2069
     reason_short: str                         # ≤ 90 chars, same builder
     reason_diff: str | None                   # None on version 1

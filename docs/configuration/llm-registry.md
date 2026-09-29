@@ -40,7 +40,7 @@ Current roles:
 
 `routing` holds provider defaults that environment variables still override: `primary` and `fallback_model` (the Groq models, overridden by `EXTRACT_MODEL` and `FALLBACK_MODEL`), `deadline_s` (the chain deadline, overridden by `LLM_DEADLINE_S`) and `cache_size` (entries in the response cache).
 
-The environment variable `PROMPT_VERSION` overrides `extract.active`; no other role has an override.
+The environment variable `PROMPT_VERSION` overrides `extract.active`; no other role has an override. The extraction cache is read and written with the resulting version, so nothing else needs to agree with it.
 
 ## Prompt files and the version lock
 
@@ -77,7 +77,7 @@ Only for the Gemini fallback. A JSON object that overrides built-in defaults des
 
 **Roll back a role.** `python scripts/ops/rollback.py judge judge-v1` rewrites that role's `active:` line in `llm.yaml` and prints the change. It touches nothing else. Commit it, restart the app, and run `make eval`. The script only knows versions already listed in the file.
 
-**Change a prompt.** Prompt files are locked, so do not edit one in place. Copy it to a new file with the next version number, edit the copy, add a `versions:` entry and set `active`, then add a line to `VERSIONS` with the new file's SHA-256 (`sha256sum config/prompts/<file>`). Every file a version uses must be listed in `VERSIONS` under that same version, so a new `extract` version needs its own copy of the few-shot file as well, even if unchanged. Keep the old version listed so a rollback stays one line. For a new `extract` version also set `PROMPT_VERSION` to the same value wherever the app runs, then run `make warm` (the cache keys include the version, so the committed sample extractions stop matching), `make eval-live` if you have a key, and `make check`. The pull-request template asks for this. See [extending](../development/extending.md#change-a-prompt) for the checklist.
+**Change a prompt.** Prompt files are locked, so do not edit one in place. Copy it to a new file with the next version number, edit the copy, add a `versions:` entry and set `active`, then add a line to `VERSIONS` with the new file's SHA-256 (`sha256sum config/prompts/<file>`). Every file a version uses must be listed in `VERSIONS` under that same version, so a new `extract` version needs its own copy of the few-shot file as well, even if unchanged. Keep the old version listed so a rollback stays one line. For a new `extract` version, run `make warm` (the cache keys include the version, so the committed sample extractions stop matching), `make eval-live` if you have a key, and `make check`. The pull-request template asks for this. See [extending](../development/extending.md#change-a-prompt) for the checklist.
 
 **Add a role.** Add a prompt, a schema, a `roles:` entry, a `VERSIONS` line and a `parse` function, as described in [LLM layer](../subsystems/llm.md#extending).
 

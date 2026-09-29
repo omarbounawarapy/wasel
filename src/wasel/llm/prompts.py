@@ -5,16 +5,16 @@ from __future__ import annotations
 
 import hashlib
 import json
-import os
 from functools import lru_cache
 from pathlib import Path
 
 import yaml
 
+from wasel.envutil import env
 from wasel.llm.base import TaskSpec
 from wasel.paths import ROOT
 
-REGISTRY = Path(os.environ.get("LLM_REGISTRY", ROOT / "config" / "llm.yaml"))
+REGISTRY = Path(env("LLM_REGISTRY", str(ROOT / "config" / "llm.yaml")))
 
 
 class PromptVersionMismatch(RuntimeError):
@@ -58,8 +58,8 @@ def registry(path: Path = REGISTRY) -> dict:
 
 def active_version(role: str) -> str:
     """The prompt version `role` runs. The PROMPT_VERSION environment variable overrides it for 'extract' only."""
-    if role == "extract" and os.environ.get("PROMPT_VERSION"):
-        return os.environ["PROMPT_VERSION"]
+    if role == "extract" and env("PROMPT_VERSION"):
+        return env("PROMPT_VERSION")
     return registry()["roles"][role]["active"]
 
 

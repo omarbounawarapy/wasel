@@ -20,7 +20,7 @@ It does **not** measure the risk model (see the training gates in [machine learn
 |---|---|---|
 | Extractor | rules extractor only (`llm=None`) | the live LLM chain |
 | Draft checks | prefilter and guard classifier | plus the LLM judge |
-| Keys | none | `GROQ_API_KEY` exported in the shell |
+| Keys | none | `GROQ_API_KEY` in the environment or `.env` |
 | Environment | `TEST_ENV` (`LLM_MODE=fail_all`, no keys) | your environment |
 | Report | `data/reports/eval.json` | `data/reports/eval_live.json` |
 | Thresholds | `offline:` block of `eval.yaml` | `live:` block |
