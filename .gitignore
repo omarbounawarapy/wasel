@@ -271,6 +271,7 @@ frontend/out/
 *.tsbuildinfo
 
 # Local tooling
+HANDOFF.md
 .claude/
 .DS_Store
 .idea/
