@@ -5,7 +5,8 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  metadataBase: new URL("http://localhost:5173"),
+  // NEXT_PUBLIC_SITE_URL: the public origin, set at build time for a deployed site; the fallback is `npm run dev`
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:5173"),
   title: "Wasel · COD order risk",
   description: "Wasel reads what your cash-on-delivery customers write, scores the refusal risk and drafts the confirmation message.",
   icons: {

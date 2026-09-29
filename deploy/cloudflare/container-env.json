@@ -1,0 +1,13 @@
+{
+  "_comment": "The only environment the Worker hands to the container. `vars` are non-secret (wrangler.jsonc vars), `secrets` are Cloudflare secrets (wrangler secret put / .dev.vars). scripts/ops/cf_check.py keeps this, wrangler.jsonc and .env.example consistent.",
+  "vars": [
+    "APP_MODE", "SEED_ON_BOOT", "DEMO_MODE", "WORKER_ENABLED", "GIT_SHA",
+    "LLM_MODE", "DRAFT_LLM", "EXTRACT_MODEL", "FALLBACK_MODEL", "GROQ_BASE_URL", "GROQ_FALLBACK_ENABLED",
+    "GEMINI_ENABLED", "GEMINI_MODEL", "LLM_DEADLINE_S", "PROMPT_VERSION",
+    "LIVE_LLM_DAILY_CAP", "VISITOR_LLM_CAP_10MIN", "VISITOR_LLM_CAP_DAY",
+    "SANDBOX_TTL_S", "SANDBOX_MAX_ORDERS", "PURGE_INTERVAL_S",
+    "WA_SEND_ENABLED", "WA_AUTO_SEND", "WEBHOOK_ENABLED", "WA_PHONE_NUMBER_ID", "WA_API_VERSION",
+    "SNAPSHOT_URL", "SNAPSHOT_INTERVAL_S"
+  ],
+  "secrets": ["GROQ_API_KEY", "GEMINI_API_KEY", "WA_TOKEN", "WA_APP_SECRET", "WA_VERIFY_TOKEN", "ADMIN_TOKEN"]
+}

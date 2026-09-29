@@ -1,0 +1,6 @@
+# Response headers for the static assets Cloudflare serves at the edge (deploy/cloudflare). The API and webhook
+# responses get the same ones from FastAPI (src/wasel/main.py); tests/unit/test_cloudflare_config.py keeps them equal.
+/*
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'
+  X-Content-Type-Options: nosniff
+  Referrer-Policy: no-referrer
