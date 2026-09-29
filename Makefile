@@ -37,12 +37,12 @@ web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make
 web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make run` or `make up` first)
 	cd web && npm run dev
 
-# ---- hosting with make and Cloudflare Tunnel (docs/deployment.md): the app runs with make, Cloudflare Tunnel publishes it
+# ---- hosting with make and Cloudflare Tunnel (docs/operations/deployment.md): the app runs with make, Cloudflare Tunnel publishes it
 serve: ## host run: API + web UI, no reload, settings from .env (unset APP_MODE = public), on HOST:PORT (127.0.0.1:8000)
 	@set -a; [ -f .env ] && . ./.env; set +a; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn wasel.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
 
 tunnel: ## publish `make serve` on your Cloudflare hostname (named tunnel; CLOUDFLARE_TUNNEL_TOKEN in .env)
-	@set -a; [ -f .env ] && . ./.env; set +a; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/deployment.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
+	@set -a; [ -f .env ] && . ./.env; set +a; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/operations/deployment.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
 
 deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `make serve` and run `make smoke URL=<public url>`
 	git pull --ff-only
@@ -50,10 +50,10 @@ deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `m
 	@echo "updated to $$(git rev-parse --short HEAD). Restart the server (systemctl restart wasel, or Ctrl-C + make serve),"
 	@echo "then check it from outside: make smoke URL=<your public URL>"
 
-wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (docs/whatsapp.md)
+wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (docs/subsystems/whatsapp.md)
 	bash scripts/ops/wa_webhook_up.sh
 
-llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_ARGS; docs/self-hosted-llm.md)
+llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_ARGS; docs/operations/self-hosted-llm.md)
 	bash scripts/ops/vllm_serve.sh serve
 
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)

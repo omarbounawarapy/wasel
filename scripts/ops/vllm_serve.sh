@@ -4,7 +4,7 @@
 #   serve  run ON the GPU host: install vLLM (docker if present, else pip) and serve MODEL on :VLLM_PORT
 #   check  run LOCALLY: verify GROQ_BASE_URL lists the model in /v1/models and answers one JSON call
 #   stop   run ON the GPU host: tear the server down
-# See docs/self-hosted-llm.md. Secrets come from the environment / .env and are never printed —
+# See docs/operations/self-hosted-llm.md. Secrets come from the environment / .env and are never printed —
 # except a token generated fresh by `serve`, which is shown once so it can be stored.
 # Idempotent: `serve` against an already-running server exits 0.
 set -euo pipefail

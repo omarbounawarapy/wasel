@@ -2,25 +2,103 @@
 
 ## Reporting a problem
 
-Do not open a public issue for a security problem. Use GitHub's private report instead: **Security → Report a vulnerability** on this repository. Include what you found, how to reproduce it, and what it exposes. We will answer there.
+Do not open a public issue for a security problem. Use GitHub's private report instead: **Security → Report a vulnerability** on this repository. Include what you found, how to reproduce it, and what it exposes.
 
-Things we especially want to hear about:
+Reports we especially want:
 
 - a way to reach `/webhook/whatsapp` or send a WhatsApp message while the app reports `mode=public`;
 - a way to read or change another visitor's sandbox rows in public mode;
-- customer text that makes the extractor or a draft follow instructions (prompt injection) without the order being flagged;
-- an API key or token appearing in a response, a log or a committed file.
+- customer text that makes the extractor or a draft follow instructions (prompt injection) without the order being flagged, or that makes an order score lower than the same text without the injection;
+- an API key, token or phone number appearing in a response, a log or a committed file;
+- a draft that reaches a customer without a person's click while `WA_AUTO_SEND` is off.
 
-## What the app does to stay safe
+Only the `main` branch is maintained; there are no tagged releases.
 
-- **Public mode is the default.** A missing or unknown `APP_MODE` means `public`: the webhook is not mounted, sends are forced off, seeded rows are read-only and each visitor gets a sandbox that is purged after 2 hours. CI boots the server with no configuration and fails if `/api/health` reports anything else.
-- **The webhook fails closed.** It is mounted only when enabled and both `WA_APP_SECRET` and `WA_VERIFY_TOKEN` are set; every POST is HMAC-checked and deduplicated.
-- **The LLM cannot decide.** It returns a strict schema; every quote is checked against the original text; suspected injection sends the order to human review. A person approves every message before it is sent.
-- **LLM spend is capped** per day and per visitor. Reaching a cap falls back to the rules extractor, never to an error.
-- **No secrets in git.** `make hygiene` (part of `make check` and CI) fails on key-shaped strings, tracked `.env` or database files, and phone numbers outside the test allowlist.
+## Security model in one page
+
+Wasel is a single-tenant application with no user accounts. It is designed to be safe when started with no configuration, and to be run with real customer data only on a host whose network access you control. What it protects, and how:
+
+| Concern | Protection | Where |
+|---|---|---|
+| Accidental exposure or sending | The default `public` mode never mounts the webhook, never sends, forces `WA_AUTO_SEND` off and isolates visitors. Anything unrecognised resolves to `public`. | [modes](docs/architecture/overview.md#modes) |
+| Forged webhook traffic | HMAC-SHA256 on the raw body, verify-token handshake, size cap, deduplication. It fails closed: the route does not exist unless the secrets are long enough. | [WhatsApp](docs/subsystems/whatsapp.md) |
+| Hostile customer text | Never trusted by code, delimited and sanitized for the model, every model quote verified, injection lexicon, deterministic scoring. | [extraction](docs/subsystems/extraction.md) |
+| Unsafe outbound messages | Deterministic prefilter, local classifier, LLM judge with approval recomputed in code, human send by default. | [outbound](docs/subsystems/outbound.md) |
+| Secrets in git | `.env` and databases are ignored and `make hygiene` fails on key-shaped strings. | [configuration](docs/configuration/environment.md) |
+| Cost abuse | Daily and per-visitor caps on LLM calls; sandbox limits; request size limits. | [LLM layer](docs/subsystems/llm.md#caps-and-the-usage-meter) |
+
+## Security-sensitive areas
+
+### Secrets and environment variables
+
+Secrets are `GROQ_API_KEY`, `GEMINI_API_KEY`, `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN`, `ADMIN_TOKEN` and `CLOUDFLARE_TUNNEL_TOKEN`. They come from the process environment or a git-ignored `.env`. `.env.example` is the only committed env file and holds empty values. `make hygiene` (part of `make check` and CI) fails on tracked `.env`, database or `node_modules` files and on strings shaped like Groq, Gemini, Meta and tunnel-token secrets. `GET /api/health` reveals only whether a WhatsApp token is present, never the value. Application logs do not print secrets.
+
+Limits: `hygiene` recognises known prefixes only. Anyone with shell access to the host can read `.env`; protect it with file permissions.
+
+### API exposure
+
+There is **no authentication or authorization on `/api`**. In `public` mode, visitor isolation rests on an `X-Visitor-Id` UUID that is a scoping token, not an identity: a visitor can only see the samples and rows created under the id they send, and another visitor's rows return `404` so their existence is not confirmed, but anyone who learns an id can use it. In `dev` and `event` mode every caller sees every row.
+
+Therefore:
+
+- do not expose an instance that holds real customer data on the public internet without an access-control layer in front of it (for example an access-restricted tunnel or a reverse proxy with authentication);
+- know that `/api/monitor`, `/api/traces`, `/api/eval`, `/api/failures`, `/api/metrics/impact` and `/openapi.json` are readable by anyone who can reach the server in every mode. They return rates, codes, identifiers and configuration versions, not message text or phone numbers;
+- there is no rate limiting on the API. In public mode, orders, replies and LLM calls are capped, which bounds resource use; elsewhere put a limiter in front.
+
+Responses carry `Content-Security-Policy` (default-src 'self', `frame-ancestors 'none'`, and `script-src 'unsafe-inline'` because the static web export needs inline bootstrap scripts), `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`. Requests declaring a body over 64 KB are refused. CORS is enabled only in `dev` mode for one configured origin. The default bind address of `make serve` is `127.0.0.1`.
+
+### Administrative endpoint
+
+`POST /api/admin/reset` deletes every order and reseeds. It exists only when `ADMIN_TOKEN` is at least 24 characters and requires it in `X-Admin-Token` (constant-time comparison). It is the only administrative endpoint. There is no lockout or rate limit on token guesses; use a long random token and do not set one on hosts that do not need the endpoint.
+
+### Webhook handling
+
+The route is mounted only outside `public` mode with `WEBHOOK_ENABLED` true, `WA_APP_SECRET` of at least 16 characters and `WA_VERIFY_TOKEN` of at least 24. The body is capped at 1 MiB while streaming, the signature is verified over the raw bytes before parsing, and a bad signature returns `401` and records a `webhook.rejected` event. Messages are deduplicated by WhatsApp message id, changes for other phone-number ids are ignored, and processing errors are recorded by exception type only. There is no option to skip signature checking. The verify token is redacted from the server's access log.
+
+Limits: signed payloads are not checked against a freshness window; replays are absorbed by deduplication and by status updates that only move forward.
+
+### Untrusted input
+
+All customer text is treated as hostile, including text that reaches an LLM.
+
+- **Sanitizing for the model:** phone-like numbers are masked; brackets and braces that could forge structure become look-alike characters; control and invisible characters are replaced. Length is preserved so evidence spans stay valid.
+- **Verification:** every quote the model returns must appear verbatim in a customer message, otherwise it is dropped. The model cannot introduce a fact, a price, a status or a score. Price, zone and product come from the seller's input, the catalog and the gazetteer.
+- **Injection lexicon:** phrase-level patterns (English, French, Arabic) in `config/scoring.yaml` flag an order, force human review and ignore an injected confirmation. A hit never changes the score. The evaluation gate requires injected orders to be flagged, still scored and not promoted to an exact address.
+- **Drafts:** the LLM judge sees only shop text and order facts, never customer text; the local classifier cannot be prompt-injected; approval is recomputed in code.
+- **Display:** the web UI renders text through React; the dashboard escapes it; bidirectional control characters are stripped from customer text in API responses.
+- **Input limits:** paste text 2,000 characters, replies 600, CSV 10 rows in public mode and 200 otherwise, request bodies 64 KB.
+
+Limits: the lexicon can miss novel phrasings, and a manipulated model can still return wrong labels for text that does exist in the conversation, which affects the score within what the checks allow. Detection is a safeguard, not a guarantee. Flagged orders are meant to be reviewed by a person.
+
+### File handling
+
+There are no file uploads and no user-controlled file paths. CSV import takes text in a JSON body. Paths come from operator configuration only (`DB_PATH`, `SCORING_CONFIG`, `LLM_REGISTRY`, `PROBE_FILE`, `TRACE_FILE`). The only static files served are those in `web/dist`.
+
+### Logging and stored data
+
+Logs carry counts and reasons only: never a message body, a sender's number or a secret. LLM trace records contain ids, versions, timing and token counts, not customer text. The database does contain customer messages, names and, for WhatsApp customers, phone numbers in plain text (`customers.phone_e164`, unique, never returned unmasked and never sent to a model). The schema has a `raw_payload` column that the current code never writes. In `public` mode, sandbox data is deleted after two hours and the whole database is rebuilt on every start. In `event` and `dev` mode nothing is deleted automatically, and there is no encryption at rest or data-retention policy. Add both at the host level if you hold real data.
+
+### External services and model providers
+
+What leaves the host:
+
+- **LLM providers (Groq, Gemini, or your own endpoint):** for extraction, the rendered conversation window: customer messages and the latest template text, with phone-like numbers masked. Customers can write personal details into messages (names, addresses); those are sent as written. For draft rewrite and judge: template text and order facts (product, price), with the customer's name replaced by a placeholder. No customer id, phone number or account data is sent. Retention and training policies are the provider's; use the self-hosted option if that matters ([self-hosted LLM](docs/operations/self-hosted-llm.md)).
+- **Where keys go:** `GROQ_API_KEY` is sent as a bearer token to `GROQ_BASE_URL` or Groq, so a mistyped base URL discloses the key to that host. Calls use HTTPS with default certificate verification when the URL is `https`.
+- **Meta (WhatsApp Cloud API):** outbound message text and the recipient's number, only when sending is effective.
+- **Cloudflare:** if you use the tunnel, it terminates TLS and sees all traffic to the site.
+
+Use provider keys with spending limits. `LIVE_LLM_DAILY_CAP` and the visitor caps bound the app's own consumption.
+
+### Database access
+
+All queries are parameterized; the few statements that interpolate text use constants (table names, status lists). The database is a local SQLite file protected only by operating-system permissions. Wasel supports a single API process; a second process on the same file is unsupported.
+
+### Supply chain
+
+Dependencies are pinned to exact versions in `requirements*.txt` and `web/package-lock.json`, CI runs with `contents: read` permission, and no LLM SDKs are used (providers are called with `httpx`). There is no automated dependency vulnerability scanning in this repository.
 
 ## Data
 
-All customer data in this repository is synthetic. Do not load real customer conversations into a public-mode deployment.
+All customer data in this repository is synthetic. Do not load real customer conversations into a `public`-mode deployment, and do not run real customer data on a host without the controls above.
 
-Design detail: see [safeguards](docs/architecture.md#11-outbound-message-safeguards) and [data handling](docs/architecture.md#14-data-handling) in the architecture document.
+Design detail: [architecture overview](docs/architecture/overview.md), [extraction](docs/subsystems/extraction.md), [outbound](docs/subsystems/outbound.md), [WhatsApp](docs/subsystems/whatsapp.md), [deployment](docs/operations/deployment.md).

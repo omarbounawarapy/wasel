@@ -2,7 +2,7 @@
 # wa_webhook_up.sh: put the localhost webhook on the internet for Meta in one command — a
 # cloudflared quick tunnel + Graph API registration of the callback URL and the `messages`
 # field. What remains afterwards is to send a WhatsApp message to the business number.
-# See docs/whatsapp.md. Needs META_APP_ID, WA_APP_SECRET, WA_VERIFY_TOKEN and
+# See docs/subsystems/whatsapp.md. Needs META_APP_ID, WA_APP_SECRET, WA_VERIFY_TOKEN and
 # WA_PHONE_NUMBER_ID in .env plus WEBHOOK_ENABLED=true; the quick-tunnel URL is ephemeral, so
 # re-run after every restart (registration is idempotent — it replaces the previous callback).
 # Ctrl-C tears the tunnel down.

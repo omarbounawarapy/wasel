@@ -347,7 +347,7 @@ def rescoring_banner(order_id: str) -> None:
 
 ROUTE = {"auto_send": "can go out without a click", "needs_review": "a person checks and clicks Send",
          "blocked": "blocked: the standard template is used"}
-# guard classifier decision on a generated draft (docs/architecture.md); old drafts have none
+# guard classifier decision on a generated draft (docs/subsystems/outbound.md); old drafts have none
 DECISION = {"send": "Clear to send", "review": "Owner approval", "block": "Blocked"}
 CLASSIFIER_EXPLAINER = ("A small local model scores how risky this message is. Below 10% it's cleared, 10–50% goes to "
                         "you for approval, above 50% it's blocked and the standard template is used.")

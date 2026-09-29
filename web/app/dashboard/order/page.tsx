@@ -227,7 +227,7 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
     );
 }
 
-// The draft guard (docs/architecture.md, outbound message safeguards): rules -> local classifier decision -> AI judge.
+// The draft guard (docs/subsystems/outbound.md): rules -> local classifier decision -> AI judge.
 // Drafts from before the classifier change carry no `decision`: shown as not applicable, never a crash.
 const DECISION: Record<string, { label: string, tone: "green" | "amber" | "gray" }> = {
     send: { label: "Clear to send", tone: "green" },

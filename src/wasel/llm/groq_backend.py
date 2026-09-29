@@ -26,7 +26,7 @@ from wasel.llm.base import (
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
 GROQ_REASONING_KWARGS = {"reasoning_effort": "low", "reasoning_format": "hidden"}
-# Self-hosted OpenAI-compatible servers (vLLM on a GPU host, docs/self-hosted-llm.md) reject the
+# Self-hosted OpenAI-compatible servers (vLLM on a GPU host, docs/operations/self-hosted-llm.md) reject the
 # Groq-only `reasoning_format` field with a 400; `reasoning_effort` is honored for gpt-oss.
 SELFHOST_REASONING_KWARGS = {"reasoning_effort": "low"}
 
