@@ -39,6 +39,7 @@ def _int(v) -> int | None:
 
 
 def build_messages(task: TaskSpec, user: str) -> list[dict]:
+    """Chat messages for a task: the system prompt, the few-shot pairs as user/assistant turns, then `user`."""
     msgs = [{"role": "system", "content": task.system_prompt}]
     for u, a in task.few_shot:
         msgs += [{"role": "user", "content": u}, {"role": "assistant", "content": a}]
@@ -47,6 +48,12 @@ def build_messages(task: TaskSpec, user: str) -> list[dict]:
 
 
 class OpenAICompatBackend:
+    """Chat-completions backend for an OpenAI-compatible endpoint (Groq, Gemini's compat API, self-hosted vLLM).
+
+    Requests strict JSON-schema output. `schema_adapter` rewrites the task schema for providers that accept a dialect,
+    `extra` maps a model name to additional request fields, and `max_tokens_param` names the output-limit field.
+    """
+
     def __init__(self, provider: str, base_url: str, api_key: str,
                  schema_adapter: Callable[[dict], dict] = lambda s: s, extra: dict | None = None,
                  max_tokens_param: str = "max_completion_tokens", send_seed: bool = True,
@@ -59,6 +66,13 @@ class OpenAICompatBackend:
         self._transport = transport
 
     def complete_json(self, task: TaskSpec, model: str, user: str, timeout_s: float) -> tuple[str, CallMeta]:
+        """POST one chat completion and return (content, CallMeta). Blocking; no retries.
+
+        Failures are mapped to LLMError subclasses: timeout -> Timeout, network errors, 401/403 and 5xx ->
+        ProviderDown, 429 -> RateLimited, 404 -> ModelGone, other 4xx -> SchemaRejected, unreadable or empty body ->
+        ParseError, and a finish_reason other than 'stop' -> Truncated. The returned content is the raw model text, not
+        yet parsed.
+        """
         body = {
             "model": model, "messages": build_messages(task, user), "temperature": task.temperature,
             "response_format": {"type": "json_schema", "json_schema": {

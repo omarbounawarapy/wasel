@@ -28,10 +28,14 @@ def bind(**kw) -> contextvars.Token:
 
 
 def new_id() -> str:
+    """A random 16-hex-character trace id."""
     return uuid.uuid4().hex[:16]
 
 
 def emit(rec: dict) -> None:
+    """Record one trace entry: stamp it with the time and the context from bind(), keep it in the ring buffer and
+    append it to TRACE_FILE (JSON lines) when that variable is set. Entries must not carry customer text.
+    """
     rec = {"ts": SystemClock().now().isoformat(timespec="milliseconds"), **(TRACE_CTX.get() or {}), **rec}
     with _lock:
         _ring.append(rec)
@@ -43,6 +47,7 @@ def emit(rec: dict) -> None:
 
 
 def recent(limit: int = 200, role: str | None = None, order_id: str | None = None) -> list[dict]:
+    """Newest-first trace entries, at most `limit`, optionally only for one role or order."""
     with _lock:
         rows = list(_ring)
     rows = [r for r in rows if (role is None or r.get("role") == role)
@@ -74,5 +79,6 @@ def summary() -> dict:
 
 
 def clear() -> None:
+    """Empty the in-process ring buffer. The TRACE_FILE is not touched."""
     with _lock:
         _ring.clear()

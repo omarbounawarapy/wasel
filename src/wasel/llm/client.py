@@ -9,8 +9,9 @@ No retries, no sleeps. ProviderDown opens a 60 s breaker for that provider. A st
 fit in the remaining deadline is skipped. Each attempted call first asks the UsageMeter; a cap stops the
 chain (path 'rules', `cap` set) and never becomes an HTTP error.
 
-ReplayClient / FailingClient are the same ChainClient over ReplayBackend / FailingBackend, selected by
-LLM_MODE = live | replay | fail_primary | fail_groq | fail_all (build_client).
+The offline modes (replay, fail_primary, fail_groq, fail_all) run the same ChainClient over ReplayBackend /
+FailingBackend instead of live providers; LLM_MODE = live | replay | fail_primary | fail_groq | fail_all selects
+between them (build_client).
 """
 from __future__ import annotations
 
@@ -53,6 +54,11 @@ def replay_key(user: str) -> str:
 
 @dataclass
 class ChainStep:
+    """One provider/model attempt in the chain. `timeout_s` is the per-call timeout for this step.
+
+    `backend` is any object with `complete_json(task, model, user, timeout_s) -> (raw_text, CallMeta)`, raising an
+    LLMError on failure.
+    """
     kind: StepKind
     provider: Literal["groq", "gemini"]
     model: str
@@ -62,6 +68,12 @@ class ChainStep:
 
 @dataclass
 class ChainResult:
+    """Outcome of one chain run.
+
+    `parsed` is None when no step succeeded, and the caller then falls back to the rules extractor (path 'rules').
+    `cap` is set when a usage cap stopped the chain before it produced a result. `errors` holds short per-attempt
+    failure strings.
+    """
     parsed: object | None             # whatever `parse` returned for the winning step, None -> rules
     raw: str | None
     path: str                         # llm | fallback_model | fallback_provider | rules
@@ -75,6 +87,12 @@ class ChainResult:
 
 
 class ChainClient:
+    """Blocking LLM client: tries the steps in order and returns the first response that parses.
+
+    Failures never raise LLMError to the caller; they show up in the result's `attempts`, `errors` and `path`. See the
+    module docstring for the fallback rules. Timings come from the injected `monotonic` so tests can control them.
+    """
+
     def __init__(self, steps: list[ChainStep], *, deadline_s: float = 20.0, breaker_s: float = 60.0,
                  monotonic: Callable[[], float] = time.monotonic, cache_size: int = 512):
         self.steps = steps
@@ -86,10 +104,12 @@ class ChainClient:
 
     @property
     def primary(self) -> str:
+        """The `provider:model` name of the first step, or `rules` when the chain has no steps."""
         return f"{self.steps[0].provider}:{self.steps[0].model}" if self.steps else "rules"
 
     @property
     def chain_names(self) -> list[str]:
+        """The `provider:model` name of every step, in order."""
         return [f"{s.provider}:{s.model}" for s in self.steps]
 
     def extract(self, task: TaskSpec, user: str, *, parse: Callable[[str], object],
@@ -126,6 +146,12 @@ class ChainClient:
         return res
 
     def _run(self, task: TaskSpec, user: str, *, parse, meter, sandbox_id, now, role) -> ChainResult:
+        """Walk the steps once and return the first successful result, or a 'rules' result if none succeeds.
+
+        A step is skipped when its provider's breaker is open or its timeout doesn't fit in the remaining deadline.
+        Each attempted step first asks `meter`; a refusal stops the chain and sets `cap`. A Timeout or ProviderDown on
+        the primary step also skips the same-provider fallback model.
+        """
         t0 = self._mono()
         res = ChainResult(None, None, "rules", None, None)
         skip_same_provider_fallback = False
@@ -186,6 +212,12 @@ class ReplayBackend:
                 self.fixtures[fx["key"]] = fx
 
     def complete_json(self, task: TaskSpec, model: str, user: str, timeout_s: float) -> tuple[str, CallMeta]:
+        """Return the recorded response for `user`.
+
+        A recorded non-200 status is raised as the LLMError a real call would raise. `model` and `timeout_s` are not
+        used for the lookup. Raises FixtureMissing (not an LLMError) if nothing is recorded for this exact input, so an
+        offline test fails loudly instead of silently scoring with rules.
+        """
         fx = self.fixtures.get(replay_key(user))
         if fx is None:
             preview = user.split("\n")[1][:60] if "\n" in user else user[:60]
@@ -208,6 +240,9 @@ class ReplayBackend:
 
 
 class FailingBackend:
+    """Test double whose calls always fail with the error named by `kind`: one of the keys of ERRORS (429, timeout,
+    400, malformed, 5xx, 404, truncated). `calls` counts the attempts.
+    """
     ERRORS = {"429": lambda: RateLimited(None), "timeout": lambda: Timeout("timeout"),
               "400": lambda: SchemaRejected("400"), "malformed": lambda: ParseError("malformed"),
               "5xx": lambda: ProviderDown("5xx"), "404": lambda: ModelGone("404"),
@@ -218,6 +253,7 @@ class FailingBackend:
         self.calls = 0
 
     def complete_json(self, task, model, user, timeout_s):
+        """Count the call and raise the configured error."""
         self.calls += 1
         raise self.ERRORS[self.kind]()
 
@@ -229,6 +265,13 @@ FALLBACK_MODEL = "openai/gpt-oss-20b"
 
 def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = None,
                  allow_hand_crafted: bool = False, deadline_s: float = 20.0) -> ChainClient:
+    """Build the ChainClient for `mode` (default: the LLM_MODE environment variable, else 'live').
+
+    'replay', 'fail_primary', 'fail_groq' and 'fail_all' are offline modes over ReplayBackend/FailingBackend and need
+    no keys. 'live' adds a step only for each provider that is configured through the environment (GROQ_API_KEY;
+    GEMINI_API_KEY plus GEMINI_MODEL with GEMINI_ENABLED=true), so with no keys the chain is empty and every extraction
+    falls back to rules. Raises ValueError for an unknown mode.
+    """
     mode = mode or os.environ.get("LLM_MODE", "live")
     replay_dirs = replay_dirs or []
     from wasel.llm.prompts import registry

@@ -18,6 +18,9 @@ DEFAULT_PROBE = {"schema_style": {"nullable": "type_array", "strip_additional": 
 
 
 def load_probe(path: str | Path | None) -> dict:
+    """Read the provider probe file (config/probe.json by default) over DEFAULT_PROBE; the defaults when the file is
+    missing.
+    """
     if path and Path(path).exists():
         return {**DEFAULT_PROBE, **json.loads(Path(path).read_text())}
     return DEFAULT_PROBE
@@ -26,6 +29,11 @@ def load_probe(path: str | Path | None) -> dict:
 def gemini_backend(api_key: str, model: str, probe: dict | None = None,
                    base_url: str = GEMINI_BASE_URL, transport: httpx.BaseTransport | None = None
                    ) -> OpenAICompatBackend:
+    """Backend for Gemini's OpenAI-compatible endpoint.
+
+    `probe` (see load_probe) says how this account's model wants the schema written, which token-limit field it takes
+    and whether it accepts a seed.
+    """
     probe = probe or DEFAULT_PROBE
     return OpenAICompatBackend(
         "gemini", base_url, api_key,

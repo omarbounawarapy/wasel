@@ -18,6 +18,7 @@ REGISTRY = Path(os.environ.get("LLM_REGISTRY", ROOT / "config" / "llm.yaml"))
 
 
 class PromptVersionMismatch(RuntimeError):
+    """A prompt file does not match its locked version, or llm.yaml names a version that isn't defined or locked."""
     pass
 
 
@@ -38,6 +39,11 @@ def check_versions(root: Path = ROOT) -> dict[str, str]:
 
 @lru_cache(maxsize=4)
 def registry(path: Path = REGISTRY) -> dict:
+    """The parsed LLM registry (config/llm.yaml), cached per path.
+
+    Validates the prompt files against config/prompts/VERSIONS first and raises PromptVersionMismatch on any
+    inconsistency, which stops the app from starting.
+    """
     reg = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
     locked = check_versions(ROOT)
     for role, r in reg["roles"].items():
@@ -51,17 +57,22 @@ def registry(path: Path = REGISTRY) -> dict:
 
 
 def active_version(role: str) -> str:
+    """The prompt version `role` runs. The PROMPT_VERSION environment variable overrides it for 'extract' only."""
     if role == "extract" and os.environ.get("PROMPT_VERSION"):
         return os.environ["PROMPT_VERSION"]
     return registry()["roles"][role]["active"]
 
 
 def active_versions() -> dict[str, str]:
+    """Active prompt version of every role in the registry."""
     return {role: active_version(role) for role in registry()["roles"]}
 
 
 @lru_cache(maxsize=8)
 def task(role: str, version: str | None = None, root: Path = ROOT) -> TaskSpec:
+    """Build the TaskSpec for `role` at `version` (default: the active one), reading its prompt, few-shot file and
+    schema from config/. Cached.
+    """
     r = registry()["roles"][role]
     version = version or active_version(role)
     spec, lim = r["versions"][version], r["limits"]
@@ -82,6 +93,7 @@ PROMPT_VERSION = active_version("extract")
 
 
 def extraction_task(root: Path = ROOT) -> TaskSpec:
+    """The extract TaskSpec at PROMPT_VERSION, which is fixed when this module is imported."""
     return task("extract", PROMPT_VERSION, root)
 
 
@@ -91,4 +103,5 @@ def rewrite_task(root: Path = ROOT) -> TaskSpec:
 
 
 def judge_task(root: Path = ROOT) -> TaskSpec:
+    """The judge TaskSpec at its active version."""
     return task("judge", root=root)
