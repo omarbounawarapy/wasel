@@ -50,6 +50,30 @@ deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `m
 	@echo "updated to $$(git rev-parse --short HEAD). Restart the server (systemctl restart wasel, or Ctrl-C + make serve),"
 	@echo "then check it from outside: make smoke URL=<your public URL>"
 
+# ---- Cloudflare (Worker + Container + R2; docs/operations/cloudflare.md). Needs no Cloudflare account except cf-deploy-*
+cf-install: ## npm ci for deploy/cloudflare (wrangler, @cloudflare/containers)
+	cd deploy/cloudflare && npm ci --no-audit --no-fund
+
+cf-check: ## offline: wrangler.jsonc/env/requirements consistency + Worker typecheck and tests (no account, no Docker)
+	$(PY) scripts/ops/cf_check.py
+	cd deploy/cloudflare && npm run --silent typecheck >/dev/null && npm test --silent
+
+cf-image: ## build the container image locally (what wrangler deploys), tag wasel-cf
+	docker build --platform linux/amd64 -t wasel-cf -f deploy/cloudflare/container/Dockerfile .
+
+cf-smoke: ## run the image locally (docker/podman): keyless boot, smoke test, state survives a wiped disk, corrupt snapshot refused
+	$(PY) scripts/ops/cf_local_smoke.py
+
+cf-dev: web ## wrangler dev: the Worker + container locally on :8787 (needs Docker; secrets from deploy/cloudflare/.dev.vars)
+	cd deploy/cloudflare && npx wrangler dev --port 8787
+
+cf-dry-run: web ## validate a deploy without uploading anything (builds the image; ENV=preview|production)
+	cd deploy/cloudflare && npx wrangler deploy --dry-run --outdir .wrangler/dry-run --env $${ENV:-preview}
+
+cf-deploy: web ## ACCOUNT SIDE: deploy ENV=preview|production (wrangler login first; docs/operations/cloudflare.md)
+	@[ -n "$${ENV:-}" ] || { echo "set ENV=preview or ENV=production" >&2; exit 1; }
+	cd deploy/cloudflare && npx wrangler deploy --env $$ENV --var GIT_SHA:$$(git rev-parse --short HEAD)
+
 wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (docs/subsystems/whatsapp.md)
 	bash scripts/ops/wa_webhook_up.sh
 
@@ -59,7 +83,7 @@ llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_AR
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)
 	bash scripts/ops/vllm_serve.sh check
 
-.PHONY: help setup run up ui web web-dev serve tunnel deploy wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
+.PHONY: help setup run up ui web web-dev serve tunnel deploy cf-install cf-check cf-image cf-smoke cf-dev cf-dry-run cf-deploy wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

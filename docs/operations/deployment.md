@@ -1,6 +1,6 @@
 # Deployment and operations
 
-Wasel runs as one Python process (`make serve`) on an always-on machine. A Cloudflare Tunnel can publish it on a stable HTTPS address without opening any port. There is **no Docker image and no container deployment**: the repository has no Dockerfile, and the supported way to run it is a checkout on a host, started by `make serve` (directly or under systemd).
+Wasel runs as one Python process (`make serve`) on an always-on machine. A Cloudflare Tunnel can publish it on a stable HTTPS address without opening any port. This page covers the **self-hosted** target: a checkout on a host, started by `make serve` (directly or under systemd). To run on Cloudflare's own platform (Worker, Container and R2, no host to maintain) see [Deploying on Cloudflare](cloudflare.md); the two targets are independent and share no infrastructure.
 
 ```
  browser ─────HTTPS──▶ Cloudflare (your hostname, TLS)

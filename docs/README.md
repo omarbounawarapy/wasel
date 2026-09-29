@@ -29,7 +29,7 @@ Wasel scores the refusal risk of cash-on-delivery orders written in chat, explai
 | Run or write tests | [Testing](development/testing.md) |
 | Change the code | [Extending](development/extending.md), [CONTRIBUTING](../CONTRIBUTING.md) |
 | Know what is in `data/` | [Data directory](data.md) |
-| Deploy, monitor, update, roll back | [Deployment and operations](operations/deployment.md) |
+| Deploy, monitor, update, roll back | [Deployment and operations](operations/deployment.md) (self-hosted), [Cloudflare](operations/cloudflare.md) |
 | Self-host the LLM | [Self-hosted LLM](operations/self-hosted-llm.md) |
 | Diagnose a problem | [Troubleshooting](operations/troubleshooting.md) |
 | Assess the security posture | [SECURITY.md](../SECURITY.md) |
@@ -67,6 +67,7 @@ docs/
 │   └── extending.md
 ├── operations/
 │   ├── deployment.md          hosting, running, logs, updates, backups
+│   ├── cloudflare.md          Worker + Container + R2 deployment, local checks, limits
 │   ├── self-hosted-llm.md
 │   └── troubleshooting.md
 └── assets/                    screenshots and social preview

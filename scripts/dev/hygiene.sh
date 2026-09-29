@@ -3,7 +3,7 @@
 set -uo pipefail
 fail=0; say(){ printf 'hygiene: %b\n' "$*" >&2; fail=1; }
 
-bad=$(git ls-files . | grep -E '(^|/)\.env$|\.db$|\.db-(wal|shm)$|\.sqlite3?$|(^|/)node_modules/|(^|/)web/dist/|(^|/)var/' || true)
+bad=$(git ls-files . | grep -E '(^|/)\.env$|(^|/)\.dev\.vars$|\.db$|\.db-(wal|shm)$|\.sqlite3?$|(^|/)node_modules/|(^|/)web/dist/|(^|/)var/' || true)
 [ -n "$bad" ] && say "tracked files that must be ignored:\n$bad"
 
 # key-shaped strings (Groq, Gemini, Meta and tunnel-token prefixes)

@@ -102,6 +102,8 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 |---|---|---|
 | `HOST` | `127.0.0.1` | Bind address for `make serve`. `0.0.0.0` exposes the port on the network. |
 | `PORT` | `8000` | Port for `make serve` |
+| `SNAPSHOT_URL` | empty (off) | `file:///abs/path` or `http(s)://…` store the SQLite file is restored from at boot and saved to while running; for hosts with an ephemeral disk ([Cloudflare](../operations/cloudflare.md)). Ignored when `SEED_ON_BOOT` resolves to `always`. A store that errors (other than "no snapshot yet") stops startup |
+| `SNAPSHOT_INTERVAL_S` | `60` | Minimum seconds between snapshot saves (a save happens only if the DB changed, and once at shutdown) |
 | `GIT_SHA` | `dev` | Shown in `/api/health` `build.git_sha` |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | CORS origin allowed in `dev` mode |
 | `SCORING_CONFIG` | `config/scoring.yaml` | Alternative scoring file |

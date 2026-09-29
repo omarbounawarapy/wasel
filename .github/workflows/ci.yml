@@ -38,3 +38,20 @@ jobs:
           make smoke
       - if: failure()
         run: cat serve.log || true
+  cloudflare:
+    name: cloudflare (config checks, container image, wrangler dry run; no account)
+    needs: [backend]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version-file: .python-version, cache: pip }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm, cache-dependency-path: "web/package-lock.json\ndeploy/cloudflare/package-lock.json" }
+      - run: make setup
+      - run: make cf-install
+      - run: make cf-check
+      - run: make cf-smoke
+      - run: make web
+      - run: make cf-dry-run ENV=production

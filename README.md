@@ -54,7 +54,7 @@ One FastAPI process owns the database and runs the worker. The web UI, the Strea
 | Web UI | Next.js 16 static export (React 19, Tailwind 4), served by FastAPI at `/` |
 | Dashboard | Streamlit 1.64 |
 | Tooling | pytest, ruff, GitHub Actions, GNU Make |
-| Hosting | systemd unit and a Cloudflare Tunnel; there is no Docker deployment |
+| Hosting | Self-hosted: systemd unit and a Cloudflare Tunnel. Cloudflare-hosted: Worker + Container + R2 ([guide](docs/operations/cloudflare.md)) |
 
 ## Quick start
 
@@ -97,7 +97,7 @@ make check      # hygiene + ruff + offline tests + evaluation gate; needs no key
 | [Web UI and dashboard](docs/interfaces.md) | the two front ends and how they reach the backend |
 | [Data directory](docs/data.md) | every file under `data/`, what produces it, whether to edit it |
 | [Commands](docs/development/commands.md), [testing](docs/development/testing.md), [extending](docs/development/extending.md) | day-to-day development |
-| [Deployment](docs/operations/deployment.md), [self-hosted LLM](docs/operations/self-hosted-llm.md), [troubleshooting](docs/operations/troubleshooting.md) | running it for other people |
+| [Deployment](docs/operations/deployment.md), [Cloudflare](docs/operations/cloudflare.md), [self-hosted LLM](docs/operations/self-hosted-llm.md), [troubleshooting](docs/operations/troubleshooting.md) | running it for other people |
 | [Security](SECURITY.md), [Contributing](CONTRIBUTING.md), [Changelog](CHANGELOG.md) | policy and process |
 
 The full index with reading order is in [docs/README.md](docs/README.md).
@@ -117,7 +117,7 @@ models/         trained risk model and its card
 tests/          unit/ integration/ e2e/, fixtures/, golden/
 scripts/        data/ ops/ dev/ helper scripts (see docs/development/commands.md)
 examples/       runnable API scripts
-deploy/         systemd unit
+deploy/         systemd unit; cloudflare/ = Worker, container image, wrangler config
 docs/           documentation
 ```
 
