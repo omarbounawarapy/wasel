@@ -112,7 +112,7 @@ At request time `scoring/model.py` loads the booster once, builds one row in `FE
 
 Verified by regenerating and retraining from a clean checkout:
 
-- `make generate` reproduces `data/synth_v1.csv` byte for byte. `data/synth_v1.meta.json` changes only if the recorded hashes or commit differ from the committed values, which they do after any edit to `features.py` or a phrase bank, so it usually shows a diff after unrelated commits.
+- `make generate` reproduces `data/synth_v1.csv` byte for byte. `data/synth_v1.meta.json` records the SHA-256 of `features.py`, the banks, the catalog and zones, and the git commit at generation time, so it shows a diff after any edit to those files or any new commit. Regenerate it in the same change as such an edit.
 - `make train` reproduces `models/risk_xgb_v1.json` and `tests/golden/hero.json` byte for byte. It also rewrites `created_at` and `trained_at` timestamps in `train_metrics.json`, `impact.json` and the card, so those three files show a diff on every run even when nothing else changed.
 - Determinism relies on the pinned versions in `requirements.txt`, fixed seeds and single-threaded training.
 

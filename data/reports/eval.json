@@ -6,8 +6,8 @@
     "judge": "judge-v2",
     "failure_label": "failure-label-v1"
   },
-  "config_hash": "555443d2",
-  "runtime_s": 5.5,
+  "config_hash": "034899c8",
+  "runtime_s": 7.1,
   "results": {
     "extraction": {
       "n": 279,

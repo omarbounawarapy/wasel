@@ -31,8 +31,8 @@
     "seed_key": "ar_area",
     "injection_suspected": false,
     "quantity": null,
-    "zone": null,
-    "zone_source": "default",
+    "zone": "suburban",
+    "zone_source": "gazetteer",
     "address_text": "حي النصر",
     "product_id": "P02",
     "language": "darija_arabic_script",
@@ -140,7 +140,6 @@
       "action": "confirm",
       "confidence": "low",
       "confidence_reasons": [
-        "imputed_inputs",
         "near_tier_boundary"
       ],
       "confirmation": "none",
@@ -190,7 +189,7 @@
         "dropped_flags": 0,
         "latency_ms": 0
       },
-      "config_hash": "50b7c24a",
+      "config_hash": "034899c8",
       "classifier_version": "xgb_v1-90d41187",
       "prompt_version": "extract-v1"
     }
@@ -201,8 +200,8 @@
       "assessment_version": 1,
       "template_id": "T_ADDRESS",
       "language": "darija_arabic_script",
-      "text": "عسلامة سارة، باش نبعثولك crème visage. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟",
-      "canonical_text": "عسلامة سارة، باش نبعثولك crème visage. تعطينا العنوان بالضبط (النهج ونومرو الدار) وتأكد الكوموند، إيه ولا لا؟",
+      "text": "باش نحضّرلك التوصيل متاع crème visage، سارة، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟",
+      "canonical_text": "باش نحضّرلك التوصيل متاع crème visage، سارة، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟",
       "source": "static_template",
       "route": "needs_review",
       "prefilter": {
@@ -213,7 +212,8 @@
       "sent_message_id": null,
       "sent_at": null,
       "delivery": null,
-      "created_at": "2026-09-27T10:00:00.000000Z"
+      "created_at": "2026-09-27T10:00:00.000000Z",
+      "decided_by": null
     }
   ],
   "capabilities": {

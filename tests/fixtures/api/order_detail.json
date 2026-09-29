@@ -125,7 +125,7 @@
         "origin": "simulated",
         "kind": "text",
         "provider_ts": "2026-09-27T10:00:00.000000Z",
-        "text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
+        "text": "Bech n7adroulk livraison mta3 casque bluetooth, Sami, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?",
         "segments": null,
         "transcript": null,
         "location": null,
@@ -248,7 +248,7 @@
         "dropped_flags": 0,
         "latency_ms": 0
       },
-      "config_hash": "50b7c24a",
+      "config_hash": "034899c8",
       "classifier_version": "xgb_v1-90d41187",
       "prompt_version": "extract-v1"
     },
@@ -307,7 +307,7 @@
         "dropped_flags": 0,
         "latency_ms": 0
       },
-      "config_hash": "50b7c24a",
+      "config_hash": "034899c8",
       "classifier_version": "xgb_v1-90d41187",
       "prompt_version": "extract-v1"
     }
@@ -318,8 +318,8 @@
       "assessment_version": 1,
       "template_id": "T_ADDRESS",
       "language": "arabizi",
-      "text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
-      "canonical_text": "Aslema Sami, bech nba3thoulek casque bluetooth. Ta3tina l'adresse bedhabt (esm el triq w noumrou dar) w tconfirmi el commande, ey walla le?",
+      "text": "Bech n7adroulk livraison mta3 casque bluetooth, Sami, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?",
+      "canonical_text": "Bech n7adroulk livraison mta3 casque bluetooth, Sami, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?",
       "source": "static_template",
       "route": "needs_review",
       "prefilter": {
@@ -330,7 +330,8 @@
       "sent_message_id": "msg_0017",
       "sent_at": "2026-09-27T10:00:00.000000Z",
       "delivery": "recorded_only",
-      "created_at": "2026-09-27T10:00:00.000000Z"
+      "created_at": "2026-09-27T10:00:00.000000Z",
+      "decided_by": "human"
     }
   ],
   "capabilities": {

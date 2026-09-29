@@ -10,7 +10,7 @@
     "started_at": "2026-09-27T10:00:00.000000Z"
   },
   "config": {
-    "config_hash": "50b7c24a",
+    "config_hash": "034899c8",
     "prompt_version": "extract-v1",
     "classifier_version": "xgb_v1-90d41187",
     "seed_version": 1,
@@ -48,5 +48,6 @@
   },
   "wa_token_present": false,
   "real_rows": 0,
-  "sandbox_orders": 1
+  "sandbox_orders": 1,
+  "wa_auto_send": false
 }

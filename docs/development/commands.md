@@ -65,7 +65,7 @@ These targets regenerate committed files. Use them deliberately and commit the r
 | `warm` | `scripts/data/warm_cache.py`: runs every sample conversation and scripted reply through the real worker in a scratch database and writes the extraction cache. Default mode uses `data/seed/hand_extractions.json` and labels the entries as hand-crafted, not model output. `LIVE=1 make warm` records real outputs from the live chain. | `data/seed/extraction_cache.jsonl` | live mode: `GROQ_API_KEY`, LLM calls |
 | `mocks` | `scripts/data/dump_mocks.py`: rewrites the frozen API responses from a seeded in-process app | `tests/fixtures/api/*.json` | none |
 
-`generate`, `golden`, `sessions` and `train` are deterministic apart from timestamps that `train` writes (see [machine learning](../machine-learning.md#reproducibility)); running them on an unchanged tree should leave `git diff` empty except for those fields. `make mocks` currently produces a diff against the committed files, because the committed frozen responses predate the current health payload and configuration hash; the contract test only requires that they validate against the API models.
+`generate`, `golden`, `sessions` and `train` are deterministic apart from timestamps that `train` writes (see [machine learning](../machine-learning.md#reproducibility)); running them on an unchanged tree should leave `git diff` empty except for those fields. `make mocks` embeds the current configuration hash and template text, so rerun it and commit the result whenever `config/scoring.yaml`, the catalog, zones or templates change.
 
 ## Scripts
 
