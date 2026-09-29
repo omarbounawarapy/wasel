@@ -1,5 +1,6 @@
 # Wasel
 
+[![ci](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml/badge.svg)](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)
 ![license](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)
 ![data](https://img.shields.io/badge/data-synthetic%20only-orange)
