@@ -116,22 +116,33 @@ class B:
         return e
 
     def say(self, key: str, **kw):
+        """Add an agent turn from the phrase table by `key`.
+
+        `name`, `product` and `price` are filled into the phrase, plus any extra `kw`.
+        """
         txt = self.T[key]
         return self._ev(type="agent", text=txt.format(name=self.name, product=self.product, price=int(self.price),
                                                       **kw))
 
     def user(self, text: str):
+        """Add a customer turn."""
         return self._ev(type="user", text=text)
 
     def tool(self, name: str, args: dict, result: dict, ok: bool = True):
+        """Add a tool_call and its tool_result (`ok` says whether it succeeded). Returns the result event."""
         self._ev(type="tool_call", tool=name, args=args)
         return self._ev(type="tool_result", tool=name, ok=ok, result=result)
 
     def wait(self, seconds: int):
+        """Advance the session clock by `seconds` without adding an event."""
         self.t += seconds
 
     # common steps ------------------------------------------------------------------------------------
     def start(self, cust=None):
+        """Open a session: lookup_customer, get_order, then the greeting.
+
+        `cust` overrides the customer record the lookup returns, which is how the wrong-customer failure is planted.
+        """
         c = cust or (self.cid, self.name, self.phone)
         self.tool("lookup_customer", {"phone": self.phone},
                   {"customer_id": c[0], "name": c[1], "phone": c[2], "past_orders": self.rng.randint(0, 4)})
@@ -141,9 +152,11 @@ class B:
         self.say("hello")
 
     def confirm_answer(self):
+        """The customer confirms, with a random phrase from the phrase table."""
         self.user(self.rng.choice(self.T["confirm"]))
 
     def address_exchange(self, address: str):
+        """Ask for the address, the customer gives `address`, then search_address and update_order at level 'exact'."""
         self.say("ask_address")
         self.user(address)
         self.tool("search_address", {"query": address}, {"matches": 1, "level": "exact", "normalized": address})
@@ -151,10 +164,15 @@ class B:
                                    "address_level": "exact"}, {"updated": True})
 
     def confirm(self, ok: bool = True, error: str | None = None):
+        """Call confirm_order. With `ok=False` the result is an error (`error`, default 'timeout')."""
         return self.tool("confirm_order", {"order_id": self.order_id},
                          {"status": "confirmed"} if ok else {"error": error or "timeout"}, ok=ok)
 
     def end(self, status: str, kind: str, failures: list[str] | None = None):
+        """Finish the session and return it.
+
+        Records the status the agent claimed and the label (`kind`, sorted `failures`).
+        """
         self.s["final"] = {"status_claimed": status}
         self.s["label"] = {"kind": kind, "failures": sorted(failures or [])}
         return self.s
@@ -162,6 +180,7 @@ class B:
 
 # ---------------------------------------------------------------- scenarios
 def success(b: B):
+    """Clean run: confirmation, exact address, confirm_order succeeds, then the success claim."""
     b.start()
     b.confirm_answer()
     b.address_exchange(b.rng.choice(b.exact))
@@ -179,6 +198,7 @@ def success_escalated(b: B):
 
 
 def recovery_tool_retry(b: B):
+    """confirm_order fails once and succeeds on retry before the claim. Labeled 'recovery', not a failure."""
     b.start()
     b.confirm_answer()
     b.address_exchange(b.rng.choice(b.exact))
@@ -242,6 +262,7 @@ def ambiguous_hedged(b: B):
 
 
 def f_unsupported_claim_failed_tool(b: B):
+    """confirm_order fails, and the agent claims success anyway. Plants unsupported_success_claim."""
     b.start()
     b.confirm_answer()
     b.address_exchange(b.rng.choice(b.exact))
@@ -251,6 +272,7 @@ def f_unsupported_claim_failed_tool(b: B):
 
 
 def f_unsupported_claim_no_tool(b: B):
+    """The agent claims success without ever calling confirm_order. Plants unsupported_success_claim."""
     b.start()
     b.confirm_answer()
     b.address_exchange(b.rng.choice(b.exact))
@@ -259,6 +281,7 @@ def f_unsupported_claim_no_tool(b: B):
 
 
 def f_repeated_question(b: B):
+    """The customer gives their address and the agent asks for it again. Plants repeated_question."""
     b.start()
     b.confirm_answer()
     addr = b.rng.choice(b.exact)
@@ -275,6 +298,11 @@ def f_repeated_question(b: B):
 
 
 def f_no_progress_search(b: B, then_claim: bool = False):
+    """The same vague address is searched 3-5 times with no matches. Plants no_progress_search.
+
+    The agent then escalates; with `then_claim` it instead saves the vague address and claims confirmation, which also
+    plants incomplete_marked_done.
+    """
     b.start()
     b.confirm_answer()
     b.say("ask_address")
@@ -295,6 +323,10 @@ def f_no_progress_search(b: B, then_claim: bool = False):
 
 
 def f_wrong_customer(b: B):
+    """lookup_customer returns another customer's record and the agent updates the order with it.
+
+    Plants wrong_customer_record.
+    """
     other = b.rng.choice([c for c in CUSTOMERS if c[0] != b.cid])
     b.start(cust=other)                           # lookup returned someone else's record; the agent used it
     b.confirm_answer()
@@ -310,6 +342,7 @@ def f_wrong_customer(b: B):
 
 
 def f_incomplete_vague_address(b: B):
+    """The order is confirmed with a city-only address. Plants incomplete_marked_done."""
     b.start()
     b.confirm_answer()
     b.say("ask_address")
@@ -324,6 +357,10 @@ def f_incomplete_vague_address(b: B):
 
 
 def f_incomplete_unanswered_question(b: B):
+    """The customer asks about delivery along with their address and the question is never answered.
+
+    Plants incomplete_marked_done.
+    """
     b.start()
     b.confirm_answer()
     addr = b.rng.choice(b.exact)
@@ -338,6 +375,10 @@ def f_incomplete_unanswered_question(b: B):
 
 
 def f_tool_error_ignored(b: B):
+    """update_order fails (db_locked) and the agent sends an acknowledgement as if it had worked.
+
+    Plants tool_error_ignored.
+    """
     b.start()
     b.confirm_answer()
     addr = b.rng.choice(b.exact)
@@ -372,6 +413,10 @@ PLAN = [(success, 30), (success_escalated, 6), (recovery_tool_retry, 10), (recov
 
 
 def build(seed: int = SEED, phrasing: str = "train") -> list[dict]:
+    """The labeled sessions for one phrasing ('train' or 'holdout'), following PLAN's scenario counts.
+
+    Deterministic for a given `seed` and `phrasing`. Ids are S001... for train and H001... for holdout.
+    """
     rng = random.Random(seed)
     jobs = [fn for fn, n in PLAN for _ in range(n)]
     rng.shuffle(jobs)
@@ -385,12 +430,14 @@ def build(seed: int = SEED, phrasing: str = "train") -> list[dict]:
 
 
 def write(path: Path = OUT, phrasing: str = "train", seed: int = SEED) -> int:
+    """Write the sessions as JSON lines (sorted keys), replacing the file. Returns the number of sessions."""
     rows = build(seed, phrasing)
     path.write_text("".join(json.dumps(s, ensure_ascii=False, sort_keys=True) + "\n" for s in rows), encoding="utf-8")
     return len(rows)
 
 
 def load(path: Path = OUT) -> list[dict]:
+    """Read sessions from a JSON-lines file."""
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
 
 

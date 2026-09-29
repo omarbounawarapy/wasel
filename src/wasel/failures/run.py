@@ -61,6 +61,11 @@ def score(sessions: list[dict], findings: list[Finding]) -> dict:
 
 
 def analyze(sessions: list[dict], *, llm=None) -> dict:
+    """Run the detectors over `sessions` and build the report dict.
+
+    Uses the rules by default. With `llm` it labels message texts through LLMSemantics first, which makes LLM calls.
+    The returned dict includes the Finding objects under "_findings"; callers pop it before serialising.
+    """
     t0 = time.perf_counter()
     sem = RuleSemantics()
     if llm is not None:
@@ -84,6 +89,9 @@ def analyze(sessions: list[dict], *, llm=None) -> dict:
 
 
 def main(argv=None) -> int:
+    """CLI entry point. Writes data/reports/failures_<source>[_llm].json and prints a summary. Returns the exit code: 2 if
+    --llm is given but no provider is configured, otherwise 0.
+    """
     ap = argparse.ArgumentParser()
     ap.add_argument("--source", choices=["synthetic", "holdout", "db"], default="synthetic")
     ap.add_argument("--db", default=str(ROOT / "var" / "app.db"))

@@ -1,7 +1,7 @@
 """Deterministic detectors: one function per failure type, each returning findings with evidence pointers (event
 index + the text or tool result) and a confidence. They look for what an agent run can get wrong without any
 technical error, and they tell recoveries (a retry that worked, a clarification after an unclear answer) apart
-from wasel.failures.
+from failures.
 
 Confidence bands: >= 0.6 reported as a failure; 0.35-0.6 "needs review" (ambiguous); lower is dropped.
 """
@@ -27,6 +27,11 @@ WHY = {"unsupported_success_claim": "The agent told the customer it succeeded, b
 
 @dataclass
 class Finding:
+    """One suspected failure in one session.
+
+    `evidence` points at the events that support it (see ev). `signature` is what groups findings from different
+    sessions into one issue (see rank.group). `status` follows from `confidence`.
+    """
     type: str
     session_id: str
     confidence: float
@@ -36,9 +41,11 @@ class Finding:
 
     @property
     def status(self) -> str:
+        """'failure' at or above REPORT_AT confidence, otherwise 'needs_review'."""
         return "failure" if self.confidence >= REPORT_AT else "needs_review"
 
     def to_dict(self) -> dict:
+        """The finding as a plain dict, with `status` included."""
         return {**asdict(self), "status": self.status}
 
 
@@ -52,11 +59,18 @@ def ev(e: dict) -> dict:
 
 
 def results(s: dict, tool: str | None = None) -> list[dict]:
+    """The session's tool_result events, in order; only those of `tool` when given."""
     return [e for e in s["events"] if e["type"] == "tool_result" and (tool is None or e["tool"] == tool)]
 
 
 # ---------------------------------------------------------------- detectors
 def unsupported_success_claim(s: dict, sem) -> list[Finding]:
+    """The agent told the customer the order was confirmed, without a successful confirm_order before it.
+
+    `sem.claim` decides whether a message is a success claim and whether it is hedged. If the last confirm_order before
+    the claim failed, confidence is 0.92; if it was never called, 0.85. Hedged claims drop to 0.45, or 0.3 when the
+    agent had also escalated.
+    """
     out = []
     for e in s["events"]:
         if e["type"] != "agent":
@@ -82,6 +96,12 @@ def unsupported_success_claim(s: dict, sem) -> list[Finding]:
 
 
 def repeated_question(s: dict, sem) -> list[Finding]:
+    """The agent asked about the same topic twice.
+
+    If the customer answered in between (`sem.answers`): 0.88. If the customer sent nothing in between (a reminder):
+    0.65, or 0.4 when more than an hour passed. A customer turn that doesn't answer makes re-asking a clarification, so
+    nothing is reported.
+    """
     out, asked = [], {}
     evs = s["events"]
     for e in evs:
@@ -109,6 +129,11 @@ def repeated_question(s: dict, sem) -> list[Finding]:
 
 
 def no_progress_search(s: dict) -> list[Finding]:
+    """A search tool called again and again with the same input and no results (or an error).
+
+    Three or more empty runs score min(0.95, 0.6 + 0.1 x runs); exactly two score 0.4 (needs review). A later call with
+    the same input that returns matches clears the run.
+    """
     out = []
     calls = [e for e in s["events"] if e["type"] == "tool_call" and e["tool"].startswith("search")]
     runs: dict[tuple, list[dict]] = {}
@@ -132,6 +157,11 @@ def no_progress_search(s: dict) -> list[Finding]:
 
 
 def wrong_customer_record(s: dict) -> list[Finding]:
+    """lookup_customer returned a customer whose phone differs from the chat's (`context.channel_phone`).
+
+    Confidence is 0.93 if that customer's id is later used as an argument of a tool call, 0.5 if it was only looked up.
+    Sessions without a channel phone produce no findings.
+    """
     phone = (s.get("context") or {}).get("channel_phone")
     out = []
     if not phone:
@@ -151,6 +181,12 @@ def wrong_customer_record(s: dict) -> list[Finding]:
 
 
 def incomplete_marked_done(s: dict) -> list[Finding]:
+    """The session was closed with a done status while something was missing.
+
+    Only applies when `final.status_claimed` is in DONE. Reports (0.85) a last update_order whose address level is
+    neither 'exact' nor 'street_and_landmark', and (0.7) a customer's last message that is a question no later agent
+    message appears to answer (no shared word longer than 4 characters).
+    """
     if s.get("final", {}).get("status_claimed") not in DONE:
         return []
     out = []
@@ -194,6 +230,11 @@ def tool_error_ignored(s: dict, claimed: set[int], sem) -> list[Finding]:
 
 
 def detect(s: dict, sem=None) -> list[Finding]:
+    """Run every detector on one session and return the findings at or above REVIEW_AT, in detector order.
+
+    `sem` is the language layer (RuleSemantics by default; LLMSemantics is passed in when labels came from an LLM).
+    Failed tool results that already back an unsupported_success_claim are not reported again as tool_error_ignored.
+    """
     sem = sem or RuleSemantics()
     claims = unsupported_success_claim(s, sem)
     used = {x["i"] for f in claims for x in f.evidence if x["type"] == "tool_result"}

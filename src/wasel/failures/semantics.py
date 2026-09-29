@@ -30,21 +30,30 @@ BATCH = 25
 
 
 def is_question(text: str) -> bool:
+    """True if the text contains a Latin or Arabic question mark."""
     return "?" in text or "؟" in text
 
 
 class RuleSemantics:
+    """Regex language layer for French and Arabizi. Free, deterministic, and the fallback for LLMSemantics."""
     name = "rules"
 
     def claim(self, text: str) -> tuple[bool, bool]:
+        """(is_success_claim, is_hedged) for an agent message."""
         return bool(CLAIM.search(text)), bool(HEDGE.search(text))
 
     def asks(self, text: str) -> str | None:
+        """The topic an agent message asks about, 'address' or 'confirm', or None if it isn't a question about either."""
         if not is_question(text):
             return None
         return next((name for name, rx in TOPIC if rx.search(text)), None)
 
     def answers(self, topic: str, text: str) -> bool:
+        """Whether a customer message answers a question on `topic`.
+
+        For 'address' that means it looks like a street address (a street word and a number); for 'confirm', any yes or
+        no. Unknown topics return False.
+        """
         if topic == "address":
             return bool(EXACT_ADDR.search(text))
         if topic == "confirm":
@@ -52,10 +61,12 @@ class RuleSemantics:
         return False
 
     def apology(self, text: str) -> bool:
+        """Whether an agent message acknowledges a problem or apologises."""
         return bool(APOLOGY.search(text))
 
 
 def parse_labels(raw: str) -> list[dict]:
+    """The `items` list of an LLM labeling response. Raises ParseError on invalid JSON or an unexpected shape."""
     try:
         j = json.loads(raw)
     except ValueError as e:
@@ -66,6 +77,12 @@ def parse_labels(raw: str) -> list[dict]:
 
 
 class LLMSemantics(RuleSemantics):
+    """Language layer backed by LLM labels, with RuleSemantics for anything left unlabeled.
+
+    Construction does the work: it sends every unique agent and customer text in `sessions` to the LLM in batches of
+    25, so it makes network calls, and it bypasses the usage meter. A failed or unparsable batch is counted in `stats`
+    and its texts fall back to the rules. `apology` is not labeled and always uses the rules.
+    """
     name = "llm"
 
     def __init__(self, llm, sessions: list[dict]):
@@ -107,16 +124,19 @@ class LLMSemantics(RuleSemantics):
         return self.labels.get((who, text))
 
     def claim(self, text: str) -> tuple[bool, bool]:
+        """LLM label for the text if there is one, otherwise the rules' answer."""
         lab = self._get("agent", text)
         return (bool(lab["success_claim"]), bool(lab["hedged"])) if lab else self.rules.claim(text)
 
     def asks(self, text: str) -> str | None:
+        """LLM label for the text if there is one, otherwise the rules' answer (topics: 'address', 'confirm')."""
         lab = self._get("agent", text)
         if lab is None:
             return self.rules.asks(text)
         return lab["asks"] if lab["asks"] in ("address", "confirm") else None
 
     def answers(self, topic: str, text: str) -> bool:
+        """LLM label for the text if there is one, otherwise the rules' answer."""
         lab = self._get("user", text)
         if lab is None:
             return self.rules.answers(topic, text)

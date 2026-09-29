@@ -13,10 +13,17 @@ from wasel.failures.detect import SEVERITY, WHY, Finding
 
 
 def root(signature: str) -> str:
+    """The signature without its parenthesised detail: "confirm_order failed (timeout)" -> "confirm_order failed"."""
     return signature.split(" (", 1)[0]
 
 
 def group(findings: list[Finding], n_sessions: int) -> list[dict]:
+    """Group findings into ranked issues.
+
+    Findings are grouped by (status, type, signature root). Each issue carries its sessions, `share` (fraction of the
+    `n_sessions` affected), mean confidence, a breakdown of the parenthesised details, and priority = severity x
+    sessions x mean confidence. Confirmed failures come before needs-review issues; ranks start at 1.
+    """
     buckets: dict[tuple, list[Finding]] = defaultdict(list)
     for f in findings:
         buckets[(f.status, f.type, root(f.signature))].append(f)

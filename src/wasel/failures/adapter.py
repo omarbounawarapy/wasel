@@ -30,6 +30,13 @@ def _j(s, default):
 
 
 def session_for(conn: sqlite3.Connection, o: sqlite3.Row) -> dict:
+    """Rebuild one order as an analyzer session from the database. Read-only.
+
+    `o` is an orders row joined with `channel` (as sessions_from_db selects it). Messages become agent/user turns and
+    each pipeline step (extraction, scoring, address update, confirmation, drafting, sending, error events) becomes a
+    tool_call and tool_result pair. Events are ordered by time and `t` is seconds since the first one. The session has
+    no `label`, so it can't be scored for accuracy.
+    """
     items: list[tuple[str, int, dict]] = []                 # (ts, tiebreak, event)
     for m in conn.execute("SELECT m.* FROM messages m JOIN order_messages om ON om.message_id = m.message_id "
                           "WHERE om.order_id = ? UNION SELECT m.* FROM messages m WHERE m.conversation_id = ? "
