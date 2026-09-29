@@ -1,5 +1,5 @@
-# 15-product catalog (03 §1.5). Prices are synthetic placeholders. Weights drive the generator.
-# Aliases per language are DRAFTS pending the native check (FEDI.md F5). P12's name is fixed for the hero.
+# 15-product catalog. Prices are synthetic placeholders. Weights drive the generator.
+# Aliases per language still need a native-speaker check. P12's name is fixed for the hero scenario.
 # Catalog median unit price = 69 (P05): the serve default for an unmatched product.
 version: 1
 products:
@@ -26,9 +26,9 @@ products:
   - {product_id: P11, name: "écouteurs sans fil", price_tnd: 179, category: electronics, weight: 0.05,
      aliases: {fr: ["écouteurs sans fil"], arabizi: ["kitman sans fil"], darija_arabic_script: ["سماعات"]}}
   - {product_id: P12, name: "casque bluetooth", price_tnd: 220, category: electronics, weight: 0.05,
-     # F5: canonical "casque bluetooth"; short form "casque"/"كاسك"; spelling variant "كاسك بلوتوث";
-     # canonical Arabic "سماعات بلوتوث". NOT aliased per F5's normalization cautions ("do not
-     # automatically equate"): generic "écouteurs bluetooth"/"إيربودز"/"kit mains libres"/"كيت مان ليرب",
+     # canonical "casque bluetooth"; short form "casque"/"كاسك"; spelling variant "كاسك بلوتوث";
+     # canonical Arabic "سماعات بلوتوث". Deliberately NOT aliased (ambiguous terms are not
+     # equated automatically): generic "écouteurs bluetooth"/"إيربودز"/"kit mains libres"/"كيت مان ليرب",
      # and plain "سماعات" (owned by P11) — ambiguous terms ask for clarification instead.
      aliases: {fr: ["casque bluetooth", "casque"], arabizi: ["casque bluetooth", "casque"],
                darija_arabic_script: ["سماعات بلوتوث", "كاسك بلوتوث", "كاسك"]}}

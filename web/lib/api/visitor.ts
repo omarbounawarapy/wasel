@@ -1,4 +1,4 @@
-// Visitor id for the public demo's sandbox (06 §1.2): a uuid v4 in localStorage["cod_visitor_id"],
+// Visitor id for the public-mode sandbox: a uuid v4 in localStorage["cod_visitor_id"],
 // sent as X-Visitor-Id on every /api call. Falls back to a per-tab id when storage is blocked.
 let memoryId: string | null = null;
 

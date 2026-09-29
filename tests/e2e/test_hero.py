@@ -1,6 +1,5 @@
-"""E1 (hero golden, 03 §10 / 05 E1) and ML13 (robustness). Runs the real score_order through the live
-chain code with a ReplayBackend over the frozen fixtures (hand_crafted until `make record` replaces them
-with a real recording), and asserts both the spec ranges and equality with tests/golden/hero.json."""
+"""Hero golden and robustness. Runs the real score_order through the live
+chain code with a ReplayBackend over the frozen fixtures (hand_crafted fixtures), and asserts both the documented ranges and equality with tests/golden/hero.json."""
 from __future__ import annotations
 
 import json

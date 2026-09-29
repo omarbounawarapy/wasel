@@ -1,4 +1,4 @@
-"""Outbound rewrite + judge (S-3, 02 §8.2). Three layers decide whether a draft may go out, cheapest first:
+"""Outbound rewrite + judge. Three layers decide whether a draft may go out, cheapest first:
 
   1. prefilter      deterministic rules (numbers, URLs, phones, payment/discount/promise terms, question count)
   2. guard_clf      char n-gram TF-IDF + logistic regression, local, no LLM; a veto that can't be prompt-injected
@@ -30,7 +30,7 @@ class Verdict:
     hold: bool                       # approved but not trusted enough for auto_send (classifier in the grey zone)
     unavailable: bool                # the LLM judge could not answer
     judge_json: dict                 # stored in outbound_drafts.judge_json
-    feedback: dict                   # fed to the one regeneration (02 §8.2 rule 2)
+    feedback: dict                   # fed to the one regeneration
     usage: list[UsageRecord] = field(default_factory=list)
 
 
@@ -58,7 +58,7 @@ def parse_rewrite(raw: str) -> str:
 
 
 def approved_in_code(j: dict, expected_questions: str) -> bool:
-    """02 §8.2 rule 2: the model's verdict alone is never enough."""
+    """The model's verdict alone is never enough."""
     return (j["verdict"] == "approve" and j["grounded"] and not j["unsupported_claims"] and j["language_ok"]
             and j["tone_ok"] and j["overreach"] == "none" and j["question_count"] == expected_questions)
 

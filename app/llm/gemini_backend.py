@@ -1,6 +1,6 @@
-"""Gemini extraction fallback, Stage A (M-8): Gemini's OpenAI-compat endpoint through the same backend,
-repair, Pydantic and evidence gate as Groq (02 §6). Disabled unless GEMINI_API_KEY and GEMINI_MODEL
-are set. [VERIFY] base URL, free-tier model id, schema style (probe), data-use terms."""
+"""Gemini extraction fallback: Gemini's OpenAI-compat endpoint through the same backend,
+repair, Pydantic and evidence gate as Groq. Disabled unless GEMINI_API_KEY and GEMINI_MODEL
+are set."""
 from __future__ import annotations
 
 import json

@@ -1,4 +1,4 @@
-"""create_app(): FastAPI factory (01 §6, 05 §2). A zero-arg call works (uvicorn --factory).
+"""create_app(): FastAPI factory. A zero-arg call works (uvicorn --factory).
 One container, one process: /api/*, the worker loop, and the static bundle at / (mounted last, if built)."""
 from __future__ import annotations
 
@@ -48,12 +48,12 @@ class AppState:
         self.last_purge_at = None
         self.last_webhook_at = None                     # last POST with a valid signature
         self.no_reply_s = self.config.raw["timeouts"]["no_reply_s"]["demo" if settings.demo_mode else "prod"]
-        self.sender = None                              # S-2: only when sending is effective (never public mode)
+        self.sender = None                              # only when sending is effective (never public mode)
         if settings.wa_send_effective and settings.wa_phone_number_id:
             from app.outbound.whatsapp_send import WhatsAppSender
             self.sender = WhatsAppSender(settings.wa_token, settings.wa_phone_number_id, settings.wa_api_version)
 
-    # one connection per thread (01 §1 conn.py)
+    # one connection per thread (see app/db/conn.py)
     def conn(self):
         c = getattr(self._local, "conn", None)
         if c is None:
@@ -71,7 +71,7 @@ class AppState:
 
     @property
     def draft_llm(self):
-        """S-3 rewrite + judge runs only with DRAFT_LLM=true and a provider configured; else static templates."""
+        """rewrite + judge runs only with DRAFT_LLM=true and a provider configured; else static templates."""
         return self.llm if self.settings.draft_llm and getattr(self.llm, "steps", None) else None
 
     def drafter(self, req):
@@ -79,7 +79,7 @@ class AppState:
                           config=self.config)
 
     def tick(self, now) -> None:
-        """One worker step on this thread's connection (01 §5.3)."""
+        """One worker step on this thread's connection."""
         conn = self.conn()
         meter = self.meter(conn)
         scorer = make_scorer(cache=SqliteExtractionCache(conn, self.settings.prompt_version), llm=self.llm,
@@ -178,7 +178,7 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         if task:
             task.cancel()
 
-    app = FastAPI(title="COD Risk", lifespan=lifespan, docs_url=None if settings.is_public else "/docs",
+    app = FastAPI(title="Wasel", lifespan=lifespan, docs_url=None if settings.is_public else "/docs",
                   redoc_url=None)
     app.state.core = state
 
@@ -197,11 +197,11 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
     @app.middleware("http")
     async def _limits_and_headers(request: Request, call_next):
         cl = request.headers.get("content-length")
-        if cl and cl.isdigit() and int(cl) > MAX_BODY and request.url.path != "/webhook/whatsapp":   # W-3: 1 MiB there
+        if cl and cl.isdigit() and int(cl) > MAX_BODY and request.url.path != "/webhook/whatsapp":   # 1 MiB there
             return JSONResponse({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "body over 64 KB"}}, status_code=413)
         resp = await call_next(request)
-        # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags (04 §
-        # [VERIFY] answered). XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule (06 §1.2).
+        # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
+        # XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.
         resp.headers["Content-Security-Policy"] = ("default-src 'self'; script-src 'self' 'unsafe-inline'; "
                                                    "img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
                                                    "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
@@ -216,7 +216,7 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
     app.include_router(router)
     if settings.admin_mounted:
         app.include_router(admin)
-    if settings.webhook_mounted:                        # 04 W-1: fail closed; public mode never mounts it
+    if settings.webhook_mounted:                        # fail closed; public mode never mounts it
         app.include_router(webhook)
         install_log_redaction()
     log.info("mode=%s webhook=%s wa_send=%s", settings.app_mode, "enabled" if settings.webhook_mounted else "disabled",

@@ -1,4 +1,4 @@
-"""store_inbound(): the ONE path for whatsapp / csv / paste / simulate / seed (01 §5.1)."""
+"""store_inbound(): the ONE path for whatsapp / csv / paste / simulate / seed."""
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -32,7 +32,7 @@ def store_inbound(conn, ids: IdGen, now: datetime, *, conversation_id: str, orig
                               provider_ts=provider_ts, channel_message_id=channel_message_id,
                               reply_to_message_id=reply_to_message_id)
     order = repo.open_order(conn, conversation_id)
-    if mid is None:                                                    # duplicate (W-6)
+    if mid is None:                                                    # duplicate
         return Stored(order["order_id"] if order else "", None, conversation_id, False)
     created = order is None
     if created:

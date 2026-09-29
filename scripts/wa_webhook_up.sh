@@ -1,17 +1,16 @@
 #!/usr/bin/env bash
-# wa_webhook_up.sh (STATUS O-9 / G5): put the localhost webhook on the internet for Meta in one
-# command — a cloudflared quick tunnel + Graph API registration of the callback URL and the
-# `messages` field. What remains after this is human-only: send a WhatsApp message to the
-# business number. Teammate guide: docs/whatsapp-live-test.md. Needs the real secrets in .env
-# (WA_APP_SECRET, WA_VERIFY_TOKEN) and
-# WEBHOOK_ENABLED=true; the quick-tunnel URL is ephemeral, so re-run after every restart
-# (registration is idempotent — it replaces the previous callback). Ctrl-C tears the tunnel down.
+# wa_webhook_up.sh: put the localhost webhook on the internet for Meta in one command — a
+# cloudflared quick tunnel + Graph API registration of the callback URL and the `messages`
+# field. What remains afterwards is to send a WhatsApp message to the business number.
+# See docs/whatsapp.md. Needs META_APP_ID, WA_APP_SECRET, WA_VERIFY_TOKEN and
+# WA_PHONE_NUMBER_ID in .env plus WEBHOOK_ENABLED=true; the quick-tunnel URL is ephemeral, so
+# re-run after every restart (registration is idempotent — it replaces the previous callback).
+# Ctrl-C tears the tunnel down.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 PORT="${PORT:-8000}"
-APP_ID="${META_APP_ID:-1104336828760534}"        # the RISKINI app subscribed to the WABA (STATUS 17:30)
 GRAPH="${META_GRAPH_VERSION:-v21.0}"
 CLOUDFLARED="${CLOUDFLARED:-$(command -v cloudflared || true)}"
 [ -n "$CLOUDFLARED" ] || CLOUDFLARED="$HOME/.local/bin/cloudflared"
@@ -22,6 +21,8 @@ PYTHON="${PYTHON:-python3}"
 [ -x "$CLOUDFLARED" ] || { echo "cloudflared not found (set CLOUDFLARED=… or install it)" >&2; exit 1; }
 
 [ -f .env ] && { set -a; . ./.env; set +a; }
+: "${META_APP_ID:?META_APP_ID missing (.env): the id of your Meta app}"
+APP_ID="$META_APP_ID"
 : "${WA_APP_SECRET:?WA_APP_SECRET missing (.env)}"
 : "${WA_VERIFY_TOKEN:?WA_VERIFY_TOKEN missing (.env)}"
 : "${WA_PHONE_NUMBER_ID:?WA_PHONE_NUMBER_ID missing — without it every inbound payload is dropped as foreign}"

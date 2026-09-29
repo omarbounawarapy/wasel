@@ -1,6 +1,6 @@
 pytest==9.1.1
 pytest-cov==7.1.0
 ruff==0.16.9
-# dashboard (06 §1.5): make up / make ui, and tests/e2e/test_dashboard.py in make check
+# dashboard: make up / make ui, and tests/e2e/test_dashboard.py in make check
 streamlit==1.64.0
 altair==6.3.0

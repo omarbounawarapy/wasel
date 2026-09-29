@@ -1,4 +1,4 @@
-"""/webhook/whatsapp (S-1; 01 §4, 04 §4 W-1…W-7, SD §9). Included by create_app ONLY when
+"""/webhook/whatsapp. Included by create_app ONLY when
 settings.webhook_mounted (never in public mode, never with a short secret or verify token). No skip-signature flag.
 Logs carry counts and reasons only: never the body, the sender's number, or a secret."""
 from __future__ import annotations
@@ -15,7 +15,7 @@ from app.ingress import whatsapp as wa
 from app.ingress.ingest import store_inbound
 
 log = logging.getLogger("cod.webhook")
-MAX_WEBHOOK_BODY = 1024 * 1024                          # W-3
+MAX_WEBHOOK_BODY = 1024 * 1024
 webhook = APIRouter()
 
 
@@ -76,7 +76,7 @@ async def receive(request: Request, background: BackgroundTasks):
 
 
 def process(core, raw: bytes) -> dict:
-    """Background half (W-5): never raises. Returns counts (tests read them)."""
+    """Background half: never raises. Returns counts (tests read them)."""
     conn, now = core.conn(), core.clock.now()
     counts = {"new": 0, "duplicate": 0, "statuses": 0, "ignored": 0, "errors": 0}
     try:
@@ -119,7 +119,7 @@ def _process_error(conn, now, e: Exception, counts: dict) -> None:
 
 
 def store_message(conn, ids, now, m: wa.Inbound, debounce_s: float) -> bool:
-    """One inbound message through the ONE ingest path. False = duplicate wamid (no rescore armed, W-6)."""
+    """One inbound message through the ONE ingest path. False = duplicate wamid (no rescore armed)."""
     if repo.row(conn, "SELECT 1 FROM messages WHERE channel_message_id=?", m.wamid):
         return False
     cust = repo.get_or_create_customer(conn, ids, now, sandbox_id=None, phone_e164="+" + m.wa_id,
@@ -137,7 +137,7 @@ def store_message(conn, ids, now, m: wa.Inbound, debounce_s: float) -> bool:
 
 
 def update_status(conn, s: wa.Status) -> int:
-    """statuses[] only move delivery_status forward on OUR outbound rows; unknown wamids are a no-op (W-6)."""
+    """statuses[] only move delivery_status forward on OUR outbound rows; unknown wamids are a no-op."""
     r = repo.row(conn, "SELECT message_id, delivery_status FROM messages WHERE channel_message_id=?"
                        " AND direction='outbound'", s.wamid)
     if r is None or wa.STATUS_RANK.get(r["delivery_status"] or "", 0) >= wa.STATUS_RANK[s.status]:

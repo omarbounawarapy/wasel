@@ -1,4 +1,4 @@
-"""App harness (05 §2): tmp file DB, FrozenClock, sequential ids, worker off, LLM chain failing everywhere, so
+"""App harness: tmp file DB, FrozenClock, sequential ids, worker off, LLM chain failing everywhere, so
 any test that silently reaches a provider shows up as path 'rules'."""
 from __future__ import annotations
 

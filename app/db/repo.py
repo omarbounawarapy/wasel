@@ -1,4 +1,4 @@
-"""All SQL except purge/seed (01 §1). Timestamps are written only through app.clock.utc_iso."""
+"""All SQL except purge/seed. Timestamps are written only through app.clock.utc_iso."""
 from __future__ import annotations
 
 import json
@@ -73,7 +73,7 @@ def insert_message(conn, ids: IdGen, now: datetime, *, conversation_id, directio
         " provider_ts, received_at, delivery_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (mid, conversation_id, channel_message_id, direction, author, origin, kind, text, canonical_text, template_id,
          transcript, lat, lng, reply_to_message_id, utc_iso(provider_ts or now), utc_iso(now), delivery_status))
-    return mid if cur.rowcount else None          # None = duplicate wamid (W-6)
+    return mid if cur.rowcount else None          # None = duplicate wamid
 
 
 # ---------------------------------------------------------------- orders
@@ -98,7 +98,7 @@ def link(conn, order_id, message_id) -> None:
 
 
 def arm_rescore(conn, order_id, trigger: str, due: datetime, now: datetime, *, keep_trigger: bool = True) -> None:
-    """pending_trigger = COALESCE(pending_trigger, trigger) (01 §5.1); a newer message pushes the due time back."""
+    """pending_trigger = COALESCE(pending_trigger, trigger); a newer message pushes the due time back."""
     conn.execute("UPDATE orders SET pending_trigger = CASE WHEN ? THEN COALESCE(pending_trigger, ?) ELSE ? END,"
                  " pending_rescore_at=?, rescore_state='debouncing', updated_at=? WHERE order_id=?",
                  (int(keep_trigger), trigger, trigger, utc_iso(due), utc_iso(now), order_id))
@@ -158,7 +158,7 @@ def prior_assessment(conn, order_id) -> PriorAssessment | None:
         reason=a["reason"], points=ctx.get("points", {}), confirmation=a["confirmation"])
 
 
-# ---------------------------------------------------------------- persist one rescore (01 §3.1, one transaction)
+# ---------------------------------------------------------------- persist one rescore (one transaction)
 def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger: str, result: ScoreResult,
                    prior: PriorAssessment | None, next_status: str | None, rescore_state: str) -> str | None:
     oid, sid = order["order_id"], order["sandbox_id"]

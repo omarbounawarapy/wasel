@@ -1,4 +1,4 @@
-"""Provider-neutral error classes and task/meta types (02 §6)."""
+"""Provider-neutral error classes and task/meta types."""
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -30,7 +30,7 @@ class SchemaRejected(LLMError):       # 400 on schema/params
 
 
 class ModelGone(LLMError):            # 404 model not found / decommissioned
-    outcome = "schema_rejected"       # contract AttemptOutcome has no model_gone (01 §2); logged in `error`
+    outcome = "schema_rejected"       # contract AttemptOutcome has no model_gone; logged in `error`
 
 
 class Truncated(LLMError):            # finish_reason != "stop" (incl. content_filter)

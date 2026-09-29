@@ -1,4 +1,4 @@
-"""Draft guard classifier: a cheap, local, no-LLM second opinion on an outgoing draft (the S-11 idea applied
+"""Draft guard classifier: a cheap, local, no-LLM second opinion on an outgoing draft (the text-baseline idea applied
 to outbound). Char n-gram TF-IDF (2-5, char_wb: catches Arabizi spelling variants) + one multinomial
 binary LogisticRegression (ok vs unsafe) for p_unsafe, plus a multinomial one naming the likely class
 {discount, payment, promise, instructions, contact, pushy, extra_question} for the activity feed.
@@ -7,7 +7,7 @@ Trained at first use, deterministically, from data/draft_guard.yaml + the static
 rows, well under a second), so there is no binary artifact to version. decide() turns p_unsafe into the
 three-way send / review / block call: >= block_at blocks the draft, >= hold_at routes it to the owner's
 approval queue, below hold_at it is cleared to send. "send" is this classifier's recommendation only: an
-auto_send still needs the LLM judge's approval and the route guards (02 §8.2 rule 6); the classifier on its
+auto_send still needs the LLM judge's approval and the route guards; the classifier on its
 own can only take approval away, and it can't be prompt-injected because it never sees the customer text.
 calibrate() measures the decision on bank phrases the classifier never trained on.
 """
@@ -49,7 +49,7 @@ class GuardDecision:
 
 
 def thresholds(cfg: dict | None = None) -> tuple[float, float]:
-    """(block_at, hold_at) from scoring.yaml outbound.judge; the same numbers everywhere (02 §8.2)."""
+    """(block_at, hold_at) from scoring.yaml outbound.judge; the same numbers everywhere."""
     from app.scoring.config import default_config
     jc = (cfg if cfg is not None else default_config().raw).get("outbound", {}).get("judge", {})
     return float(jc.get("classifier_block_at", 0.5)), float(jc.get("classifier_hold_at", 0.1))

@@ -1,5 +1,5 @@
 """Mutations behind the /api routes, callable without HTTP (routes stay thin; tests and scripts reuse these).
-ADDITIVE module: 01 §1 puts this logic inside routes_*.py."""
+"""
 from __future__ import annotations
 
 import csv
@@ -18,7 +18,7 @@ from app.settings import Settings
 from app.state import ACTIONS, TERMINAL, allowed_actions
 
 
-# ---------------------------------------------------------------- visibility (01 §4, 04 §2.3)
+# ---------------------------------------------------------------- visibility
 def visible_order(conn, order_id: str, settings: Settings, vid: str | None):
     o = repo.get_order(conn, order_id)
     if o is None:
@@ -114,7 +114,7 @@ def try_order(conn, ids: IdGen, now: datetime, settings: Settings, order_id: str
     return {"order_id": new_oid, "order_ref": f"#{n['order_no']}", "conversation_id": n["conversation_id"]}
 
 
-# ---------------------------------------------------------------- simulate a customer reply (01 §5.3)
+# ---------------------------------------------------------------- simulate a customer reply
 def simulate_reply(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, vid: str | None,
                    conversation_id: str, *, text: str | None = None, lat: float | None = None,
                    lng: float | None = None) -> dict:
@@ -195,7 +195,7 @@ def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | N
     conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", o["conversation_id"])
     delivery, origin, wamid = "recorded_only", "dashboard", None
     if conv["channel"] == "whatsapp" and settings.wa_send_effective and sender is not None:
-        # S-2: free-form text is only allowed inside the 24 h customer-service window (SD §9)
+        # free-form text is only allowed inside the 24 h customer-service window
         last_in = conv["last_inbound_at"]
         if not last_in or now - parse_utc(last_in) > WA_WINDOW:
             raise ApiError(409, "OUTSIDE_24H_WINDOW", "the customer's last message is older than 24 h")

@@ -1,11 +1,11 @@
-"""SqliteUsageMeter (implements contracts.UsageMeter) over llm_usage (04 §2.5). Counters live in SQLite,
+"""SqliteUsageMeter (implements contracts.UsageMeter) over llm_usage. Counters live in SQLite,
 so a restart doesn't reset them. Calls allowed inside a scoring run but not yet persisted are held in
 `_pending` so a 3-step chain can't overshoot the cap; the worker calls settle() after its transaction.
 
 Caps: global daily provider calls (all providers, fallback hops included); in public mode also per visitor
 6 per 10 min and 20 per day, and a per-model token guard. Over a cap -> 'visitor_cap' / 'global_cap', which
 the chain turns into path 'rules'. Never an HTTP error.
-NOTE: the visitor cap counts provider calls, not "LLM actions" (04 §2.5); stricter, simpler."""
+NOTE: the visitor cap counts provider calls, not "LLM actions"; stricter, simpler."""
 from __future__ import annotations
 
 import sqlite3

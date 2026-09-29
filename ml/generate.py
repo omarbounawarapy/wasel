@@ -1,4 +1,4 @@
-"""Synthetic order generator (03 §1).
+"""Synthetic order generator.
 
     python -m ml.generate --seed 20260927 --n 10000
 
@@ -226,7 +226,7 @@ def render_text(row: dict, banks: dict, text_seed: int) -> dict:
     return {"messages_json": msgs, "text": text, "gt_evidence_json": gt}
 
 
-# ---------------------------------------------------------------- lints (03 §1.6)
+# ---------------------------------------------------------------- lints
 def _cells(banks: dict):
     """Yield (label, lang, cell) for every authored cell."""
     for lang, cell in banks["order_intro"].items():

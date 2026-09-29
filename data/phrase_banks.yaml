@@ -1,19 +1,18 @@
-# Phrase banks — FEDI.md F2, authored by Fedi (native speaker) and integrated verbatim (F16).
-# Source: "01 Wasel_F2 Tunisian_Phrase_Bank.pdf" (Arabic column corrected by Fedi; pdftotext RTL
-# artifacts verified against the rendered page images).
+# Phrase banks: native-speaker Tunisian phrasings (Arabizi, Arabic-script Darija, French) per label.
+# The generator (ml/generate.py) draws from `train`; `eval_only` lines are held out for evaluation.
 #
-# Integrator deviations (all recorded in docs/fedi_content_integration.md):
-# - §02 city-only used literal cities (fi Sfax …); per the F2 slot rule they became {place}, so the
-#   generator can render all 30 gazetteer places. Fedi's train/eval assignment is preserved.
-# - §03 area kept "9rib {landmark}" but NOT "fi {place}" / "nosken fi {place}" / "à {place}" /
+# Conventions:
+# - city-only phrases use the {place} slot rather than literal cities, so the generator can render
+#   all 30 gazetteer places; the train/eval assignment is preserved.
+# - area kept "9rib {landmark}" but NOT "fi {place}" / "nosken fi {place}" / "à {place}" /
 #   "j'habite à {place}" / "في {place}" … : those moved to city-only only, because a phrase under two
 #   labels fails generator lint 3.
-# - §10 previous refusal: "marra o5ra refusit el commande" and "J'ai refusé une commande auparavant"
+# - previous refusal: "marra o5ra refusit el commande" and "J'ai refusé une commande auparavant"
 #   are excluded (lint 4 bans the substring "refus" in bank phrases); the Darija line
 #   "مرة أخرى رفضت الطلبية" stays (the banned token is مرفوض, which it does not contain).
 # - Terminal periods dropped from the French lines (message segments are joined with ". ").
-# - address.none and tone.negative keep the starter (stub) cells: F2 does not cover them; the
-#   generator requires both. PENDING: native pass on these two cells.
+# - address.none and tone.negative keep placeholder cells: they have no native-speaker phrases yet; the
+#   generator requires both. These two cells still need a native-speaker pass.
 #
 # Every leaf cell is {train: [...], eval_only: [...]}, keyed by language:
 # arabizi | darija_arabic_script | fr   (mixed is composed, never authored)
@@ -21,7 +20,7 @@
 # Slots: {product} {place} {landmark} {street} {number}
 version: 2
 
-order_intro:                 # F2 §01
+order_intro:
   arabizi: {train: ["nheb {product}", "3andkom {product}?", "nheb nechri {product}"],
             eval_only: ["ena nlawwej 3la {product}", "najem na5ou {product}?"]}
   fr: {train: ["Je veux {product}", "Vous avez {product} ?", "Je voudrais acheter {product}"],
@@ -30,34 +29,34 @@ order_intro:                 # F2 §01
                          eval_only: ["أنا نلّوج على {product}", "نجم ناخذ {product}؟"]}
 
 address:
-  none:                      # starter stub — PENDING native pass (F2 does not cover it)
+  none:                      # placeholder — needs a native-speaker pass
     arabizi: {train: ["l'adresse nab3athelkom ba3d", "mazelt ma 3andich l'adresse"], eval_only: ["l'adresse nkalmek 3liha"]}
     fr: {train: ["je vous envoie l'adresse plus tard", "adresse à confirmer"], eval_only: ["je n'ai pas encore l'adresse"]}
     darija_arabic_script: {train: ["العنوان نبعثهولك من بعد", "مازلت ما عنديش العنوان"], eval_only: ["العنوان نقلك عليه"]}
-  city_only:                 # F2 §02, literal cities -> {place}. lint6: "ena fi" and "livraison à" appear
-                             # in prompts/ (FS8 / FS4), so those two stay train-side (Fedi listed them in
-                             # both columns); the starter's "ab3athha l" / "j'habite" cover the eval side.
+  city_only:                 # literal cities -> {place}. lint6: "ena fi" and "livraison à" appear
+                             # in prompts/ (FS8 / FS4), so those two stay train-side (they were authored in
+                             # both columns); the placeholder "ab3athha l" / "j'habite" cover the eval side.
     arabizi: {train: ["fi {place}", "ena fi {place}", "nosken fi {place}"],
               eval_only: ["livraison fi {place}", "ab3athha l {place}"]}
     fr: {train: ["à {place}", "je suis à {place}", "j'habite à {place}"],
          eval_only: ["je suis à {place}", "j'habite {place}"]}
     darija_arabic_script: {train: ["في {place}", "أنا في {place}", "نسكن في {place}"],
                            eval_only: ["التوصيل في {place}", "أنا في {place}"]}
-  area_or_landmark:          # F2 §03 (the two {place} lines live in city_only, see header)
+  area_or_landmark:          # (the two {place} lines live in city_only, see header)
     arabizi: {train: ["9rib {landmark}"], eval_only: ["7dhe {landmark}", "fi jihet {place}"]}
     fr: {train: ["près de {landmark}"], eval_only: ["à côté de {landmark}", "du côté de {place}"]}
     darija_arabic_script: {train: ["قريب {landmark}"], eval_only: ["حذا {landmark}", "في جهة {place}"]}
-  street_and_landmark:       # F2 §04 — a named street, no house number, no building token (lint 2)
+  street_and_landmark:       # a named street, no house number, no building token (lint 2)
     arabizi: {train: ["tri9 {street} 9odem {landmark}", "nahj {street} 7dhe {landmark}", "fi {street}, 9rib {landmark}"],
               eval_only: ["fi zen9et {street} 9odem {landmark}", "fi {street} 7dha {landmark}"]}
     fr: {train: ["Rue {street}, devant {landmark}", "Rue {street}, près de {landmark}", "Sur {street}, près de {landmark}"],
          eval_only: ["Dans la rue {street}, en face de {landmark}", "Dans {street}, à côté de {landmark}"]}
     darija_arabic_script: {train: ["طريق {street} قدّام {landmark}", "نهج {street} حذا {landmark}", "في {street}، قريب {landmark}"],
                            eval_only: ["في زنقة {street} قدّام {landmark}", "في {street} حذا {landmark}"]}
-  exact:                     # F2 §05 — MUST contain {number} or a building token (lint 2). lint6: any
+  exact:                     # MUST contain {number} or a building token (lint 2). lint6: any
                              # eval_only line containing "immeuble" collides with prompts/ (FS2, FS7 and
-                             # the system prompt quote "immeuble Yasmine"), so Fedi's two immeuble lines
-                             # are train-side; the starter's dar/n° lines cover the eval side.
+                             # the system prompt quote "immeuble Yasmine"), so the two immeuble lines
+                             # are train-side; the placeholder dar/n° lines cover the eval side.
     arabizi: {train: ["dar {number}", "imm {number}, {place}", "bloc {number}, {place}", "immeuble {number}, 3e etage"],
               eval_only: ["dar fiha {number}, {street}", "{place}, {street}, dar {number}"]}
     fr: {train: ["Maison numéro {number}", "Immeuble {number}, {place}", "Bloc {number}, {place}", "Immeuble {number}, troisième étage"],
@@ -66,42 +65,42 @@ address:
                            eval_only: ["الدار رقم {number}، {street}", "{place}، {street}، دار {number}"]}
 
 flags:
-  vague_location:            # F2 §06
+  vague_location:
     arabizi: {train: ["9rib el jemaa", "wra el 7anout", "3ayetli ki tousel"],
               eval_only: ["9odem el 7ouma", "taw nfassarlek win"]}
     fr: {train: ["Près de la mosquée", "Derrière l'épicerie", "Appelez-moi à votre arrivée"],
          eval_only: ["À l'entrée du quartier", "Je vous expliquerai où c'est"]}
     darija_arabic_script: {train: ["قريب الجامع", "ورا الحانوت", "عيّطلي كي توصل"],
                            eval_only: ["قدّام الحومة", "توّا نفّسرلك وين"]}
-  availability_uncertain:    # F2 §07
+  availability_uncertain:
     arabizi: {train: ["mouch dima fi dar", "ken l9itni", "momken mankounch mawjoued"],
               eval_only: ["ma nadhmanch nkoun ghadi", "ki narja3 n9ollek"]}
     fr: {train: ["Je ne suis pas toujours à la maison", "Si vous me trouvez", "Il se peut que je sois absent"],
          eval_only: ["Je ne garantis pas ma présence", "Je vous confirme à mon retour"]}
     darija_arabic_script: {train: ["موش ديما في الدار", "كان لقيتني", "ممكن ما نكونش موجود"],
                            eval_only: ["ما نضمنش نكون غادي", "كي نرجع نقّلك"]}
-  price_hesitation:          # F2 §08 (pdftotext "الربايس" verified as "البريس" on the page image)
+  price_hesitation:
     arabizi: {train: ["ghali chwaya", "el prix tal3 chwaya", "fama remise?"],
               eval_only: ["n5amem fil prix", "ma kontch nestanna fih b soum hedha"]}
     fr: {train: ["C'est un peu cher", "Le prix est un peu élevé", "Est-ce qu'il y a une remise ?"],
          eval_only: ["Je réfléchis au prix", "Je ne m'attendais pas à ce tarif"]}
     darija_arabic_script: {train: ["غالي شوية", "البريس طالع شوية", "فما تخفيض؟"],
                            eval_only: ["نخمّم في الثمن", "ما كنتش نستناه بسوم هذا"]}
-  third_party_recipient:     # F2 §09
+  third_party_recipient:
     arabizi: {train: ["o5ti bech testalem", "5ouya ya5ou el colis", "omi bech tkoun fi dar"],
               eval_only: ["rajli howa bech yest9belkom", "5alti testalem blasti"]}
     fr: {train: ["Ma sœur réceptionnera le colis", "Mon frère prendra le colis", "Ma mère sera à la maison"],
          eval_only: ["Mon mari sera là pour réceptionner", "Ma tante le prendra à ma place"]}
     darija_arabic_script: {train: ["أخيت باش تستلم", "خويا ياخو الكولي", "أمي باش تكون في الدار"],
                            eval_only: ["راجلي هو باش يستقبلكم", "خالتي تستلم بلاصتي"]}
-  prior_refusal_mention:     # F2 §10 minus the two lint-4 "refus" lines (see header)
+  prior_refusal_mention:     # minus the two lint-4 "refus" lines (see header)
     arabizi: {train: ["l marra li fetet ma 5dhitouch", "9bal rja3t el colis"],
               eval_only: ["el colis eli 9bal ma testalmtouch", "deja annuleit commande 9bal"]}
     fr: {train: ["La dernière fois, je ne l'ai pas pris", "J'ai déjà retourné un colis"],
          eval_only: ["Je n'avais pas réceptionné le colis précédent", "J'ai déjà annulé une commande"]}
     darija_arabic_script: {train: ["المرة اللي فاتت ما خذيتوش", "قبل رجعت الكولي", "مرة أخرى رفضت الطلبية"],
                            eval_only: ["الكولي اللي قبل ما تستلمتوش", "ديجا ألغيت طلبية قبل"]}
-  pressure_or_inconsistency: # F2 §11
+  pressure_or_inconsistency:
     arabizi: {train: ["lazem lyoum wala nlaghi", "na7kiw fi adresse o5ra", "nhebha taw ama manich ghadi"],
               eval_only: ["ken ma touselch tawa nfassakh", "mara fi {place} w mara fi {place}"]}
     fr: {train: ["Il faut livrer aujourd'hui sinon j'annule", "Je vous donne une autre adresse",
@@ -112,31 +111,31 @@ flags:
                            eval_only: ["كان ما توصلش توّا نفسّخ", "مرة في {place} ومرة في {place}"]}
 
 tone:
-  positive:                  # F2 §12
+  positive:
     arabizi: {train: ["merci barcha", "ya3tik essa7a", "ey behi"],
               eval_only: ["3aychek 3la tawdhii7", "parfait, merci"]}
     fr: {train: ["Merci beaucoup", "C'est gentil", "Très bien, merci"],
          eval_only: ["Merci pour la précision", "Parfait, ça me convient"]}
     darija_arabic_script: {train: ["مرسي برشة", "يعطيك الصحة", "إي باهي"],
                            eval_only: ["عايشك على التوضيح", "باهي، مرسي"]}
-  uncertain:                 # F2 §13; hedges about the purchase itself; no availability/price words (lint 7)
+  uncertain:                 # hedges about the purchase itself; no availability/price words (lint 7)
     arabizi: {train: ["nchouf", "ma na3rafch", "mazelt manich met2aked"],
               eval_only: ["n5amem w njawebek", "taw n9arrer"]}
     fr: {train: ["Je vais voir", "Je ne sais pas encore", "Je ne suis pas encore sûr"],
          eval_only: ["Je réfléchis et je vous réponds", "Je vais décider"]}
     darija_arabic_script: {train: ["نشوف", "ما نعرفش", "مازلت مانيش متأكد"],
                            eval_only: ["نخمّم ونجاوبك", "توّا نقرّر"]}
-  negative:                  # starter stub — PENDING native pass (F2 does not cover it)
+  negative:                  # placeholder — needs a native-speaker pass
     arabizi: {train: ["dima t3ata9ou", "ma 3jebnich el service"], eval_only: ["9ala9touni"]}
     fr: {train: ["vous êtes toujours en retard", "je suis déçu du service"], eval_only: ["c'est pénible à la fin"]}
     darija_arabic_script: {train: ["ديما تعطلو", "ما عجبنيش السرفيس"], eval_only: ["قلقتوني"]}
 
-time:                        # F2 §14 + Brev P3 supplement (see header note below)
-  # Brev P3 (docs/brev_gpu_plan.md, gap G3b/O-14): definite presence commitments paired with a
+time:
+  # Definite presence commitments paired with a
   # delivery window ("ghodwa ba3d 17h nkoun fi dar"). These render in the time segment, which
   # carries no flag: the label prior never draws availability_uncertain for them, so the
   # extractor's learning signal is "commitment clears the flag" — the exact hero failure class.
-  # PENDING native pass (lines below the F2 originals are not Fedi-reviewed yet).
+  # The commitment lines below the original phrases still need a native-speaker review.
   arabizi: {train: ["ghodwa ba3d 17h", "samedi sbe7", "ba3d el 3chiya",
                     "ghodwa ba3d 17h nkoun fi dar", "bech nkoun mawjoued ghodwa", "ba3d el 3chiya nkoun fi dar"],
             eval_only: ["nhar el a7ad fi sbe7", "ba3d ma nkamel el 5edma",
@@ -152,8 +151,8 @@ time:                        # F2 §14 + Brev P3 supplement (see header note bel
                                      "كي تحبوا توّا نكون في الدار", "بعد 17 نكون ديما في الدار"]}
 
 slots:                        # not split: proper nouns shared with the gazetteer / serve side.
-  # Landmarks/streets extended with F2's place-name vocabulary (F5); Fedi's landmark row
-  # (el jemaa / el pharmacie / el 7anout / la poste) plus el markez / el ma7atta from F5.
+  # Landmarks and streets share the place-name vocabulary of the gazetteer
+  # (el jemaa / el pharmacie / el 7anout / la poste, plus el markez / el ma7atta).
   landmark:
     arabizi: ["el jemaa", "el pharmacie", "el poste", "el lycée", "el 7anout", "el markez", "el ma7atta"]
     fr: ["la mosquée", "la pharmacie", "la poste", "le lycée", "l'épicerie", "la gare"]

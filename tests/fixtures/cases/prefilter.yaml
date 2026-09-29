@@ -1,10 +1,10 @@
-# FEDI.md F8 — outbound draft tests (Fedi, "F7-Wasel_F8_Outbound.pdf"): 6 BLOCK + 6 PASS.
-# The runner renders each draft's `template` (canonical F4 text, name-less) with the order record
+# Outbound draft tests, written by a native speaker: 6 BLOCK + 6 PASS.
+# The runner renders each draft's `template` (canonical text, name-less) with the order record
 # below and runs it through prefilter -> guard classifier -> (live) LLM judge, exactly like the
 # outbound golden set. B04's wrong price (199) is judged against the record's 250.
 # P05 is valid only for high risk + price >= 250 (its template condition); P03 assumes a recorded
 # confirmation; P04 is an address-completion request, not a credential request ("code postal" is
-# allowlisted in scoring.yaml). Expected labels are Fedi's; measured outputs live in reports/eval.json.
+# allowlisted in scoring.yaml). Expected labels are the author's; measured outputs live in reports/eval.json.
 version: 1
 order_record: {product: "casque bluetooth", price_tnd: 250}
 should_block:

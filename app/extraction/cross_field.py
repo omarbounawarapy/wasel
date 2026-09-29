@@ -1,4 +1,4 @@
-"""Post-processing, in the exact order of 03 §4.4 / 02 §5: evidence check -> tone gate -> cross-field
+"""Post-processing, in a fixed order: evidence check -> tone gate -> cross-field
 rules (confirmation, exact guard) -> pin override -> dedupe_by_code -> resolve_flags -> is_order guard.
 Pure: the same function runs in the golden test, the eval runner and the API."""
 from __future__ import annotations
@@ -44,7 +44,7 @@ class Processed:
         return [f.code for f in self.flags]
 
     def cache_extraction(self) -> dict:
-        """Stage stored in extraction_cache: after repair + evidence check + tone gate (01 §2 CachedExtraction).
+        """Stage stored in extraction_cache: after repair + evidence check + tone gate.
         Cross-field rules, the pin override and resolve_flags re-run on every hit, so they stay current."""
         return {
             "is_order": self.is_order, "is_order_change": self.is_order_change,
@@ -125,8 +125,8 @@ def postprocess(ext: OrderExtraction, w: Window, *, prior_confirmation: str = "n
     elif seller.template_id == "T_ADDRESS" and conf == "confirmed" and not any(i > k for _, i in addr) \
             and not w.has_geo_pin:
         warn.append("ack_without_address->ambiguous")
-        conf = "ambiguous"                                         # F6
-    #    exact guard (shared Arabizi-digit helper, 03 §5)
+        conf = "ambiguous"
+    #    exact guard (shared Arabizi-digit helper)
     if level == "exact" and not passes_exact_guard([q for q, _ in addr]):
         warn.append("exact_downgraded")
         level = "street_and_landmark"
@@ -148,7 +148,7 @@ def postprocess(ext: OrderExtraction, w: Window, *, prior_confirmation: str = "n
         warn.append("is_order_overridden")
         is_order = True
     if inj:
-        conf = "none"                                              # I-5
+        conf = "none"
     return Processed(
         is_order=is_order, is_order_change=ext.is_order_change, product_quote=product_quote,
         quantity=ext.quantity, address_quotes=addr, address_level_raw=level_raw, address_level=level,

@@ -1,4 +1,4 @@
-"""Length-preserving sanitize/defuse and phone masking (02 §4, 04 §5 I-1), plus re-exports of the shared
+"""Length-preserving sanitize/defuse and phone masking, plus re-exports of the shared
 normalizer. Every target of DEFUSE is one code point, one UTF-16 unit and NFKC-stable, so evidence spans
 found on the LLM view index the original text unchanged."""
 from __future__ import annotations
@@ -32,12 +32,12 @@ def sanitize_llm_view(s: str) -> str:
 
 def lexicon_view(s: str) -> str:
     """normalize(text) with every Unicode format character (category Cf) REMOVED, so 'ig\\u200bnore'
-    can't split a lexicon word (04 I-4)."""
+    can't split a lexicon word."""
     return normalize("".join(ch for ch in s if unicodedata.category(ch) != "Cf"))
 
 
 def mask_phone_for_display(e164: str | None) -> str | None:
-    """'+21600000001' -> '+216 •• ••• 001' (01 §4)."""
+    """'+21600000001' -> '+216 •• ••• 001'."""
     if not e164:
         return None
     digits = re.sub(r"\D", "", e164)

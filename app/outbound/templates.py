@@ -1,4 +1,4 @@
-"""Static outbound templates: choice by rule, language routing, slot rendering (02 §8.1, SD §8.1)."""
+"""Static outbound templates: choice by rule, language routing, slot rendering."""
 from __future__ import annotations
 
 import re
@@ -9,9 +9,7 @@ _NAME_OK = re.compile(r"^[A-Za-zÀ-ɏ؀-ۿ \-]{1,20}$")
 
 
 def choose_template(tier: str, action: str, address_level_final: str) -> str | None:
-    """02 §8.1 (F17). Prepay first, then an imprecise address, else confirm. Low tier -> no message.
-    NOTE: 03 §7 template_rule / SD §8.1 key T_ADDRESS on the vague_location flag instead; 02's rule is
-    implemented (it's the later finding and M-10 names choose_template). Both agree on the hero."""
+    """Prepay first, then an imprecise address, else confirm. Low tier -> no message."""
     if tier not in ("medium", "high") or action in ("cancelled", "review"):
         return None
     if action == "prepay":
@@ -22,7 +20,7 @@ def choose_template(tier: str, action: str, address_level_final: str) -> str | N
 
 
 def template_language(language: str | None, last_customer_text: str | None = None) -> str:
-    """F18 routing: fr -> fr, arabizi -> arabizi, ar/darija -> darija_arabic_script, mixed -> script of
+    """Language routing: fr -> fr, arabizi -> arabizi, ar/darija -> darija_arabic_script, mixed -> script of
     the last customer message."""
     if language in ("fr", "arabizi"):
         return language
@@ -49,7 +47,7 @@ def format_price(price: float | None) -> str | None:
 
 
 def template_slots(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> dict[str, str]:
-    """The slot values the chosen variant actually uses (SD §8.1 required slots): only these are checked."""
+    """The slot values the chosen variant actually uses (the required slots): only these are checked."""
     t = templates["templates"][template_id][lang]
     body = t["text"] if slots.get("first_name") else t["no_name"]
     return {k: v for k, v in slots.items() if v and "{" + k + "}" in body}

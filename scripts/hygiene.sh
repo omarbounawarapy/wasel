@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
-# Fails on anything that must never be committed or that breaks determinism (05 §5).
+# Fails on anything that must never be committed or that breaks determinism.
 set -uo pipefail
 fail=0; say(){ printf 'hygiene: %b\n' "$*" >&2; fail=1; }
 
 bad=$(git ls-files . | grep -E '(^|/)\.env$|\.db$|\.db-(wal|shm)$|\.sqlite3?$|(^|/)node_modules/|(^|/)web/dist/|(^|/)var/' || true)
 [ -n "$bad" ] && say "tracked files that must be ignored:\n$bad"
 
-# key-shaped strings [VERIFY Groq/Gemini/Meta prefixes]
+# key-shaped strings (Groq, Gemini, Meta and tunnel-token prefixes)
 git grep -nIE '(gsk_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|EAA[A-Za-z0-9]{50,}|eyJhIjoi[A-Za-z0-9+/=_-]{40,})' -- . ':!scripts/hygiene.sh' \
   && say "key-shaped string in a tracked file"
 

@@ -4,7 +4,7 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, Info, X } from "lucide-react";
 
-// ---------------------------------------------------------------- shared labels (06 §5.5)
+// ---------------------------------------------------------------- shared labels
 export const TIER: Record<string, { label: string, cls: string, shape: string, meaning: string }> = {
     high: { label: "High", cls: "bg-red-600 text-white", shape: "●", meaning: "Likely refused at the door. Confirm before shipping." },
     medium: { label: "Medium", cls: "bg-amber-500 text-gray-950", shape: "◆", meaning: "Some doubt. A quick confirmation helps." },

@@ -1,4 +1,4 @@
-"""Runtime settings (01 §7, 04 §2.1, 05 §2). Unknown or missing APP_MODE -> public, with a warning.
+"""Runtime settings. Unknown or missing APP_MODE -> public, with a warning.
 Secrets come from the host env / .env and are never committed."""
 from __future__ import annotations
 
@@ -24,14 +24,14 @@ class Settings(BaseSettings):
     admin_token: str = ""
     # mode and safety
     wa_send_enabled: bool = False
-    wa_auto_send: bool = False           # S-2: auto_send drafts go out without a click (never in public mode)
+    wa_auto_send: bool = False           # auto_send drafts go out without a click (never in public mode)
     webhook_enabled: bool = False
     seed_on_boot: Literal["auto", "always", "if_empty", "never"] = "auto"
     db_path: str = "var/app.db"
     demo_mode: bool = True
     worker_enabled: bool = True
     debug_raw: bool = False
-    # WhatsApp non-secret (01 §7)
+    # WhatsApp non-secret
     wa_phone_number_id: str = ""
     wa_api_version: str = ""
     # LLM

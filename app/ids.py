@@ -1,4 +1,4 @@
-"""ID generation (05 §2): ULIDs in prod, sequential ids in tests."""
+"""ID generation: ULIDs in prod, sequential ids in tests."""
 from __future__ import annotations
 
 from typing import Protocol

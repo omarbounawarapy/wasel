@@ -1,6 +1,6 @@
-"""score_order(): the whole DB-free scoring core (01 §2 docstring, 03 §4.4).
+"""score_order(): the whole DB-free scoring core.
 
-window -> input_hash -> cache (Must) -> [cascade: S-6, not built] -> meter + LLM chain -> rules extractor
+window -> input_hash -> cache -> meter + LLM chain -> rules extractor
 -> repair -> evidence -> tone gate -> cross-field -> pin -> resolve_flags -> features -> XGBoost
 pred_contribs -> reply adjustments -> tier/action/confidence -> reasons.
 Never raises for provider problems (ends in path='rules'). Raises only on programmer error.
@@ -147,11 +147,11 @@ def _confidence(*, path: str, path_origin: str, proc: Processed | None, product_
         if proc.dropped_flags > cfg["confidence"]["max_dropped_flags"]:
             reasons.append("dropped_flags")
         if proc.injection_suspected:
-            reasons.append("injection_suspected")          # ADDITIVE code (04 I-4)
+            reasons.append("injection_suspected")          
     if not product_matched:
         reasons.append("product_not_in_catalog")
     if [i for i in imputed if i != "price_tnd"]:
-        reasons.append("imputed_inputs")                    # ADDITIVE code (03 §7: imputed must be empty)
+        reasons.append("imputed_inputs")                    
     margin = cfg["confidence"]["boundary_margin"]
     if min(abs(final - cfg["tiers"]["low_max"]), abs(final - cfg["tiers"]["medium_max"])) < margin:
         reasons.append("near_tier_boundary")
@@ -206,7 +206,7 @@ def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: U
         error="; ".join(filter(None, [x.error, *x.warnings])) or None, latency_ms=x.latency_ms,
         tokens_in=x.tokens_in, tokens_out=x.tokens_out)
     cache_put = None
-    if x.path == "llm" and not x.cache_hit:            # fallbacks are never cached (02 §6)
+    if x.path == "llm" and not x.cache_hit:            # fallbacks are never cached
         cache_put = CacheEntry(input_hash, PROMPT_VERSION, x.provider, x.model, "llm", proc.cache_extraction())
 
     if not proc.is_order:

@@ -29,7 +29,7 @@ from ml.textnorm import passes_exact_guard, standalone_numbers
 ROOT = Path(__file__).resolve().parents[2]
 
 
-# ---------------------------------------------------------------- ML5 / U25: the Arabizi-digit helper
+# ---------------------------------------------------------------- the Arabizi-digit helper
 @pytest.mark.parametrize("text,nums,guard", [
     ("dar 14", ["14"], True), ("3ayetli 9bal", [], False), ("9rib el jemaa", [], False),
     ("ghodwa ba3d 17h", [], False), ("imm 7 étage 2", ["7", "2"], True), ("2eme etage", [], True),
@@ -42,7 +42,7 @@ def test_standalone_numbers(text, nums, guard):
     assert passes_exact_guard([text]) is guard
 
 
-# ---------------------------------------------------------------- ML6 / U24
+# ---------------------------------------------------------------- phrase matching
 def F(code, i, s=0):
     return VerifiedFlag(code, i, s, s + 3, f"m{i}", "q")
 
@@ -78,7 +78,7 @@ def test_dedupe_keeps_latest_evidence():
     assert out == [F("vague_location", 3, 2)]
 
 
-# ---------------------------------------------------------------- ML7
+# ---------------------------------------------------------------- tone gate
 def test_tone_gate():
     assert tone_gate("uncertain", None, []) == "neutral"
     assert tone_gate("uncertain", (2, 10, 20), [(2, 0, 9)]) == "uncertain"
@@ -87,7 +87,7 @@ def test_tone_gate():
     assert tone_gate("neutral", (2, 10, 20), []) == "neutral"
 
 
-# ---------------------------------------------------------------- ML11
+# ---------------------------------------------------------------- zone from text
 def test_zone_from_text(config):
     z = config.zones
     assert zone_from_text(["Douar Ouled Ali"], z) == ("rural", "keyword")
@@ -96,7 +96,7 @@ def test_zone_from_text(config):
     assert zone_from_text(["nheb sac"], z) is None
 
 
-# ---------------------------------------------------------------- U15 / ML9
+# ---------------------------------------------------------------- features
 def test_feature_mapping_and_imputation():
     f, imp = build_features(address_level="street_and_landmark", flag_count=2, tone="negative", price_tnd=None,
                             zone=None, refusals=1, completed=3)
@@ -115,7 +115,7 @@ def test_catalog_price_ignores_text_price(config):
     assert match_product("un truc inconnu", config.catalog)[0] is None
 
 
-# ---------------------------------------------------------------- generator: ML1 ML2 ML10 U27
+# ---------------------------------------------------------------- generator
 def test_generator_deterministic_and_bank_edit_changes_only_text(tmp_path):
     a, _ = generate(400, 20260927)
     b, _ = generate(400, 20260927)
@@ -188,7 +188,7 @@ def test_generator_no_llm_imports():
 
 
 def test_layering():
-    """01 §1: the core never imports sqlite3, fastapi or the persistence/API/worker modules."""
+    """The core never imports sqlite3, fastapi or the persistence/API/worker modules."""
     banned = ("sqlite3", "fastapi", "app.db", "app.api", "app.ingress", "app.worker")
     for d in ("app/llm", "app/extraction", "app/scoring", "app/outbound", "ml"):
         for f in (ROOT / d).rglob("*.py"):
@@ -196,7 +196,7 @@ def test_layering():
             assert not [m for m in mods if any(m == b or m.startswith(b + ".") for b in banned)], f
 
 
-# ---------------------------------------------------------------- model: ML3 ML4 U20 U21 U22 ML8 ML12
+# ---------------------------------------------------------------- model
 def _card():
     return json.loads((ROOT / "models/risk_xgb_v1.card.json").read_text())
 
@@ -244,11 +244,11 @@ def test_classifier_monotone(config):
                 assert all(b >= a - 1e-9 for a, b in pairs), feat
 
 
-@pytest.mark.xfail(strict=True, reason="OPEN (handoff §4): P15 at 450 TND scores 36.3 on the committed "
-                   "model (spec sim max 30.8, prior 29.0). Needs Omar's call: accept + move ML8 into the card, "
-                   "or change the catalog/generator; never tune the model to pass.")
+@pytest.mark.xfail(strict=True, reason="Known limitation: P15 at 450 TND scores 36.3 on the committed model (simulated "
+                   "maximum 30.8, prior 29.0). Resolve by accepting the trade-off and documenting it in the "
+                   "card, or by changing the catalog/generator; never tune the model to pass.")
 def test_fairness_invariant(config):
-    """Rural, exact, 0 flags, neutral, new customer, any catalog price <= 450 -> tier low (03 ML8)."""
+    """Rural, exact, 0 flags, neutral, new customer, any catalog price <= 450 -> tier low."""
     from app.scoring.model import load_model
     lm = load_model(str(ROOT / "models/risk_xgb_v1.json"))
     for p in config.catalog["products"]:

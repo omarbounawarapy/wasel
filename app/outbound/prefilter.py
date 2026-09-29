@@ -1,4 +1,4 @@
-"""Deterministic draft prefilter (02 §8.1, SD §8.3). A draft is rejected if ANY rule fails. Runs on the
+"""Deterministic draft prefilter. A draft is rejected if ANY rule fails. Runs on the
 static templates in CI (12/12) and on every rewritten draft. Numbers use the Arabizi-digit exception:
 a digit touching a letter is a letter (3andek, 9rib, ta3tina yield no numbers)."""
 from __future__ import annotations
@@ -11,8 +11,8 @@ from app.extraction.injection import injection_hit_text
 from app.extraction.normalize import PHONE, sanitize_llm_view
 from ml.textnorm import has_phrase
 
-# SPEC FIX: 02 §8.1 bounds these with (?<![^\W\d_]) / (?![^\W\d_]) (letters only), which backtracks
-# into "89DT" -> "8" and "10h30" -> "0", "1". Bounding on any word char (digits included) fixes it.
+# Bound on any word character (digits included): bounding on letters only (?<![^\W\d_]) would
+# backtrack into "89DT" -> "8" and "10h30" -> "0", "1".
 NUM = re.compile(r"(?<![^\W_])[0-9٠-٩]+(?:[.,][0-9٠-٩]+)?(?![^\W_])")
 NUM_UNIT = re.compile(r"(?<![^\W_])([0-9٠-٩]+(?:[.,][0-9٠-٩]+)?)\s?"
                       r"(?:h|dt|tnd|dinars?|d|%|د\.?ت|دينار|دنانير)(?:[0-9٠-٩]{2})?(?![^\W\d_])", re.I)
@@ -48,7 +48,7 @@ def prefilter(draft: str, template_text: str, slots: dict[str, str | None], expe
         fails.append("phone")
     allow = [a for a in lexicons.get("allowlist", [])]
     probe = draft
-    for a in allow:                                   # F16: "code postal" is not a payment term
+    for a in allow:                                   # "code postal" is not a payment term
         probe = re.sub(re.escape(a), " ", probe, flags=re.I)
     for group in ("payment", "discount", "promise"):
         for t in lexicons.get(group, []):

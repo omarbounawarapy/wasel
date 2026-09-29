@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Threaded extraction probe for the brev GPU endpoint (P4d/P4e aid).
+"""Threaded extraction probe for a self-hosted GPU endpoint.
 
 Runs the golden extraction set against the live LLM chain N-wide (vLLM batches
 server-side, so concurrency only changes wall time) and prints per-case rows for

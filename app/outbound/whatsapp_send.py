@@ -1,4 +1,4 @@
-"""WhatsApp Cloud API send (S-2; 01 §4, SD §9). One text message per call, bounded retries on transient
+"""WhatsApp Cloud API send. One text message per call, bounded retries on transient
 failures only (transport errors, 408/429/5xx), no logging of the recipient or the body. Built only when
 settings.wa_send_effective (never in public mode)."""
 from __future__ import annotations

@@ -1,4 +1,4 @@
-"""Order state machine (01 §5.2) and seller actions (01 §5.4)."""
+"""Order state machine and seller actions."""
 from __future__ import annotations
 
 from app.contracts import ScoreResult
@@ -22,7 +22,7 @@ def allowed_actions(status: str) -> list[str]:
 
 def next_status(current: str, result: ScoreResult, trigger: str, prior_tier: str | None,
                 seller_approved_at: str | None) -> str:
-    """First match wins (01 §5.2)."""
+    """First match wins."""
     a = result.assessment
     if result.injection_suspected:                                          # 0
         return "needs_review"

@@ -1,9 +1,8 @@
-"""OpenAI-compatible chat-completions backend over httpx (02 §6), used for Groq and for Gemini's
+"""OpenAI-compatible chat-completions backend over httpx, used for Groq and for Gemini's
 OpenAI-compat endpoint. max_retries = 0 by construction: this module never retries or sleeps.
 
-DEVIATION (logged in docs/code_handoff.md): 02 §6 builds this on the `openai` SDK and 05 §2 on the `groq`
-SDK. Both speak the same HTTP API, so this uses plain httpx and avoids one more pinned dependency.
-[VERIFY] against a live key: the reasoning kwargs and the rate-limit header names.
+Both providers speak the same HTTP API as the `openai` and `groq` SDKs, so this uses plain httpx and
+avoids one more pinned dependency.
 """
 from __future__ import annotations
 
@@ -26,8 +25,8 @@ from app.llm.base import (
 )
 
 GROQ_BASE_URL = "https://api.groq.com/openai/v1"
-GROQ_REASONING_KWARGS = {"reasoning_effort": "low", "reasoning_format": "hidden"}   # [VERIFY] §16 check #2
-# Self-hosted OpenAI-compatible servers (Brev GPU + vLLM, docs/brev-live-test.md) reject the
+GROQ_REASONING_KWARGS = {"reasoning_effort": "low", "reasoning_format": "hidden"}
+# Self-hosted OpenAI-compatible servers (vLLM on a GPU host, docs/self-hosted-llm.md) reject the
 # Groq-only `reasoning_format` field with a 400; `reasoning_effort` is honored for gpt-oss.
 SELFHOST_REASONING_KWARGS = {"reasoning_effort": "low"}
 

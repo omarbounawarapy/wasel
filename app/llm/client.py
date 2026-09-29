@@ -1,6 +1,6 @@
-"""The provider chain and its test doubles (02 §6, 05 §2).
+"""The provider chain and its test doubles.
 
-ChainClient.extract() walks the chain table of 02 §6:
+ChainClient.extract() walks this chain:
   1 Groq gpt-oss-120b            -> path 'llm'
   2 Groq gpt-oss-20b             -> 'fallback_model'    (only after 429/400/404/truncated/parse error)
   3 Gemini (if configured)       -> 'fallback_provider' (after any failure, or when step 2 was skipped)
@@ -47,7 +47,7 @@ _NEXT_MODEL_ERRORS = (RateLimited, SchemaRejected, ModelGone, Truncated, ParseEr
 
 
 def replay_key(user: str) -> str:
-    """ReplayClient key: sha256 of the rendered window, not normalized, no version (02 §4, F14)."""
+    """ReplayClient key: sha256 of the rendered window, not normalized, no version."""
     return hashlib.sha256(user.encode("utf-8")).hexdigest()
 
 
@@ -169,7 +169,7 @@ class ChainClient:
 
 # ---------------------------------------------------------------- test doubles
 class ReplayBackend:
-    """Serves recorded fixtures keyed by replay_key(user). Envelope (05 §3):
+    """Serves recorded fixtures keyed by replay_key(user). Envelope:
     {"meta":{"source","provider","model","prompt_version","recorded_at"},"key","window","status",
      "headers","response":{"choices":[{"finish_reason","message":{"content"}}],"usage":{...}}}"""
 

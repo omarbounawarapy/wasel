@@ -1,6 +1,6 @@
-# Dashboard: COD Risk Queue on the API
+# Streamlit dashboard
 
-The Streamlit UI from the standalone `cod-risk-poc` prototype (same six screens and look), rewired so that every read and every button goes through the FastAPI backend in `app/`. It is the spec's Streamlit dashboard (06 §1.5). The UI has no database, model or LLM of its own.
+A Streamlit UI for Wasel in which every read and every button goes through the FastAPI backend in `app/`. It has no database, model or LLM of its own. The production web UI is the Next.js app in [`web/`](../web), served by the API at `/` after `make web`; this dashboard is a lightweight alternative that runs with `make up`.
 
 ```
 browser ──► dashboard/app.py ──HTTP──► app/ FastAPI  /api/*  ──► SQLite, worker, LLM chain, classifier, rules
@@ -35,13 +35,12 @@ For live LLM scoring and WhatsApp, configure the **backend** (`APP_MODE=event`, 
 
 The sidebar shows the backend's health (mode, LLM chain and budget, WhatsApp send and webhook state) and polls `/api/events` every 5 s: a new customer message or rescore shows a toast and refreshes the page.
 
-## What changed from the `cod-risk-poc` prototype
+## Notes
 
-- Scores are the backend's 0–100 `final_score` and tiers `high / medium / low` (shown as High / Med / Low), not the old 0–1 probability.
-- An order is a conversation, not an address + note pair: the detail page shows the thread with the backend's highlight segments.
-- "Judge activity" became **Activity** (the backend's event feed). The backend has no LLM judge yet (S-3); drafts are static templates with rule checks.
-- The seller's free-text reply box became **Simulate the customer's reply**: the backend has no free-text outbound send yet (S-2).
-- The ROI sliders are gone: the savings figures come from the backend's `reports/impact.json`.
+- Scores are the backend's 0–100 `final_score` and tiers `high / medium / low`.
+- An order is a conversation, not an address plus a note: the detail page shows the thread with the backend's highlight segments.
+- Customer replies are simulated (**Simulate the customer's reply**); real replies arrive through the WhatsApp webhook.
+- Savings figures come from the backend's `reports/impact.json` and are simulated.
 
 ## Tests
 

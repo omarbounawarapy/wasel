@@ -15,8 +15,6 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 }
 
-import Providers from "@/components/providers"
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -34,9 +32,7 @@ html {
         `}</style>
       </head>
       <body suppressHydrationWarning>
-        <Providers>
-          {children}
-        </Providers>
+        {children}
       </body>
     </html>
   )

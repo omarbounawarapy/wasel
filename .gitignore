@@ -217,8 +217,7 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
-# ===== COD Risk additions — keep below the stock Python template =====
-# (council spec 04-security-public-mode.md §6.1; tested in a scratch repo)
+# ===== Wasel additions — keep below the stock Python template =====
 # The stock template ignores EVERY directory named lib/ (and dist/, build/).
 # Re-include frontend source dirs (Vite/shadcn put code in src/lib/).
 !web/src/lib/
@@ -265,7 +264,7 @@ node_modules/
 .next/
 out/
 web/dist/
-# the Python `lib/` rule above would drop the frontend's API layer (06 §1.1, Skeptic N-1)
+# the Python `lib/` rule above would drop the frontend's API layer
 !web/lib/
 web/*.tsbuildinfo
 frontend/out/
@@ -273,7 +272,7 @@ frontend/out/
 .vercel/
 *.tsbuildinfo
 
-# Local tooling (council transcripts reference personal files)
+# Local tooling
 .claude/
 .DS_Store
 .idea/

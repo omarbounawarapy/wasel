@@ -1,6 +1,6 @@
-"""The extraction window (02 §4, SD §3.2): customer lines + only the latest seller line, capped,
+"""The extraction window: customer lines + only the latest seller line, capped,
 sanitized, rendered in the exact few-shot format. The [SELLER] line is the CANONICAL template text,
-never a rewritten draft (04 I-3)."""
+never a rewritten draft ."""
 from __future__ import annotations
 
 import hashlib
@@ -56,7 +56,7 @@ class Window:
         return "\n".join(lines)
 
     def cache_key(self, prompt_version: str) -> str:
-        """input_hash (02 §7): the sanitized render, not normalized text (F14); the model is not in it."""
+        """input_hash: the sanitized render, not normalized text; the model is not in it."""
         return hashlib.sha256(f"extract|{prompt_version}|order_extraction_v1|{self.render()}".encode()).hexdigest()
 
     def replay_key(self) -> str:

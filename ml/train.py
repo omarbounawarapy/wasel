@@ -1,4 +1,4 @@
-"""python -m ml.train  (03 §6, §9, §10)
+"""python -m ml.train
 
 Trains the monotone XGBoost on the 8,000 train rows and writes:
   models/risk_xgb_v1.json, models/risk_xgb_v1.card.json, reports/train_metrics.json,
@@ -50,7 +50,7 @@ def reliability(p_hat: np.ndarray, y: np.ndarray, bins: int = 10) -> list[dict]:
 
 
 def impact(h: pd.DataFrame, p_hat: np.ndarray, cfg: dict) -> dict:
-    """03 §9: simulated, on the holdout, with the scoring.yaml › roi assumptions."""
+    """Simulated, on the holdout, with the scoring.yaml › roi assumptions."""
     roi = cfg["roi"]
     score = np.round(100 * p_hat)
     tier = tier_of(score, cfg["tiers"]["low_max"], cfg["tiers"]["medium_max"])
@@ -155,7 +155,7 @@ def main() -> int:
         "tier_share": {t: round(float((tiers == t).mean()), 4) for t in ("low", "medium", "high")},
         "tier_refusal_rate": {t: (round(v, 4) if v is not None else None) for t, v in rate.items()},
         "gates": {k: ("pass" if v else "fail") for k, v in gates.items()},
-        "note": "Synthetic data; labels are simulated outcomes drawn from a documented prior (03 §2).",
+        "note": "Synthetic data; labels are simulated outcomes drawn from a documented prior.",
     }
     (ROOT / "reports").mkdir(exist_ok=True)
     (ROOT / "reports" / "train_metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")

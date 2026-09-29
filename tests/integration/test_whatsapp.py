@@ -1,4 +1,4 @@
-"""S-1 WhatsApp webhook: J1–J6, P7, E2 (05 §1) and the W-1…W-7 criteria (04 §4). Offline: hand-built Meta-shaped
+"""WhatsApp webhook and send path. Offline: hand-built Meta-shaped
 payloads under tests/fixtures/whatsapp/ (fake numbers 21600000001–09 only), signed with a fake test secret."""
 from __future__ import annotations
 
@@ -63,7 +63,7 @@ def n_messages(conn) -> int:
     return conn.execute("SELECT COUNT(*) FROM messages WHERE origin='whatsapp'").fetchone()[0]
 
 
-# ---------------------------------------------------------------- J1 verify GET (W-2)
+# ---------------------------------------------------------------- verify GET
 @pytest.mark.parametrize("params,ok", [
     ({"hub.mode": "subscribe", "hub.verify_token": VERIFY, "hub.challenge": "1158201444"}, True),
     ({"hub.mode": "subscribe", "hub.verify_token": VERIFY + "x", "hub.challenge": "1158201444"}, False),
@@ -87,7 +87,7 @@ def test_verify_get_fixture_query_string(wa):
     assert c.get(f"{URL}?{qs}").text == "1158201444"
 
 
-# ---------------------------------------------------------------- J2 signature (W-4)
+# ---------------------------------------------------------------- signature
 @pytest.mark.parametrize("kw,reason", [
     ({"secret": "wrong-secret-0000000000"}, "mismatch"),
     ({"tamper": True}, "mismatch"),
@@ -131,7 +131,7 @@ def test_verify_signature_pure():
     assert verify_signature(SECRET, body, None) == "missing"
 
 
-# ---------------------------------------------------------------- W-3 size, W-5 always 200 after a valid signature
+# ---------------------------------------------------------------- size limit, always 200 after a valid signature
 def test_webhook_body_limits(wa):
     c, core, _ = wa
     big = json.dumps({"object": "whatsapp_business_account", "pad": "x" * (1024 * 1024)}).encode()
@@ -154,7 +154,7 @@ def test_webhook_malformed_and_foreign_payloads_still_200(wa):
     assert conn.execute("SELECT COUNT(*) FROM events WHERE type='webhook.process_error'").fetchone()[0] == 1
 
 
-# ---------------------------------------------------------------- J3 duplicate wamid (W-6)
+# ---------------------------------------------------------------- duplicate wamid
 def test_webhook_duplicate_wamid(wa):
     c, core, clock = wa
     conn = core.conn()
@@ -170,7 +170,7 @@ def test_webhook_duplicate_wamid(wa):
     assert n_messages(conn) == 2 and order_of(conn, "wamid.TEST2")["order_id"] == oid
 
 
-# ---------------------------------------------------------------- J4 status receipts
+# ---------------------------------------------------------------- status receipts
 def test_webhook_status_receipt(wa):
     c, core, clock = wa
     conn = core.conn()
@@ -179,7 +179,7 @@ def test_webhook_status_receipt(wa):
     o = order_of(conn, "wamid.TEST1")
     mid = repo.insert_message(conn, core.ids, clock.now(), conversation_id=o["conversation_id"], direction="outbound",
                               author="seller", origin="whatsapp", text="ok", channel_message_id="wamid.OUT1",
-                              delivery_status="sent")               # stand-in for an S-2 send
+                              delivery_status="sent")               # stand-in for an send
     before = conn.execute("SELECT COUNT(*) FROM messages").fetchone()[0]
     for name, expect in (("status_delivered", "delivered"), ("status_read", "read"), ("status_delivered", "read")):
         assert wa_post(c, name).status_code == 200
@@ -189,7 +189,7 @@ def test_webhook_status_receipt(wa):
     assert repo.get_order(conn, o["order_id"])["pending_rescore_at"] is None
 
 
-# ---------------------------------------------------------------- J5 out-of-order batch
+# ---------------------------------------------------------------- out-of-order batch
 def test_webhook_out_of_order_batch(wa):
     c, core, _ = wa
     body = json.loads(raw("batch_out_of_order"))
@@ -201,7 +201,7 @@ def test_webhook_out_of_order_batch(wa):
     assert msg(conn, "wamid.OOO1")["message_id"] < msg(conn, "wamid.OOO2")["message_id"]      # stored in ts order
 
 
-# ---------------------------------------------------------------- J6 type mapping
+# ---------------------------------------------------------------- message type mapping
 @pytest.mark.parametrize("name,wamid,kind", [
     ("location", "wamid.LOC1", "location"), ("audio", "wamid.AUD1", "unsupported"),
     ("image", "wamid.IMG1", "unsupported"), ("sticker", "wamid.STK1", "unsupported"),
@@ -264,7 +264,7 @@ def test_access_log_never_carries_the_verify_token(wa):
     assert VERIFY not in rec.getMessage() and f"{URL}?<redacted>" in rec.getMessage()
 
 
-# ---------------------------------------------------------------- P7 fails closed (W-1)
+# ---------------------------------------------------------------- fails closed
 @pytest.mark.parametrize("mode,over", [
     ("public", WA),                                                  # every WA var set, still never mounted
     ("dev", {**WA, "wa_app_secret": ""}),
@@ -289,7 +289,7 @@ def test_webhook_mounted_in_event_mode(tmp_path):
         assert (h["mode"], h["webhook"], h["wa_send"]) == ("event", "enabled", False)
 
 
-# ---------------------------------------------------------------- E2 hero parity: webhook path == paste/seed path
+# ---------------------------------------------------------------- hero parity: webhook path == paste/seed path
 def test_hero_loop_webhook_parity(wa):
     c, core, clock = wa
     conn = core.conn()
@@ -307,7 +307,7 @@ def test_hero_loop_webhook_parity(wa):
     draft = repo.unsent_draft(conn, oid)
     assert draft["template_id"] == "T_ADDRESS"
     repo.mark_draft_sent(conn, core.ids, clock.now(), draft, origin="dashboard", delivery="recorded_only",
-                         decided_by="human")                          # stand-in for the S-2 send
+                         decided_by="human")                          # stand-in for the send
     clock.advance(30)
     assert wa_post(c, "hero_v2_reply").status_code == 200
     settle(core, clock)
@@ -320,7 +320,7 @@ def test_hero_loop_webhook_parity(wa):
     assert got["order"]["status"] == "ready_to_ship"
 
 
-# ---------------------------------------------------------------- S-2 send (offline: httpx MockTransport as Meta)
+# ---------------------------------------------------------------- send (offline: httpx MockTransport as Meta)
 def _sender(calls, status=200):
     import httpx
 

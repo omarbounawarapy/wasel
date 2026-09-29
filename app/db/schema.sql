@@ -1,8 +1,7 @@
--- Verbatim from docs/council-spec/01-architecture-contracts.md §3.
 -- Opened per thread with:
 --   PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000; PRAGMA synchronous=NORMAL;
 -- Timestamps: UTC ISO-8601 'YYYY-MM-DDTHH:MM:SS.ffffffZ' written ONLY by app.clock.utc_iso().
--- IDs: ULID text. No migrations: the DB is rebuilt from this file (SEED_ON_BOOT, §6).
+-- IDs: ULID text. No migrations: the DB is rebuilt from this file (SEED_ON_BOOT).
 
 -- ---------------------------------------------------------------- reference data
 CREATE TABLE catalog (                         -- mirror of data/catalog.yaml, upserted on every boot
@@ -37,7 +36,7 @@ CREATE TABLE conversations (
   seed_key         TEXT,                      -- demo_seed.json conversation key; enables "Try this order"
   opened_at        TEXT NOT NULL,
   last_inbound_at  TEXT,
-  last_outbound_at TEXT                       -- 24h window check (SD §8.5)
+  last_outbound_at TEXT                       -- 24h window check
 );
 CREATE INDEX ix_conversations_sandbox ON conversations (sandbox_id, opened_at);
 
@@ -98,7 +97,7 @@ CREATE TABLE orders (
   CHECK ((pending_rescore_at IS NULL) = (pending_trigger IS NULL))
 );
 CREATE UNIQUE INDEX ux_orders_one_open ON orders (conversation_id)
-  WHERE status IN ('collecting','awaiting_reply','needs_review','ready_to_ship');      -- SD §3.1 rule 5
+  WHERE status IN ('collecting','awaiting_reply','needs_review','ready_to_ship');      -- at most one open order per conversation
 CREATE INDEX ix_orders_pending  ON orders (pending_rescore_at) WHERE pending_rescore_at IS NOT NULL;
 CREATE INDEX ix_orders_awaiting ON orders (awaiting_reply_since) WHERE status = 'awaiting_reply';
 CREATE INDEX ix_orders_sandbox  ON orders (sandbox_id, updated_at);

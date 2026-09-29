@@ -1,6 +1,6 @@
 """python -m scripts.dump_mocks: writes mocks/{orders,order_detail,health}.json from a seeded in-process app in
-public mode, with the hero taken through the reply loop (the G6 replacement for hand mocks, 01 §8). The mocks
-therefore validate against app/api/models.py by construction (C3)."""
+public mode, with the hero taken through the reply loop. The mocks therefore validate against
+app/api/models.py by construction; tests/integration/test_backend.py checks the committed copies."""
 from __future__ import annotations
 
 import json

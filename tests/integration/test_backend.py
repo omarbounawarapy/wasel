@@ -1,4 +1,4 @@
-"""C1 C2 C3 J7 J9 J10 J11 J12 J19 E3 E5 M1 P1–P7 + seed cache hits (05 §1)."""
+"""C1 C2 C3 J7 J9 J10 J11 J12 J19 E3 E5 M1 P1–P7 + seed cache hits."""
 from __future__ import annotations
 
 import json
@@ -108,7 +108,7 @@ def test_script_tag_in_customer_text_stays_text(dev):
     assert [s.text for s in segs if s.kind == "risk"] == ["9rib el jemaa"]
 
 
-# ---------------------------------------------------------------- hero loop through the API (E1 over HTTP, E5)
+# ---------------------------------------------------------------- hero loop through the API
 def test_hero_loop_in_dev(dev):
     c, core, clock = dev
     hid = hero_id(c)["order_id"]
@@ -194,7 +194,7 @@ def test_csv_ingest_limits_and_rejects(dev):
     assert len(r["created"]) == 1 and [x["row"] for x in r["rejected"]] == [2, 3]
 
 
-# ---------------------------------------------------------------- J10 debounce, J11 append-only, J7 boundary
+# ---------------------------------------------------------------- debounce, append-only assessments, tier boundary
 def test_debounce_and_append_only_versions(dev):
     c, core, clock = dev
     oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb sac cuir"}).json()["created"][0]["order_id"]
@@ -224,7 +224,7 @@ def test_order_boundary_after_terminal(dev):
     assert r["order_id"] != oid                                    # terminal -> a new order opens
 
 
-# ---------------------------------------------------------------- J9 state machine + actions
+# ---------------------------------------------------------------- state machine and actions
 def test_seller_actions_and_invalid_transition(dev):
     c, core, clock = dev
     oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb sac cuir, Sfax"}).json()["created"][0]["order_id"]
@@ -321,7 +321,7 @@ def test_admin_reset_reseeds(dev):
 
 
 def test_committed_mocks_match_api_models():
-    """C3: mocks/*.json validate against the Pydantic response models (regenerate with `make mocks`)."""
+    """mocks/*.json validate against the Pydantic response models (regenerate with `make mocks`)."""
     from pathlib import Path
     root = Path(__file__).resolve().parents[2] / "mocks"
     M.OrderListResponse.model_validate_json((root / "orders.json").read_text(encoding="utf-8"))

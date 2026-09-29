@@ -1,4 +1,4 @@
-"""XGBoost load + pred_contribs (03 §6). One predict call gives the score and the 6 per-feature
+"""XGBoost load + pred_contribs. One predict call gives the score and the 6 per-feature
 contributions (+ bias) in log-odds; points are derived in reason.py."""
 from __future__ import annotations
 

@@ -1,4 +1,4 @@
-# Makefile (05 §5): every command a teammate or CI needs. `make help` lists them.
+# Makefile: every command a developer or CI needs. `make help` lists them.
 SHELL         := /bin/bash
 .SHELLFLAGS   := -eu -o pipefail -c
 .DEFAULT_GOAL := help
@@ -29,7 +29,7 @@ up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set
 	echo "Dashboard  http://localhost:$(UI_PORT)"; \
 	API_BASE_URL=http://localhost:$(API_PORT) $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
 
-ui: ## dashboard only on :8501 (06 §1.5), against API_BASE_URL (default :8000)
+ui: ## dashboard only on :8501, against API_BASE_URL (default :8000)
 	API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run dashboard/app.py --server.port $(UI_PORT)
 
 web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make demo` then serve it at :8000/
@@ -38,12 +38,12 @@ web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make
 web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make run` or `make up` first)
 	cd web && npm run dev
 
-# ---- hosting without Docker (docs/deploy-cloudflare.md): the app runs with make, Cloudflare Tunnel publishes it
+# ---- hosting with make and Cloudflare Tunnel (docs/deployment.md): the app runs with make, Cloudflare Tunnel publishes it
 serve: ## host run: API + web UI, no reload, settings from .env (unset APP_MODE = public), on HOST:PORT (127.0.0.1:8000)
 	@set -a; [ -f .env ] && . ./.env; set +a; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn app.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
 
 tunnel: ## publish `make serve` on your Cloudflare hostname (named tunnel; CLOUDFLARE_TUNNEL_TOKEN in .env)
-	@set -a; [ -f .env ] && . ./.env; set +a; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/deploy-cloudflare.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
+	@set -a; [ -f .env ] && . ./.env; set +a; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/deployment.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
 
 deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `make serve` and run `make smoke URL=<public url>`
 	git pull --ff-only
@@ -51,16 +51,16 @@ deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `m
 	@echo "updated to $$(git rev-parse --short HEAD). Restart the server (systemctl restart wasel, or Ctrl-C + make serve),"
 	@echo "then check it from outside: make smoke URL=<your public URL>"
 
-wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (STATUS O-9/G5; docs/whatsapp-live-test.md)
+wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (docs/whatsapp.md)
 	bash scripts/wa_webhook_up.sh
 
-brev-serve: ## run ON the Brev GPU instance: install + serve vLLM (MODEL, PORT, VLLM_ARGS; docs/brev-live-test.md)
-	bash scripts/brev_llm_up.sh serve
+llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_ARGS; docs/self-hosted-llm.md)
+	bash scripts/vllm_serve.sh serve
 
-brev-check: ## verify the self-hosted LLM endpoint from the laptop (GROQ_BASE_URL + GROQ_API_KEY in .env)
-	bash scripts/brev_llm_up.sh check
+llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)
+	bash scripts/vllm_serve.sh check
 
-.PHONY: help setup run up ui web web-dev serve tunnel deploy wa-up brev-serve brev-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
+.PHONY: help setup run up ui web web-dev serve tunnel deploy wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
@@ -86,7 +86,7 @@ fmt: ## autofix
 hygiene: ## no tracked secrets/DBs, fixture phones allowlisted, one clock, one LLM entry point
 	bash scripts/hygiene.sh
 
-eval: ## offline golden sets (455 cases, no keys) gated on eval/thresholds.yaml -> reports/eval.json
+eval: ## offline golden sets (476 cases, no keys) gated on eval/thresholds.yaml -> reports/eval.json
 	$(TEST_ENV) $(PY) -m eval.run
 
 eval-live: ## same golden sets through the live LLM extractor + judge (needs GROQ_API_KEY) -> reports/eval_live.json
@@ -126,7 +126,7 @@ drill: ## fallback drill, no keys
 smoke: ## deployed/local URL: health+mode, try hero, reply, 409 (no key)
 	$(PY) -m scripts.smoke $(URL)
 
-mocks: ## dump mocks/*.json from a seeded in-process app (C3 contract for the frontend)
+mocks: ## rewrite mocks/*.json (frozen API responses checked by the API contract test) from a seeded in-process app
 	$(PY) -m scripts.dump_mocks
 
 clean: ## remove caches and local DBs

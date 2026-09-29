@@ -1,16 +1,7 @@
 import axios, { AxiosInstance, AxiosRequestConfig } from 'axios';
-import { z } from 'zod';
 import { getVisitorId } from './api/visitor';
 
-const StoredUserSchema = z.object({
-    id: z.string().optional(),
-    tenant_id: z.string().optional(),
-    role: z.enum(['user', 'admin', 'owner', 'super_admin']).optional(),
-    username: z.string().optional(),
-    email: z.string().email().optional(),
-});
-
-// The built bundle is served by FastAPI itself (01 §6.1), so it calls its own origin (/api).
+// The built bundle is served by FastAPI itself, so it calls its own origin (/api).
 // `next dev` (:5173) talks to the API on :8000 (CORS is on in APP_MODE=dev). NEXT_PUBLIC_API_URL overrides both.
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ||
     (process.env.NODE_ENV === 'development' ? 'http://localhost:8000' : '');
@@ -28,48 +19,14 @@ class ApiClient {
             },
         });
 
-        // Request interceptor to add auth token and tenant ID
-        this.client.interceptors.request.use(
-            (config) => {
-                const token = localStorage.getItem('access_token');
-                if (token) {
-                    config.headers.Authorization = `Bearer ${token}`;
-                }
-
-                // Add X-Visitor-Id header (required by backend for ingest/try)
-                const vid = getVisitorId();
-                if (vid) {
-                    config.headers['X-Visitor-Id'] = vid;
-                }
-
-                // Add X-Tenant-ID header if available
-                const tenantId = localStorage.getItem('tenant_id');
-                if (tenantId) {
-                    config.headers['X-Tenant-ID'] = tenantId;
-                }
-
-                // Fallback: try to get tenant_id from user object (schema-validated)
-                if (!tenantId) {
-                    const userStr = localStorage.getItem('user');
-                    if (userStr) {
-                        try {
-                            const parsed = StoredUserSchema.safeParse(JSON.parse(userStr));
-                            if (parsed.success && parsed.data.tenant_id) {
-                                config.headers['X-Tenant-ID'] = parsed.data.tenant_id;
-                                localStorage.setItem('tenant_id', parsed.data.tenant_id);
-                            } else if (!parsed.success) {
-                                localStorage.removeItem('user');
-                            }
-                        } catch (e) {
-                            localStorage.removeItem('user');
-                        }
-                    }
-                }
-
-                return config;
-            },
-            (error) => Promise.reject(error)
-        );
+        // Every request carries the visitor id that scopes the public-mode sandbox.
+        this.client.interceptors.request.use((config) => {
+            const vid = getVisitorId();
+            if (vid) {
+                config.headers['X-Visitor-Id'] = vid;
+            }
+            return config;
+        });
 
         // Response interceptor for error handling
         this.client.interceptors.response.use(
@@ -85,15 +42,6 @@ class ApiClient {
                         data: error.response?.data,
                         raw: error
                     });
-                }
-
-                // Only redirect to login on 401 if it's not a config fetch
-                // Config fetch failures should be handled gracefully by the component
-                const isConfigEndpoint = error.config?.url?.includes('/admin/config');
-                const isWhatsAppStatus = error.config?.url?.includes('/whatsapp/status');
-
-                if (error.response?.status === 401 && !isConfigEndpoint && !isWhatsAppStatus) {
-                    // Redirect to login removed for the hackathon version
                 }
 
                 // Enhance error object with more details

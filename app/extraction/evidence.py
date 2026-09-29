@@ -1,5 +1,5 @@
-"""Evidence location: every quote must be a verbatim (normalized) substring of ONE [CUSTOMER] line
-(02 §5). The latest occurrence wins, and spans index the ORIGINAL text through the index map."""
+"""Evidence location: every quote must be a verbatim (normalized) substring of ONE [CUSTOMER] line.
+The latest occurrence wins, and spans index the ORIGINAL text through the index map."""
 from __future__ import annotations
 
 from collections.abc import Sequence
@@ -11,7 +11,7 @@ from ml.textnorm import normalize_with_map
 
 
 @dataclass(frozen=True)
-class EvidenceSpan:                 # 01 contract + msg_idx and the product/tone kinds (02 §5)
+class EvidenceSpan:                 # contract type + msg_idx and the product/tone kinds
     message_id: str
     msg_idx: int
     start: int                      # code-point offset into the ORIGINAL text (== text_llm offset)

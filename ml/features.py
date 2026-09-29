@@ -1,4 +1,4 @@
-"""Feature contract, the data-generating prior, and the pure serve-side rules (03 §2–§4).
+"""Feature contract, the data-generating prior, and the pure serve-side rules.
 
 The single import for the generator, the trainer and the serve path. Changing a PRIOR constant
 means regenerating and retraining; synth_v1.meta.json records this file's sha256.
@@ -28,7 +28,7 @@ ZONE_DEC = {v: k for k, v in ZONE_ENC.items()}
 FLAG_ORDER = ("vague_location", "availability_uncertain", "price_hesitation",
               "third_party_recipient", "prior_refusal_mention", "pressure_or_inconsistency")
 
-# ---------------------------------------------------------------- the prior (03 §2)
+# ---------------------------------------------------------------- the prior
 PRIOR = {
     "w_vag": 0.35, "w_price": 0.15, "w_zone": 0.10, "w_rate": 0.20, "w_flags": 0.10, "w_tone": 0.10,
     "price_lo": 20.0, "price_hi": 600.0, "flags_cap": 3, "S_mid": 43.0, "S_scale": 12.0,
@@ -65,7 +65,7 @@ def score_prior(f: dict) -> float:
     return 100.0 * p_true(S(f))
 
 
-# ---------------------------------------------------------------- zone (03 §3)
+# ---------------------------------------------------------------- zone
 def _zone_in(text: str, zones: dict) -> tuple[str, str] | None:
     for entry in zones.get("entries", []):
         for alias in [entry["name"], *entry.get("aliases", [])]:
@@ -87,7 +87,7 @@ def zone_from_text(texts: list[str], zones: dict) -> tuple[str, str] | None:
     return None
 
 
-# ---------------------------------------------------------------- flags and tone (03 §4)
+# ---------------------------------------------------------------- flags and tone
 @dataclass(frozen=True)
 class VerifiedFlag:
     code: str

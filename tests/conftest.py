@@ -1,4 +1,4 @@
-"""Shared fixtures (05 §2). Offline, keyless, deterministic: every test runs with no network."""
+"""Shared fixtures. Offline, keyless, deterministic: every test runs with no network."""
 from __future__ import annotations
 
 import json

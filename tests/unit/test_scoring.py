@@ -22,7 +22,7 @@ GOOD = {"is_order": True, "is_order_change": False, "product_quote": "casque blu
         "tone": "neutral", "confirmation": "none", "language": "arabizi", "clarity": "clear"}
 
 
-# ---------------------------------------------------------------- U16
+# ---------------------------------------------------------------- scoring
 @pytest.mark.parametrize("final,tier", [(34, "low"), (35, "medium"), (64, "medium"), (65, "high")])
 def test_tier_boundaries(config, final, tier):
     assert _tier(final, config["tiers"]) == tier
@@ -48,17 +48,17 @@ def test_confidence_rules(config):
     assert "llm_cap_reached" in _confidence(final=80, **{**kw, "cap": "global_cap"})[1]
 
 
-# ---------------------------------------------------------------- U17
+# ---------------------------------------------------------------- reply adjustments
 def test_reply_adjustments(config):
     assert _adjust(80.0, "confirmed", "customer_reply", config.raw)[0] == 48
     assert _adjust(80.0, "reschedule", "customer_reply", config.raw)[0] == 80
     assert _adjust(80.0, "ambiguous", "customer_reply", config.raw)[0] == 80
     final, adj = _adjust(80.0, "declined", "customer_reply", config.raw)
-    assert final == 80 and adj[0].rule == "declined"          # scored normally (01 §2), action cancelled
+    assert final == 80 and adj[0].rule == "declined"          # scored normally, action cancelled
     assert _adjust(92.0, "none", "no_reply_timeout", config.raw)[0] == 100   # +15 capped at 100
 
 
-# ---------------------------------------------------------------- U18
+# ---------------------------------------------------------------- reasons
 def test_points_sum_to_model_minus_base():
     phi = {"a": 0.8, "b": -0.2, "c": 0.3}
     import math
@@ -67,7 +67,7 @@ def test_points_sum_to_model_minus_base():
     assert sum(points(phi, p, p0).values()) == pytest.approx(100 * (p - p0), abs=1e-9)
 
 
-# ---------------------------------------------------------------- U14 chain routing
+# ---------------------------------------------------------------- chain routing
 def _chain(steps):
     return ChainClient([ChainStep(k, prov, model, be, t) for k, prov, model, be, t in steps])
 
@@ -186,7 +186,7 @@ def test_structured_fields_win(replay_dir):
     assert r.order_patch.price_tnd == 99.0 and r.order_patch.zone == "urban" and r.order_patch.zone_source == "csv"
 
 
-# ---------------------------------------------------------------- J15 / J14 outbound
+# ---------------------------------------------------------------- outbound
 @pytest.mark.parametrize("tid", ["T_CONFIRM", "T_ADDRESS", "T_PREPAY", "T_ACK"])
 @pytest.mark.parametrize("lang", TEMPLATE_LANGS)
 @pytest.mark.parametrize("name", ["Sami", None])

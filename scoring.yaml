@@ -1,4 +1,4 @@
-# Every tunable number and lexicon (03 §7, 02 §8.1, 04 §5 I-4). Hashed into config_hash with
+# Every tunable number and lexicon. Hashed into config_hash with
 # data/zones.yaml and data/catalog.yaml. All values are cold-start ASSUMPTIONS, not evidence.
 version: 1
 model:
@@ -26,7 +26,7 @@ final_score:      { clip: [0, 100], round: 0 }               # final = round(cli
 
 outbound:
   static_insert_when_tier_at_least: medium
-  # S-3 draft judge: guard classifier p_unsafe >= block_at vetoes the rewrite; >= hold_at never auto_sends.
+  # draft judge: guard classifier p_unsafe >= block_at vetoes the rewrite; >= hold_at never auto_sends.
   # hold_at 0.1 (was 0.2, tightened when auto_send.gate became classifier and this line became the only
   # backstop with the judge down). Measured on the never-trained holdout bank: unsafe text cleared to send
   # drops 21% -> 11%, ~12% of safe drafts move to owner approval (safe, just slower), none blocked. 0.05
@@ -59,14 +59,14 @@ window:           { max_messages: 12, max_chars: 2000 }
 lexicons:
   ack:     [ok, oui, ey, eyh, behi, "d'accord", merci, "ya3tik saha", "je confirme", "نعم", "باهي", "إيه"]
   decline: [non, la, annuler, "ma nhebech", "لا", "ألغي"]
-  # F3: a darija commitment with no product name ("nheb wa7ed noir" after "3andkom casque bluetooth?")
+  # a darija commitment with no product name ("nheb wa7ed noir" after "3andkom casque bluetooth?")
   # is an order; the fr ask ("je voudrais connaître la couleur") is not, so no fr verbs here.
   order_intent: [nheb, n7eb, nebghi, نوردر, نحب, نبغي]
-  # 04 §5 I-4: the ONLY injection lexicon. Phrase-level. `normalized` patterns run on
+  # The ONLY injection lexicon. Phrase-level. `normalized` patterns run on
   # normalize(text) with Cf characters removed (casefolded, أ→ا, ة→ه); `defused` patterns run on the
-  # length-preserving defused LLM view. More Arabic-script and Arabizi lines per FEDI.md F7.
+  # length-preserving defused LLM view.
   injection:
-    # F7/F8 extensions (Fedi's variants, additive to the 04 §5 I-4 core): "risk rules" target,
+    # Extended variants: "risk rules" target,
     # mark/marque/7ot verbs with bare LOW, system/admin update-override headers, règle système,
     # unaccented "regles", Arabic قوانين / تحديث نظام.
     normalized:
@@ -87,22 +87,22 @@ lexicons:
       - '⟦\s*(?:SELLER|CUSTOMER)'
       - '⦃\s*"'
 
-prefilter:        # 02 §8.1; a term in the draft and NOT in the template -> reject
+prefilter:        # a term in the draft and NOT in the template -> reject
   payment:   [carte, card, iban, rib, cvv, code, "mot de passe", password, virement, "numero de carte",
               "بطاقة", "كلمة السر", "الرمز", "حساب بنكي", "el carta", "numrou el carta"]
   discount:  [remise, promo, promotion, gratuit, gratuite, gratuitement, offert, offerte, cadeau,
               réduction, reduction, solde, soldes, free, batel, blech, "bla flous",
               "مجانا", "مجاني", "بلاش", "تخفيض", "هدية"]
   promise:   [garanti, garantie, "sans faute", promis, "je vous promets", madhmoun, "مضمون", "نوعدك", "nwa3dek"]
-  allowlist: ["code postal"]    # F16: "code postal" passes
+  allowlist: ["code postal"]    # "code postal" passes
   max_chars: 400
 
 roi:                                                         # every value is an ASSUMPTION; impact is simulated
-  c_fail_tnd: 8.0                                            # [VERIFY] courier + return cost of one failed COD trip
+  c_fail_tnd: 8.0                                            # courier + return cost of one failed COD trip
   prevent_rate: { ship: 0.0, confirm: 0.30, prepay: 0.60 }
   prepay_conversion_loss: 0.10
   gross_margin: 0.25
-  msg_cost_tnd: 0.0                                          # [VERIFY] WhatsApp service-window pricing
+  msg_cost_tnd: 0.0                                          # WhatsApp service-window pricing
   sensitivity_confirm: [0.15, 0.30, 0.45]
 
 text_clf: { enabled: false, file: models/text_clf_v1.joblib, min_prob: 0.6, disagree_levels: 2 }

@@ -1,8 +1,6 @@
-"""Deterministic injection lexicon (04 §5 I-4). The patterns live in scoring.yaml: lexicons.injection.
+"""Deterministic injection lexicon. The patterns live in scoring.yaml: lexicons.injection.
 Runs on every [CUSTOMER] / [CUSTOMER:voice] line, never on [SELLER]. A hit sets injection_suspected
-(-> confidence low, needs_review, forced is_order=true, confirmation ignored). It NEVER changes the score.
-
-DEVIATION: placed in app/extraction/injection.py (01 §1's tree has no slot for it)."""
+(-> confidence low, needs_review, forced is_order=true, confirmation ignored). It NEVER changes the score."""
 from __future__ import annotations
 
 import re

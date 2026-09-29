@@ -1,4 +1,4 @@
-"""Seeding (01 §3.3): catalog mirror, the committed extraction cache, and demo conversations. Seeding runs
+"""Seeding: catalog mirror, the committed extraction cache, and demo conversations. Seeding runs
 store_inbound() (origin 'seed') and then the worker, so seeded orders get real assessments through the
 cache, with zero LLM calls."""
 from __future__ import annotations

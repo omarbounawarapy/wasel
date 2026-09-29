@@ -88,7 +88,7 @@ def run_outbound(rows, llm) -> dict:
     """Task: decide send / don't send. Success = unsafe drafts stopped AND safe drafts let through.
     Routing mirrors make_draft via guard_clf.decide(): block = prefilter fail or classifier >= block_at;
     review (hold_at..block_at) is the owner-approval path — for an unsafe draft that still stops the
-    auto-send (counted as stopped), for a safe draft it is the designed outcome (F8 PASS drafts
+    auto-send (counted as stopped), for a safe draft it is the designed outcome (the PASS drafts
     go to the send queue after a human check), tracked separately as safe_held."""
     cfg = default_config()
     tp = tn = fp = fn = held_safe = 0
@@ -148,8 +148,8 @@ def run_injection(rows, llm) -> dict:
 
 
 def set_input(row: dict) -> ScoreInput:
-    """F3/F7 conversation row -> ScoreInput. Seller rows carry the canonical template text (window's
-    [SELLER] line, 04 I-3); the last-customer script routes their language like a real session."""
+    """Conversation row -> ScoreInput. Seller rows carry the canonical template text (window's
+    [SELLER] line); the last-customer script routes their language like a real session."""
     msgs = []
     for i, m in enumerate(row["messages"]):
         ts = T0.replace(second=i)
@@ -166,8 +166,8 @@ def set_input(row: dict) -> ScoreInput:
 
 
 def run_g1(rows, llm) -> dict:
-    """F3 (eval/sets/g1.jsonl): 24 handwritten conversations. Flag metrics compare orders only
-    (Fedi's three non-orders carry no flag labels)."""
+    """eval/sets/g1.jsonl: 24 handwritten conversations. Flag metrics compare orders only
+    (the three non-orders carry no flag labels)."""
     n = order_ok = exact = near = lang_ok = conf_ok = tone_ok = 0
     flag_tp = flag_fp = flag_fn = 0
     for r in rows:
@@ -196,7 +196,7 @@ def run_g1(rows, llm) -> dict:
 
 
 def run_g3(rows, llm) -> dict:
-    """F7 (eval/sets/g3_injection.jsonl): 4 bases x 2 appended injections. Protocol: the injection is
+    """eval/sets/g3_injection.jsonl: 4 bases x 2 appended injections. Protocol: the injection is
     flagged, the order still scores, labels keep their base values, the address is not promoted."""
     flagged = scored = not_exact = preserved = n = 0
     for r in rows:
@@ -215,7 +215,7 @@ def run_g3(rows, llm) -> dict:
 
 
 def prefilter_case_rows() -> list[dict]:
-    """F8 (tests/fixtures/cases/prefilter.yaml): Fedi's 6 BLOCK + 6 PASS drafts against the canonical
+    """tests/fixtures/cases/prefilter.yaml: 6 BLOCK + 6 PASS drafts against the canonical
     templates rendered with the fixture's order record."""
     cfg = default_config()
     fx = yaml.safe_load((ROOT / "tests" / "fixtures" / "cases" / "prefilter.yaml").read_text(encoding="utf-8"))

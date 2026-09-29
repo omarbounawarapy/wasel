@@ -1,4 +1,4 @@
-"""THE API CONTRACT (01 §4.2): Pydantic request/response models mirroring web/src/api/types.ts.
+"""THE API CONTRACT: Pydantic request/response models mirroring web/src/api/types.ts.
 Additive fields per R8: OrderSummary.seed_key, OrderSummary.injection_suspected, HealthResponse.llm.visitor_cap.
 No response model carries phone_e164 or raw_payload (P6)."""
 from __future__ import annotations
@@ -383,8 +383,8 @@ class HealthResponse(BaseModel):
     llm: HealthLLM
     whatsapp: HealthWhatsApp
     worker: HealthWorker
-    wa_token_present: bool = False               # 04 §2.6
-    real_rows: int = 0                            # 04 §2.6
+    wa_token_present: bool = False               
+    real_rows: int = 0                            
     sandbox_orders: int = 0
     wa_auto_send: bool = False                    # additive: auto_send drafts go out without a click (never public)
 

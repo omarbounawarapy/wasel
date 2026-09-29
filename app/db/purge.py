@@ -1,4 +1,4 @@
-"""purge_sandboxes (public mode, every PURGE_INTERVAL_S) and reset_all (admin reset). 01 §3.2."""
+"""purge_sandboxes (public mode, every PURGE_INTERVAL_S) and reset_all (admin reset)."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta

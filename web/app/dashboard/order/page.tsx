@@ -11,7 +11,7 @@ import {
     Page, Section, Details, Chip, RiskBadge, Delta, Empty, TIER, NEXT_STEP, STATUS, tunisTime, tnd,
 } from '@/components/wasel/kit';
 
-// Labels follow the council spec copy (06 §5.5); server-built strings (reasons, flag labels) are shown verbatim.
+// Server-built strings (reasons, flag labels) are shown verbatim.
 const SELLER_ACTIONS: Record<string, string> = {
     approve: "Approve for shipping",
     request_confirmation: "Ask the customer to confirm",
@@ -21,7 +21,7 @@ const SELLER_ACTIONS: Record<string, string> = {
     cancel: "Cancel order",
 };
 
-// Primary action per status (06 §2.7): exactly one filled button.
+// Primary action per status: exactly one filled button.
 const PRIMARY_BY_STATUS: Record<string, string> = {
     needs_review: "approve",
     ready_to_ship: "ship",
@@ -75,7 +75,7 @@ const RESCORE: Record<string, string> = {
     drafting: "Drafting the reply…",
 };
 
-// Server segments (06 §3): text nodes only, no HTML; the join of segment texts equals the message text.
+// Server segments: text nodes only, no HTML; the join of segment texts equals the message text.
 function Segments({ segments }: { segments: any[] }) {
     return <>{segments.map((s, i) => s.kind
         ? <mark key={i} tabIndex={0} title={s.label ?? ""}
@@ -227,7 +227,7 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
     );
 }
 
-// The draft guard (docs/frontend_note_send_vs_review.md): rules -> local classifier decision -> AI judge.
+// The draft guard (docs/architecture.md, outbound message safeguards): rules -> local classifier decision -> AI judge.
 // Drafts from before the classifier change carry no `decision`: shown as not applicable, never a crash.
 const DECISION: Record<string, { label: string, tone: "green" | "amber" | "gray" }> = {
     send: { label: "Clear to send", tone: "green" },
@@ -333,7 +333,7 @@ function OrderDetailContent() {
         }).catch(() => setLoading(false));
     }, []);
 
-    // Poll the selected order: 1 s while it is rescoring (or right after a reply/Try), else 3 s (06 §2.1).
+    // Poll the selected order: 1 s while it is rescoring (or right after a reply/Try), else 3 s.
     useEffect(() => {
         if (!orderId) return;
         let stop = false;

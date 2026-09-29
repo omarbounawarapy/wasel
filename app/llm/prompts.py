@@ -1,6 +1,6 @@
 """Prompt + schema + limits loading from the LLM registry (config/llm.yaml). The app refuses to start if a
-prompt file's sha256 doesn't match prompts/VERSIONS, so a prompt can't change silently without a version bump
-(02 §2). Which version each role runs is one line in config/llm.yaml, so a rollback is one edit."""
+prompt file's sha256 doesn't match prompts/VERSIONS, so a prompt can't change silently without a version bump.
+Which version each role runs is one line in config/llm.yaml, so a rollback is one edit."""
 from __future__ import annotations
 
 import hashlib
@@ -85,7 +85,7 @@ def extraction_task(root: Path = ROOT) -> TaskSpec:
 
 
 def rewrite_task(root: Path = ROOT) -> TaskSpec:
-    """02 §8.2: no customer text in the user turn."""
+    """No customer text in the user turn."""
     return task("rewrite", root=root)
 
 

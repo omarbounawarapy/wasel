@@ -2,7 +2,6 @@
 
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { AlertTriangle } from "lucide-react";
-import { logClientError } from "@/lib/errorLogging";
 
 interface Props {
   children?: ReactNode;
@@ -31,14 +30,6 @@ class ErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
-    logClientError(error.message, {
-      stack: error.stack,
-      component: "ErrorBoundary",
-      metadata: {
-        componentStack: errorInfo.componentStack,
-      },
-    });
-
     console.error("ErrorBoundary caught an error:", error, errorInfo);
   }
 

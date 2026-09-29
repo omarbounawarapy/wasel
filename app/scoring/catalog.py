@@ -1,4 +1,4 @@
-"""Catalog match: product quote (or seller-entered name) -> product, RapidFuzz >= 80 (02 §1, 03 §3)."""
+"""Catalog match: product quote (or seller-entered name) -> product, RapidFuzz >= 80."""
 from __future__ import annotations
 
 from rapidfuzz import fuzz

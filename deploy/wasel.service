@@ -1,4 +1,4 @@
-# systemd unit for a Linux host (docs/deploy-cloudflare.md). Copy to /etc/systemd/system/wasel.service,
+# systemd unit for a Linux host (docs/deployment.md). Copy to /etc/systemd/system/wasel.service,
 # adjust User and WorkingDirectory, then: sudo systemctl daemon-reload && sudo systemctl enable --now wasel
 # The tunnel runs as its own service: sudo cloudflared service install <CLOUDFLARE_TUNNEL_TOKEN>
 [Unit]

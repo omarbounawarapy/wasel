@@ -13,7 +13,7 @@ Things we especially want to hear about:
 
 ## What the app does to stay safe
 
-- **Public mode is the default.** A missing or unknown `APP_MODE` means `public`: the webhook is not mounted, sends are forced off, seeded rows are read-only and each visitor gets a sandbox that is purged after 2 hours. CI boots the Docker image and fails if `/api/health` reports anything else.
+- **Public mode is the default.** A missing or unknown `APP_MODE` means `public`: the webhook is not mounted, sends are forced off, seeded rows are read-only and each visitor gets a sandbox that is purged after 2 hours. CI boots the server with no configuration and fails if `/api/health` reports anything else.
 - **The webhook fails closed.** It is mounted only when enabled and both `WA_APP_SECRET` and `WA_VERIFY_TOKEN` are set; every POST is HMAC-checked and deduplicated.
 - **The LLM cannot decide.** It returns a strict schema; every quote is checked against the original text; suspected injection sends the order to human review. A person approves every message before it is sent.
 - **LLM spend is capped** per day and per visitor. Reaching a cap falls back to the rules extractor, never to an error.
@@ -23,4 +23,4 @@ Things we especially want to hear about:
 
 All customer data in this repository is synthetic. Do not load real customer conversations into a public-mode deployment.
 
-Design detail: [`docs/council-spec/04-security-public-mode.md`](docs/council-spec/04-security-public-mode.md).
+Design detail: see [safeguards](docs/architecture.md#11-outbound-message-safeguards) and [data handling](docs/architecture.md#14-data-handling) in the architecture document.

@@ -1,4 +1,4 @@
-"""ScoringConfig = scoring.yaml + data/zones.yaml + data/catalog.yaml, loaded once (01 §2).
+"""ScoringConfig = scoring.yaml + data/zones.yaml + data/catalog.yaml, loaded once.
 
 config_hash = sha256(scoring.yaml + b"\\0" + zones.yaml + b"\\0" + catalog.yaml), shown as 8 hex chars.
 """
@@ -21,7 +21,7 @@ class ScoringConfig:
     zones: dict
     catalog: dict
     templates: dict
-    banks: dict                 # phrase banks (rules_v1 flag matching); not hashed, per 01 §2
+    banks: dict                 # phrase banks (rules_v1 flag matching); not hashed
     config_hash: str            # full hex
     root: Path
 

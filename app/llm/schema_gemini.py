@@ -1,5 +1,5 @@
-"""Canonical (Groq strict) schema -> what Gemini's OpenAI-compat response_format accepts (02 §6).
-The style is chosen by the Sat 12:00 probe and written to config/probe.json. [VERIFY all styles]"""
+"""Canonical (Groq strict) schema -> what Gemini's OpenAI-compat response_format accepts.
+The style is chosen by a probe of the account's model and written to config/probe.json."""
 from __future__ import annotations
 
 

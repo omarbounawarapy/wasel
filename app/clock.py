@@ -1,4 +1,4 @@
-"""The ONLY place that reads the wall clock (05 §2; hygiene greps for datetime.now elsewhere)."""
+"""The ONLY place that reads the wall clock (hygiene greps for datetime.now elsewhere)."""
 from __future__ import annotations
 
 from datetime import UTC, datetime, timedelta
@@ -29,7 +29,7 @@ class FrozenClock:
 
 
 def utc_iso(dt: datetime) -> str:
-    """'2026-09-27T10:00:04.123456Z': fixed width, sorts lexicographically (01 §3)."""
+    """'2026-09-27T10:00:04.123456Z': fixed width, sorts lexicographically."""
     assert dt.tzinfo is not None, "utc_iso needs a tz-aware datetime"
     return dt.astimezone(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
 

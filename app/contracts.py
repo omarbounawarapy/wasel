@@ -1,8 +1,6 @@
-"""Lane contract: persistence/worker (Jesser) <-> scoring core (Omar).
-Types frozen at G-seams (Sat 10:30); field lists frozen at G2 (Sat 12:00).
+"""Contract between the persistence/worker layer and the scoring core.
 The core is DB-free: everything it needs is passed in; everything it produces is returned.
 
-Source: docs/council-spec/01-architecture-contracts.md §2 (verbatim, except where marked ADDITIVE).
 The implementations live in app/scoring/score_order.py (score_order, make_scorer) and
 app/outbound/make_draft.py (make_draft).
 """
@@ -89,9 +87,9 @@ class PriorAssessment:
     path: Path
     reason: str
     # ADDITIVE: the per-feature points of that version, so reason_diff can compare
-    # v(k-1) with v(k) (03 §8 diff templates). Empty dict when unknown.
+    # v(k-1) with v(k). Empty dict when unknown.
     points: dict[str, float] = field(default_factory=dict)
-    confirmation: Confirmation = "none"     # ADDITIVE: T_ACK keeps the prior confirmation (02 §5 step 7)
+    confirmation: Confirmation = "none"     # ADDITIVE: T_ACK keeps the prior confirmation
 
 
 @dataclass(frozen=True)
@@ -117,15 +115,15 @@ class CachedExtraction:
     extraction: dict              # after repair + evidence check + tone gate; evidence carries msg_idx, no ids/offsets
 
 
-class ExtractionCache(Protocol):  # Jesser: SqliteExtractionCache; tests: dict-backed
+class ExtractionCache(Protocol):  # SqliteExtractionCache; tests: dict-backed
     def get(self, input_hash: str) -> CachedExtraction | None: ...
 
 
-class UsageMeter(Protocol):       # Jesser: SqliteUsageMeter over llm_usage; tests: counter
+class UsageMeter(Protocol):       # SqliteUsageMeter over llm_usage; tests: counter
     def allow(self, role: Role, sandbox_id: str | None, now: datetime) -> CapDecision: ...
 
 
-class LLMClient(Protocol):        # Omar, app/llm/client.py (Oracle D6). Implementations:
+class LLMClient(Protocol):        # app/llm/client.py. Implementations:
     primary: str                  #   ChainClient(live) | ReplayClient(tests/fixtures/llm) | FailingClient(kind)
     # full method set lives in app/llm/base.py; the worker never calls it directly
 
@@ -206,7 +204,7 @@ class FlagView:
 
 
 @dataclass(frozen=True)
-class AssessmentRecord:           # -> one risk_assessments row (ids, version, trigger, created_at added by Jesser)
+class AssessmentRecord:           # -> one risk_assessments row (ids, version, trigger, created_at added by the persistence layer)
     path: Path
     is_order_change: bool
     has_unsupported_media: bool
@@ -221,7 +219,7 @@ class AssessmentRecord:           # -> one risk_assessments row (ids, version, t
     final_score: int                          # 0-100; NEVER None (declined is scored normally)
     tier: Tier
     action: Action                            # 'cancelled' iff confirmation == 'declined'; else 'review' if path == 'rules';
-                                              # else by tier (SD §7.3)
+                                              # else by tier
     confidence: Literal["high", "low"]
     confidence_reasons: list[str]             # near_tier_boundary | not_primary_model | product_not_in_catalog |
                                               # dropped_flags | clarity_unclear | rules_path | llm_cap_reached |
@@ -262,7 +260,7 @@ class UsageRecord:                # -> one llm_usage row per provider attempt
 
 
 @dataclass(frozen=True)
-class CoreEvent:                  # -> events row; Jesser adds seq, ts, order_id, sandbox_id
+class CoreEvent:                  # -> events row; the persistence layer adds seq, ts, order_id, sandbox_id
     type: str                     # 'llm.fallback' | 'llm.cap_reached' | 'cascade.hit' | 'cache.hit' |
                                   # 'evidence.dropped' | 'flags.resolved' | 'extraction.not_order' | 'injection.suspected'
     level: Literal["info", "success", "warning", "error"]
@@ -276,10 +274,10 @@ class ScoreResult:
     cache_put: CacheEntry | None
     assessment: AssessmentRecord | None   # None iff not is_order
     order_patch: OrderPatch | None        # None iff not is_order
-    template_id: TemplateId | None        # rule (SD §8.1): vague_location -> T_ADDRESS, prepay -> T_PREPAY, else T_CONFIRM
+    template_id: TemplateId | None        # rule: vague_location -> T_ADDRESS, prepay -> T_PREPAY, else T_CONFIRM
     usage: list[UsageRecord] = field(default_factory=list)
     events: list[CoreEvent] = field(default_factory=list)
-    injection_suspected: bool = False     # ADDITIVE: 01 §5.2 rule 0 reads result.injection_suspected
+    injection_suspected: bool = False     # read by the state machine (rule 0: result.injection_suspected)
 
 
 # ---------------------------------------------------------------- the calls
@@ -288,7 +286,7 @@ Scorer = Callable[[ScoreInput], ScoreResult]
 # make_scorer(*, cache, llm, meter, config) -> Scorer                  functools.partial over score_order
 
 
-# ---------------------------------------------------------------- drafts (Omar, pure; worker persists)
+# ---------------------------------------------------------------- drafts (pure; the worker persists)
 @dataclass(frozen=True)
 class DraftRequest:
     order_id: str
@@ -326,4 +324,4 @@ class DraftRecord:                # -> one outbound_drafts row
 
 Drafter = Callable[[DraftRequest], DraftRecord]
 # make_draft(req, *, llm, meter, config) -> DraftRecord                app/outbound/make_draft.py
-#   llm=None (DRAFT_LLM=false, the Saturday default) -> static template + prefilter only.
+#   llm=None (DRAFT_LLM=false, the default) -> static template + prefilter only.

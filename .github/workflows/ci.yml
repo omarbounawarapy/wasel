@@ -1,4 +1,4 @@
-# 05 §4. Runs on every push and PR: make check with no API keys, then the host path (make, no Docker):
+# Runs on every push and PR: make check with no API keys, then the host path (make + serve):
 # build the web UI, start `make serve` with no .env, and require safe public mode + the UI + the smoke test.
 name: ci
 on: [push, pull_request, workflow_dispatch]

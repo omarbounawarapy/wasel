@@ -1,4 +1,4 @@
-"""Stub scorer with score_order's signature (01 §2): is_order, path 'llm', tier high, final 78, one
+"""Stub scorer with score_order's signature: is_order, path 'llm', tier high, final 78, one
 vague_location span on the first customer message (start 0, end min(12, len)), template T_ADDRESS.
 Test C2 inserts its result into a fresh DB on day one."""
 from __future__ import annotations

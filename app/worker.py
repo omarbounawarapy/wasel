@@ -1,4 +1,4 @@
-"""process_due(): the sync worker step tests call directly (01 §5.3, 05 §2). run_loop() wraps it in
+"""process_due(): the sync worker step tests call directly. run_loop() wraps it in
 asyncio.to_thread every second. No clock reads and no sleeps in process_due."""
 from __future__ import annotations
 
@@ -68,7 +68,7 @@ def create_draft(conn, ids: IdGen, now: datetime, order_id: str, drafter: Drafte
     rec = drafter(draft_request(conn, order_id, now, tid))
     did = repo.insert_draft(conn, ids, now, order_id, a["assessment_id"], rec)
     o = repo.get_order(conn, order_id)
-    for u in rec.usage:                                 # S-3 rewrite/judge calls count against the caps
+    for u in rec.usage:                                 # rewrite/judge calls count against the caps
         repo.insert_usage(conn, u, sandbox_id=o["sandbox_id"], order_id=order_id)
     for e in rec.events:
         repo.add_event(conn, now, e.type, e.level, order_id=order_id, sandbox_id=o["sandbox_id"], entity_id=did,

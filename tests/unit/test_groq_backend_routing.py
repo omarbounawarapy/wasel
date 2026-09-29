@@ -1,4 +1,4 @@
-"""GROQ_BASE_URL routing (brev plan P1, docs/brev_gpu_plan.md): default -> Groq with the
+"""GROQ_BASE_URL routing: default -> Groq with the
 Groq reasoning kwargs; self-hosted (GROQ_BASE_URL env or explicit base_url) -> URL honored,
 Groq-only `reasoning_format` dropped (self-hosted vLLM 400s on unknown fields) while
 `reasoning_effort` is kept (vLLM honors it for gpt-oss)."""

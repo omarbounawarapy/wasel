@@ -6,8 +6,8 @@
   </defs>
   <rect width="1280" height="640" fill="url(#bg)"/>
   <g font-family="Inter, 'DejaVu Sans', Arial, sans-serif">
-    <text x="80" y="150" fill="#94a3b8" font-size="28" letter-spacing="4">Z-TEAM · COME BUILD WITH AI 2026</text>
-    <text x="80" y="245" fill="#f8fafc" font-size="96" font-weight="700">COD Risk</text>
+    <text x="80" y="150" fill="#94a3b8" font-size="28" letter-spacing="4">COD ORDER RISK</text>
+    <text x="80" y="245" fill="#f8fafc" font-size="96" font-weight="700">Wasel</text>
     <text x="80" y="310" fill="#cbd5e1" font-size="34">Cash-on-delivery refusal risk for Tunisian e-commerce,</text>
     <text x="80" y="355" fill="#cbd5e1" font-size="34">read from the customer's own messages.</text>
 
@@ -28,6 +28,6 @@
       <text x="780" y="485">LLM extracts, XGBoost + rules score</text>
       <text x="780" y="530">A person approves every message</text>
     </g>
-    <text x="80" y="600" fill="#64748b" font-size="22">github.com/omarbounawarapy/hackathon · synthetic data only</text>
+    <text x="80" y="600" fill="#64748b" font-size="22">github.com/omarbounawarapy/wasel · synthetic data only</text>
   </g>
 </svg>

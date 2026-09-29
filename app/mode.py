@@ -1,4 +1,4 @@
-"""APP_MODE resolution lives in Settings; this module holds the visitor-id dependency (04 §2.2)."""
+"""APP_MODE resolution lives in Settings; this module holds the visitor-id dependency."""
 from __future__ import annotations
 
 import re

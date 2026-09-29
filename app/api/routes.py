@@ -1,5 +1,5 @@
-"""/api routes (01 §4.1). DEVIATION: one module instead of routes_{orders,conversations,drafts,events,health,
-admin}.py; split by owner when promoted. The WhatsApp webhook (S-1) lives in routes_webhook.py."""
+"""/api routes (orders, conversations, drafts, events, health, metrics). The WhatsApp webhook lives in
+routes_webhook.py."""
 from __future__ import annotations
 
 import hmac

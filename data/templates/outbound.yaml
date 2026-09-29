@@ -1,12 +1,10 @@
-# Outbound static templates (02 §8.1, SD §8.1) — FEDI.md F4, native text by Fedi, integrated verbatim
-# ("03 Wasel_F4_Outbound_Templates.pdf"; Darija column de-scrambled from pdftotext RTL artifacts:
-# الخالص->الخلاص، مريس->مرسي، مؤ ّكدة->مؤكّدة، نحّض رلك->نحضّرلك — page-image verified).
-# Rules: slots come from the order record only; every template passes the prefilter (J15);
+# Outbound static templates: native-speaker text in French, Arabizi and Arabic-script Darija.
+# Rules: slots come from the order record only; every template passes the prefilter;
 # T_CONFIRM / T_ADDRESS / T_PREPAY end in exactly one yes/no question; T_ACK asks none;
 # no digits other than {price_tnd}; currency TND / دينار. `no_name` is used when first_name is
-# missing or unsafe. Human review before send (F4 checklist).
+# missing or unsafe. Human review before send.
 version: 2
-language_fallback:            # F18: extraction language -> template language
+language_fallback:            # extraction language -> template language
   fr: fr
   arabizi: arabizi
   ar: darija_arabic_script

@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "_comment": "Seed conversations (01 §3.3). STARTER DRAFTS: final texts per FEDI.md F6. Customers and texts are synthetic.",
+  "_comment": "Seed conversations. Customers and texts are synthetic.",
   "conversations": [
     {
       "key": "hero",

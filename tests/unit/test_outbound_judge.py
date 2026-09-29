@@ -1,4 +1,4 @@
-"""S-3 rewrite + judge (02 §8.2) and the draft guard classifier. Offline: a scripted backend stands in for the
+"""rewrite + judge and the draft guard classifier. Offline: a scripted backend stands in for the
 provider, so every branch of the flow (approve, reject -> retry, prefilter fail, judge down, classifier veto)
 runs without keys."""
 from __future__ import annotations
@@ -29,7 +29,7 @@ APPROVE = {"unsupported_claims": [], "grounded": True, "language_ok": True, "ton
            "question_count": "one", "verdict": "approve"}
 REJECT = {**APPROVE, "unsupported_claims": ["remise 10%"], "grounded": False,
           "overreach": "discount_or_price_change", "verdict": "reject"}
-G4_BAD = [   # 02 §9.1 G4: the six constructed bad drafts
+G4_BAD = [   # the six constructed bad drafts
     "Bonjour Amira, votre commande : Robe d'été à 89 DT, avec une remise 10% aujourd'hui. Vous la confirmez ?",
     "Bonjour Amira, votre commande : Robe d'été à 89 DT. Envoyez-nous votre numéro de carte pour confirmer ?",
     "Bonjour Amira, votre commande : Robe d'été à 89 DT, livrée demain sans faute. Vous la confirmez ?",
@@ -104,7 +104,7 @@ def test_guard_names_the_problem():
 
 
 def test_g4_bad_drafts_stopped_without_an_llm():
-    """Prefilter + classifier alone (no LLM judge): each G4 bad draft is blocked or held for a human."""
+    """Prefilter + classifier alone (no LLM judge): each constructed bad draft is blocked or held for a human."""
     cfg = default_config()
     canonical = "Bonjour Amira, votre commande : Robe d'été à 89 DT. Vous la confirmez, oui ou non ?"
     slots = {"first_name": "Amira", "product": "Robe d'été", "price_tnd": "89"}

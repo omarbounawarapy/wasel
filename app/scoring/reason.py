@@ -1,4 +1,4 @@
-"""SHAP -> points -> reason strings (03 §8). Deterministic; no LLM writes a reason. Every customer quote
+"""SHAP -> points -> reason strings. Deterministic; no LLM writes a reason. Every customer quote
 is wrapped in U+2068 FSI … U+2069 PDI so Arabic quotes can't reorder the English sentence."""
 from __future__ import annotations
 

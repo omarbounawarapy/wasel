@@ -1,4 +1,4 @@
-"""python -m scripts.smoke URL  (M3, 05 §5). No key needed. One line per step; exits 1 on the first failure.
+"""python -m scripts.smoke URL. No key needed. One line per step; exits 1 on the first failure.
 1 health (public: sends and webhook off)  2 GET /  3 try hero (public) or paste it (event/dev) -> HIGH
 4 scripted reply -> LOW, lower score  5 public: rescore on the seeded hero -> 409  6 SMOKE PASS"""
 from __future__ import annotations

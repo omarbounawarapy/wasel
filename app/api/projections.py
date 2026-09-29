@@ -1,4 +1,4 @@
-"""Read-side projections: queue summaries, the detail view and server-built segments (01 §4.2, 06 §3.1).
+"""Read-side projections: queue summaries, the detail view and server-built segments.
 Segments are built per message on the ORIGINAL text; the client does no offset math."""
 from __future__ import annotations
 
@@ -14,7 +14,7 @@ from app.scoring.score_order import FLAG_LABELS
 from app.settings import Settings
 from app.state import TERMINAL, allowed_actions
 
-# I-9: customer text can't visually reorder the dashboard. Applied to customer text only; server sentences
+# Customer text can't visually reorder the dashboard. Applied to customer text only; server sentences
 # (reasons, labels) keep their FSI/PDI isolates.
 BIDI_CONTROLS = {chr(c) for c in [*range(0x202A, 0x202F), *range(0x2066, 0x206A)]}
 

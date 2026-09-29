@@ -1,4 +1,4 @@
-"""The hero scenario as ScoreInputs (03 §10), shared by ml/train.py (writes tests/golden/hero.json) and
+"""The hero scenario as ScoreInputs, shared by ml/train.py (writes tests/golden/hero.json) and
 the E1 golden test. The frozen extractions are served through the extraction cache, so no LLM runs."""
 from __future__ import annotations
 

@@ -28,14 +28,14 @@ export default function QueueDashboard() {
             .then(res => { setQueueData(res); setError(false); })
             .catch(() => setError(true));
         load();
-        const interval = setInterval(load, 3000);   // 06 §2.1
+        const interval = setInterval(load, 3000);
         return () => clearInterval(interval);
     }, []);
 
     const open = (orderId: string) => router.push(`/dashboard/order?id=${orderId}`);
 
     const counts = queueData?.counts || {};
-    // 06 §2.5: messages still being scored come first as "Scoring…"; conversations the AI found
+    // Messages still being scored come first as "Scoring…"; conversations the AI found
     // not to be orders (collecting + idle, e.g. a lone "salam") stay out of the list.
     const all: any[] = queueData?.orders || [];
     const scoring = all.filter(o => o.status === "collecting" && o.rescore_state !== "idle");

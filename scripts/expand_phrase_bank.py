@@ -1,17 +1,17 @@
-"""Draft paraphrase expansions for data/phrase_banks.yaml via a hosted LLM (brev plan P3b).
+"""Draft paraphrase expansions for data/phrase_banks.yaml via a hosted LLM.
 
 Never edits the authored bank: writes data/phrase_banks_candidates.yaml containing only the
 requested cells, with drafted lines placed in eval_only (review-facing pool) AFTER they
-survive the generator's own lints (ml.generate.lint_banks). Native review (Fedi) is still
+survive the generator's own lints (ml.generate.lint_banks). Native-speaker review is still
 required before any line moves into the authored bank — this tool only drafts.
 
-Run against a self-hosted endpoint (make brev-serve) to stay quota-free:
+Run against a self-hosted endpoint (make llm-serve) to stay quota-free:
 
     GROQ_BASE_URL=http://<ip>:8001/v1 GROQ_API_KEY=... python scripts/expand_phrase_bank.py \
         [--cells time,flags.price_hesitation] [--langs arabizi,fr] [--k 3] [--out PATH]
 
 Requires GROQ_BASE_URL + GROQ_API_KEY (the vLLM token) and EXTRACT_MODEL (default
-openai/gpt-oss-20b) — same .env keys as make brev-check.
+openai/gpt-oss-20b) — same .env keys as make llm-check.
 """
 from __future__ import annotations
 

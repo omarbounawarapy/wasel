@@ -1,4 +1,4 @@
-"""rules_v1: the last-resort extractor (02 §6), also used at the LLM cap. Output goes through the same
+"""rules_v1: the last-resort extractor, also used at the LLM cap. Output goes through the same
 postprocess as an LLM result; the run is recorded valid=0, path 'rules', confidence low, needs_review.
 
 - address_level: pin -> exact; number/building token + street token -> exact; street token ->
@@ -20,7 +20,7 @@ STREET = ("rue", "avenue", "av", "nahj", "ne7j", "شارع", "نهج", "زنقة
           "triq", "طريق")                                    # triq/طريق: ADDITIVE (hero v2 uses "triq")
 AREA = ("cité", "cite", "hay", "7ay", "حي", "douar", "دوار", "9rib", "قريب", "à côté", "près", "9odem", "قدام",
         "jemaa", "جامع", "pharmacie", "صيدلية", "poste", "quartier",
-        "7dhe", "7dha", "حذا", "حدا", "jihet", "جهة")        # additive per FEDI.md F2 §03
+        "7dhe", "7dha", "حذا", "حدا", "jihet", "جهة")        # native-speaker vocabulary
 _SENT = re.compile(r"[^.\n!?؟]+")
 _SLOT = re.compile(r"\{(\w+)\}")
 
@@ -31,7 +31,7 @@ def _sentences(text: str) -> list[str]:
 
 def _sentences_q(text: str) -> list[tuple[str, bool]]:
     """(sentence, is_question). _SENT drops the delimiters, so interrogative form is read from the
-    character that closes the sentence (F3: "vous avez des casques ?" is a browse, not an order)."""
+    character that closes the sentence ("vous avez des casques ?" is a browse, not an order)."""
     out = []
     for m in _SENT.finditer(text):
         s = m.group(0).strip()
@@ -77,7 +77,7 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
     cust = [m for m in w.messages if m.role == "customer" and m.kind != "location_pin" and m.text_orig]
     texts = [m.text_orig for m in cust]
     # product: the alias must appear in a NON-interrogative sentence — "vous avez des casques ?"
-    # is a browse, not an order (F3: g1-fr-14, g1-mix-20)
+    # is a browse, not an order
     product_quote = None
     for m in reversed(cust):
         for sent, question in _sentences_q(m.text_orig):
@@ -106,8 +106,8 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
             has_city = any(has_phrase(sent, p) for p in places)
             r = 0
             # Exact needs a NUMBER plus a street word or building token ("dar 57", "Maison numéro 12,
-            # rue X"; F2 exact phrases). A building word alone is not exact ("à la maison" = at home,
-            # F7-03) and a bare number alone is not either (prices/times also contain digits).
+            # rue X"). A building word alone is not exact ("à la maison" = at home)
+            # and a bare number alone is not either (prices/times also contain digits).
             if standalone_numbers(sent) and (has_street or has_building_token(sent)):
                 r = 4
             elif has_street:
@@ -142,7 +142,7 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
                 conf = "declined"
             elif any(head.startswith(normalize(a)) for a in lexicons.get("ack", [])):
                 conf = "confirmed"
-    # F3: a bare flag ("le prix est un peu élevé") or an availability question is a browse, not an
+    # A bare flag ("le prix est un peu élevé") or an availability question is a browse, not an
     # order — order evidence is a declarative product mention, an address quote, or a darija intent
     # verb ("nheb wa7ed noir" after the availability question), never a flag alone.
     intent = any(has_phrase(t, w) for t in reversed(texts) for w in lexicons.get("order_intent", []))

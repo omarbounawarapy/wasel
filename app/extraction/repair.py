@@ -1,7 +1,7 @@
-"""order_extraction_v1 Pydantic mirror + lenient repair (02 §1b). Repair clamps and truncates,
+"""order_extraction_v1 Pydantic mirror + lenient repair. Repair clamps and truncates,
 never rejects on a fixable value; only an unusable SHAPE raises ParseError.
 
-Out-of-range quantity -> null (02 §1b and 08 AC-03.2; 05 U3's '60 -> 50' is superseded)."""
+Out-of-range quantity -> null (an out-of-range value is not clamped to the bound)."""
 from __future__ import annotations
 
 import json

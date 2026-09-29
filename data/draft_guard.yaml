@@ -10,7 +10,7 @@ slots:
             "Parfum 50ml", "Coque iPhone", "Ensemble bébé", "Lampe LED", "Tapis salon", "casque bluetooth"]
   price_tnd: ["89", "45", "120", "35.5", "79", "150", "29", "64", "250"]
 safe:          # reassuring phrases that state no new fact (rewrite rule 6). The fr/darija entries
-               # mirror the F4 (v2) template vocabulary — paiement-avant-livraison, code postal,
+               # mirror the outbound template vocabulary — paiement-avant-livraison, code postal,
                # livraison programmée — so the ok manifold covers drafts reworded from those templates.
   fr: ["Merci beaucoup.", "Merci pour votre confiance.", "Nous restons à votre écoute.", "Bonne journée !",
        "Pas d'inquiétude, nous sommes là.", "Merci 🙏",

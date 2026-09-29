@@ -1,4 +1,4 @@
-"""event type -> (title, detail) for the activity feed. Jesser's code, copy per FEDI.md F13 (01 §1). English source."""
+"""event type -> (title, detail) for the activity feed. English source."""
 from __future__ import annotations
 
 import json

@@ -6,15 +6,10 @@ body:
     id: problem
     attributes:
       label: The problem
-      description: Who hits it (seller, customer, the team) and when.
+      description: Who hits it (seller, customer, operator) and when.
     validations: { required: true }
   - type: textarea
     id: proposal
     attributes:
       label: What you propose
     validations: { required: true }
-  - type: textarea
-    id: scope
-    attributes:
-      label: Spec link, if any
-      description: A MoSCoW item from docs/council-spec/07 (M-…, S-…) or a spec section.

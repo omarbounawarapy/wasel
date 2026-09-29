@@ -1,4 +1,4 @@
-# Direct runtime deps, ==-pinned to what pip resolved on 26 Sept 2026 (05 §6). Jesser owns this file.
+# Direct runtime deps, ==-pinned to what pip resolved on 26 Sept 2026.
 fastapi==0.141.1
 uvicorn[standard]==0.54.0
 pydantic==2.13.5

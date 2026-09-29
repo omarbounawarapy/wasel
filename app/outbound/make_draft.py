@@ -1,5 +1,5 @@
-"""make_draft(): static template + prefilter + human click (02 §8.1), and with an LLM client (DRAFT_LLM=true)
-the S-3 rewrite + judge flow of 02 §8.2:
+"""make_draft(): static template + prefilter + human click, and with an LLM client (DRAFT_LLM=true)
+the rewrite + judge flow:
 
   rewrite -> prefilter -> guard classifier -> LLM judge      (at most `max_attempts` rewrites, with feedback)
   any rewrite that doesn't pass every layer -> the static template, which a human sends
@@ -25,7 +25,7 @@ _VOUS = re.compile(r"\bvous\b", re.I)
 
 
 def formality(lang: str, customer_recent: list[str]) -> str:
-    """02 §8.2: French with "vous" in any customer line -> formal; Darija/Arabizi -> informal."""
+    """French with "vous" in any customer line -> formal; Darija/Arabizi -> informal."""
     if lang != "fr":
         return "informal"
     return "formal" if any(_VOUS.search(t or "") for t in customer_recent) or not customer_recent else "informal"

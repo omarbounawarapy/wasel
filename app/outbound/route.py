@@ -1,4 +1,4 @@
-"""Draft routing (SD §8.4, 02 §8.2 rules 3/5/6/7). auto_send needs the auto_send gate (scoring.yaml) +
+"""Draft routing. auto_send needs the auto_send gate (scoring.yaml) +
 confidence high + price <= auto_send.max_tnd + the loop guard + the 24 h window. Two gates:
 "classifier" — the guard classifier's decision alone: "send" auto-sends, "review" is the owner-approval
 queue; the judge's rejection still kills the rewrite in make_draft, it is just not required to send.

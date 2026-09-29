@@ -1,4 +1,4 @@
-"""One connection per thread, with the PRAGMAs from 01 §3. The DB is rebuilt from schema.sql (no migrations)."""
+"""One connection per thread, with the PRAGMAs set in schema.sql. The DB is rebuilt from schema.sql (no migrations)."""
 from __future__ import annotations
 
 import sqlite3
@@ -34,7 +34,7 @@ def fresh_db(path: str | Path) -> sqlite3.Connection:
 
 class tx:
     """BEGIN IMMEDIATE … COMMIT/ROLLBACK. The deferred FK lets an order point at a new assessment
-    inside the same transaction (01 §3.1)."""
+    inside the same transaction."""
 
     def __init__(self, conn: sqlite3.Connection):
         self.conn = conn

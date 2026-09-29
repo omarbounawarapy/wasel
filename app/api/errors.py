@@ -1,4 +1,4 @@
-"""The error envelope (01 §4.3 + Skeptic's codes per README R4). The LLM cap never produces an HTTP error."""
+"""The API error envelope. The LLM cap never produces an HTTP error."""
 from __future__ import annotations
 
 

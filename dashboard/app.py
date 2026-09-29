@@ -1,4 +1,4 @@
-"""Wasel: the Streamlit dashboard (06 §1.5), backed by the FastAPI app in app/.
+"""Wasel: the Streamlit dashboard, backed by the FastAPI app in app/.
 
     make up                                   # backend :8000 + this dashboard :8501
     API_BASE_URL=http://localhost:8000 streamlit run dashboard/app.py
@@ -193,7 +193,7 @@ def order_list(include_collecting: bool = False) -> dict:
 
 
 def owner(r: dict) -> str:
-    """06 §3: public mode marks samples vs the visitor's copies; event/dev mark only the seeded samples
+    """Public mode marks samples vs the visitor's copies; event/dev mark only the seeded samples
     (is_seeded means "no sandbox", which every real order is outside the public demo)."""
     if MODE == "public":
         return " (sample)" if r["is_seeded"] else " (yours)"
@@ -347,7 +347,7 @@ def rescoring_banner(order_id: str) -> None:
 
 ROUTE = {"auto_send": "can go out without a click", "needs_review": "a person checks and clicks Send",
          "blocked": "blocked: the standard template is used"}
-# guard classifier decision on a generated draft (docs/frontend_note_send_vs_review.md); old drafts have none
+# guard classifier decision on a generated draft (docs/architecture.md); old drafts have none
 DECISION = {"send": "Clear to send", "review": "Owner approval", "block": "Blocked"}
 CLASSIFIER_EXPLAINER = ("A small local model scores how risky this message is. Below 10% it's cleared, 10–50% goes to "
                         "you for approval, above 50% it's blocked and the standard template is used.")
@@ -365,7 +365,7 @@ def JUDGE_SHORT(j: dict) -> str:  # noqa: N802 - reads like a label in the f-str
 
 
 def draft_checks(dr: dict, oid: str) -> None:
-    """The three layers a draft passes (02 §8.2), cheapest first, and the rewrite attempts that led here."""
+    """The three layers a draft passes, cheapest first, and the rewrite attempts that led here."""
     j = dr.get("judge") or {}
     clf = j.get("classifier") or {}
     pf = dr["prefilter"]

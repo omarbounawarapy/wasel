@@ -1,4 +1,4 @@
-"""WhatsApp Cloud API webhook, pure half (01 §1, 04 §4, SD §9): signature check and payload walk.
+"""WhatsApp Cloud API webhook, pure half: signature check and payload walk.
 No DB, no clock, no logging of payload content. The route (app/api/routes_webhook.py) owns I/O."""
 from __future__ import annotations
 
@@ -20,14 +20,14 @@ def verify_signature(secret: str, raw: bytes, header: str | None) -> str | None:
         return "missing"
     if not SIG_RE.match(header):
         return "malformed"
-    if not secret:                                          # never reached while mounted (W-1); fail closed anyway
+    if not secret:                                          # never reached while mounted; fail closed anyway
         return "no_secret"
     expected = "sha256=" + hmac.new(secret.encode(), raw, hashlib.sha256).hexdigest()
     return None if hmac.compare_digest(expected, header) else "mismatch"
 
 
 def verify_challenge(params, verify_token: str) -> str | None:
-    """W-2: the challenge to echo, or None (→ 403)."""
+    """the challenge to echo, or None (→ 403)."""
     token, challenge = params.get("hub.verify_token") or "", params.get("hub.challenge") or ""
     if (params.get("hub.mode") != "subscribe" or not verify_token or not challenge or len(challenge) > MAX_CHALLENGE
             or not hmac.compare_digest(token.encode(), verify_token.encode())):
@@ -60,7 +60,7 @@ class Status:
 class Batch:
     messages: list[Inbound]
     statuses: list[Status]
-    ignored_foreign: int = 0         # changes for another phone_number_id (W-5)
+    ignored_foreign: int = 0         # changes for another phone_number_id
     skipped: int = 0                 # entries missing required fields
 
 
@@ -90,7 +90,7 @@ def _message(m: dict, names: dict[str, str]) -> Inbound | None:
             lat = lng = None
         if lat is not None and -90 <= lat <= 90 and -180 <= lng <= 180:
             return Inbound(kind="location", lat=lat, lng=lng, **base)
-    # audio, image, sticker, video, document, reaction, interactive, unknown... → unsupported → needs_review (SD §9)
+    # audio, image, sticker, video, document, reaction, interactive, unknown... → unsupported → needs_review
     return Inbound(kind="unsupported", **base)
 
 
