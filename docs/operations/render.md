@@ -15,6 +15,17 @@ One free Render web service runs the API and the built web UI from a single imag
 3. Optional secrets in the service's Environment tab: `GROQ_API_KEY` (capped key), `ADMIN_TOKEN` (24+ characters). Without a key the app scores with recorded extractions and rules.
 4. Verify: `make smoke URL=https://<name>.onrender.com`, expect `SMOKE PASS ... public v1=87 v2=16`.
 
+## Custom domain (runs-on.dev)
+
+The demo is also served at `https://wasel.runs-on.dev`, a free subdomain from [runs-on.dev](https://runs-on.dev). No code or `render.yaml` change is involved; the app has no hard-coded host.
+
+1. Claim the name at runs-on.dev (GitHub sign-in; one name per account).
+2. In runs-on.dev's manage page, add a `CNAME` record pointing to the service's `onrender.com` hostname (hostname only, no `https://`). In the registry this is `"records": { "CNAME": "<name>.onrender.com" }`.
+3. In Render, service Settings, Custom Domains, add `wasel.runs-on.dev`, then Verify. Render issues the certificate itself.
+4. Check: `make smoke URL=https://wasel.runs-on.dev`.
+
+If verification fails right after adding the record, retry in a few minutes; DNS propagation is the usual cause.
+
 ## Local check of the image
 
 ```bash
