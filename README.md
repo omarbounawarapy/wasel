@@ -9,6 +9,8 @@ Wasel scores the refusal risk of cash-on-delivery (COD) orders that customers pl
 
 In Tunisian e-commerce a large share of COD parcels are refused at the door, and every refused parcel costs the seller a wasted trip. Customers order in Tunisian Darija (Arabic script or Arabizi), French or a mix, often with an address like "near the mosque". Wasel reads the conversation, scores the order from 0 to 100, explains the score with the customer's own words, and drafts the one question that would reduce the risk (confirm, complete the address, or pay first). When the customer answers, the order is rescored and the app shows what changed.
 
+**[Live demo →](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake)
+
 All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
 
 ![Order detail: a HIGH 87 order with the risky phrases highlighted in the customer's message, the reason for the score and the drafted confirmation message](docs/assets/screenshots/order-detail.png)
