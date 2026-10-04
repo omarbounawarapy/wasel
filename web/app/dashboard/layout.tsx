@@ -17,7 +17,7 @@ export default function DashboardLayout({
     return (
         <ErrorBoundary>
             <TooltipProvider>
-                <div className="flex bg-[#f4f6f9] text-gray-800 font-sans h-screen w-full overflow-hidden">
+                <div className="flex bg-[#f4f6f9] text-gray-800 font-sans h-dvh w-full overflow-hidden">
                     <div className="hidden lg:flex bg-[#eef2f7] border-r border-gray-200/70 flex-shrink-0">
                         <Sidebar />
                     </div>
@@ -31,7 +31,7 @@ export default function DashboardLayout({
                         <div className="px-4 lg:px-8 pt-3">
                             <HealthBar />
                         </div>
-                        <main className="flex-1 overflow-y-auto px-4 lg:px-8 pt-5 pb-28 lg:pb-10">
+                        <main className="flex-1 overflow-y-auto px-4 lg:px-8 pt-5 pb-32 lg:pb-10">
                             {children}
                         </main>
                     </div>
