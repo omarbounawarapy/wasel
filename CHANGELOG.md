@@ -5,6 +5,7 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 ## [Unreleased]
 
 ### Added
+- Render free-plan hosting for the public demo (`render.yaml`, `deploy/render/Dockerfile`, [guide](docs/operations/render.md)), now linked from the README, the docs index and the deployment page, with a "Which target?" note: Render free for a public demo, `make serve` for a host you control, Cloudflare only with a paid plan.
 - Cloudflare hosting ([guide](docs/operations/cloudflare.md)): a Worker serves the static UI and routes `/api` and the webhook to one FastAPI Container; the SQLite file is restored from and saved to an R2 bucket (`SNAPSHOT_URL`, `wasel.db.snapshot`) because container disks are ephemeral. `deploy/cloudflare/` holds the wrangler config (dev, preview, production), Worker, Dockerfile (no pandas, CPU-only xgboost) and the variable allow-list. `make cf-check`, `cf-smoke`, `cf-dev`, `cf-dry-run`, `cf-deploy`; a `cloudflare` CI job. Self-hosting is unchanged.
 - Evaluation gate: 476 golden cases (279 extraction, 165 outbound drafts, 32 injection) built deterministically from synthetic data (`make golden`). `make eval` gates them on `config/eval.yaml` and is part of `make check`, so CI blocks a change that drops under a floor. `make eval-live` runs the same sets through the live LLM extractor and judge.
 - LLM registry `config/llm.yaml` with one-step rollback (`scripts/ops/rollback.py`), per-request input caps and trace records; a monitor endpoint (`GET /api/monitor`, `GET /api/traces`) reporting drift and safety rates.
