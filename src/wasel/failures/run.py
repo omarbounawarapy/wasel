@@ -1,11 +1,13 @@
 """Hidden-failure analyzer: sessions -> detectors -> (optional LLM review of the ambiguous ones) -> ranked issues.
 
   python -m wasel.failures.run                     synthetic labeled set (data/agent_sessions.jsonl) + scoring
+  python -m wasel.failures.run --source holdout    held-out labeled set + scoring
   python -m wasel.failures.run --source db         this app's own orders (var/app.db), same detectors
   python -m wasel.failures.run --llm               also ask the LLM to adjudicate needs-review findings
 
-Writes data/reports/failures.json (synthetic) or data/reports/failures_db.json: ranked issues with grouped sessions and
-evidence, per-type precision/recall against the labels, runtime and cost.
+Writes data/reports/failures_<source>.json: failures_synthetic.json, failures_holdout.json or failures_db.json
+(with --llm the name ends in _llm.json). Each file holds ranked issues with grouped sessions and evidence,
+runtime and cost, and, for the two labeled sources, per-type precision/recall against the labels.
 """
 from __future__ import annotations
 

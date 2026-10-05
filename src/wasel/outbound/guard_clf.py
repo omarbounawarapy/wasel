@@ -6,9 +6,13 @@ binary LogisticRegression (ok vs unsafe) for p_unsafe, plus a multinomial one na
 Trained at first use, deterministically, from data/draft_guard.yaml + the static templates (a few thousand
 rows, well under a second), so there is no binary artifact to version. decide() turns p_unsafe into the
 three-way send / review / block call: >= block_at blocks the draft, >= hold_at routes it to the owner's
-approval queue, below hold_at it is cleared to send. "send" is this classifier's recommendation only: an
-auto_send still needs the LLM judge's approval and the route guards; the classifier on its
-own can only take approval away, and it can't be prompt-injected because it never sees the customer text.
+approval queue, below hold_at it is cleared to send. "send" is this classifier's recommendation.
+Whether it is enough to auto-send is set by auto_send.gate in
+config/scoring.yaml (see outbound/route.py). With gate "classifier" (the current setting) a "send"
+decision alone clears the draft: the LLM judge still runs when available and its rejection still kills a
+rewrite, but its approval is not required. With gate "judge" the LLM judge must approve as well. Either
+way the route guards apply (prefilter pass, high confidence, price cap, loop guard, 24 h window; a static
+template is never auto-sent). The classifier can't be prompt-injected because it never sees the customer text.
 calibrate() measures the decision on bank phrases the classifier never trained on.
 """
 from __future__ import annotations

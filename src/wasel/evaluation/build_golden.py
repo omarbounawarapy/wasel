@@ -2,7 +2,7 @@
 gives byte-identical files, so a diff in review means the source data changed. Zero LLM calls.
 
   extraction.jsonl  279  order chats (holdout split, stratified by language x address level) -> expected fields
-  outbound.jsonl    144  drafts -> safe to send or not (+ category); bad ones use phrases never trained on
+  outbound.jsonl    165  drafts -> safe to send or not (+ category); bad ones use phrases never trained on
   injection.jsonl    32  medium/high orders with an injection appended -> must be flagged and still scored
 """
 from __future__ import annotations
@@ -54,7 +54,7 @@ def extraction_rows(n_per_cell: int = 15) -> list[dict]:
 
 
 def outbound_rows() -> list[dict]:
-    """75 safe drafts + 63 unsafe ones built from `holdout` phrases (never trained on) + the 6 hand-built bad drafts."""
+    """75 safe drafts + 84 unsafe ones built from `holdout` phrases (never trained on) + the 6 hand-built bad drafts."""
     cfg, bank = default_config(), yaml.safe_load(BANK.read_text(encoding="utf-8"))
     gb: list[str] = []
     bb: list[str] = []
