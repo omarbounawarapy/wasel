@@ -271,3 +271,29 @@ def test_fewshots_parse_clean_and_survive_postprocess():
         p = postprocess(e, w, injection_lexicon=_lex())
         assert (p.dropped_flags, p.dropped_quotes, p.resolved_flags, p.tone_reset) == (0, 0, [], False), fs["id"]
         assert p.address_level == e.address_level and p.confirmation == e.confirmation, fs["id"]
+
+
+# ---------------------------------------------------------------- rules extractor: whole-reply confirmation (#61)
+REPLIES = [
+    ("non ça ne me dérange pas, je prends", "ambiguous"), ("non non c'est bon je confirme", "ambiguous"),
+    ("oui mais annulez la commande", "ambiguous"), ("ok non finalement", "ambiguous"),
+    ("oui... enfin non, je ne veux plus", "ambiguous"), ("d'accord mais je ne serai pas là", "ambiguous"),
+    ("ok je vais réfléchir", "ambiguous"), ("oui je confirme pas", "ambiguous"), ("okkk", "confirmed"),
+    ("annule", "declined"), ("je ne confirme pas", "declined"), ("yes", "confirmed"), ("3ayet", "ambiguous"),
+    ("mafhemtech", "ambiguous"), ("oui", "confirmed"), ("ey behi", "confirmed"), ("non merci", "declined"),
+    ("لا", "declined"), ("non finalement j'annule, trop cher", "declined"),
+]
+
+
+@pytest.mark.parametrize("reply,label", REPLIES)
+def test_rules_confirmation_reads_the_whole_reply(config, reply, label):
+    from wasel.extraction.rules_extractor import _confirmation
+    assert _confirmation(reply, config["lexicons"], has_address=False) == label
+
+
+def test_rules_confirmation_ack_with_address_or_product_is_confirmed(config):
+    from wasel.extraction.rules_extractor import _confirmation
+    lex = config["lexicons"]
+    assert _confirmation("oui, 12 rue de Marseille", lex, has_address=True) == "confirmed"
+    assert _confirmation("Je confirme le casque bluetooth.", lex, has_address=False, has_product=True) == "confirmed"
+    assert _confirmation("oui je serai là demain", lex, has_address=False) == "ambiguous"

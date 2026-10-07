@@ -30,7 +30,7 @@ def next_status(current: str, result: ScoreResult, trigger: str, prior_tier: str
     if not result.is_order or a is None:                                    # 1
         return current
     if a.confirmation == "declined":                                        # 2
-        return "cancelled"
+        return "needs_review" if a.path == "rules" else "cancelled"       # a rules-read decline needs a person
     if a.is_order_change:                                                   # 3
         return "needs_review"
     if (a.path != "rules" and result.extraction is not None and not result.extraction.valid) \
