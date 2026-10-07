@@ -325,6 +325,25 @@ def test_stored_provider_output_is_cut_with_a_marker(tmp_path):
     assert run("{}") == "{}"
 
 
+def test_failures_api_never_returns_message_text(dev):
+    c, core, clock = dev
+    sentence = "nheb zouz casquettat rouges, dar 14 ghodwa ba3d el 3asr, merci barcha"
+    oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": sentence}).json()["created"][0]["order_id"]
+    settle(core, clock)
+    conv = core.conn().execute("SELECT conversation_id FROM orders WHERE order_id=?", (oid,)).fetchone()[0]
+    c.post(f"/api/conversations/{conv}/simulate-reply", json={"text": "iyeh nconfirmi, merci"})
+    settle(core, clock)
+    r = c.get("/api/failures", params={"source": "app"})
+    assert r.status_code == 200
+    n = core.conn().execute("SELECT order_no FROM orders WHERE order_id=?", (oid,)).fetchone()[0]
+    s = c.get(f"/api/failures/sessions/order-{n}", params={"source": "app"})
+    assert s.status_code == 200
+    turns = [e for e in s.json()["session"]["events"] if e["type"] in ("agent", "user")]
+    assert turns and all(t["text"].startswith("[") and t["text"].endswith(" characters]") for t in turns)
+    for body in (r.text, s.text):
+        assert "casquettat" not in body and "nconfirmi" not in body and "barcha" not in body
+
+
 def test_actions_table_shape():
     assert ACTIONS["cancel"][1] == "cancelled" and "shipped" not in ACTIONS["cancel"][0]
 

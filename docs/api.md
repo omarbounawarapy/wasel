@@ -64,8 +64,8 @@ Structured fields on ingest: `product_name`, `price_tnd` (at least 0), `zone` (`
 | `GET /api/monitor` | Drift, faithfulness, safety and provider health ([monitoring](subsystems/monitoring.md)) |
 | `GET /api/traces` | Recent LLM trace records: `role`, `order_id`, `limit` (at most 500) |
 | `GET /api/eval` | The committed offline and live evaluation reports (`null` if absent) |
-| `GET /api/failures` | The failure analysis: `source=synthetic\|holdout\|app` (`400 BAD_SOURCE` otherwise) |
-| `GET /api/failures/sessions/{session_id}` | One session with its findings; same `source` parameter |
+| `GET /api/failures` | The failure analysis: `source=synthetic\|holdout\|app` (`400 BAD_SOURCE` otherwise). With `source=app`, message bodies are replaced by `[N characters]` in the evidence |
+| `GET /api/failures/sessions/{session_id}` | One session with its findings; same `source` parameter and the same redaction |
 
 ### Admin and webhook
 
