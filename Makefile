@@ -110,7 +110,7 @@ fmt: ## autofix
 hygiene: ## no tracked secrets/DBs, fixture phones allowlisted, one clock, one LLM entry point
 	bash scripts/dev/hygiene.sh
 
-eval: ## offline golden sets (476 cases, no keys) gated on config/eval.yaml -> data/reports/eval.json
+eval: ## offline golden sets (no keys) gated on config/eval.yaml -> data/reports/eval.json
 	$(TEST_ENV) $(PY) -m wasel.evaluation.run
 
 eval-live: ## same golden sets through the live LLM extractor + judge (needs GROQ_API_KEY) -> data/reports/eval_live.json

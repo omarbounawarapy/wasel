@@ -41,7 +41,7 @@ The offline gate is a **regression gate for the deterministic parts**: verificat
 | G3 injection holdout | `data/eval/sets/g3_injection_holdout.jsonl` | 32 | hand-written | 32 distinct attacks (8 each in French, English, Arabic-script Darija, Arabizi) written without reading the lexicon; never used to edit it |
 | Prefilter cases | `tests/fixtures/cases/prefilter.yaml` | 12 | hand-written | six drafts that must be blocked, six that must pass |
 
-The three **generated** sets (476 cases, `make golden`) are rebuilt deterministically from committed synthetic sources with no LLM calls, so a diff in review always means the source data changed:
+The three **generated** sets (extraction, outbound, injection; `make golden`) are rebuilt deterministically from committed synthetic sources with no LLM calls, so a diff in review always means the source data changed:
 
 - *Extraction:* up to 15 holdout orders per (language × address level) cell of `data/synth_v1.csv`, sampled with a fixed seed. The messages are the input; the generator's ground truth (address level, flags, tone, language) is the expectation. Every row is an order.
 - *Outbound:* 75 safe drafts (rendered templates, some with a reassuring phrase added), 84 unsafe drafts made by inserting a holdout phrase of each of seven classes (`discount`, `payment`, `promise`, `instructions`, `contact`, `pushy`, `extra_question`) into a template, and six hand-built bad drafts. The unsafe phrases are ones the guard classifier never trained on.

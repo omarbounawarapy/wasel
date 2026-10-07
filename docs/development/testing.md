@@ -1,6 +1,6 @@
 # Testing
 
-The test suite is offline, keyless and deterministic. It runs the real code (SQLite, FastAPI, XGBoost, the guard classifier, the Streamlit app) and replaces only what would need a network or a wall clock. The current tree passes with 347 tests and one expected failure, in about four and a half minutes.
+The test suite is offline, keyless and deterministic. It runs the real code (SQLite, FastAPI, XGBoost, the guard classifier, the Streamlit app) and replaces only what would need a network or a wall clock. The current tree passes with one expected failure (the xfail below); `make test` prints the current counts and duration.
 
 ## Running
 

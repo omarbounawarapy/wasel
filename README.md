@@ -80,7 +80,7 @@ To use a live LLM, copy `.env.example` to `.env`, set `GROQ_API_KEY`, and start 
 To verify your checkout:
 
 ```bash
-make check      # hygiene + ruff + offline tests + evaluation gate; needs no keys, about 5 minutes
+make check      # hygiene + ruff + offline tests + evaluation gate; needs no keys, about a minute
 ```
 
 `make help` lists every target; [development/commands.md](docs/development/commands.md) explains each one, including which ones overwrite committed files.
