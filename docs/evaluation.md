@@ -91,7 +91,7 @@ The gate passes when `gate_failures` in the report is empty. The runner then pri
 ## Running it
 
 ```bash
-make eval                                  # offline gate; rewrites data/reports/eval.json
+make eval                                  # offline gate; rewrites data/reports/eval.json only if results changed
 make eval-live                             # needs GROQ_API_KEY in the environment; rewrites data/reports/eval_live.json
 python -m wasel.evaluation.run --limit 20  # first 20 cases of each file-based set, for a quick look (exits 3, no gate, no report)
 python -m wasel.evaluation.run --live --sample 279 --pace 2   # full extraction set, 2 s between calls
@@ -125,7 +125,7 @@ Which files are which:
 | File | Committed | Reproducible | Notes |
 |---|---|---|---|
 | `data/eval/golden/*.jsonl` | yes | yes, byte for byte | `make golden` |
-| `data/reports/eval.json` | yes | metrics yes; `runtime_s` varies run to run | `make check` and `make eval` rewrite it. If only `runtime_s` changed, restore it with `git checkout -- data/reports/eval.json`. If metrics changed, that is a real change: commit it with the code that caused it. |
+| `data/reports/eval.json` | yes | yes (`runtime_s` is ignored when deciding to write) | `make check` and `make eval` rewrite it only when results, versions or config hash change. A modified file is a real change: commit it with the code that caused it. |
 | `data/reports/eval_live.json` | yes | no | A recorded run against a self-hosted `gpt-oss-20b`. It lists six gate failures (extraction `is_order_acc` 0.875, `address_within1_acc` 0.775, and some outbound and prefilter safe-pass rates), so the smaller model does not meet the live floors; see [self-hosted LLM](operations/self-hosted-llm.md#measured-behaviour). |
 
 `GET /api/eval` serves both reports to the UIs, which is why they are part of the repository and read at runtime.

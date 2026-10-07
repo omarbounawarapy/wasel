@@ -24,7 +24,7 @@ Conventions used below:
 | `smoke` | `scripts/ops/smoke.py $(URL)`: health, `GET /`, the sample order through `try` (or paste), a scripted reply, the read-only check in public mode | a running API; no key | creates orders in the target's sandbox |
 | `clean` | Removes `.pytest_cache`, `.ruff_cache`, `htmlcov` and `var/*.db` with their WAL and SHM files | | **deletes the local database** |
 
-`make check` rewrites `data/reports/eval.json`. When only its `runtime_s` changed, restore it (`git checkout -- data/reports/eval.json`) before committing. When metrics changed, that is a real change; see [evaluation](../evaluation.md#reports).
+`make eval` and `make check` rewrite `data/reports/eval.json` only when the results change; `runtime_s` is ignored in the comparison. A modified file is a real change; see [evaluation](../evaluation.md#reports).
 
 ## Running the application
 

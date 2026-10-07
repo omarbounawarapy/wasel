@@ -275,12 +275,30 @@ def gate(report: dict, thresholds: dict) -> list[str]:
     return fails
 
 
+def _write_report(out: Path, report: dict) -> bool:
+    """Write the report unless the file already holds the same results. Returns True if it wrote.
+
+    runtime_s differs on every run, so it is ignored when comparing: a rerun with unchanged results leaves the
+    tracked file (and git status) untouched.
+    """
+    try:
+        old = json.loads(out.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        old = None
+    if isinstance(old, dict) and {**old, "runtime_s": None} == {**report, "runtime_s": None}:
+        return False
+    out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    return True
+
+
 def main(argv=None) -> int:
     """CLI entry point. Runs all golden sets, applies the thresholds in config/eval.yaml and writes the report.
 
     Returns 0 if the gate passes, 1 if any gated metric is below its threshold or missing, 2 if --live has no
     configured provider, 3 for a partial run (--limit, or --sample on the offline run): metrics are printed, the gate
-    is not applied and no report is written. Otherwise overwrites data/reports/eval.json (or eval_live.json with --live).
+    is not applied and no report is written. Otherwise writes data/reports/eval.json (eval_live.json with --live)
+    only if the results changed,
+    ignoring runtime_s.
     """
     ap = argparse.ArgumentParser()
     ap.add_argument("--live", action="store_true")
@@ -314,7 +332,7 @@ def main(argv=None) -> int:
     report["gate_failures"] = gate(report, th)
     out = ROOT / "data" / "reports" / ("eval_live.json" if a.live else "eval.json")
     if not partial:
-        out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+        _write_report(out, report)
     for task, m in results.items():
         print(task, {k: (round(v, 3) if isinstance(v, float) else v) for k, v in m.items() if k != "misses"})
     if partial:

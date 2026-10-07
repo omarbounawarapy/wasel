@@ -115,7 +115,7 @@ make test       # test suite only
 make eval       # evaluation gate only
 ```
 
-`make check` takes about five minutes, most of it the dashboard tests. It needs no keys and no network. It rewrites `data/reports/eval.json`; see [testing](development/testing.md) and [evaluation](evaluation.md) before committing after a run.
+`make check` takes about five minutes, most of it the dashboard tests. It needs no keys and no network. It rewrites `data/reports/eval.json` only if results changed; see [testing](development/testing.md) and [evaluation](evaluation.md) before committing after a run.
 
 ## Common first-run problems
 

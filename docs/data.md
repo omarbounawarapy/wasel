@@ -66,7 +66,7 @@ Files written by runs. Several are read at runtime, which is why they are commit
 
 | File | Produced by | Read at runtime by | Committed |
 |---|---|---|---|
-| `eval.json` | `make eval`, `make check` | `GET /api/eval` (offline), the UIs' quality pages | yes; rewritten by every run |
+| `eval.json` | `make eval`, `make check` | `GET /api/eval` (offline), the UIs' quality pages | yes; rewritten only when results change |
 | `eval_live.json` | `make eval-live` | `GET /api/eval` (live) | yes; a recorded run, not reproducible |
 | `impact.json` | `make train` | `GET /api/metrics/impact`, the queue banner. If missing, the endpoint returns zeros with dataset `none`. | yes |
 | `train_metrics.json` | `make train` | tests only (the gate and tier-ordering checks) | yes |
@@ -74,7 +74,7 @@ Files written by runs. Several are read at runtime, which is why they are commit
 | `failures_synthetic_llm.json`, `failures_holdout_llm.json` | `make failures-llm` | `GET /api/failures` attaches the matching one as `llm_run` | not present by default |
 | `failures_db.json` | `make failures` | none | not committed by default; appears as an untracked file after a run |
 
-Do not edit a report by hand. When a run changes one, commit the new file together with the code change that caused it. `eval.json` is the exception: its `runtime_s` varies from run to run, so restore the file if nothing else changed ([evaluation](evaluation.md#reports)).
+Do not edit a report by hand. When a run changes one, commit the new file together with the code change that caused it. `eval.json` is only rewritten when results change; `runtime_s` is ignored in that comparison ([evaluation](evaluation.md#reports)).
 
 ## Runtime data outside `data/`
 

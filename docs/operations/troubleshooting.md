@@ -96,7 +96,7 @@ curl -s 'localhost:8000/api/events?limit=30'                  # recent events: e
 |---|---|
 | `make check` fails at `hygiene` | The message names the rule: a tracked `.env`, database or `web/dist`; a key-shaped string; a phone number outside `21600000001` to `...009` in `tests/fixtures` or `data`; `datetime.now()` outside `clock.py`; an LLM SDK import; `dangerouslySetInnerHTML`. |
 | `make check` fails at `eval` with `EVAL GATE FAILED` | A metric is under its floor in `config/eval.yaml`. [Reading a failure](../evaluation.md#reading-a-failure). |
-| `git status` shows `data/reports/eval.json` modified after `make check` | `runtime_s` changed. Restore it (`git checkout -- data/reports/eval.json`) unless metrics changed too. |
+| `git status` shows `data/reports/eval.json` modified after `make check` | A metric, version or config hash changed, so the report was rewritten. Commit it with the change that caused it. Timing alone never rewrites it. |
 | A test fails with `network call to ... in an offline test` | The test (or code it exercises) tried to reach a non-loopback address. Use `ReplayBackend`, `FailingBackend` or an `httpx.MockTransport`. |
 | `FixtureMissing: no fixture for key ...` | An offline `replay` client has no recording for that exact rendered window. Add an envelope for it under the replay directory (`LLM_REPLAY_DIR`); tests use the `replay_dir` helper in `tests/conftest.py`. |
 | `ValueError: LLM_MODE=replay needs recorded fixtures` | `LLM_REPLAY_DIR` (default `data/llm_replay`) has no `*.json` files. |
