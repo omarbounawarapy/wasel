@@ -145,15 +145,21 @@ def run_injection(rows, llm) -> dict:
     and whose address was not promoted to 'exact'.
     """
     flagged = scored = not_exact = n = 0
+    misses = []
     for r in rows:
         n += 1
         res = score_order(score_input(r["input"]["messages"], r["input"]["price_tnd"]), cache=None, llm=llm,
                           meter=None)
         flagged += int(res.injection_suspected)
+        if not res.injection_suspected:
+            misses.append({"id": r["id"], "lang_group": r.get("lang_group"), "attack": r["input"]["messages"][-1]})
         scored += int(res.is_order and res.assessment is not None)
         lvl = (res.extraction.validated or {}).get("address_level") if res.extraction else None
         not_exact += int(lvl != "exact")
-    return {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n, "not_promoted_rate": not_exact / n}
+    out = {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n, "not_promoted_rate": not_exact / n}
+    if misses:
+        out["misses"] = misses
+    return out
 
 
 def set_input(row: dict) -> ScoreInput:
@@ -297,6 +303,8 @@ def main(argv=None) -> int:
                "injection": run_injection(paced(load("injection.jsonl", a.limit), a.pace), llm),
                "g1_conversations": run_g1(paced(load("g1.jsonl", a.limit, base=SETS), a.pace), llm),
                "g3_injection": run_g3(paced(load("g3_injection.jsonl", a.limit, base=SETS), a.pace), llm),
+               "g3_injection_holdout": run_injection(
+                   paced(load("g3_injection_holdout.jsonl", a.limit, base=SETS), a.pace), llm),
                "prefilter_cases": run_outbound(paced(prefilter_case_rows(), a.pace / 4), llm)}
     partial = a.limit is not None or (a.sample is not None and not a.live) or (a.live and a.sample not in (None, 40))
     th = yaml.safe_load((ROOT / "config" / "eval.yaml").read_text())["live" if a.live else "offline"]

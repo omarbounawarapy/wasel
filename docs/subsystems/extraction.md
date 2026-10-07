@@ -88,7 +88,7 @@ Customer text is untrusted. Three independent layers apply:
 2. **Defusing.** The sanitizer above prevents forged tags and structure.
 3. **Lexicon.** `extraction/injection.py` matches the regexes in `lexicons.injection` of [`scoring.yaml`](../configuration/scoring.md#lexicons) against every customer text and voice line (never the seller line). `normalized` patterns run on the normalized text with all Unicode format characters removed, so `ig​nore` with a zero-width space still matches; `defused` patterns run on the sanitized model view.
 
-A hit sets `injection_suspected`, which forces `confidence=low` and status `needs_review`, clears any confirmation and forces `is_order=true`. It never changes the score. The evaluation gate requires that injected orders are flagged, still scored, and not promoted to an `exact` address ([evaluation](../evaluation.md)).
+A hit sets `injection_suspected`, which forces `confidence=low` and status `needs_review`, clears any confirmation and forces `is_order=true`. It never changes the score. The evaluation gate requires that injected orders are flagged, still scored, and not promoted to an `exact` address ([evaluation](../evaluation.md)). Those sets share wording with the lexicon, so a separate held-out set of unseen attacks reports the real detection rate; see [injection holdout misses](../evaluation.md#injection-holdout-misses).
 
 ## Rules extractor
 
