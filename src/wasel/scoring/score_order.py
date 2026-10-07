@@ -104,13 +104,12 @@ def _tier(final: float, t: dict) -> str:
 
 
 def _action(tier: str, price: float, confirmation: str, path: str, cfg: dict) -> str:
-    """Recommended action: 'cancelled' if the customer declined, 'review' on the rules path, 'ship' for low tier,
-    'prepay' for high tier at or above the prepay price, else 'confirm'.
+    """Recommended action: 'cancelled' if the customer declined, 'ship' for low tier, 'prepay' for high tier at or
+    above the prepay price, else 'confirm'. The rules path uses the same mapping; its coarser read is shown through
+    confidence 'low' and the page note, not a forced 'review'.
     """
     if confirmation == "declined":
         return "cancelled"
-    if path == "rules":
-        return "review"
     if tier == "low":
         return "ship"
     if tier == "high" and price >= cfg["actions"]["prepay_min_tnd"]:

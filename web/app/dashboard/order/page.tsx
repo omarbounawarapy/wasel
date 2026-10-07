@@ -133,6 +133,9 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: any[], resco
                             ))}
                         </p>
                     )}
+                    {a.path === "rules" && (
+                        <p className="text-xs text-gray-600 mt-2">Scored by simple rules, not the AI. This read is coarser, so treat the tier as a rough guide.</p>
+                    )}
                     <Details>
                         <p>{a.reason_diff || stripTier(a.reason)}</p>
                         {a.adjustments?.length > 0 && (

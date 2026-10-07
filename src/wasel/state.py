@@ -33,7 +33,7 @@ def next_status(current: str, result: ScoreResult, trigger: str, prior_tier: str
         return "cancelled"
     if a.is_order_change:                                                   # 3
         return "needs_review"
-    if a.path == "rules" or (result.extraction is not None and not result.extraction.valid) \
+    if (a.path != "rules" and result.extraction is not None and not result.extraction.valid) \
             or a.has_unsupported_media:                                     # 4
         return "needs_review"
     if trigger == "no_reply_timeout":                                       # 5

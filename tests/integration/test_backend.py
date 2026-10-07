@@ -182,8 +182,9 @@ def test_paste_scores_on_rules_path_when_llm_down(dev):
     settle(core, clock)
     d = c.get(f"/api/orders/{oid}").json()
     a = d["assessments"][-1]
-    assert a["path"] == "rules" and a["confidence"] == "low" and a["action"] == "review"
-    assert d["order"]["status"] == "needs_review" and d["order"]["product_id"] == "P12"
+    assert a["path"] == "rules" and a["confidence"] == "low"
+    assert a["action"] in ("ship", "confirm", "prepay")             # same tier mapping as the LLM path, not forced review
+    assert d["order"]["status"] != "needs_review" and d["order"]["product_id"] == "P12"
 
 
 def test_csv_ingest_limits_and_rejects(dev):
@@ -256,7 +257,8 @@ def _result(tier="high", conf="none", path="llm", inj=False, change=False):
     ("collecting", dict(inj=True, tier="low"), "initial", None, None, "needs_review"),
     ("awaiting_reply", dict(conf="declined", tier="low"), "customer_reply", "high", None, "cancelled"),
     ("collecting", dict(change=True), "initial", None, None, "needs_review"),
-    ("collecting", dict(path="rules"), "initial", None, None, "needs_review"),
+    ("collecting", dict(path="rules", tier="low"), "initial", None, None, "ready_to_ship"),
+    ("collecting", dict(path="rules", tier="medium"), "initial", None, None, "awaiting_reply"),
     ("awaiting_reply", dict(), "no_reply_timeout", "high", None, "needs_review"),
     ("awaiting_reply", dict(conf="ambiguous"), "customer_reply", "high", None, "needs_review"),
     ("ready_to_ship", dict(tier="medium"), "customer_reply", "high", "t", "ready_to_ship"),
@@ -298,7 +300,7 @@ def test_stub_scorer_satisfies_contract(tmp_path):
 @pytest.mark.parametrize("llm_mode", ["fail_all", "fail_primary"])
 def test_fallback_drill_never_errors(tmp_path, llm_mode):
     """E3: hero v1 still scored, every call 200, fallback visible. (fail_primary has no replay fixture for a new
-    window, so it ends in rules too: FixtureMissing is caught by the worker -> needs_review + error event.)"""
+    window, so it ends in rules too: FixtureMissing is caught by the worker -> needs_review + error event, or the rules path.)"""
     c, core, clock = make_client(tmp_path, "dev", llm_mode=llm_mode)
     with c:
         r = c.post("/api/orders/ingest", json={"kind": "paste", "text": "salam, nheb el casque bluetooth. "
@@ -306,7 +308,10 @@ def test_fallback_drill_never_errors(tmp_path, llm_mode):
         assert r.status_code == 202
         settle(core, clock)
         d = c.get(f"/api/orders/{r.json()['created'][0]['order_id']}").json()
-        assert d["order"]["status"] == "needs_review"
+        if llm_mode == "fail_all":                                  # rules path: a next step and a drafted question
+            assert d["order"]["status"] == "awaiting_reply" and d["order"]["has_pending_draft"]
+        else:
+            assert d["order"]["status"] in ("awaiting_reply", "needs_review")
         assert c.get("/api/health").status_code == 200
 
 

@@ -26,11 +26,15 @@ export function HealthBar() {
     if (!health) return null;
 
     const llm = health.llm || {};
-    const ai = llm.cap_reached ? "AI budget used up: new messages are scored by rules only"
+    const callsLeft = llm.live_call_cap ? Math.max(0, llm.live_call_cap - (llm.live_calls_today ?? 0)) : null;
+    const lowBudget = callsLeft !== null && !llm.cap_reached && callsLeft <= Math.max(5, Math.ceil(llm.live_call_cap * 0.1));
+    const aiBase = llm.cap_reached ? "AI budget used up: new messages are scored by rules only"
         : llm.fallback_active ? "AI running on its backup model"
         : llm.primary === "rules" ? "AI offline: scoring with rules only"
         : "AI scoring live";
-    const warn = llm.cap_reached || llm.fallback_active || llm.primary === "rules" || health.status !== "ok";
+    const ai = callsLeft !== null && !llm.cap_reached && llm.primary !== "rules"
+        ? `${aiBase} · ${callsLeft} of ${llm.live_call_cap} AI calls left today` : aiBase;
+    const warn = lowBudget || llm.cap_reached || llm.fallback_active || llm.primary === "rules" || health.status !== "ok";
     const whatsapp = health.webhook === "enabled"
         ? (health.wa_send
             ? "WhatsApp connected, replies are sent"

@@ -247,8 +247,8 @@ class AssessmentRecord:           # -> one risk_assessments row (ids, version, t
     flags: list[FlagView]                     # surviving, evidence-checked
     final_score: int                          # 0-100; NEVER None (declined is scored normally)
     tier: Tier
-    action: Action                            # 'cancelled' iff confirmation == 'declined'; else 'review' if path == 'rules';
-                                              # else by tier
+    action: Action                            # 'cancelled' iff confirmation == 'declined'; else by tier
+                                              # (the rules path included)
     confidence: Literal["high", "low"]
     confidence_reasons: list[str]             # near_tier_boundary | not_primary_model | product_not_in_catalog |
                                               # dropped_flags | clarity_unclear | rules_path | llm_cap_reached |
