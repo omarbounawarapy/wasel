@@ -260,3 +260,33 @@ def test_fairness_invariant(config):
 def test_fairness_prior_value():
     assert score_prior(dict(address_specificity=1.0, red_flag_count=0, tone_score=0, price_tnd=450.0,
                             zone_encoded=2, customer_refusal_rate=.3)) == pytest.approx(29.0, abs=0.1)
+
+
+def _train_root(tmp_path, n_train=3000, n_holdout=3000):
+    import shutil
+    df = pd.read_csv(ROOT / "data/synth_v1.csv")
+    small = pd.concat([df[df.split == "train"].head(n_train), df[df.split == "holdout"].head(n_holdout)])
+    (tmp_path / "data").mkdir()
+    small.to_csv(tmp_path / "data/synth_v1.csv", index=False)
+    shutil.copy(ROOT / "data/synth_v1.meta.json", tmp_path / "data/synth_v1.meta.json")
+    (tmp_path / "config").mkdir()
+    shutil.copy(ROOT / "config/scoring.yaml", tmp_path / "config/scoring.yaml")
+    return tmp_path
+
+
+def test_train_failing_gate_writes_nothing(tmp_path):
+    from wasel.ml.train import main
+    root = _train_root(tmp_path)
+    before = {p for p in root.rglob("*")}
+    assert main(root=root, min_auc=1.01) == 1
+    assert {p for p in root.rglob("*")} == before
+
+
+def test_train_passing_gates_writes_artifacts(tmp_path):
+    from wasel.ml.train import main
+    root = _train_root(tmp_path)
+    assert main(root=root) == 0
+    card = json.loads((root / "models/risk_xgb_v1.card.json").read_text())
+    assert card["model_sha256"] == hashlib.sha256((root / "models/risk_xgb_v1.json").read_bytes()).hexdigest()
+    assert (root / "data/reports/train_metrics.json").exists() and (root / "data/reports/impact.json").exists()
+    assert not (root / "tests").exists()

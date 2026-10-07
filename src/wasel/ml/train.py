@@ -3,14 +3,17 @@
 Trains the monotone XGBoost on the 8,000 train rows and writes:
   models/risk_xgb_v1.json, models/risk_xgb_v1.card.json, data/reports/train_metrics.json,
   data/reports/impact.json, tests/golden/hero.json
-Exits non-zero if a gate fails (AUC, calibration MAE, tier refusal-rate ordering).
+Exits non-zero if a gate fails (AUC, calibration MAE, tier refusal-rate ordering). The model is fitted into a temporary
+directory and nothing is written under the root unless every gate passes.
 S and p_true are never columns of X (the prior must not leak into the model). Imports no LLM SDK.
 """
 from __future__ import annotations
 
 import hashlib
 import json
+import shutil
 import sys
+import tempfile
 from pathlib import Path
 
 import numpy as np
@@ -119,16 +122,17 @@ def write_hero_golden(out: Path) -> dict:
     return golden
 
 
-def main() -> int:
+def main(root: Path = ROOT, min_auc: float = 0.70) -> int:
     """Train the classifier on the train split, then write the model, its card, metrics, impact report and the hero
-    golden.
+    golden under `root`, but only if every gate passes.
 
-    Returns 1 if a gate (AUC, calibration error, tier refusal rates increasing) fails, else 0. Overwrites the committed
-    artifacts listed in the module docstring.
+    Returns 1 if a gate (AUC >= `min_auc`, calibration error, tier refusal rates increasing) fails, else 0. On failure
+    the metrics are printed and no file under `root` is touched. The hero golden is only written for the real root,
+    because it scores through the committed model path.
     """
     import yaml
-    cfg = yaml.safe_load((ROOT / "config/scoring.yaml").read_text(encoding="utf-8"))
-    csv_path = ROOT / "data" / "synth_v1.csv"
+    cfg = yaml.safe_load((root / "config/scoring.yaml").read_text(encoding="utf-8"))
+    csv_path = root / "data" / "synth_v1.csv"
     df = pd.read_csv(csv_path)
     tr, h = df[df.split == "train"], df[df.split == "holdout"]
     X, y = tr.loc[:, list(FEATURES)], tr["refused"]
@@ -136,9 +140,10 @@ def main() -> int:
     clf = XGBClassifier(**PARAMS)
     clf.fit(X, y)
     booster = clf.get_booster()
-    model_path = ROOT / cfg["model"]["file"]
-    model_path.parent.mkdir(parents=True, exist_ok=True)
-    booster.save_model(str(model_path))
+    model_path = root / cfg["model"]["file"]
+    tmp = tempfile.TemporaryDirectory()
+    tmp_model = Path(tmp.name) / model_path.name
+    booster.save_model(str(tmp_model))
 
     p_hat = booster.predict(xgb.DMatrix(h.loc[:, list(FEATURES)], feature_names=list(FEATURES)))
     yh, pt = h["refused"].to_numpy(), h["p_true"].to_numpy()
@@ -147,12 +152,12 @@ def main() -> int:
     err = np.abs(100 * p_hat - 100 * pt)
     auc, oracle = float(roc_auc_score(yh, p_hat)), float(roc_auc_score(yh, pt))
     gates = {
-        "auc": auc >= 0.70 and auc >= oracle - 0.03,
+        "auc": auc >= min_auc and auc >= oracle - 0.03,
         "calibration_mae": float(err.mean()) <= 5.0,
         "tier_refusal_rate_increasing": all(v is not None for v in rate.values())
         and rate["low"] < rate["medium"] < rate["high"],
     }
-    version = "xgb_v1-" + _sha(model_path)[:8]
+    version = "xgb_v1-" + _sha(tmp_model)[:8]
     now = utc_iso(SystemClock().now())
     metrics = {
         "report": "train_metrics", "created_at": now, "classifier_version": version,
@@ -167,12 +172,17 @@ def main() -> int:
         "gates": {k: ("pass" if v else "fail") for k, v in gates.items()},
         "note": "Synthetic data; labels are simulated outcomes drawn from a documented prior.",
     }
-    (ROOT / "data" / "reports").mkdir(exist_ok=True)
-    (ROOT / "data" / "reports" / "train_metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
-    meta = json.loads((ROOT / "data" / "synth_v1.meta.json").read_text())
+    print_summary = {k: metrics[k] for k in ("auc", "oracle_auc", "calib_mae_pts", "tier_share",
+                                              "tier_refusal_rate", "gates")}
+    print(json.dumps(print_summary, indent=2))
+    if not all(gates.values()):
+        tmp.cleanup()
+        print("TRAIN GATES FAILED, no file was written", file=sys.stderr)
+        return 1
+    meta = json.loads((root / "data" / "synth_v1.meta.json").read_text())
     card = {
         "classifier_version": version, "params": PARAMS, "FEATURES": list(FEATURES), "monotone": list(MONOTONE),
-        "model_sha256": _sha(model_path), "data_sha256": _sha(csv_path), "synth_meta": meta,
+        "model_sha256": _sha(tmp_model), "data_sha256": _sha(csv_path), "synth_meta": meta,
         "versions": {"xgboost": xgb.__version__, "numpy": np.__version__, "sklearn": sklearn.__version__},
         "git_sha": meta.get("git_sha"), "trained_at": now, "metrics_ref": "data/reports/train_metrics.json",
         "reliability": reliability(p_hat, yh),
@@ -180,16 +190,19 @@ def main() -> int:
                   "The model class matches the prior (additive in log-odds), so depth 2 and no tuning.",
                   "model_score = 100 · P(refused) on simulated outcomes, not a real-world refusal rate."],
     }
+    model_path.parent.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(tmp_model, model_path)
+    tmp.cleanup()
+    reports = root / "data" / "reports"
+    reports.mkdir(parents=True, exist_ok=True)
+    (reports / "train_metrics.json").write_text(json.dumps(metrics, indent=2) + "\n")
     (model_path.with_suffix(".card.json")).write_text(json.dumps(card, indent=2) + "\n")
-    (ROOT / "data" / "reports" / "impact.json").write_text(json.dumps({**impact(h, p_hat, cfg), "created_at": now,
-                                                              "classifier_version": version}, indent=2) + "\n")
-    golden = write_hero_golden(ROOT / "tests" / "golden" / "hero.json")
-    print(json.dumps({k: metrics[k] for k in ("auc", "oracle_auc", "calib_mae_pts", "tier_share",
-                                              "tier_refusal_rate", "gates")}, indent=2))
-    print("hero:", {v: (golden[v]["model_score"], golden[v]["final"], golden[v]["tier"]) for v in ("v1", "v2a", "v2b")})
-    if not all(gates.values()):
-        print("TRAIN GATES FAILED", file=sys.stderr)
-        return 1
+    (reports / "impact.json").write_text(json.dumps({**impact(h, p_hat, cfg), "created_at": now,
+                                                     "classifier_version": version}, indent=2) + "\n")
+    if root == ROOT:
+        golden = write_hero_golden(root / "tests" / "golden" / "hero.json")
+        print("hero:", {v: (golden[v]["model_score"], golden[v]["final"], golden[v]["tier"])
+                        for v in ("v1", "v2a", "v2b")})
     return 0
 
 
