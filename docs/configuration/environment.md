@@ -77,6 +77,7 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | Variable | Default | Effect |
 |---|---|---|
 | `LIVE_LLM_DAILY_CAP` | empty = mode default (public 80, event 300, dev none) | Provider calls per UTC day, counting fallback hops and failed attempts. `0` disables live calls. |
+| `LIVE_LLM_TOKENS_PER_MODEL_DAY` | empty = mode default (public 120000, others none) | Input plus output tokens per model per UTC day; at the limit calls fall back to the rules path. |
 | `VISITOR_LLM_CAP_10MIN` | `6` | Provider calls per visitor in 10 minutes (public mode) |
 | `VISITOR_LLM_CAP_DAY` | `20` | Provider calls per visitor per UTC day (public mode) |
 | `SANDBOX_TTL_S` | `7200` | Age after which a visitor's conversations are purged |
