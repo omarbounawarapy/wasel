@@ -22,6 +22,22 @@ STATUS = {"ready_to_ship": "ready", "shipped": "shipped", "delivered": "shipped"
           "needs_review": "needs_review", "collecting": "collecting", "refused": "refused", "cancelled": "cancelled"}
 
 
+def redact_message_text(obj):
+    """Copy of a session, finding or report with every customer and seller message body replaced by its length.
+
+    The detectors run on the full text server-side; only what leaves through the API goes through this. Tool names,
+    ids, codes, results and the rest of each event are kept.
+    """
+    if isinstance(obj, list):
+        return [redact_message_text(x) for x in obj]
+    if not isinstance(obj, dict):
+        return obj
+    out = {k: redact_message_text(v) for k, v in obj.items()}
+    if obj.get("type") in ("agent", "user") and "text" in obj:
+        out["text"] = f"[{len(obj['text'] or '')} characters]"
+    return out
+
+
 def _j(s, default):
     try:
         return json.loads(s) if s else default

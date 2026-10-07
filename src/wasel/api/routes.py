@@ -182,6 +182,7 @@ def _failure_sessions(request: Request, source: str, vid: str | None) -> list[di
 def failures(request: Request, source: str = "synthetic", vid: str | None = Depends(visitor_id)):
     """Hidden-failure analyzer (src/wasel/failures/): ranked issues, grouped sessions, evidence, accuracy on the labeled
     sets, runtime and cost. Rules run live; the LLM-labeled run is read from data/reports/ when it was recorded."""
+    from wasel.failures.adapter import redact_message_text
     from wasel.failures.run import analyze, score
     sessions = _failure_sessions(request, source, vid)
     rep = analyze(sessions)
@@ -196,7 +197,8 @@ def failures(request: Request, source: str = "synthetic", vid: str | None = Depe
             llm = {k: d.get(k) for k in ("accuracy", "semantics", "runtime", "cost", "by_status", "issues")}
         except ValueError:
             llm = None
-    return _nocache_json({"source": source, **rep, "llm_run": llm})
+    out = {"source": source, **rep, "llm_run": llm}
+    return _nocache_json(redact_message_text(out) if source == "app" else out)
 
 
 @router.get("/failures/sessions/{session_id}")
@@ -207,7 +209,11 @@ def failure_session(session_id: str, request: Request, source: str = "synthetic"
     if s is None:
         raise ApiError(404, "NOT_FOUND", "no such session")
     from wasel.failures.detect import detect
-    return _nocache_json({"session": s, "findings": [f.to_dict() for f in detect(s)]})
+    out = {"session": s, "findings": [f.to_dict() for f in detect(s)]}
+    if source == "app":
+        from wasel.failures.adapter import redact_message_text
+        out = redact_message_text(out)         # detectors ran on the full text; none of it leaves the server
+    return _nocache_json(out)
 
 
 def _nocache_json(d: dict) -> JSONResponse:

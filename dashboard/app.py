@@ -950,6 +950,8 @@ def page_failures():
     r = call(api.failures, src)
     if not r:
         return
+    if src == "app":
+        st.caption("Message bodies of real orders are not sent to this page; they show as their length.")
     bs = r["by_status"]
     c = st.columns(5)
     c[0].metric("Sessions", r["n_sessions"])
