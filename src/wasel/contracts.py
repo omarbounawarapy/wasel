@@ -57,7 +57,6 @@ class WindowMessage:
     transcript: str | None
     has_location: bool
     provider_ts: datetime         # tz-aware UTC; ordering key
-    is_new: bool                  # provider_ts > prior.created_at (cascade rules need it)
 
 
 @dataclass(frozen=True)
@@ -136,13 +135,6 @@ class UsageMeter(Protocol):
     def allow(self, role: Role, sandbox_id: str | None, now: datetime) -> CapDecision:
         """Return 'ok' or the cap that refuses the call. A refusal means 'score with rules', never an error."""
         ...
-
-
-class LLMClient(Protocol):
-    """The LLM chain the scorer calls for extraction. The implementation is llm.client.ChainClient: over live
-    providers, or over recorded fixtures or forced failures when LLM_MODE selects them (build_client)."""
-    primary: str                  # "provider:model" of the first step, or "rules" when the chain is empty
-    # full method set lives in src/wasel/llm/base.py; the worker never calls it directly
 
 
 # ---------------------------------------------------------------- output

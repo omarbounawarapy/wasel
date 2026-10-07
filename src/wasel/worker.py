@@ -71,8 +71,7 @@ def build_score_input(conn, order: sqlite3.Row, trigger: str, now: datetime) -> 
     prior = repo.prior_assessment(conn, order["order_id"])
     conv = repo.row(conn, "SELECT channel FROM conversations WHERE conversation_id=?", order["conversation_id"])
     return ScoreInput(order_id=order["order_id"], sandbox_id=order["sandbox_id"], channel=conv["channel"],
-                      trigger=trigger, messages=repo.window_messages(conn, order["order_id"],
-                                                                     prior.created_at if prior else None),
+                      trigger=trigger, messages=repo.window_messages(conn, order["order_id"]),
                       structured=repo.structured(order), customer=repo.customer_history(conn, order["customer_id"]),
                       prior=prior, now=now)
 

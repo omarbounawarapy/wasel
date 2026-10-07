@@ -46,10 +46,10 @@ def hero_messages(upto: int, templates: dict) -> list[WindowMessage]:
                                     {"first_name": script["customer"]["display_name"],
                                      "product": "casque bluetooth"})
             out.append(WindowMessage(f"msg_{m['idx']}", "outbound", "ai", "simulated", "text", canon, canon,
-                                     m["template_id"], None, False, ts, True))
+                                     m["template_id"], None, False, ts))
         else:
             out.append(WindowMessage(f"msg_{m['idx']}", "inbound", "customer", "paste", "text", m["text"], None,
-                                     None, None, False, ts, True))
+                                     None, None, False, ts))
     return out
 
 

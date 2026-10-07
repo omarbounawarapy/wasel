@@ -45,12 +45,12 @@ def clock():
 
 def customer_msg(i: int, text: str, kind: str = "text") -> WindowMessage:
     return WindowMessage(f"m{i}", "inbound", "customer", "paste", kind, text if kind == "text" else None, None,
-                         None, None, kind == "location", T0.replace(second=i), True)
+                         None, None, kind == "location", T0.replace(second=i))
 
 
 def seller_msg(i: int, canonical: str, template_id: str = "T_CONFIRM") -> WindowMessage:
     return WindowMessage(f"m{i}", "outbound", "ai", "dashboard", "text", canonical, canonical, template_id, None,
-                         False, T0.replace(second=i), True)
+                         False, T0.replace(second=i))
 
 
 def make_input(texts, *, seller_at: int | None = None, seller_text: str = "Vous confirmez, oui ou non ?",

@@ -51,7 +51,7 @@ def paced(rows, pace_s: float):
 def score_input(texts: list[str], price: float) -> ScoreInput:
     """ScoreInput for one order made of customer `texts`, with a seller-entered `price`, a new customer and no prior."""
     msgs = [WindowMessage(f"m{i}", "inbound", "customer", "paste", "text", t, None, None, None, False,
-                          T0.replace(second=i), True) for i, t in enumerate(texts)]
+                          T0.replace(second=i)) for i, t in enumerate(texts)]
     return ScoreInput("eval", None, "paste", "initial", msgs, StructuredFields(price_tnd=price),
                       CustomerHistory(0, 0), None, T0)
 
@@ -170,10 +170,10 @@ def set_input(row: dict) -> ScoreInput:
         ts = T0.replace(second=i)
         if m["role"] == "seller":
             msgs.append(WindowMessage(f"m{i}", "outbound", "ai", "paste", "text", m["text"], m["text"],
-                                      m.get("template_id"), None, False, ts, True))
+                                      m.get("template_id"), None, False, ts))
         else:
             msgs.append(WindowMessage(f"m{i}", "inbound", "customer", "paste", "text", m["text"], None,
-                                      None, None, False, ts, True))
+                                      None, None, False, ts))
     ctx = row["order_ctx"]
     return ScoreInput("eval", None, "paste", "initial", msgs,
                       StructuredFields(price_tnd=ctx["price_tnd"], zone=ctx.get("zone")),

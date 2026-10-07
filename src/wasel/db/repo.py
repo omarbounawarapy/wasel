@@ -143,19 +143,15 @@ def order_messages(conn, order_id) -> list[sqlite3.Row]:
                       " WHERE om.order_id=? ORDER BY m.provider_ts, m.received_at", order_id)
 
 
-def window_messages(conn, order_id, prior_created_at: datetime | None) -> list[WindowMessage]:
-    """The order's messages as scorer input, oldest first.
-
-    `is_new` marks messages stamped after `prior_created_at` (all of them when there is no prior assessment).
-    """
+def window_messages(conn, order_id) -> list[WindowMessage]:
+    """The order's messages as scorer input, oldest first."""
     out = []
     for m in order_messages(conn, order_id):
         ts = parse_utc(m["provider_ts"])
         out.append(WindowMessage(
             message_id=m["message_id"], direction=m["direction"], author=m["author"], origin=m["origin"],
             kind=m["kind"], text=m["text"], canonical_text=m["canonical_text"], template_id=m["template_id"],
-            transcript=m["transcript"], has_location=m["kind"] == "location", provider_ts=ts,
-            is_new=prior_created_at is None or ts > prior_created_at))
+            transcript=m["transcript"], has_location=m["kind"] == "location", provider_ts=ts))
     return out
 
 

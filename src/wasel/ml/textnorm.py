@@ -109,12 +109,6 @@ def _tokens(text: str) -> tuple[str, ...]:
     return tuple(out)
 
 
-def has_token(text: str, vocab) -> bool:
-    """True if any normalized token of `text` is in `vocab` (compared after normalizing the vocabulary too)."""
-    vocab = {normalize(v) for v in vocab}
-    return any(t in vocab for t in tokens(text))
-
-
 def has_building_token(text: str) -> bool:
     """True if the text has a building word (apartment, floor, bloc, ...) or a "dar <number>" house number."""
     return any(t in BUILDING_TOKENS for t in tokens(text)) or bool(DAR_N_RE.search(normalize(text)))

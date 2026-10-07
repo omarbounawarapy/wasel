@@ -63,11 +63,6 @@ class OrderExtraction(Strict):
     clarity: Clarity
 
 
-def load_schema() -> dict:
-    """The order_extraction_v1 JSON schema (config/schemas), as sent to providers."""
-    return json.loads(SCHEMA_PATH.read_text(encoding="utf-8"))
-
-
 def _s(v, max_len: int) -> str | None:
     if not isinstance(v, str):
         return None

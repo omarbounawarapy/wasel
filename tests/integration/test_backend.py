@@ -246,7 +246,7 @@ def _result(tier="high", conf="none", path="llm", inj=False, change=False):
     from wasel.contracts import WindowMessage
     inp = ScoreInput("o", None, "paste", "initial",
                      [WindowMessage("m0", "inbound", "customer", "paste", "text", "nheb sac", None, None, None, False,
-                                    T0, True)], StructuredFields(), CustomerHistory(0, 0), None, T0)
+                                    T0)], StructuredFields(), CustomerHistory(0, 0), None, T0)
     r = stub.score_order(inp)
     from dataclasses import replace
     a = replace(r.assessment, tier=tier, confirmation=conf, path=path, is_order_change=change)
