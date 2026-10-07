@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import threading
 import time
 from collections import OrderedDict
 from collections.abc import Callable
@@ -102,6 +103,7 @@ class ChainClient:
         self.deadline_s, self.breaker_s = deadline_s, breaker_s
         self._mono = monotonic
         self._breaker_until: dict[str, float] = {}
+        self._lock = threading.Lock()     # guards _cache and _breaker_until, never held across a network call
 
     @property
     def primary(self) -> str:
@@ -124,9 +126,13 @@ class ChainClient:
         if task.max_input_chars and len(user) > task.max_input_chars:
             trace.emit({**base, "outcome": "input_too_large", "path": "rules", "attempts": []})
             return ChainResult(None, None, "rules", None, None, errors=["input_too_large"])
-        if task.cache and key in self._cache:
-            self._cache.move_to_end(key)
-            hit = self._cache[key]
+        hit = None
+        if task.cache:
+            with self._lock:
+                hit = self._cache.get(key)
+                if hit is not None:
+                    self._cache.move_to_end(key)
+        if hit is not None:
             trace.emit({**base, "outcome": "cache_hit", "cache_hit": True, "path": hit.path,
                         "provider": hit.provider, "model": hit.model, "latency_ms": 0, "attempts": [],
                         "output": hit.raw if role != "extract" else None})
@@ -141,9 +147,11 @@ class ChainClient:
                     "tokens_out": sum(u.tokens_out or 0 for u in res.usage),
                     "errors": res.errors[:3], "output": res.raw if ok and role != "extract" else None})
         if ok and task.cache:
-            self._cache[key] = res
-            if len(self._cache) > self.cache_size:
-                self._cache.popitem(last=False)
+            with self._lock:
+                self._cache[key] = res
+                self._cache.move_to_end(key)
+                while len(self._cache) > self.cache_size:
+                    self._cache.popitem(last=False)
         return res
 
     def _run(self, task: TaskSpec, user: str, *, parse, meter, sandbox_id, now, role) -> ChainResult:
@@ -159,7 +167,9 @@ class ChainClient:
         for step in self.steps:
             if step.kind == "fallback_model" and skip_same_provider_fallback:
                 continue
-            if self._breaker_until.get(step.provider, 0) > self._mono():
+            with self._lock:
+                breaker_open = self._breaker_until.get(step.provider, 0) > self._mono()
+            if breaker_open:
                 res.errors.append(f"{step.provider}:breaker_open")
                 continue
             if step.timeout_s > self.deadline_s - (self._mono() - t0):
@@ -180,7 +190,8 @@ class ChainClient:
                 res.usage.append(UsageRecord(now, role, step.provider, step.model, e.outcome, None, None, latency))
                 res.errors.append(f"{step.model}:{type(e).__name__}:{str(e)[:120]}")
                 if isinstance(e, ProviderDown):
-                    self._breaker_until[step.provider] = self._mono() + self.breaker_s
+                    with self._lock:
+                        self._breaker_until[step.provider] = self._mono() + self.breaker_s
                 if step.kind == "primary" and not isinstance(e, _NEXT_MODEL_ERRORS):
                     skip_same_provider_fallback = True        # Timeout / ProviderDown skip the sibling
                 continue
