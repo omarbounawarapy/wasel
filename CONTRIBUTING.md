@@ -1,6 +1,6 @@
 # Contributing
 
-The code is not open source (see [LICENSE](LICENSE)). Issues from anyone are welcome; code changes are accepted from maintainers and invited contributors. Everyone follows the [code of conduct](CODE_OF_CONDUCT.md). Report security problems privately, as described in [SECURITY.md](SECURITY.md).
+The code is not open source (see [LICENSE](LICENSE)). The repository is private: issues and code changes come from maintainers and invited contributors. Everyone follows the [code of conduct](CODE_OF_CONDUCT.md). Report security problems privately, as described in [SECURITY.md](SECURITY.md).
 
 ## Orientation
 

@@ -127,4 +127,4 @@ docs/           documentation
 
 ## License
 
-Copyright © 2026 Z-Team. All rights reserved. The code is public so that it can be read and evaluated; it is not open source. See [LICENSE](LICENSE).
+Copyright © 2026 Z-Team. All rights reserved. The demo is public; the code is in a private repository, shared with reviewers on request, and is not open source. See [LICENSE](LICENSE).
