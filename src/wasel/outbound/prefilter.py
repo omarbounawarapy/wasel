@@ -40,13 +40,13 @@ def prefilter(draft: str, template_text: str, slots: dict[str, str | None], expe
               lexicons: dict, injection_lexicon: dict | None = None) -> list[str]:
     """Deterministic checks on a draft; returns failure codes, empty if it passes.
 
-    Codes: `slot_missing:<slot>` (a required slot value is absent), `number_not_allowed:[...]` (a number not in the
+    Codes: `slot_missing:<slot>` (a required slot is empty or missing), `number_not_allowed:[...]` (a number not in the
     template or price), `url`, `phone`, `payment:`/`discount:`/`promise:<term>`, `instructions_in_draft`,
     `question_count:<n>` against `expected_questions` ('none' or 'one'), and `too_long`.
     """
     fails: list[str] = []
     for k, v in slots.items():
-        if v and unicodedata.normalize("NFC", v) not in unicodedata.normalize("NFC", draft):
+        if not v or unicodedata.normalize("NFC", v) not in unicodedata.normalize("NFC", draft):
             fails.append(f"slot_missing:{k}")
     allowed = numbers_in(template_text)
     if slots.get("price_tnd"):

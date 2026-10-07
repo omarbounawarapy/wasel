@@ -2,7 +2,8 @@
 # Rules: slots come from the order record only; every template passes the prefilter;
 # T_CONFIRM / T_ADDRESS / T_PREPAY end in exactly one yes/no question; T_ACK asks none;
 # no digits other than {price_tnd}; currency TND / دينار. `no_name` is used when first_name is
-# missing or unsafe. Human review before send.
+# missing or unsafe. `generic` / `generic_no_name` use no product or price: they replace the full variant when
+# the order has no product or price on record, so a message never goes out with an empty slot. Human review before send.
 version: 2
 language_fallback:            # extraction language -> template language
   fr: fr
@@ -16,39 +17,63 @@ templates:
     arabizi:
       text: "Marhba {first_name}, 3andek commande {product} b {price_tnd} TND. T2akkedli elli bech tekhouha?"
       no_name: "Marhba, 3andek commande {product} b {price_tnd} TND. T2akkedli elli bech tekhouha?"
+      generic: "Marhba {first_name}, wselatna commandtek. T2akkedli elli bech tekhouha?"
+      generic_no_name: "Marhba, wselatna commandtek. T2akkedli elli bech tekhouha?"
     fr:
       text: "Bonjour {first_name}, votre commande de {product} est à {price_tnd} TND. Confirmez-vous que vous souhaitez la recevoir ?"
       no_name: "Bonjour, votre commande de {product} est à {price_tnd} TND. Confirmez-vous que vous souhaitez la recevoir ?"
+      generic: "Bonjour {first_name}, nous avons bien reçu votre commande. Confirmez-vous que vous souhaitez la recevoir ?"
+      generic_no_name: "Bonjour, nous avons bien reçu votre commande. Confirmez-vous que vous souhaitez la recevoir ?"
     darija_arabic_script:
       text: "مرحبا {first_name}، عندك كوموند {product} بـ {price_tnd} دينار. تأكّدلي إلي باش تاخذها؟"
       no_name: "مرحبا، عندك كوموند {product} بـ {price_tnd} دينار. تأكّدلي إلي باش تاخذها؟"
+      generic: "مرحبا {first_name}، وصلتنا الكوموند متاعك. تأكّدلي إلي باش تاخذها؟"
+      generic_no_name: "مرحبا، وصلتنا الكوموند متاعك. تأكّدلي إلي باش تاخذها؟"
   T_ADDRESS:                  # address incomplete · ask street + house number · one yes/no question
     arabizi:
       text: "Bech n7adroulk livraison mta3 {product}, {first_name}, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
       no_name: "Bech n7adroulk livraison mta3 {product}, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
+      generic: "Bech n7adroulk livraison mta3 commandtek, {first_name}, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
+      generic_no_name: "Bech n7adroulk livraison mta3 commandtek, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
     fr:
       text: "Pour préparer la livraison de {product}, {first_name}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
       no_name: "Pour préparer la livraison de {product}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
+      generic: "Pour préparer la livraison de votre commande, {first_name}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
+      generic_no_name: "Pour préparer la livraison de votre commande, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
     darija_arabic_script:
       text: "باش نحضّرلك التوصيل متاع {product}، {first_name}، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
       no_name: "باش نحضّرلك التوصيل متاع {product}، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
+      generic: "باش نحضّرلك التوصيل متاع الكوموند متاعك، {first_name}، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
+      generic_no_name: "باش نحضّرلك التوصيل متاع الكوموند متاعك، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
   T_PREPAY:                   # high risk AND price >= 250 TND · payment before delivery · one yes/no question
     arabizi:
       text: "{first_name}, commande {product} b {price_tnd} TND: el paiement ykoun 9bal el livraison. Twaafe9 3al paiement 9bal ma nab3thou?"
       no_name: "Commande {product} b {price_tnd} TND: el paiement ykoun 9bal el livraison. Twaafe9 3al paiement 9bal ma nab3thou?"
+      generic: "{first_name}, commandtek: el paiement ykoun 9bal el livraison. Twaafe9 3al paiement 9bal ma nab3thou?"
+      generic_no_name: "Commandtek: el paiement ykoun 9bal el livraison. Twaafe9 3al paiement 9bal ma nab3thou?"
     fr:
       text: "{first_name}, votre commande de {product} est à {price_tnd} TND. Le paiement se fait avant la livraison. Acceptez-vous ces conditions ?"
       no_name: "Votre commande de {product} est à {price_tnd} TND. Le paiement se fait avant la livraison. Acceptez-vous ces conditions ?"
+      generic: "{first_name}, pour votre commande, le paiement se fait avant la livraison. Acceptez-vous ces conditions ?"
+      generic_no_name: "Pour votre commande, le paiement se fait avant la livraison. Acceptez-vous ces conditions ?"
     darija_arabic_script:
       text: "{first_name}، كوموند {product} بـ {price_tnd} دينار: الخلاص يكون قبل التوصيل. توافق على الخلاص قبل ما نبعثوها؟"
       no_name: "كوموند {product} بـ {price_tnd} دينار: الخلاص يكون قبل التوصيل. توافق على الخلاص قبل ما نبعثوها؟"
+      generic: "{first_name}، الكوموند متاعك: الخلاص يكون قبل التوصيل. توافق على الخلاص قبل ما نبعثوها؟"
+      generic_no_name: "الكوموند متاعك: الخلاص يكون قبل التوصيل. توافق على الخلاص قبل ما نبعثوها؟"
   T_ACK:                      # acknowledgement only · no question
     arabizi:
       text: "Merci {first_name}, commande {product} confirmée. Na3tiwk mise à jour ki tet7added livraison."
       no_name: "Merci, commande {product} confirmée. Na3tiwk mise à jour ki tet7added livraison."
+      generic: "Merci {first_name}, commandtek confirmée. Na3tiwk mise à jour ki tet7added livraison."
+      generic_no_name: "Merci, commandtek confirmée. Na3tiwk mise à jour ki tet7added livraison."
     fr:
       text: "Merci {first_name}, votre commande de {product} est confirmée. Nous vous informerons lorsque la livraison sera planifiée."
       no_name: "Merci, votre commande de {product} est confirmée. Nous vous informerons lorsque la livraison sera planifiée."
+      generic: "Merci {first_name}, votre commande est confirmée. Nous vous informerons lorsque la livraison sera planifiée."
+      generic_no_name: "Merci, votre commande est confirmée. Nous vous informerons lorsque la livraison sera planifiée."
     darija_arabic_script:
       text: "مرسي {first_name}، كوموند {product} مؤكّدة. نعطيوك مستجدات كي تتحّدد التوصيل."
       no_name: "مرسي، كوموند {product} مؤكّدة. نعطيوك مستجدات كي تتحّدد التوصيل."
+      generic: "مرسي {first_name}، الكوموند متاعك مؤكّدة. نعطيوك مستجدات كي تتحّدد التوصيل."
+      generic_no_name: "مرسي، الكوموند متاعك مؤكّدة. نعطيوك مستجدات كي تتحّدد التوصيل."

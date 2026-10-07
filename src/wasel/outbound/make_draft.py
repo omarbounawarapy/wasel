@@ -58,7 +58,7 @@ def make_draft(req: DraftRequest, *, llm=None, meter: UsageMeter | None = None,
     events: list[CoreEvent] = []
     usage: list = []
     trace.bind(order_id=req.order_id, sandbox_id=req.sandbox_id, template_id=req.template_id)
-    if llm is not None:
+    if llm is not None and all(used.values()):               # never rewrite a message that has an empty slot
         rec = _rewrite_and_judge(req, llm, meter, config, lang, canonical, used, expected, check, route,
                                  events, usage)
         if rec is not None:

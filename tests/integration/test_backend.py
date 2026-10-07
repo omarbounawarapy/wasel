@@ -340,3 +340,14 @@ def test_extraction_cache_is_read_with_the_active_prompt_version(dev):
     from wasel.llm.prompts import PROMPT_VERSION
     _, core, _ = dev
     assert core.scorer_for(core.conn()).keywords["cache"].prompt_version == PROMPT_VERSION
+
+
+def test_draft_for_a_product_outside_the_catalog_has_no_empty_slot(dev):
+    c, core, clock = dev
+    r = c.post("/api/orders/ingest", json={"kind": "paste", "text": "Bonjour je veux la robe rouge, Ariana rue des "
+                                                                    "Roses 12 pres de la pharmacie"})
+    oid = r.json()["created"][0]["order_id"]
+    settle(core, clock)
+    c.post(f"/api/orders/{oid}/actions", json={"action": "request_confirmation"})
+    for d in c.get(f"/api/orders/{oid}").json()["drafts"]:
+        assert "  " not in d["text"] and " est à  " not in d["text"] and "de  est" not in d["text"], d["text"]
