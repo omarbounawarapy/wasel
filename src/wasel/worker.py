@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sqlite3
+import time
 from datetime import datetime, timedelta
 
 from wasel.clock import parse_utc, utc_iso
@@ -89,8 +90,12 @@ def create_draft(conn, ids: IdGen, now: datetime, order_id: str, drafter: Drafte
 
 
 def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, limit: int = 10,
-                no_reply_s: float | None = None, meter=None) -> list[str]:
+                no_reply_s: float | None = None, meter=None, only_order_id: str | None = None,
+                budget_s: float | None = None) -> list[str]:
     """Score every order whose rescore is due at `now`, up to `limit`, and return the ids that were scored.
+
+    With `only_order_id` only that order is considered. With `budget_s` no further order is taken once that many
+    seconds have passed since the call started, so a queue of slow orders is spread over several ticks.
 
     Each order is claimed atomically, scored outside a transaction, then its result, next status and events are written
     in one transaction; a draft is created afterwards if the order is now awaiting a reply. With `no_reply_s`, orders
@@ -101,9 +106,14 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
         with tx(conn):
             fire_no_reply_timeouts(conn, now, no_reply_s)
     done: list[str] = []
+    started = time.monotonic()
+    only_sql, only_args = (" AND order_id=?", (only_order_id,)) if only_order_id else ("", ())
     for _ in range(limit):
+        if budget_s is not None and time.monotonic() - started >= budget_s:
+            break
         cand = repo.row(conn, "SELECT order_id, pending_rescore_at, pending_trigger FROM orders WHERE pending_rescore_at"
-                              " IS NOT NULL AND pending_rescore_at <= ? ORDER BY pending_rescore_at LIMIT 1", utc_iso(now))
+                              " IS NOT NULL AND pending_rescore_at <= ?" + only_sql + " ORDER BY pending_rescore_at"
+                              " LIMIT 1", utc_iso(now), *only_args)
         if cand is None:
             break
         with tx(conn):                                      # claim (CAS)
@@ -141,11 +151,12 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
     return done
 
 
-def drain(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, max_rounds: int = 200) -> int:
-    """Run process_due until nothing is due (seeding, tests)."""
+def drain(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, max_rounds: int = 200,
+          only_order_id: str | None = None) -> int:
+    """Run process_due until nothing is due (seeding, tests); with `only_order_id`, for that order alone."""
     n = 0
     for _ in range(max_rounds):
-        got = process_due(conn, now, scorer, drafter, ids=ids)
+        got = process_due(conn, now, scorer, drafter, ids=ids, only_order_id=only_order_id)
         if not got:
             break
         n += len(got)

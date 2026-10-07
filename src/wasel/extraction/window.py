@@ -109,8 +109,8 @@ def build_window(inp: ScoreInput, max_messages: int = MAX_MESSAGES, max_chars: i
     for m in msgs:
         if m.direction == "inbound":
             line = _customer_line(m)
-            if line:
-                items.append((m.message_id, "customer", line[0], None, line[1]))
+            if line:       # one over-long message must not reach the regexes and normalizers at full length
+                items.append((m.message_id, "customer", line[0], None, line[1][:max_chars]))
         elif m is latest_out:
             text = m.canonical_text if m.author == "ai" else (m.text or "")
             items.append((m.message_id, "seller", "text", m.template_id, text or ""))

@@ -38,6 +38,7 @@ from wasel.worker import drain, process_due, run_loop
 
 log = logging.getLogger("cod.main")
 MAX_BODY = 64 * 1024
+TICK_BUDGET_S = 3.0          # the worker takes no new order in a tick once this many seconds have passed
 # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
 # XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.
 # web/public/_headers repeats these for assets served at the edge on Cloudflare; a test keeps the two equal.
@@ -118,7 +119,8 @@ class AppState:
         scorer = make_scorer(cache=SqliteExtractionCache(conn, PROMPT_VERSION), llm=self.llm,
                              meter=meter, config=self.config)
         process_due(conn, now, scorer, self.drafter, ids=self.ids, meter=meter,
-                    no_reply_s=self.no_reply_s if self.settings.no_reply_enabled else None)
+                    no_reply_s=self.no_reply_s if self.settings.no_reply_enabled else None,
+                    budget_s=TICK_BUDGET_S)
         if self.settings.wa_auto_send and not self.settings.is_public:
             from wasel.api.commands import auto_send_due
             auto_send_due(conn, self.ids, now, self.settings, self.sender)
@@ -127,10 +129,12 @@ class AppState:
         """Delete visitor sandbox rows older than the TTL. Returns the number of orders purged."""
         return purge_sandboxes(self.conn(), now, self.settings.sandbox_ttl_s)
 
-    def drain(self, conn=None):
-        """Score everything that is due now, repeatedly, until nothing is left. Returns the number of orders scored."""
+    def drain(self, conn=None, order_id: str | None = None):
+        """Score everything that is due now (or only `order_id`), repeatedly, until nothing is left. Returns the
+        number of orders scored."""
         conn = conn or self.conn()
-        return drain(conn, self.clock.now(), self.scorer_for(conn), self.drafter, ids=self.ids)
+        return drain(conn, self.clock.now(), self.scorer_for(conn), self.drafter, ids=self.ids,
+                     only_order_id=order_id)
 
     def boot(self) -> None:
         """Prepare the database at startup.

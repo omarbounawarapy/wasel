@@ -122,6 +122,36 @@ def test_locate_ignores_quotes_under_three_characters():
     assert locate("sac", w.messages) is not None
 
 
+# ---------------------------------------------------------------- hostile text cost
+@pytest.mark.parametrize("text", ["ﷺ" * 2000, "نحب كاسك " * 60000, "x" * 500_000], ids=["fdfa", "long-arabic", "long-latin"])
+def test_hostile_message_is_bounded_before_it_is_scored(text):
+    import time
+
+    from wasel.extraction.rules_extractor import rules_extract
+    from wasel.scoring.config import default_config
+    cfg = default_config()
+    t0 = time.perf_counter()
+    w = build_window(make_input([text]))
+    rules_extract(w, banks=cfg.banks, catalog=cfg.catalog, zones=cfg.zones, lexicons=cfg.raw["lexicons"])
+    assert len(w.messages[0].text_orig) <= 2000
+    assert time.perf_counter() - t0 < 0.5
+
+
+def test_each_text_is_normalized_once_however_many_phrases_read_it():
+    from wasel.ml.textnorm import _normalize_with_map, _tokens, has_phrase
+    text = "salam nheb casque bluetooth livraison à Sfax rue de la liberté"
+    _normalize_with_map.cache_clear()
+    _tokens.cache_clear()
+    for p in ["casque", "bluetooth", "rue", "sfax", "liberté", "livraison"] * 50:
+        has_phrase(text, p)
+    info = _normalize_with_map.cache_info()
+    assert info.misses == 1 + 6, info          # the text once, each distinct phrase once
+
+
+def test_characters_that_expand_past_four_code_points_are_dropped():
+    assert normalize("ﷺ") == "" and normalize("aﷺb") == "ab"
+
+
 # ---------------------------------------------------------------- cross-field rules
 CASES = ["ــقريـب من الجامع", "قَرِيب مِن الجَامِع", "أختي إستلمت آخر كوليه", "Près DE LA Poste",
          "9rib el jemaa w 3and el pharmacie", "🙂 salam, nheb el sac 👜 fi Sfax", "رقم ٣٤ شارع الحرية",
