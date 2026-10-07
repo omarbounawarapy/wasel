@@ -216,7 +216,8 @@ def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: U
 
     prior_conf = inp.prior.confirmation if inp.prior else "none"
     proc = postprocess(x.ext, w, prior_confirmation=prior_conf,
-                       injection_lexicon=cfg["lexicons"].get("injection", {}))
+                       injection_lexicon=cfg["lexicons"].get("injection", {}),
+                       agreement_lexicon=cfg["lexicons"].get("agreement", {}))
     valid = x.path != "rules"
     if proc.dropped_flags or proc.dropped_quotes:
         events.append(CoreEvent("evidence.dropped", "warning",
