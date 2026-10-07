@@ -20,6 +20,7 @@
       "action": "ship",
       "confidence": "high",
       "path": "cascade_cache",
+      "read_by": "recorded",
       "delta": -71,
       "reason_short": "LOW 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19"
     },
@@ -188,6 +189,13 @@
       "trigger": "initial",
       "created_at": "2026-09-27T10:00:00.000000Z",
       "path": "cascade_cache",
+      "read_by": "recorded",
+      "rules_alone": {
+        "tier": "high",
+        "final_score": 82,
+        "reason_short": "HIGH 82 · 3 warning signs: \"⁨9rib el jemaa⁩\" +18",
+        "top_factor": "3 warning signs: \"⁨9rib el jemaa⁩\""
+      },
       "model_score": 87.1,
       "final_score": 87,
       "delta": null,
@@ -258,6 +266,13 @@
       "trigger": "customer_reply",
       "created_at": "2026-09-27T10:00:05.000000Z",
       "path": "cascade_cache",
+      "read_by": "recorded",
+      "rules_alone": {
+        "tier": "low",
+        "final_score": 16,
+        "reason_short": "LOW 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14,…⁩\") −19",
+        "top_factor": "full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14,…⁩\")"
+      },
       "model_score": 26.8,
       "final_score": 16,
       "delta": -71,

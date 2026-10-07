@@ -505,3 +505,14 @@ def test_missing_model_is_degraded_not_ok(tmp_path, monkeypatch):
     c, _, _ = make_client(tmp_path, "dev")
     with c:
         assert c.get("/api/health").json()["degraded_reason"] == "model_missing"
+
+
+def test_read_by_and_rules_alone(dev):
+    """A paste scored with no AI says 'rules'; no AI-vs-rules note is kept for a rules-path score."""
+    c, core, clock = dev
+    r = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb tablette. Kasserine, ki twsel kalamni"})
+    settle(core, clock)
+    detail = c.get(f"/api/orders/{r.json()['created'][0]['order_id']}").json()
+    assert detail["order"]["score"]["read_by"] == "rules"
+    assert detail["assessments"][-1]["read_by"] == "rules"
+    assert detail["assessments"][-1]["rules_alone"] is None

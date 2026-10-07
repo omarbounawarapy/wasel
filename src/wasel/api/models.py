@@ -40,6 +40,7 @@ class ScoreBadge(BaseModel):
     action: Action
     confidence: Literal["high", "low"]
     path: Path
+    read_by: Literal["ai", "rules", "recorded"]
     delta: int | None
     reason_short: str
 
@@ -193,6 +194,8 @@ class AssessmentView(BaseModel):
     trigger: Trigger
     created_at: str
     path: Path
+    read_by: Literal["ai", "rules", "recorded"]
+    rules_alone: dict | None = None
     model_score: float
     final_score: int
     delta: int | None

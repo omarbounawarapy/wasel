@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ordersApi } from "@/lib/api/orders";
-import { Page, PageHeader, Guide, StatCard, RiskBadge, Empty, LoadError, STATUS, tunisTime } from "@/components/wasel/kit";
+import { Page, PageHeader, Guide, StatCard, ReadBy, RiskBadge, Empty, LoadError, STATUS, tunisTime } from "@/components/wasel/kit";
 
 export default function InboxPage() {
     const router = useRouter();
@@ -71,7 +71,7 @@ export default function InboxPage() {
                                     </span>
                                     <bdi dir="auto" className="flex-1 min-w-0 text-sm text-gray-700 truncate">{o.last_message_preview || ""}</bdi>
                                     <span className="flex items-center gap-3 shrink-0">
-                                        {o.score ? <RiskBadge tier={o.score.tier} score={o.score.final_score} />
+                                        {o.score ? <><ReadBy value={o.score.read_by} /><RiskBadge tier={o.score.tier} score={o.score.final_score} /></>
                                             : o.rescore_state !== "idle" ? <RiskBadge tier={null} score={null} />
                                             : <span className="text-xs font-medium text-gray-600 border border-gray-300 rounded-full px-2.5 py-0.5"
                                                     title="No product or delivery address in these messages yet, so there is nothing to score. Wasel rescores as soon as the customer sends order details.">

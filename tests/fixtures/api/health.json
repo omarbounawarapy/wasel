@@ -50,5 +50,6 @@
   "real_rows": 0,
   "sandbox_orders": 1,
   "wa_auto_send": false,
-  "degraded_reason": null
+  "degraded_reason": null,
+  "degraded_detail": null
 }

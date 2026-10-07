@@ -21,6 +21,7 @@
         "action": "confirm",
         "confidence": "high",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "HIGH 89 · vague address (\"⁨Thala⁩\") +30 · rural delivery zone +11"
       },
@@ -53,6 +54,7 @@
         "action": "confirm",
         "confidence": "high",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "HIGH 87 · 3 warning signs: \"⁨9rib el jemaa⁩\" +17 · rural delivery zone +13"
       },
@@ -85,6 +87,7 @@
         "action": "prepay",
         "confidence": "high",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "HIGH 85 · high order value (450 TND) +16 · vague address (\"⁨douar Sbiba⁩\") +14"
       },
@@ -117,6 +120,7 @@
         "action": "prepay",
         "confidence": "low",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "HIGH 71 · vague address (\"⁨Kairouan⁩\") +30 · high order value (349 TND) +10"
       },
@@ -149,6 +153,7 @@
         "action": "confirm",
         "confidence": "low",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "MEDIUM 42 · vague address (\"⁨حي النصر⁩\") +14 · 2 warning signs: \"⁨قريب من الجامع⁩\" +11"
       },
@@ -181,6 +186,7 @@
         "action": "ship",
         "confidence": "high",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": -71,
         "reason_short": "LOW 16 · full address given (\"⁨Douar Ouled Ali, triq el jemaa, dar 14⁩\") −19"
       },
@@ -213,6 +219,7 @@
         "action": "ship",
         "confidence": "low",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "LOW 14 · full address given (\"⁨نهج ابن خلدون عدد 5، سوسة⁩\") −16"
       },
@@ -245,6 +252,7 @@
         "action": "ship",
         "confidence": "high",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "LOW 9 · good order history (6 delivered) −8 · urban delivery zone −4"
       },
@@ -277,6 +285,7 @@
         "action": "ship",
         "confidence": "high",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "LOW 4 · full address given (\"⁨12 rue Ibn Khaldoun, immeuble Yasmine, …⁩\") −12"
       },
@@ -309,6 +318,7 @@
         "action": "ship",
         "confidence": "high",
         "path": "cascade_cache",
+        "read_by": "recorded",
         "delta": null,
         "reason_short": "LOW 4 · full address given (\"⁨nahj el Jazira, dar 22, Monastir⁩\") −12"
       },
@@ -329,6 +339,6 @@
     "awaiting_reply": 5,
     "ready_to_ship": 5
   },
-  "server_time": "2026-10-07T19:44:05.965947Z",
+  "server_time": "2026-10-07T23:52:59.187567Z",
   "mode": "public"
 }

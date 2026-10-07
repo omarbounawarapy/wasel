@@ -20,6 +20,7 @@
       "action": "confirm",
       "confidence": "low",
       "path": "cascade_cache",
+      "read_by": "recorded",
       "delta": null,
       "reason_short": "MEDIUM 42 · vague address (\"⁨حي النصر⁩\") +14 · 2 warning signs: \"⁨قريب من الجامع⁩\" +11"
     },
@@ -133,6 +134,13 @@
       "trigger": "initial",
       "created_at": "2026-09-27T10:00:00.000000Z",
       "path": "cascade_cache",
+      "read_by": "recorded",
+      "rules_alone": {
+        "tier": "low",
+        "final_score": 25,
+        "reason_short": "LOW 25 · low order value (35 TND) −9 · no warning signs −5",
+        "top_factor": "vague address (\"⁨حي النصر، قريب من الجامع⁩\")"
+      },
       "model_score": 41.8,
       "final_score": 42,
       "delta": null,

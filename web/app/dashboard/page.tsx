@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { MessageCircle } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
 import {
-    Page, PageHeader, Guide, StatCard, RiskBadge, Delta, Empty, LoadError, Chip,
+    Page, PageHeader, Guide, StatCard, ReadBy, RiskBadge, Delta, Empty, LoadError, Chip,
     TIER, NEXT_STEP, STATUS, tnd,
 } from "@/components/wasel/kit";
 
@@ -131,6 +131,7 @@ export default function QueueDashboard() {
                                     <span className="flex items-center gap-1.5 md:w-[120px]">
                                         <RiskBadge tier={o.score?.tier} score={o.score?.final_score} />
                                         <Delta delta={o.score?.delta} />
+                                        <ReadBy value={o.score?.read_by} />
                                     </span>
                                     <span className="text-sm font-medium text-gray-800">{o.score ? NEXT_STEP[o.score.action] ?? o.score.action : "–"}</span>
                                     <span className="text-sm text-gray-600">{STATUS[o.status] ?? o.status}</span>

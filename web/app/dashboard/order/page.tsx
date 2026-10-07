@@ -8,7 +8,7 @@ import { ordersApi } from '@/lib/api/orders';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-    Page, Section, Details, Chip, RiskBadge, Delta, Empty, TIER, NEXT_STEP, STATUS, tunisTime, tnd,
+    Page, Section, Details, Chip, ReadBy, RiskBadge, Delta, Empty, TIER, NEXT_STEP, STATUS, tunisTime, tnd,
 } from '@/components/wasel/kit';
 
 // Server-built strings (reasons, flag labels) are shown verbatim.
@@ -116,6 +116,7 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: any[], resco
                             v{a.version} · {TRIGGER[a.trigger] ?? a.trigger} · {tunisTime(a.created_at)}
                         </span>
                         <span className="flex items-center gap-2">
+                            <ReadBy value={a.read_by} />
                             <RiskBadge tier={a.tier} score={a.final_score} />
                             <Delta delta={a.delta} />
                         </span>
@@ -131,6 +132,14 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: any[], resco
                             Warning signs: {a.flags.map((f: any, i: number) => (
                                 <span key={i}>{i > 0 && ", "}{FLAG[f.code] ?? f.label} (“<bdi dir="auto">{f.quote}</bdi>”)</span>
                             ))}
+                        </p>
+                    )}
+                    {a.rules_alone && (a.rules_alone.tier !== a.tier || a.rules_alone.reason_short !== a.reason_short) && (
+                        <p className="text-xs text-gray-700 mt-2 rounded-lg bg-gray-50 border border-gray-200 px-2.5 py-1.5">
+                            <span className="font-semibold">What the rules alone would have said:</span>{" "}
+                            {(TIER[a.rules_alone.tier]?.label ?? a.rules_alone.tier)} {a.rules_alone.final_score}
+                            {a.rules_alone.tier !== a.tier ? ` (the AI read gave ${TIER[a.tier]?.label ?? a.tier} ${a.final_score})` : ""}
+                            {a.rules_alone.reason_short ? `. ${stripTier(a.rules_alone.reason_short)}` : ""}
                         </p>
                     )}
                     {a.path === "rules" && (
@@ -442,6 +451,7 @@ function OrderDetailContent() {
                 <div className="flex items-center gap-4 shrink-0">
                     <RiskBadge tier={o.score?.tier} score={o.score?.final_score} size="lg" />
                     <Delta delta={o.score?.delta} />
+                    <ReadBy value={o.score?.read_by} />
                 </div>
                 <div className="flex-1 min-w-0">
                     <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{STATUS[o.status]}</p>

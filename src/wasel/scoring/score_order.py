@@ -181,7 +181,7 @@ def _record_spans(proc: Processed) -> list[EvidenceSpan]:
 
 
 def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: UsageMeter | None,
-                config: ScoringConfig | None = None) -> ScoreResult:
+                config: ScoringConfig | None = None, _with_rules_alone: bool = True) -> ScoreResult:
     """Score one order from its messages. Pure: no database, no clock, no network beyond `llm`.
 
     Steps: build the window, look up `cache`, otherwise call `llm` (gated by `meter`), otherwise use the rules
@@ -308,6 +308,14 @@ def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: U
         "clarity": proc.clarity, "language": proc.language, "tone": proc.tone, "path_origin": x.path_origin,
     }
     assessment_path = x.path
+    if _with_rules_alone and x.path != "rules":
+        # What the rules extractor alone would have said, kept so the UI can show where the AI read differs.
+        alone = score_order(inp, cache=None, llm=None, meter=None, config=config, _with_rules_alone=False)
+        if alone.assessment is not None:
+            a0 = alone.assessment
+            context["rules_alone"] = {"tier": a0.tier, "final_score": a0.final_score,
+                                      "reason_short": a0.reason_short,
+                                      "top_factor": a0.top_factors[0].label if a0.top_factors else None}
     assessment = AssessmentRecord(
         path=assessment_path, is_order_change=proc.is_order_change, has_unsupported_media=w.has_unsupported_media,
         features={k: feats[k] for k in FEATURES}, context=context, model_score=model_score,

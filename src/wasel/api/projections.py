@@ -49,6 +49,22 @@ def _display_name(settings: Settings, cust: sqlite3.Row, order: sqlite3.Row) -> 
     return cust["display_name"]
 
 
+def read_by(path: str, cache_hit: bool) -> str:
+    """Who produced a score: 'rules' (no AI), 'recorded' (a stored AI result, no new call) or 'ai' (a live read)."""
+    if path == "rules":
+        return "rules"
+    if cache_hit or path in ("cascade_cache", "cascade_ack"):
+        return "recorded"
+    return "ai"
+
+
+def _cache_hit(conn, extraction_id) -> bool:
+    if not extraction_id:
+        return False
+    r = repo.row(conn, "SELECT cache_hit FROM extraction_runs WHERE extraction_id=?", extraction_id)
+    return bool(r and r["cache_hit"])
+
+
 def order_summary(conn, settings: Settings, o: sqlite3.Row) -> M.OrderSummary:
     """Build the queue row for order row `o`. Read-only.
 
@@ -64,6 +80,7 @@ def order_summary(conn, settings: Settings, o: sqlite3.Row) -> M.OrderSummary:
         prev = asm[-2] if len(asm) > 1 else None
         score = M.ScoreBadge(version=cur["version"], final_score=cur["final_score"], tier=cur["tier"],
                              action=cur["action"], confidence=cur["confidence"], path=cur["path"],
+                             read_by=read_by(cur["path"], _cache_hit(conn, cur["extraction_id"])),
                              delta=(cur["final_score"] - prev["final_score"]) if prev else None,
                              reason_short=cur["reason_short"])
         inj = bool(json.loads(cur["context_json"]).get("injection_suspected"))
@@ -155,7 +172,9 @@ def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailRespo
             if a["extraction_id"] else None
         views.append(M.AssessmentView(
             assessment_id=a["assessment_id"], version=a["version"], trigger=a["trigger"], created_at=a["created_at"],
-            path=a["path"], model_score=a["model_score"], final_score=a["final_score"],
+            path=a["path"], read_by=read_by(a["path"], bool(run and run["cache_hit"])),
+            rules_alone=json.loads(a["context_json"]).get("rules_alone"), model_score=a["model_score"],
+            final_score=a["final_score"],
             delta=(a["final_score"] - prev["final_score"]) if prev else None, tier=a["tier"], action=a["action"],
             confidence=a["confidence"], confidence_reasons=json.loads(a["confidence_reasons_json"]),
             confirmation=a["confirmation"], reason=a["reason"], reason_diff=a["reason_diff"],

@@ -170,6 +170,19 @@ export function RiskBadge({ tier, score, size = "sm" }: { tier?: string | null, 
     );
 }
 
+const READ_BY: Record<string, { label: string, tone: "blue" | "gray" | "amber" }> = {
+    ai: { label: "Read by AI", tone: "blue" },
+    rules: { label: "Read by rules", tone: "amber" },
+    recorded: { label: "Recorded sample", tone: "gray" },
+};
+
+/** Says how a score was produced: a live AI read, the rules alone, or a stored (recorded) AI result. */
+export function ReadBy({ value }: { value?: string | null }) {
+    const r = value ? READ_BY[value] : null;
+    if (!r) return null;
+    return <Chip tone={r.tone}>{r.label}</Chip>;
+}
+
 export function Delta({ delta }: { delta?: number | null }) {
     if (!delta) return null;
     const down = delta < 0;
