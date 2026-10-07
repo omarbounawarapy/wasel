@@ -13,6 +13,7 @@ from wasel.extraction.normalize import mask_phones, sanitize_llm_view
 from wasel.extraction.repair import FIELD_ORDER, OrderExtraction, load_schema, parse_extraction, repair
 from wasel.extraction.window import build_window
 from wasel.llm.base import ParseError
+from wasel.ml.features import FLAG_ORDER
 from wasel.ml.textnorm import normalize, normalize_with_map
 
 BASE = {"is_order": True, "is_order_change": False, "product_quote": None, "quantity": None,
@@ -336,3 +337,40 @@ def test_genuine_reply_keeps_its_label(reply, model):
 ])
 def test_injection_lexicon_catches_more_imperatives(text):
     assert injection_hit_text(text, text, _lex())
+
+
+# ---------------------------------------------------------------- rules extractor: flags and confirmation (#63)
+def _rules(config, texts, **kw):
+    from wasel.extraction.rules_extractor import rules_extract
+    w = build_window(make_input(texts, **kw))
+    return rules_extract(w, banks=config.banks, catalog=config.catalog, zones=config.zones,
+                         lexicons=config.raw["lexicons"])
+
+
+def _flag_cases():
+    from wasel.extraction.rules_extractor import _bank_phrases
+    from wasel.scoring.config import load_config
+    by_code: dict[str, list[str]] = {}
+    for code, ph in _bank_phrases(load_config().banks):
+        by_code.setdefault(code, []).append(ph)
+    return [(code, ph) for code, phs in by_code.items() for ph in phs[:3]]
+
+
+@pytest.mark.parametrize("code,phrase", _flag_cases())
+def test_rules_extract_finds_each_flag_on_a_bank_phrase(config, code, phrase):
+    ext_ = _rules(config, [f"nheb casque bluetooth. {phrase}"])
+    assert code in {f.code for f in ext_.red_flags}
+
+
+def test_rules_extract_reports_every_flag_code_in_the_banks(config):
+    assert {c for c, _ in _flag_cases()} == set(FLAG_ORDER)
+
+
+@pytest.mark.parametrize("reply,label", [
+    ("ey", "confirmed"), ("oui", "confirmed"), ("ok", "confirmed"), ("باهي", "confirmed"), ("behi", "confirmed"),
+    ("non", "declined"), ("annuler", "declined"), ("ma nhebech", "declined"), ("لا", "declined"),
+    ("oui mais finalement non", "ambiguous"), ("ok pas sûr", "ambiguous"), ("hmm asdf", "none"),
+])
+def test_rules_extract_reads_ack_and_decline_replies(config, reply, label):
+    ext_ = _rules(config, ["nheb casque bluetooth", reply], seller_at=1)
+    assert ext_.confirmation == label
