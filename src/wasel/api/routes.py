@@ -75,7 +75,7 @@ def try_order(order_id: str, request: Request, vid: str | None = Depends(visitor
                        {"X-Visitor-Id": ["missing or malformed"]})
     conn = st.conn()
     r = commands.try_order(conn, st.ids, st.clock.now(), st.settings, order_id, vid)
-    st.drain(conn)                                     # scored immediately: no debounce, cache hit
+    st.drain(conn, r["order_id"])                       # only this order; scored immediately: no debounce, cache hit
     return M.TryResponse(**r)
 
 

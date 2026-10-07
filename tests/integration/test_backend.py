@@ -344,6 +344,33 @@ def test_failures_api_never_returns_message_text(dev):
         assert "casquettat" not in body and "nconfirmi" not in body and "barcha" not in body
 
 
+def test_try_scores_only_the_new_order_not_the_whole_queue(public):
+    """Orders other visitors queued stay queued: /try latency does not depend on them."""
+    c, core, clock = public
+    B = {"X-Visitor-Id": VID_B}
+    for i in range(3):
+        r = c.post("/api/orders/ingest", json={"kind": "paste", "text": f"nheb casque {i}, Sfax"}, headers=B)
+        assert r.status_code in (200, 201, 202), r.text
+    clock.advance(5)                                   # all three are now due
+    due = "SELECT COUNT(*) FROM orders WHERE pending_rescore_at IS NOT NULL"
+    assert core.conn().execute(due).fetchone()[0] == 3
+    A = {"X-Visitor-Id": VID_A}
+    mine = c.post(f"/api/orders/{hero_id(c, A)['order_id']}/try", headers=A).json()
+    assert c.get(f"/api/orders/{mine['order_id']}", headers=A).json()["assessments"]       # scored
+    assert core.conn().execute(due).fetchone()[0] == 3                                    # B's still queued
+
+
+def test_process_due_stops_taking_orders_once_the_budget_is_spent(dev):
+    from wasel.worker import process_due
+    c, core, clock = dev
+    for i in range(3):
+        c.post("/api/orders/ingest", json={"kind": "paste", "text": f"nheb casque {i}, Sfax"})
+    clock.advance(5)
+    conn = core.conn()
+    assert process_due(conn, clock.now(), core.scorer_for(conn), core.drafter, ids=core.ids, budget_s=0.0) == []
+    assert len(process_due(conn, clock.now(), core.scorer_for(conn), core.drafter, ids=core.ids, limit=2)) == 2
+
+
 def test_actions_table_shape():
     assert ACTIONS["cancel"][1] == "cancelled" and "shipped" not in ACTIONS["cancel"][0]
 

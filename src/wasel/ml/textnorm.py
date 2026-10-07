@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import re
 import unicodedata
+from functools import lru_cache
 
 ARABIC_DIACRITICS = {chr(c) for c in range(0x064B, 0x0653)} | {"ٰ"}
 TATWEEL = "ـ"
@@ -17,12 +18,28 @@ LETTER_MAP = {"أ": "ا", "إ": "ا", "آ": "ا", "ٱ": "ا", "ى": "ي", "ة": 
               **{chr(0x06F0 + i): str(i) for i in range(10)}}       # Extended Arabic-Indic digits → ASCII
 
 
+MAX_EXPANSION = 4        # a character whose NFKC form is longer (U+FDFA gives 18) is dropped: it is not text
+
+
 def normalize_with_map(s: str) -> tuple[str, list[int]]:
-    """Per-character normalization; idx[j] = index in s of normalized char j."""
+    """Per-character normalization; idx[j] = index in s of normalized char j.
+
+    Results are memoized per text, so one message is normalized once per scoring run however many phrase checks
+    read it. Characters that NFKC-expand to more than MAX_EXPANSION code points are dropped.
+    """
+    norm, idx = _normalize_with_map(s)
+    return norm, list(idx)
+
+
+@lru_cache(maxsize=512)
+def _normalize_with_map(s: str) -> tuple[str, tuple[int, ...]]:
     out: list[str] = []
     idx: list[int] = []
     for i, ch in enumerate(s):
-        for c in unicodedata.normalize("NFKC", ch).casefold():
+        expanded = unicodedata.normalize("NFKC", ch)
+        if len(expanded) > MAX_EXPANSION:
+            continue
+        for c in expanded.casefold():
             if c in ARABIC_DIACRITICS or c == TATWEEL:
                 continue
             c = LETTER_MAP.get(c, c)
@@ -32,7 +49,7 @@ def normalize_with_map(s: str) -> tuple[str, list[int]]:
                 c = " "
             out.append(c)
             idx.append(i)
-    return "".join(out), idx
+    return "".join(out), tuple(idx)
 
 
 def normalize(s: str) -> str:
@@ -77,6 +94,11 @@ def standalone_numbers(text: str) -> list[str]:
 
 def tokens(text: str) -> list[str]:
     """Normalized word tokens, Arabic prefixes ال / و stripped."""
+    return list(_tokens(text))
+
+
+@lru_cache(maxsize=2048)
+def _tokens(text: str) -> tuple[str, ...]:
     out = []
     for tok in _TOKEN_RE.findall(normalize(text)):
         for p in _AR_PREFIXES:
@@ -84,7 +106,7 @@ def tokens(text: str) -> list[str]:
                 tok = tok[len(p):]
                 break
         out.append(tok)
-    return out
+    return tuple(out)
 
 
 def has_token(text: str, vocab) -> bool:
