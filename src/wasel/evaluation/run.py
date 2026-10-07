@@ -82,7 +82,7 @@ def run_extraction(rows, llm) -> dict:
         flag_tp += len(codes & want)
         flag_fp += len(codes - want)
         flag_fn += len(want - codes)
-    p = flag_tp / (flag_tp + flag_fp) if flag_tp + flag_fp else 1.0
+    p = flag_tp / (flag_tp + flag_fp) if flag_tp + flag_fp else (0.0 if flag_fn else 1.0)  # none predicted, some expected: 0
     rc = flag_tp / (flag_tp + flag_fn) if flag_tp + flag_fn else 1.0
     return {"n": n, "is_order_acc": order_ok / n, "address_exact_acc": exact / n, "address_within1_acc": near / n,
             "language_acc": lang_ok / n, "flag_precision": p, "flag_recall": rc,
@@ -196,7 +196,7 @@ def run_g1(rows, llm) -> dict:
             flag_tp += len(codes & want)
             flag_fp += len(codes - want)
             flag_fn += len(want - codes)
-    p = flag_tp / (flag_tp + flag_fp) if flag_tp + flag_fp else 1.0
+    p = flag_tp / (flag_tp + flag_fp) if flag_tp + flag_fp else (0.0 if flag_fn else 1.0)  # none predicted, some expected: 0
     rc = flag_tp / (flag_tp + flag_fn) if flag_tp + flag_fn else 1.0
     return {"n": n, "is_order_acc": order_ok / n, "address_exact_acc": exact / n,
             "address_within1_acc": near / n, "language_acc": lang_ok / n, "flag_precision": p,
