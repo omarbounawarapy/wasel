@@ -316,3 +316,41 @@ def test_input_over_the_per_request_cap_is_refused_before_any_call():
     res = llm(b).extract(judge_task(), "x" * 5000, parse=J.parse_judge, meter=None, sandbox_id=None, now=T0,
                          role="judge")
     assert res.parsed is None and res.errors == ["input_too_large"] and "judge" not in b.users
+
+
+# ---------------------------------------------------------------- empty slots never reach a message (#62)
+@pytest.mark.parametrize("tid", ["T_CONFIRM", "T_ADDRESS", "T_PREPAY", "T_ACK"])
+@pytest.mark.parametrize("lang", ["fr", "darija_arabic_script", "arabizi"])
+@pytest.mark.parametrize("name", ["Amira", None])
+def test_empty_product_and_price_use_the_generic_variant(tid, lang, name):
+    d = make_draft(req(template_id=tid, language=lang, price_tnd=None,
+                       slots={"first_name": name, "product": None, "price_tnd": None},
+                       customer_recent=["نحب" if lang == "darija_arabic_script" else "nheb" if lang == "arabizi"
+                                        else "Bonjour vous livrez ?"]))
+    assert d.route == "needs_review" and d.prefilter.passed, d.prefilter.failures
+    assert "{" not in d.rendered_text and "  " not in d.rendered_text and " ," not in d.rendered_text and "TND" not in d.rendered_text
+
+
+def test_empty_slot_without_a_generic_variant_is_blocked_and_named():
+    import copy
+    cfg = default_config()
+    from dataclasses import replace
+    tpl = copy.deepcopy(cfg.templates)
+    for v in tpl["templates"]["T_CONFIRM"].values():
+        v.pop("generic"), v.pop("generic_no_name")
+    d = make_draft(req(slots={"first_name": "Amira", "product": None, "price_tnd": "89"}),
+                   config=replace(cfg, templates=tpl))
+    assert d.route == "blocked" and "slot_missing:product" in d.prefilter.failures
+
+
+def test_empty_slot_is_never_rewritten_by_the_llm():
+    d = make_draft(req(slots={"first_name": "Amira", "product": None, "price_tnd": None}, price_tnd=None),
+                   llm=llm(None))
+    assert d.source == "static_template" and d.judge is None
+
+
+def test_prefilter_fails_on_an_empty_required_slot():
+    cfg = default_config()
+    fails = prefilter("Bonjour, votre commande de  est à  TND. Confirmez-vous ?", "x", {"product": None, "price_tnd": ""},
+                      "one", cfg["prefilter"], None)
+    assert "slot_missing:product" in fails and "slot_missing:price_tnd" in fails

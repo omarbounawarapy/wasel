@@ -50,21 +50,37 @@ def format_price(price: float | None) -> str | None:
     return None if price is None else f"{price:g}"
 
 
-def template_slots(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> dict[str, str]:
-    """The slot values the chosen variant actually uses (the required slots): only these are checked."""
+_PLACEHOLDER = re.compile(r"\{(\w+)\}")
+
+
+def template_body(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> str:
+    """The text variant to render: with or without the name, and the generic one (no product or price) when a slot
+    the full variant needs is empty. If there is no generic variant the full one is returned and its empty slot is
+    reported by `template_slots` and the prefilter.
+    """
     t = templates["templates"][template_id][lang]
-    body = t["text"] if slots.get("first_name") else t["no_name"]
-    return {k: v for k, v in slots.items() if v and "{" + k + "}" in body}
+    named = bool(slots.get("first_name"))
+    full = t["text"] if named else t["no_name"]
+    if all(slots.get(k) for k in _PLACEHOLDER.findall(full)):
+        return full
+    generic = t.get("generic" if named else "generic_no_name")
+    return generic or full
+
+
+def template_slots(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> dict[str, str | None]:
+    """Every slot the chosen variant uses (the required slots); an empty one is None, which the prefilter reports as
+    `slot_missing:<slot>`."""
+    body = template_body(templates, template_id, lang, slots)
+    return {k: (slots.get(k) or None) for k in _PLACEHOLDER.findall(body)}
 
 
 def render_template(templates: dict, template_id: str, lang: str, slots: dict[str, str | None]) -> str:
     """Render a template in `lang` with the slots.
 
-    Uses the variant with the name when `first_name` is set, otherwise the `no_name` variant. None slot values render
-    as empty text.
+    Uses the variant with the name when `first_name` is set, otherwise the `no_name` variant, and the generic variant
+    when the product or price is empty. A slot that is still empty renders as empty text; the prefilter blocks it.
     """
-    t = templates["templates"][template_id][lang]
-    body = t["text"] if slots.get("first_name") else t["no_name"]
+    body = template_body(templates, template_id, lang, slots)
     return body.format(**{k: (v if v is not None else "") for k, v in slots.items()})
 
 
