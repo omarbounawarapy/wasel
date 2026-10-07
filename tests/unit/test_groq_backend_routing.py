@@ -55,3 +55,58 @@ def test_explicit_base_url_beats_env(monkeypatch):
                            base_url="http://arg-host:8002/v1")
     backend.complete_json(TASK, "m", "salam", timeout_s=5)
     assert str(seen[0].url).startswith("http://arg-host:8002/v1/chat/completions")
+
+
+def test_oversized_provider_answer_is_a_parse_error_not_held_in_memory(monkeypatch):
+    import pytest
+
+    from wasel.llm.base import ParseError
+    monkeypatch.delenv("GROQ_BASE_URL", raising=False)
+    pulled = []
+
+    def chunks():
+        for _ in range(20):                                   # 20 x 256 KB = 5 MB on offer
+            pulled.append(1)
+            yield b" " * 262_144
+
+    backend = groq_backend("k", models=("openai/gpt-oss-20b",), transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=chunks())))
+    with pytest.raises(ParseError, match="too_large"):
+        backend.complete_json(TASK, "openai/gpt-oss-20b", "salam", timeout_s=5)
+    assert len(pulled) <= 3                                   # stopped reading shortly after the cap
+
+
+def test_declared_content_length_over_the_cap_is_refused(monkeypatch):
+    import pytest
+
+    from wasel.llm.base import ParseError
+    backend = groq_backend("k", models=("openai/gpt-oss-20b",), transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=b"{}", headers={"content-length": "5000000"})))
+    with pytest.raises(ParseError, match="too_large"):
+        backend.complete_json(TASK, "openai/gpt-oss-20b", "salam", timeout_s=5)
+
+
+def test_gemini_backend_has_the_same_cap():
+    import pytest
+
+    from wasel.llm.base import ParseError
+    from wasel.llm.gemini_backend import gemini_backend
+    backend = gemini_backend("k", "gemini-x", transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=b"x" * 600_000)))
+    with pytest.raises(ParseError, match="too_large"):
+        backend.complete_json(TASK, "gemini-x", "salam", timeout_s=5)
+
+
+def test_a_large_error_body_is_cut_not_refused():
+    import pytest
+
+    from wasel.llm.base import SchemaRejected
+    backend = groq_backend("k", models=("openai/gpt-oss-20b",), transport=httpx.MockTransport(
+        lambda request: httpx.Response(400, content=b"bad " * 100_000)))
+    with pytest.raises(SchemaRejected):
+        backend.complete_json(TASK, "openai/gpt-oss-20b", "salam", timeout_s=5)
+
+
+def test_normal_answer_still_parses():
+    backend = groq_backend("k", models=("openai/gpt-oss-20b",), transport=_capture([]))
+    assert backend.complete_json(TASK, "openai/gpt-oss-20b", "salam", timeout_s=5)[0] == "{}"

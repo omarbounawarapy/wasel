@@ -141,6 +141,17 @@ def test_everything_down_is_rules_path():
     assert r.order_patch.product_id == "P12"
 
 
+def test_oversized_provider_answer_falls_back_to_rules():
+    import httpx
+
+    from wasel.llm.groq_backend import groq_backend
+    big = groq_backend("k", models=("120b",), transport=httpx.MockTransport(
+        lambda request: httpx.Response(200, content=b"x" * 5_000_000)))
+    inp = make_input(["nheb el casque bluetooth. rue de Marseille, Sfax"])
+    r = _run(_chain([("primary", "groq", "120b", big, 6)]), inp)
+    assert r.assessment.path == "rules" and r.cache_put is None
+
+
 def test_breaker_opens_after_provider_down():
     be = FailingBackend("5xx")
     c = _chain([("primary", "groq", "120b", be, 6)])
