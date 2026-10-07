@@ -263,6 +263,7 @@ def _result(tier="high", conf="none", path="llm", inj=False, change=False):
     ("awaiting_reply", dict(), "no_reply_timeout", "high", None, "needs_review"),
     ("awaiting_reply", dict(conf="ambiguous"), "customer_reply", "high", None, "needs_review"),
     ("ready_to_ship", dict(tier="medium"), "customer_reply", "high", "t", "ready_to_ship"),
+    ("ready_to_ship", dict(tier="medium"), "customer_reply", "medium", "t", "ready_to_ship"),   # equal tier stays
     ("ready_to_ship", dict(tier="high"), "customer_reply", "low", "t", "needs_review"),
     ("collecting", dict(tier="low"), "initial", None, None, "ready_to_ship"),
     ("needs_review", dict(tier="medium"), "customer_reply", "high", None, "needs_review"),
@@ -270,6 +271,29 @@ def _result(tier="high", conf="none", path="llm", inj=False, change=False):
 ])
 def test_next_status_table(current, res, trigger, prior, approved, expected):
     assert next_status(current, _result(**res), trigger, prior, approved) == expected
+
+
+def test_fallback_extraction_never_replaces_a_primary_cache_row(tmp_path):
+    from wasel.contracts import CacheEntry, ScoreResult
+    conn = fresh_db(tmp_path / "cache.db")
+    ids = SeqIds()
+    with tx(conn):
+        cus = repo.get_or_create_customer(conn, ids, T0, sandbox_id=None, display_name="x")
+        cnv = repo.create_conversation(conn, ids, T0, customer_id=cus, sandbox_id=None, channel="paste")
+    from wasel.ingress.ingest import store_inbound
+    with tx(conn):
+        st = store_inbound(conn, ids, T0, conversation_id=cnv, origin="paste", text="nheb sac", no_debounce=True)
+    order = conn.execute("SELECT * FROM orders WHERE order_id=?", (st.order_id,)).fetchone()
+
+    def put(origin, ext):
+        res = ScoreResult(False, None, CacheEntry("h1", "extract-v1", "groq", "m", origin, ext), None, None, None, [], [])
+        with tx(conn):
+            repo.persist_result(conn, ids, T0, order, "initial", res, None, None, "idle")
+        return conn.execute("SELECT origin_path, is_primary, extraction_json FROM extraction_cache").fetchall()
+
+    assert [tuple(r) for r in put("llm", {"v": 1})] == [("llm", 1, '{"v": 1}')]
+    assert put("fallback_model", {"v": 2})[0]["extraction_json"] == '{"v": 1}'       # primary row kept
+    assert put("llm", {"v": 3})[0]["extraction_json"] == '{"v": 3}'                  # equally primary replaces
 
 
 def test_actions_table_shape():

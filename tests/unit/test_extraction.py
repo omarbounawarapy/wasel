@@ -115,6 +115,13 @@ def _lex():
     return default_config()["lexicons"]["injection"]
 
 
+def test_locate_ignores_quotes_under_three_characters():
+    from wasel.extraction.evidence import locate
+    w = build_window(make_input(["nheb sac cuir, Sfax"]))
+    assert locate("sa", w.messages) is None and locate("s a", w.messages) is None      # spaces do not count
+    assert locate("sac", w.messages) is not None
+
+
 # ---------------------------------------------------------------- cross-field rules
 CASES = ["ــقريـب من الجامع", "قَرِيب مِن الجَامِع", "أختي إستلمت آخر كوليه", "Près DE LA Poste",
          "9rib el jemaa w 3and el pharmacie", "🙂 salam, nheb el sac 👜 fi Sfax", "رقم ٣٤ شارع الحرية",

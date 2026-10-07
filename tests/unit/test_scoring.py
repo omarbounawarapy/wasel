@@ -48,6 +48,28 @@ def test_confidence_rules(config):
     assert "llm_cap_reached" in _confidence(final=80, **{**kw, "cap": "global_cap"})[1]
 
 
+@pytest.mark.parametrize("final,reasons", [
+    (25, []), (26, ["near_tier_boundary"]),           # exactly boundary_margin (10) from low_max 35 is not near
+    (55, []), (56, ["near_tier_boundary"]),           # and the same from medium_max 65
+    (45, []),                                         # 10 from both lines
+])
+def test_confidence_margin_is_exclusive(config, final, reasons):
+    kw = dict(path="llm", path_origin="llm", proc=None, product_matched=True, imputed=[], cap=None, cfg=config.raw)
+    assert _confidence(final=final, **kw)[1] == reasons
+
+
+def test_no_reply_timeout_adds_15_to_the_model_score_not_the_reply_adjusted_one(config):
+    """A confirmed reply scored 80 -> 48 (x0.6); the later timeout starts again from the model's 80, not from 48."""
+    from tests.conftest import T0
+    from wasel.contracts import PriorAssessment
+    prior = PriorAssessment(1, T0, "ext_1", None, [], {"price_tnd": 69}, 60.0, 36, "medium", "llm", "r",
+                            confirmation="confirmed")
+    r = score_order(make_input(["nheb sac"], trigger="no_reply_timeout", prior=prior),
+                    cache=None, llm=None, meter=None, config=config)
+    assert r.assessment.model_score == 60.0 and r.assessment.final_score == 75      # not 36 + 15 = 51
+    assert r.assessment.tier == "high"
+
+
 # ---------------------------------------------------------------- reply adjustments
 def test_reply_adjustments(config):
     assert _adjust(80.0, "confirmed", "customer_reply", config.raw)[0] == 48
