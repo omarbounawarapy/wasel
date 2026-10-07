@@ -3,10 +3,12 @@ to outbound). Char n-gram TF-IDF (2-5, char_wb: catches Arabizi spelling variant
 binary LogisticRegression (ok vs unsafe) for p_unsafe, plus a multinomial one naming the likely class
 {discount, payment, promise, instructions, contact, pushy, extra_question} for the activity feed.
 
-Trained at first use, deterministically, from data/draft_guard.yaml + the static templates (a few thousand
-rows, well under a second), so there is no binary artifact to version. decide() turns p_unsafe into the
-three-way send / review / block call: >= block_at blocks the draft, >= hold_at routes it to the owner's
-approval queue, below hold_at it is cleared to send. "send" is this classifier's recommendation.
+Trained at `make train` time (wasel/ml/train_guard.py, scikit-learn, deterministic) from data/draft_guard.yaml + the
+static templates. The vocabulary, IDF and coefficients are committed in models/draft_guard_v1.json with a card
+(bank sha256, versions, holdout numbers, thresholds); this module scores with numpy only and refuses to load if the
+bank no longer matches the artifact, so any change in decisions shows up as an artifact diff. decide()
+turns p_unsafe into the three-way send / review / block call: >= block_at blocks the draft, >= hold_at
+routes it to the owner's approval queue, below hold_at it is cleared to send. "send" is this classifier's recommendation.
 Whether it is enough to auto-send is set by auto_send.gate in
 config/scoring.yaml (see outbound/route.py). With gate "classifier" (the current setting) a "send"
 decision alone clears the draft: the LLM judge still runs when available and its rejection still kills a
@@ -17,21 +19,23 @@ calibrate() measures the decision on bank phrases the classifier never trained o
 """
 from __future__ import annotations
 
+import hashlib
+import json
+import math
 import random
 from dataclasses import dataclass
 from functools import lru_cache
 from pathlib import Path
 
+import numpy as np
 import yaml
-from sklearn.feature_extraction.text import TfidfVectorizer
-from sklearn.linear_model import LogisticRegression
-from threadpoolctl import threadpool_limits
 
 from wasel.ml.textnorm import normalize
 from wasel.outbound.templates import TEMPLATE_LANGS
 from wasel.paths import ROOT
 
 BANK = ROOT / "data" / "draft_guard.yaml"
+ARTIFACT = ROOT / "models" / "draft_guard_v1.json"
 OK = "ok"
 SEND, REVIEW, BLOCK = "send", "review", "block"
 
@@ -117,29 +121,65 @@ def build_corpus(templates: dict, bank: dict, *, split: str = "train", n_base: i
     return X, y
 
 
+class _Model:
+    """Numpy TF-IDF (char_wb 2-5, sublinear tf, smooth idf, l2) + two logistic heads, loaded from the artifact."""
+
+    def __init__(self, d: dict):
+        self.index = {g: i for i, g in enumerate(d["vocab"])}
+        self.idf = np.asarray(d["idf"], dtype=np.float64)
+        self.w = np.asarray(d["binary"]["coef"], dtype=np.float64)
+        self.b = float(d["binary"]["intercept"])
+        self.classes = list(d["kind"]["classes"])
+        self.kw = np.asarray(d["kind"]["coef"], dtype=np.float64)
+        self.kb = np.asarray(d["kind"]["intercept"], dtype=np.float64)
+
+    def vector(self, text: str) -> np.ndarray:
+        """L2-normalised TF-IDF row; same n-grams as scikit-learn's char_wb analyzer."""
+        counts: dict[int, int] = {}
+        for word in normalize(text).split():
+            w = f" {word} "
+            n_w = len(w)
+            for n in range(2, 6):
+                for off in range(max(n_w - n + 1, 1)):
+                    i = self.index.get(w[off:off + n])
+                    if i is not None:
+                        counts[i] = counts.get(i, 0) + 1
+                if n_w <= n:                      # a word this short is counted once, not again at larger n
+                    break
+        x = np.zeros(len(self.idf))
+        for i, c in counts.items():
+            x[i] = (1.0 + math.log(c)) * self.idf[i]
+        norm = float(np.linalg.norm(x))
+        return x / norm if norm else x
+
+    def p_unsafe(self, x: np.ndarray) -> float:
+        return float(1.0 / (1.0 + math.exp(-(float(x @ self.w) + self.b))))
+
+    def kinds(self, x: np.ndarray) -> np.ndarray:
+        z = self.kw @ x + self.kb
+        e = np.exp(z - z.max())
+        return e / e.sum()
+
+
+def _bank_sha(path: Path = BANK) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
 @lru_cache(maxsize=1)
-def _model(bank_path: str = str(BANK)) -> tuple[TfidfVectorizer, LogisticRegression, LogisticRegression]:
-    from wasel.scoring.config import default_config
-    bank = yaml.safe_load(Path(bank_path).read_text(encoding="utf-8"))
-    X, y = build_corpus(default_config().templates, bank)
-    vec = TfidfVectorizer(analyzer="char_wb", ngram_range=(2, 5), min_df=2, sublinear_tf=True,
-                          preprocessor=normalize)
-    M = vec.fit_transform(X)
-    bad = [i for i, c in enumerate(y) if c != OK]
-    # One BLAS thread: the problem is tiny, and the default pool (one thread per core) burns ~10x the CPU for
-    # the same result and pegs every core on a laptop.
-    with threadpool_limits(limits=1):
-        binary = LogisticRegression(max_iter=3000, C=10.0, class_weight="balanced").fit(M, [int(c != OK) for c in y])
-        kind = LogisticRegression(max_iter=3000, C=10.0).fit(M[bad], [y[i] for i in bad])
-    return vec, binary, kind
+def _model(artifact: str = str(ARTIFACT)) -> _Model:
+    d = json.loads(Path(artifact).read_text(encoding="utf-8"))
+    if d["bank_sha256"] != _bank_sha():
+        raise RuntimeError("data/draft_guard.yaml changed since models/draft_guard_v1.json was trained; "
+                           "run `make train` and commit the artifact")
+    return _Model(d)
 
 
 def classify(draft: str) -> GuardResult:
-    """Score one draft with the local classifier. The first call trains the models (cached for the process)."""
-    vec, binary, kind = _model()
-    m = vec.transform([draft])
-    p = round(float(binary.predict_proba(m)[0][1]), 3)
-    top = sorted(((str(c), round(float(q), 3)) for c, q in zip(kind.classes_, kind.predict_proba(m)[0], strict=True)),
+    """Score one draft with the local classifier (artifact loaded once per process, numpy only)."""
+    m = _model()
+    x = m.vector(draft)
+    p = round(m.p_unsafe(x), 3)
+    top = sorted(((c, round(float(q), 3)) for c, q in zip(m.classes, m.kinds(x), strict=True)),
                  key=lambda t: -t[1])[:3]
     return GuardResult(p, top[0][0] if p >= 0.5 else OK, top)
 
@@ -173,8 +213,6 @@ def calibrate(*, block_at: float | None = None, hold_at: float | None = None, n_
     text is cleared to send; how many safe drafts are held or blocked), plus the smallest hold_at on a 5%
     grid that clears at most 15% of the unsafe holdout while holding at most 15% of safe drafts (auto-send
     has to stay viable) and blocking none, with block_at fixed. Deterministic; no training happens here."""
-    import yaml
-
     from wasel.scoring.config import default_config
     cfg = default_config()
     bank = yaml.safe_load(BANK.read_text(encoding="utf-8"))

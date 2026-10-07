@@ -24,7 +24,7 @@ This guide separates what was **verified** on a development machine from what ne
 | Piece | Why it exists |
 |---|---|
 | **Worker** | Serves the static UI from the edge (no container wake-up for page loads), routes API and webhook traffic to the container, rejects bodies over 1 MiB before they reach it, and hands the container its environment. |
-| **Container** (`deploy/cloudflare/container/Dockerfile`) | The backend needs Linux, xgboost, numpy and scikit-learn, one SQLite file and a 1-second in-process worker loop. That does not fit Python Workers (Pyodide) and cannot be split across isolates. Exactly one instance (`max_instances: 1`), addressed by a fixed name. |
+| **Container** (`deploy/cloudflare/container/Dockerfile`) | The backend needs Linux, xgboost and numpy, one SQLite file and a 1-second in-process worker loop. That does not fit Python Workers (Pyodide) and cannot be split across isolates. Exactly one instance (`max_instances: 1`), addressed by a fixed name. |
 | **R2 bucket** | A container's disk is wiped whenever it sleeps. `wasel.db.snapshot` restores the SQLite file from R2 at boot, saves it back at most every `SNAPSHOT_INTERVAL_S` (60 s) when it changed, and once more on shutdown (SIGTERM, up to 15 min of grace). The Worker keeps one previous generation (`wasel.sqlite.prev`). The container reaches R2 through a Worker outbound handler, so it holds no Cloudflare credential. |
 | **Cron** (production only) | Outside `public` mode, no-reply timeouts must fire while nobody is browsing, so the cron pings the container every 5 minutes. In `public` mode it does nothing and the container sleeps after `CONTAINER_SLEEP_AFTER` (15 m). |
 

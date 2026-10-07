@@ -51,7 +51,7 @@ One FastAPI process owns the database and runs the worker. The web UI, the Strea
 | Area | Stack |
 |---|---|
 | Backend | Python 3.11, FastAPI, Uvicorn, Pydantic v2, SQLite (WAL), `httpx` |
-| Scoring | XGBoost (monotone constraints), NumPy, pandas, scikit-learn (guard classifier), RapidFuzz (catalog matching) |
+| Scoring | XGBoost (monotone constraints), NumPy, pandas, RapidFuzz (catalog matching) |
 | LLM providers | Groq (`openai/gpt-oss-120b`, `openai/gpt-oss-20b`), Gemini (optional), any OpenAI-compatible endpoint such as vLLM |
 | Web UI | Next.js 16 static export (React 19, Tailwind 4), served by FastAPI at `/` |
 | Dashboard | Streamlit 1.64 |

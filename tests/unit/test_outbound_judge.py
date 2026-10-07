@@ -362,3 +362,40 @@ def test_prefilter_fails_on_an_empty_required_slot():
     fails = prefilter("Bonjour, votre commande de  est à  TND. Confirmez-vous ?", "x", {"product": None, "price_tnd": ""},
                       "one", cfg["prefilter"], None)
     assert "slot_missing:product" in fails and "slot_missing:price_tnd" in fails
+
+
+def test_numpy_scorer_matches_scikit_learn_on_every_bank_row():
+    """The committed artifact scores like the scikit-learn fit it was exported from, within 1e-6."""
+    import yaml
+
+    from wasel.ml.train_guard import fit
+    from wasel.outbound import guard_clf as G
+    from wasel.scoring.config import default_config
+    bank = yaml.safe_load(BANK.read_text(encoding="utf-8"))
+    templates = default_config().templates
+    vec, binary, kind = fit(bank, templates)
+    texts = build_corpus(templates, bank)[0] + build_corpus(templates, bank, split="holdout")[0]
+    m = G._model()
+    M = vec.transform(texts)
+    want_p, want_k = binary.predict_proba(M)[:, 1], kind.predict_proba(M)
+    for i, t in enumerate(texts):
+        x = m.vector(t)
+        assert abs(m.p_unsafe(x) - want_p[i]) < 1e-6
+        assert abs(m.kinds(x) - want_k[i]).max() < 1e-6
+
+
+def test_first_call_is_fast_and_stale_bank_is_refused(tmp_path):
+    import json
+    import subprocess
+    import sys
+
+    from wasel.outbound import guard_clf as G
+    code = "import time;from wasel.outbound.guard_clf import classify;t=time.time();classify('x');print(time.time()-t)"
+    out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
+    assert float(out.stdout) < 0.2
+    art = json.loads(G.ARTIFACT.read_text(encoding="utf-8"))
+    art["bank_sha256"] = "0" * 64
+    bad = tmp_path / "a.json"
+    bad.write_text(json.dumps(art), encoding="utf-8")
+    with pytest.raises(RuntimeError, match="make train"):
+        G._model(str(bad))

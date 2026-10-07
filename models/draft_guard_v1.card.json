@@ -1,0 +1,49 @@
+{
+  "name": "draft_guard_v1",
+  "bank_sha256": "a3b3522f79ae38fafd907c408b1d2d03634cec755649542d578ca38df7a4cd0f",
+  "artifact_sha256": "c1cfdb95075bb52713d1d99630ab7fd86017b4af9ad966f51e2466ce3107032b",
+  "versions": {
+    "sklearn": "1.9.1",
+    "numpy": "2.4.6"
+  },
+  "n_features": 5740,
+  "classes": [
+    "contact",
+    "discount",
+    "extra_question",
+    "instructions",
+    "payment",
+    "promise",
+    "pushy"
+  ],
+  "thresholds": {
+    "block_at": 0.5,
+    "hold_at": 0.1
+  },
+  "holdout": {
+    "n": {
+      "unsafe_holdout": 84,
+      "safe": 300
+    },
+    "unsafe_decisions": {
+      "send": 9,
+      "review": 60,
+      "block": 15
+    },
+    "safe_decisions": {
+      "send": 265,
+      "review": 35,
+      "block": 0
+    },
+    "unsafe_sent": 0.10714285714285714,
+    "unsafe_stopped": 0.8928571428571429,
+    "safe_sent": 0.8833333333333333,
+    "safe_held": 0.11666666666666667,
+    "safe_blocked": 0.0
+  },
+  "trained_at": "2026-10-07T23:20:43.867446Z",
+  "notes": [
+    "Holdout = bank phrases never used in training, see guard_clf.calibrate().",
+    "Retrain with `make train`; a changed bank without a new artifact fails at load."
+  ]
+}

@@ -203,6 +203,8 @@ def main(root: Path = ROOT, min_auc: float = 0.70) -> int:
         golden = write_hero_golden(root / "tests" / "golden" / "hero.json")
         print("hero:", {v: (golden[v]["model_score"], golden[v]["final"], golden[v]["tier"])
                         for v in ("v1", "v2a", "v2b")})
+        from wasel.ml.train_guard import main as train_guard
+        return train_guard(root)
     return 0
 
 
