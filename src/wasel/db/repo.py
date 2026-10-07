@@ -201,6 +201,16 @@ def prior_assessment(conn, order_id) -> PriorAssessment | None:
 
 
 # ---------------------------------------------------------------- persist one rescore (one transaction)
+MAX_STORED_OUTPUT = 16 * 1024
+
+
+def _cap_text(s: str | None, limit: int = MAX_STORED_OUTPUT) -> str | None:
+    """`s` cut to `limit` characters with a visible marker, so one provider answer cannot bloat the database."""
+    if s is None or len(s) <= limit:
+        return s
+    return s[:limit] + f"…[truncated, {len(s)} characters in all]"
+
+
 def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger: str, result: ScoreResult,
                    prior: PriorAssessment | None, next_status: str | None, rescore_state: str) -> str | None:
     """Write one rescore's ScoreResult and update the order. The caller wraps it in a transaction.
@@ -222,7 +232,8 @@ def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger:
             " dropped_quotes, injection_suspected, error, latency_ms, tokens_in, tokens_out, created_at)"
             " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (ext_id, oid, _j(x.input_message_ids), x.input_hash, x.provider, x.model, x.prompt_version,
-             int(x.cache_hit), _j(x.attempts), x.output_json, _j(x.validated) if x.validated is not None else None,
+             int(x.cache_hit), _j(x.attempts), _cap_text(x.output_json),
+             _j(x.validated) if x.validated is not None else None,
              _j(x.spans), int(x.valid), x.dropped_flags, x.dropped_quotes, int(x.injection_suspected), x.error,
              x.latency_ms, x.tokens_in, x.tokens_out, utc_iso(now)))
     elif prior is not None:

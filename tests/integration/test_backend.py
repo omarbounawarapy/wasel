@@ -296,6 +296,35 @@ def test_fallback_extraction_never_replaces_a_primary_cache_row(tmp_path):
     assert put("llm", {"v": 3})[0]["extraction_json"] == '{"v": 3}'                  # equally primary replaces
 
 
+def test_stored_provider_output_is_cut_with_a_marker(tmp_path):
+    from dataclasses import replace
+
+    from wasel.db.repo import MAX_STORED_OUTPUT
+    conn = fresh_db(tmp_path / "out.db")
+    ids = SeqIds()
+    with tx(conn):
+        cus = repo.get_or_create_customer(conn, ids, T0, sandbox_id=None, display_name="x")
+        cnv = repo.create_conversation(conn, ids, T0, customer_id=cus, sandbox_id=None, channel="paste")
+    from wasel.ingress.ingest import store_inbound
+    with tx(conn):
+        st = store_inbound(conn, ids, T0, conversation_id=cnv, origin="paste", text="nheb sac", no_debounce=True)
+    order = conn.execute("SELECT * FROM orders WHERE order_id=?", (st.order_id,)).fetchone()
+    from tests.conftest import make_input
+    base = stub.score_order(make_input(["nheb sac"]))
+
+    def run(text):
+        res = replace(base, extraction=replace(base.extraction, output_json=text), assessment=None,
+                      order_patch=None, cache_put=None, usage=[], events=[])
+        with tx(conn):
+            repo.persist_result(conn, ids, T0, order, "initial", res, None, None, "idle")
+        return conn.execute("SELECT output_json FROM extraction_runs ORDER BY rowid DESC").fetchone()[0]
+
+    big = run("x" * 1_000_000)
+    assert big.startswith("x" * MAX_STORED_OUTPUT) and len(big) < MAX_STORED_OUTPUT + 100
+    assert "truncated, 1000000 characters in all" in big
+    assert run("{}") == "{}"
+
+
 def test_actions_table_shape():
     assert ACTIONS["cancel"][1] == "cancelled" and "shipped" not in ACTIONS["cancel"][0]
 

@@ -6,6 +6,7 @@ avoids one more pinned dependency.
 """
 from __future__ import annotations
 
+import json
 import time
 from collections.abc import Callable
 
@@ -29,6 +30,23 @@ GROQ_REASONING_KWARGS = {"reasoning_effort": "low", "reasoning_format": "hidden"
 # Self-hosted OpenAI-compatible servers (vLLM on a GPU host, docs/operations/self-hosted-llm.md) reject the
 # Groq-only `reasoning_format` field with a 400; `reasoning_effort` is honored for gpt-oss.
 SELFHOST_REASONING_KWARGS = {"reasoning_effort": "low"}
+MAX_RESPONSE_BYTES = 256 * 1024     # a real extraction is a few KB; a bigger answer is treated as a bad one
+MAX_ERROR_BYTES = 2048              # error bodies are only quoted in a message
+
+
+def _read_capped(r: httpx.Response, cap: int) -> bytes:
+    """Body of a streamed response. A 2xx body over `cap` raises ParseError("too_large") without reading the rest;
+    an error body is simply cut at `cap`."""
+    if r.status_code < 400 and int(r.headers.get("content-length") or 0) > cap:
+        raise ParseError("too_large")
+    buf = bytearray()
+    for chunk in r.iter_bytes():
+        buf += chunk
+        if len(buf) > cap:
+            if r.status_code < 400:
+                raise ParseError("too_large")
+            return bytes(buf[:cap])
+    return bytes(buf)
 
 
 def _int(v) -> int | None:
@@ -70,7 +88,8 @@ class OpenAICompatBackend:
 
         Failures are mapped to LLMError subclasses: timeout -> Timeout, network errors, 401/403 and 5xx ->
         ProviderDown, 429 -> RateLimited, 404 -> ModelGone, other 4xx -> SchemaRejected, unreadable or empty body ->
-        ParseError, and a finish_reason other than 'stop' -> Truncated. The returned content is the raw model text, not
+        ParseError (a body over MAX_RESPONSE_BYTES is ParseError("too_large"), read as a stream and never held in
+        full), and a finish_reason other than 'stop' -> Truncated. The returned content is the raw model text, not
         yet parsed.
         """
         body = {
@@ -83,9 +102,10 @@ class OpenAICompatBackend:
             body["seed"] = 7
         t0 = time.monotonic()
         try:
-            with httpx.Client(timeout=timeout_s, transport=self._transport) as c:
-                r = c.post(f"{self.base_url}/chat/completions", json=body,
-                           headers={"Authorization": f"Bearer {self.api_key}"})
+            with httpx.Client(timeout=timeout_s, transport=self._transport) as c, \
+                    c.stream("POST", f"{self.base_url}/chat/completions", json=body,
+                             headers={"Authorization": f"Bearer {self.api_key}"}) as r:
+                raw = _read_capped(r, MAX_RESPONSE_BYTES if r.status_code < 400 else MAX_ERROR_BYTES)
         except httpx.TimeoutException as e:
             raise Timeout(str(e)[:200]) from e
         except httpx.HTTPError as e:
@@ -93,13 +113,13 @@ class OpenAICompatBackend:
         if r.status_code == 429:
             raise RateLimited(float(r.headers["retry-after"]) if r.headers.get("retry-after") else None)
         if r.status_code == 404:
-            raise ModelGone(r.text[:200])
+            raise ModelGone(raw.decode("utf-8", "replace")[:200])
         if r.status_code in (401, 403) or r.status_code >= 500:
             raise ProviderDown(f"http {r.status_code}")
         if r.status_code >= 400:
-            raise SchemaRejected(r.text[:300])
+            raise SchemaRejected(raw.decode("utf-8", "replace")[:300])
         try:
-            data = r.json()
+            data = json.loads(raw)
             ch = data["choices"][0]
         except (ValueError, KeyError, IndexError) as e:
             raise ParseError("bad_envelope") from e
