@@ -59,7 +59,11 @@ def registry(path: Path = REGISTRY) -> dict:
 def active_version(role: str) -> str:
     """The prompt version `role` runs. The PROMPT_VERSION environment variable overrides it for 'extract' only."""
     if role == "extract" and env("PROMPT_VERSION"):
-        return env("PROMPT_VERSION")
+        version, valid = env("PROMPT_VERSION"), list(registry()["roles"]["extract"]["versions"])
+        if version not in valid:
+            raise PromptVersionMismatch(f"PROMPT_VERSION={version} is not registered in config/llm.yaml; "
+                                        f"valid extract versions: {', '.join(valid)}")
+        return version
     return registry()["roles"][role]["active"]
 
 

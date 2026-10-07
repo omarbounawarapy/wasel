@@ -65,6 +65,7 @@ class AppState:
         self.started_at = clock.now()
         self.last_tick_at = None
         self.last_purge_at = None
+        self.seed_unscored = 0                          # seeded orders without an assessment after the last seeding
         self.last_webhook_at = None                     # last POST with a valid signature
         self.no_reply_s = self.config.raw["timeouts"]["no_reply_s"]["demo" if settings.demo_mode else "prod"]
         self.snapshot_store = store_from_url(settings.snapshot_url)     # set only on hosts with an ephemeral disk
@@ -155,6 +156,12 @@ class AppState:
         if mode == "always" or (mode == "if_empty" and empty):
             n = seed_all(conn, self.ids, self.clock.now(), self.scorer_for(conn), self.drafter, self.config.catalog)
             log.info("seeded %d orders", n)
+            self.seed_unscored = conn.execute(
+                "SELECT COUNT(*) FROM orders o JOIN conversations c USING (conversation_id)"
+                " WHERE c.seed_key IS NOT NULL AND o.sandbox_id IS NULL AND o.current_assessment_id IS NULL").fetchone()[0]
+            if self.seed_unscored:
+                log.error("seed_unscored: %d seeded orders have no assessment (check PROMPT_VERSION and make warm)",
+                          self.seed_unscored)
         if restored:
             self.snapshotter.seed_digest(conn)          # what was just restored is already stored
 
@@ -183,7 +190,7 @@ class AppState:
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))
         cap = s.daily_cap
         worker_stale = s.worker_enabled and (self.last_tick_at is None or (now - self.last_tick_at).total_seconds() > 10)
-        degraded = fb or worker_stale or (self.snapshotter is not None and self.snapshotter.failing)
+        degraded = fb or worker_stale or self.seed_unscored or (self.snapshotter is not None and self.snapshotter.failing)
         return M.HealthResponse(
             status="degraded" if degraded else "ok", mode=s.app_mode, wa_send=s.wa_send_effective,
             webhook="enabled" if s.webhook_mounted else "disabled", db=True, demo_mode=s.demo_mode,
@@ -208,7 +215,8 @@ class AppState:
             wa_token_present=bool(s.wa_token),
             real_rows=conn.execute("SELECT COUNT(*) FROM conversations WHERE channel='whatsapp'").fetchone()[0],
             sandbox_orders=conn.execute("SELECT COUNT(*) FROM orders WHERE sandbox_id IS NOT NULL").fetchone()[0],
-            wa_auto_send=s.wa_auto_send and not s.is_public)
+            wa_auto_send=s.wa_auto_send and not s.is_public,
+            degraded_reason="seed_unscored" if self.seed_unscored else None)
 
 
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,

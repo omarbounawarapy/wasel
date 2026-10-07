@@ -40,7 +40,7 @@ Current roles:
 
 `routing` holds provider defaults that environment variables still override: `primary` and `fallback_model` (the Groq models, overridden by `EXTRACT_MODEL` and `FALLBACK_MODEL`), `deadline_s` (the chain deadline, overridden by `LLM_DEADLINE_S`) and `cache_size` (entries in the response cache).
 
-The environment variable `PROMPT_VERSION` overrides `extract.active`; no other role has an override. The extraction cache is read and written with the resulting version, so nothing else needs to agree with it.
+The environment variable `PROMPT_VERSION` overrides `extract.active`; no other role has an override. The extraction cache is read and written with the resulting version, so nothing else needs to agree with it. The value must be a version listed under `extract.versions`; otherwise the app refuses to start with `PromptVersionMismatch` and the list of valid versions. The committed seed cache (`data/seed/extraction_cache.jsonl`) is keyed on the version, so a new extract version needs `make warm` before deploy. Without it every seeded order misses the cache on each boot, and `/api/health` reports `degraded` with reason `seed_unscored` if any seeded order ends up with no assessment.
 
 ## Prompt files and the version lock
 

@@ -366,6 +366,14 @@ def test_extraction_cache_is_read_with_the_active_prompt_version(dev):
     assert core.scorer_for(core.conn()).keywords["cache"].prompt_version == PROMPT_VERSION
 
 
+def test_health_is_degraded_when_seeded_orders_are_unscored(tmp_path, monkeypatch):
+    monkeypatch.setattr("wasel.worker.drain", lambda *a, **k: 0)        # seeding leaves every order unscored
+    c, core, _ = make_client(tmp_path, "dev")
+    with c:
+        h = c.get("/api/health").json()
+        assert h["status"] == "degraded" and h["degraded_reason"] == "seed_unscored"
+
+
 def test_draft_for_a_product_outside_the_catalog_has_no_empty_slot(dev):
     c, core, clock = dev
     r = c.post("/api/orders/ingest", json={"kind": "paste", "text": "Bonjour je veux la robe rouge, Ariana rue des "
