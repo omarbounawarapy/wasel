@@ -132,6 +132,6 @@ To train on real outcomes, replace `data/synth_v1.csv` with a table having the s
 ## Known limitations
 
 - Labels are simulated. Feature weights, zone risk and catalog prices are assumptions.
-- `zone_encoded` raises the score of rural orders by construction. An expected-failure test records that a rural order with an exact address and a 450 TND price scores 36.3 (medium) on the committed model, against 30.8 for the simulated maximum and 29.0 for the prior. Resolving it means changing the data or accepting the trade-off in the card, not tuning the model until the test passes.
+- `zone_encoded` raises the score of rural orders by construction. An expected-failure test records that a rural order with an exact address and a 450 TND price scores 36.3 (medium) on the committed model, against 30.8 for the simulated maximum and 29.0 for the prior. Resolving it means changing the data or accepting the trade-off in the card, not tuning the model until the test passes. The limitation is recorded in the `notes` of `models/risk_xgb_v1.card.json`.
 - Confidence is an operational rule ([scoring](subsystems/scoring.md#confidence)), not a calibrated interval.
 - The 0.6 confirmation multiplier and the 15 point timeout addition are starting assumptions, not fitted.

@@ -188,7 +188,10 @@ def main(root: Path = ROOT, min_auc: float = 0.70) -> int:
         "reliability": reliability(p_hat, yh),
         "notes": ["No time split: rows have no temporal order.",
                   "The model class matches the prior (additive in log-odds), so depth 2 and no tuning.",
-                  "model_score = 100 · P(refused) on simulated outcomes, not a real-world refusal rate."],
+                  "model_score = 100 · P(refused) on simulated outcomes, not a real-world refusal rate.",
+                  "Known limitation: zone_encoded raises the score of rural orders by construction. A rural order "
+                  "with an exact address and a 450 TND price (P15) scores 36.3 (medium) against 30.8 for the "
+                  "simulated maximum; see docs/machine-learning.md."],
     }
     model_path.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(tmp_model, model_path)
