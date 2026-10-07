@@ -17,6 +17,22 @@ function groupIssues(issues: any[]) {
     return [...groups.values()].sort((a, b) => a.rank - b.rank);
 }
 
+// The analyzer reports raw identifiers from the synthetic sessions' own tools. Show plain wording instead.
+const SIGNATURE_LABELS: Record<string, string> = {
+    "confirm_order never called": "Said the order was confirmed, but the confirmation was never made",
+    "confirm_order failed": "Said the order was confirmed, but the confirmation failed",
+    "closed with an imprecise address": "Closed as done with an address that was still imprecise",
+    "lookup_customer returned another customer": "The customer lookup returned another customer's record",
+    "asked again: address": "Asked again for the address",
+    "asked again: confirm": "Asked again for the confirmation",
+    "search_address: same query, no results": "Searched for the address again with the same words and found nothing",
+    "update_order failed": "The order update failed, yet the conversation went on as if it worked",
+    "customer question left unanswered": "A customer question was left unanswered",
+};
+
+// Unknown signatures still lose their underscores, so no raw identifier is shown as-is.
+const plainSignature = (sig: string) => SIGNATURE_LABELS[sig] ?? String(sig).replace(/_/g, " ");
+
 export default function FailuresPage() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
@@ -33,10 +49,10 @@ export default function FailuresPage() {
         <Page wide>
             <PageHeader
                 title="Silent failures"
-                subtitle="Conversations where nothing crashed, yet the customer was still let down: for example the assistant said an order was confirmed when it wasn't." />
+                subtitle="A demonstration of the silent-failure analyzer on synthetic test conversations. It is not a measurement of real Wasel conversations." />
 
             <Guide id="failures" steps={[
-                "Wasel re-reads finished conversations and looks for silent mistakes.",
+                "The analyzer re-reads finished conversations and looks for silent mistakes: cases where nothing crashed, yet the customer was let down.",
                 "Problems are grouped and ranked: fix the top card first.",
                 "Each card lists the specific cases and how often they happened.",
             ]} />
@@ -45,10 +61,18 @@ export default function FailuresPage() {
                 <Section title="No report yet"><Empty title="The silent-failure analysis hasn't been run on this server." /></Section>
             ) : (
                 <>
+                    <div role="note" className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+                        <p className="font-semibold">Test data, not real Wasel conversations.</p>
+                        <p className="mt-1">
+                            The analyzer was run on {data.n_sessions} synthetic conversations of a different, imaginary assistant, to show
+                            that it can find silent failures. The percentages below are not a Wasel failure rate.
+                        </p>
+                    </div>
+
                     <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                        <StatCard label="Conversations checked" value={data.n_sessions} hint="Synthetic test conversations" />
+                        <StatCard label="Test conversations checked" value={data.n_sessions} hint="Synthetic, not real Wasel orders" />
                         <StatCard label="Silent failures" value={failed} tone={failed ? "warn" : "good"}
-                                  hint={data.n_sessions ? `${Math.round((failed / data.n_sessions) * 100)}% of conversations` : undefined} />
+                                  hint={data.n_sessions ? `${Math.round((failed / data.n_sessions) * 100)}% of the test conversations` : undefined} />
                         <StatCard label="Worth a second look" value={review} hint="Not sure it's a failure" />
                     </div>
 
@@ -68,7 +92,7 @@ export default function FailuresPage() {
                                             <ul className="divide-y divide-gray-100 border border-gray-100 rounded-xl">
                                                 {g.cases.map((c: any) => (
                                                     <li key={c.signature} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
-                                                        <span className="text-gray-800 min-w-0 break-words">{c.signature}</span>
+                                                        <span className="text-gray-800 min-w-0 break-words">{plainSignature(c.signature)}</span>
                                                         <span className="text-gray-500 tabular-nums shrink-0">{c.n_sessions} × · {Math.round((c.share || 0) * 100)}%</span>
                                                     </li>
                                                 ))}
@@ -76,7 +100,7 @@ export default function FailuresPage() {
                                             <Details>
                                                 <p>Problem type: {g.type.replace(/_/g, " ")}</p>
                                                 {g.cases.map((c: any) => (
-                                                    <p key={c.signature}>{c.signature}: confidence {Math.round((c.confidence || 0) * 100)}%, priority {Number(c.priority).toFixed(1)}</p>
+                                                    <p key={c.signature}>{plainSignature(c.signature)}: confidence {Math.round((c.confidence || 0) * 100)}%, priority {Number(c.priority).toFixed(1)}</p>
                                                 ))}
                                             </Details>
                                         </Section>
