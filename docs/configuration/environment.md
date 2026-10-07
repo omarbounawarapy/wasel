@@ -66,7 +66,7 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `GEMINI_MODEL` | empty | A Flash-class model id from your Gemini account |
 | `PROBE_FILE` | `config/probe.json` | Optional JSON describing how your Gemini account wants the schema written. The file is absent from the repository; built-in defaults apply. |
 | `LLM_DEADLINE_S` | `20` (or `routing.deadline_s`) | Total time budget of one chain run |
-| `PROMPT_VERSION` | unset | Overrides the active extract prompt version from `llm.yaml`. Both the cache key and the cache lookup use the resulting version, so the cache stays consistent. Leave unset normally. |
+| `PROMPT_VERSION` | unset | Overrides the active extract prompt version from `llm.yaml`. Both the cache key and the cache lookup use the resulting version, so the cache stays consistent. Must be listed in `llm.yaml`, otherwise startup fails with `PromptVersionMismatch`. A new extract version needs `make warm` before deploy because the seed cache is keyed on the version. Leave unset normally. |
 | `DRAFT_LLM` | `false` | Enables the LLM rewrite and judge for outbound drafts |
 | `LLM_REGISTRY` | `config/llm.yaml` | Alternative registry file |
 | `TRACE_FILE` | unset | Append every LLM trace record to this JSONL file |

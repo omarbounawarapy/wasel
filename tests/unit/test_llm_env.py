@@ -40,3 +40,12 @@ def test_tests_ignore_dotenv_when_env_file_is_none(monkeypatch):
 def test_replay_without_fixtures_is_a_clear_error(tmp_path):
     with pytest.raises(ValueError, match="LLM_REPLAY_DIR"):
         build_client("replay", replay_dirs=[tmp_path / "missing"])
+
+
+def test_unregistered_prompt_version_refuses_to_start(monkeypatch):
+    from wasel.llm.prompts import PromptVersionMismatch, active_version
+    monkeypatch.setenv("PROMPT_VERSION", "extract-v2")
+    with pytest.raises(PromptVersionMismatch, match="extract-v1"):
+        active_version("extract")
+    monkeypatch.setenv("PROMPT_VERSION", "extract-v1")
+    assert active_version("extract") == "extract-v1"

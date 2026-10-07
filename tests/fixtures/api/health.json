@@ -49,5 +49,6 @@
   "wa_token_present": false,
   "real_rows": 0,
   "sandbox_orders": 1,
-  "wa_auto_send": false
+  "wa_auto_send": false,
+  "degraded_reason": null
 }
