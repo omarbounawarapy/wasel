@@ -1,7 +1,7 @@
 """ChainClient's cache and breaker must survive concurrent callers (issue #24)."""
 import sys
 import threading
-from datetime import datetime
+from datetime import UTC, datetime
 
 from wasel.llm.base import CallMeta, ProviderDown, TaskSpec
 from wasel.llm.client import ChainClient, ChainStep
@@ -30,7 +30,7 @@ def _hammer(client, threads=16, calls=200):
         try:
             for i in range(calls):
                 client.extract(_task(), f"k{(n + i) % 5}", parse=lambda raw: raw, meter=None, sandbox_id=None,
-                               now=datetime(2026, 1, 1), role="judge")
+                               now=datetime(2026, 1, 1, tzinfo=UTC), role="judge")
         except Exception as e:  # noqa: BLE001
             errors.append(e)
 
