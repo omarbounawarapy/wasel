@@ -248,7 +248,7 @@
         "dropped_flags": 0,
         "latency_ms": 0
       },
-      "config_hash": "db3f8c72",
+      "config_hash": "0d226295",
       "classifier_version": "xgb_v1-90d41187",
       "prompt_version": "extract-v1"
     },
@@ -307,7 +307,7 @@
         "dropped_flags": 0,
         "latency_ms": 0
       },
-      "config_hash": "db3f8c72",
+      "config_hash": "0d226295",
       "classifier_version": "xgb_v1-90d41187",
       "prompt_version": "extract-v1"
     }

@@ -3,6 +3,7 @@ rules (confirmation, exact guard) -> pin override -> dedupe_by_code -> resolve_f
 Pure: the same function runs in the golden test, the eval runner and the API."""
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 
 from wasel.extraction.evidence import EvidenceSpan, locate
@@ -10,7 +11,7 @@ from wasel.extraction.injection import injection_hit
 from wasel.extraction.repair import OrderExtraction
 from wasel.extraction.window import Window
 from wasel.ml.features import FLAG_ORDER, VerifiedFlag, dedupe_by_code, resolve_flags, tone_gate
-from wasel.ml.textnorm import passes_exact_guard
+from wasel.ml.textnorm import has_phrase, passes_exact_guard, tokens
 
 
 @dataclass(frozen=True)
@@ -77,8 +78,19 @@ class Processed:
         }
 
 
+def _reply_agrees(label: str, replies: list[str], lexicon: dict) -> bool:
+    """True if the customer's reply carries a word that backs the model's 'confirmed' or 'declined'.
+
+    'confirmed' needs an affirmative word and no negative one; 'declined' needs a negative word.
+    """
+    text = " ".join(re.sub(r"(.)\1{2,}", r"\1", t) for r in replies for t in tokens(r))   # "okkk" -> "ok"
+    yes = any(has_phrase(text, p) for p in lexicon.get("affirm", []))
+    no = any(has_phrase(text, p) for p in lexicon.get("negate", []))
+    return (yes and not no) if label == "confirmed" else no
+
+
 def postprocess(ext: OrderExtraction, w: Window, *, prior_confirmation: str = "none",
-                injection_lexicon: dict | None = None) -> Processed:
+                injection_lexicon: dict | None = None, agreement_lexicon: dict | None = None) -> Processed:
     """Verify a parsed extraction against the window and apply the deterministic rules. Pure.
 
     Quotes (product, address, flags, tone) must be found verbatim in a customer message; unverified ones are dropped
@@ -143,6 +155,14 @@ def postprocess(ext: OrderExtraction, w: Window, *, prior_confirmation: str = "n
             and not w.has_geo_pin:
         warn.append("ack_without_address->ambiguous")
         conf = "ambiguous"
+    #    the label must be backed by a word in the reply (an address given after T_ADDRESS counts for 'confirmed')
+    if agreement_lexicon and conf in ("confirmed", "declined") and seller is not None \
+            and seller.template_id != "T_ACK":
+        replies = [m.text_orig for m in w.messages if m.role == "customer" and m.idx > k and m.kind in ("text", "voice")]
+        address_reply = seller.template_id == "T_ADDRESS" and any(i > k for _, i in addr)
+        if not (conf == "confirmed" and address_reply) and not _reply_agrees(conf, replies, agreement_lexicon):
+            warn.append("confirmation_unverified")
+            conf = "ambiguous"
     #    exact guard (shared Arabizi-digit helper)
     if level == "exact" and not passes_exact_guard([q for q, _ in addr]):
         warn.append("exact_downgraded")
