@@ -127,6 +127,14 @@ def test_decide_names_the_three_zones():
     assert bad.decision == "block" and bad.label == "discount" and "block line" in bad.reason
 
 
+def test_decide_lines_are_inclusive(monkeypatch):
+    """p_unsafe exactly on a line takes the stricter side: hold_at -> review, block_at -> block."""
+    from wasel.outbound import guard_clf as G
+    for p, want in [(0.099, "send"), (0.1, "review"), (0.499, "review"), (0.5, "block")]:
+        monkeypatch.setattr(G, "classify", lambda d, p=p: G.GuardResult(p, "ok", [("discount", p)]))
+        assert G.decide("x", block_at=0.5, hold_at=0.1).decision == want, p
+
+
 def test_decide_defaults_come_from_scoring_yaml():
     b, h = thresholds()
     assert (b, h) == (0.5, 0.1)
