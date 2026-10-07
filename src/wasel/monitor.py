@@ -63,7 +63,7 @@ def current_mix(conn: sqlite3.Connection, window: int) -> tuple[dict[str, list],
     """
     rows = conn.execute(
         "SELECT a.tier, a.path, a.context_json, e.validated_json, e.valid, e.dropped_quotes, e.dropped_flags, "
-        "e.injection_suspected, e.provider FROM risk_assessments a "
+        "e.injection_suspected, e.provider, e.cache_hit FROM risk_assessments a "
         "LEFT JOIN extraction_runs e ON e.extraction_id = a.extraction_id "
         "ORDER BY a.created_at DESC LIMIT ?", (window,)).fetchall()
     mix: dict[str, list] = {"language": [], "address_level": [], "tier": [], "path": []}
@@ -95,12 +95,14 @@ def drift(mix: dict[str, list], reference: dict, features: list[str], threshold:
 
 def faithfulness(rows: list[sqlite3.Row]) -> dict:
     """Extraction-quality rates over the assessment rows: hallucinated (dropped) quotes and dropped flags per
-    extraction, invalid extraction rate, injection rate and share of assessments that used a fallback path. Rates
+    extraction, invalid extraction rate, injection rate and share of assessments that used a fallback path. Only
+    live model calls count (`n`/`live`); readings served from the extraction cache are reported as `recorded`. Rates
     are None when there is nothing to divide by.
     """
-    ext = [r for r in rows if r["validated_json"] is not None or r["valid"] is not None]
+    ai = [r for r in rows if r["provider"] in ("groq", "gemini")]
+    ext = [r for r in ai if not r["cache_hit"]]             # live model calls; cache hits are recorded readings
     n = len(ext)
-    return {"n": n,
+    return {"n": n, "live": n, "recorded": len(ai) - n,
             "hallucinated_quotes_per_extraction": _rate(sum(r["dropped_quotes"] or 0 for r in ext), n),
             "dropped_flags_per_extraction": _rate(sum(r["dropped_flags"] or 0 for r in ext), n),
             "invalid_extraction_rate": _rate(sum(1 for r in ext if r["valid"] == 0), n),

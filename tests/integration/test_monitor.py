@@ -29,7 +29,9 @@ def test_monitor_on_seeded_app_has_every_section_and_no_text(dev):
     assert r.status_code == 200
     d = r.json()
     assert {"drift", "faithfulness", "safety", "ops", "alerts"} <= set(d)
-    assert d["faithfulness"]["n"] > 0 and {x["feature"] for x in d["drift"]} == {"language", "address_level", "tier"}
+    f = d["faithfulness"]
+    assert f["n"] == f["live"] and f["recorded"] > 0           # seeded readings come from the cache, not live calls
+    assert {x["feature"] for x in d["drift"]} == {"language", "address_level", "tier"}
     body = json.dumps(d)
     for o in client.get("/api/orders").json()["orders"]:          # no customer text leaks into the monitor
         assert not o.get("reason_short") or o["reason_short"] not in body
@@ -69,3 +71,14 @@ def test_eval_endpoint_serves_committed_reports(dev):
 
 def test_reference_is_committed_and_matches_the_builder():
     assert json.loads(mon.REFERENCE.read_text()) == mon.build_reference()
+
+
+def test_faithfulness_counts_only_live_calls():
+    def row(provider, cache_hit, valid=1):
+        return {"validated_json": "{}", "valid": valid, "dropped_quotes": 1, "dropped_flags": 0,
+                "injection_suspected": 0, "provider": provider, "cache_hit": cache_hit, "path": "llm"}
+    f = mon.faithfulness([row("groq", 1), row("gemini", 1), row("groq", 0, valid=0), row("rules", 0)])
+    assert (f["n"], f["live"], f["recorded"]) == (1, 1, 2)
+    assert f["invalid_extraction_rate"] == 1.0
+    none = mon.faithfulness([row("groq", 1)])
+    assert none["n"] == 0 and none["recorded"] == 1 and none["invalid_extraction_rate"] is None

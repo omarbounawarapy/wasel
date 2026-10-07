@@ -35,12 +35,21 @@ export default function MonitorPage() {
     const drift: any[] = Array.isArray(data?.drift) ? data.drift : [];
     const alerts: any[] = Array.isArray(data?.alerts) ? data.alerts : [];
     const faith = data?.faithfulness || {};
+    const live: number = faith.live ?? faith.n ?? 0;
+    const recorded: number = faith.recorded ?? 0;
+    const noLive = live === 0;
+    const good = alerts.length === 0 && !noLive;
+    const featureLine = (d: any) => {
+        const cur = d.current || {};
+        const top = Object.entries(cur).sort((a: any, b: any) => b[1] - a[1]).slice(0, 3);
+        return top.length ? top.map(([k, v]) => `${k} ${pct(v)}`).join(", ") : "no data yet";
+    };
 
     return (
         <Page>
             <PageHeader
                 title="Live monitor"
-                subtitle="Watches the last messages Wasel scored and warns you if they start to look different from what it was tested on."
+                subtitle={`Watches the last messages Wasel scored and warns you if they start to look different from what it was tested on. AI readings: ${live} live, ${recorded} recorded.`}
                 actions={
                     <button type="button" onClick={load} disabled={refreshing}
                             className="inline-flex items-center gap-2 px-3 min-h-[40px] rounded-xl bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
@@ -53,18 +62,18 @@ export default function MonitorPage() {
 
             {data && (
                 <>
-                    <section className={`rounded-2xl p-5 border flex items-start gap-3 ${alerts.length ? "bg-amber-50 border-amber-200" : "bg-emerald-50 border-emerald-200"}`}>
-                        {alerts.length ? <AlertTriangle className="w-6 h-6 text-amber-600 shrink-0" /> : <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />}
+                    <section className={`rounded-2xl p-5 border flex items-start gap-3 ${good ? "bg-emerald-50 border-emerald-200" : alerts.length ? "bg-amber-50 border-amber-200" : "bg-gray-50 border-gray-200"}`}>
+                        {!good ? <AlertTriangle className={`w-6 h-6 shrink-0 ${alerts.length ? "text-amber-600" : "text-gray-500"}`} /> : <CheckCircle2 className="w-6 h-6 text-emerald-600 shrink-0" />}
                         <div>
-                            <p className={`font-bold ${alerts.length ? "text-amber-900" : "text-emerald-900"}`}>
-                                {alerts.length ? `${alerts.length} thing${alerts.length > 1 ? "s" : ""} to look at` : "Everything looks normal"}
+                            <p className={`font-bold ${good ? "text-emerald-900" : alerts.length ? "text-amber-900" : "text-gray-900"}`}>
+                                {alerts.length ? `${alerts.length} thing${alerts.length > 1 ? "s" : ""} to look at` : noLive ? "No live AI calls yet" : "Everything looks normal"}
                             </p>
                             {alerts.length > 0 && (
                                 <ul className="list-disc pl-5 mt-1 text-sm text-amber-900">
                                     {alerts.map((a, i) => <li key={i}>{typeof a === "string" ? a : a.message ?? JSON.stringify(a)}</li>)}
                                 </ul>
                             )}
-                            <p className="text-sm text-gray-600 mt-0.5">Based on {faith.n ?? 0} recent AI readings.</p>
+                            <p className="text-sm text-gray-600 mt-0.5">{noLive ? `Nothing to judge yet. ${recorded} recorded readings are not counted.` : `Based on ${live} recent live AI readings.`}</p>
                         </div>
                     </section>
 
@@ -79,7 +88,8 @@ export default function MonitorPage() {
                                             <span className="text-sm font-medium text-gray-900">{FEATURE[d.feature] ?? d.feature}</span>
                                             <Chip tone={d.drifted ? "amber" : "green"}>{d.drifted ? "Changed" : "As expected"}</Chip>
                                         </div>
-                                        <Details>
+                                        <p className="text-sm text-gray-700 mt-1">{featureLine(d)}</p>
+                                        <Details open>
                                             <p>Drift score (PSI) {typeof d.psi === "number" ? d.psi.toFixed(3) : "–"} · {d.n} readings</p>
                                             {d.current && Object.keys(d.current).map(k => (
                                                 <p key={k}>{k}: now {pct(d.current[k])}, tests {pct(d.reference?.[k])}</p>
@@ -92,6 +102,7 @@ export default function MonitorPage() {
                     </Section>
 
                     <Section title="Is the AI behaving?" hint="Share of recent readings with each problem. Lower is better.">
+                        {noLive ? <p className="text-sm text-gray-600">No live AI calls yet, so there is nothing to judge.</p> :
                         <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                             {Object.entries(RATES).filter(([k]) => k in faith).map(([k, [label, hint]]) => (
                                 <div key={k} className="min-w-0" title={hint}>
@@ -99,7 +110,7 @@ export default function MonitorPage() {
                                     <p className="text-xs text-gray-600">{label}</p>
                                 </div>
                             ))}
-                        </div>
+                        </div>}
                         <Details label="Replies and AI service details">
                             {data.safety && <p>Replies drafted {data.safety.drafts ?? 0} · checked by the AI judge {data.safety.judged ?? 0}</p>}
                             {data.ops && <p>AI requests {data.ops.attempts ?? 0} · error rate {pct(data.ops.llm_error_rate)} · refusal rate {pct(data.ops.refusal_rate)}</p>}

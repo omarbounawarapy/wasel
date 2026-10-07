@@ -136,9 +136,9 @@ export function StatCard({ label, value, hint, tone = "default", onClick }: {
 }
 
 /** Collapsed-by-default technical detail, so cards show the essentials first. */
-export function Details({ label = "Details", children }: { label?: string, children: ReactNode }) {
+export function Details({ label = "Details", open, children }: { label?: string, open?: boolean, children: ReactNode }) {
     return (
-        <details className="group mt-3">
+        <details className="group mt-3" open={open}>
             <summary className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 cursor-pointer select-none list-none min-h-[28px]">
                 <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" /> {label}
             </summary>
