@@ -56,6 +56,20 @@ def score_input(texts: list[str], price: float) -> ScoreInput:
                       CustomerHistory(0, 0), None, T0)
 
 
+def _text(msgs) -> str:
+    """The customer lines of a case, joined, for showing one example on the quality page."""
+    lines = [m if isinstance(m, str) else m["text"] for m in msgs if m and (isinstance(m, str) or m["role"] != "seller")]
+    return " / ".join(t for t in lines if t)
+
+
+def _pick(cur: dict | None, case: dict, missed: bool) -> dict:
+    """Keep one example per set: the first case that went wrong, else the first case."""
+    case = {**case, "outcome": "missed" if missed else "passed"}
+    if cur is None or (missed and cur["outcome"] == "passed"):
+        return case
+    return cur
+
+
 def run_extraction(rows, llm) -> dict:
     """Score every golden extraction row and compare with the expected labels. `llm` None means the rules extractor.
 
@@ -64,11 +78,16 @@ def run_extraction(rows, llm) -> dict:
     """
     n = exact = near = lang_ok = flag_tp = flag_fp = flag_fn = order_ok = hallucinated = 0
     paths: dict[str, int] = {}
+    example = None
     for r in rows:
         res = score_order(score_input(r["input"]["messages"], r["input"]["price_tnd"]), cache=None, llm=llm,
                           meter=None)
         e, v = r["expected"], (res.extraction.validated if res.extraction else {}) or {}
         n += 1
+        example = _pick(example, {"id": r["id"], "input": _text(r["input"]["messages"]),
+                                  "expected": f"order={e['is_order']}, address={e['address_level']}",
+                                  "got": f"order={res.is_order}, address={v.get('address_level', 'none')}"},
+                        res.is_order != e["is_order"] or v.get("address_level", "none") != e["address_level"])
         order_ok += int(res.is_order == e["is_order"])
         paths[res.assessment.path if res.assessment else "none"] = paths.get(
             res.assessment.path if res.assessment else "none", 0) + 1
@@ -84,10 +103,12 @@ def run_extraction(rows, llm) -> dict:
         flag_fn += len(want - codes)
     p = flag_tp / (flag_tp + flag_fp) if flag_tp + flag_fp else (0.0 if flag_fn else 1.0)  # none predicted, some expected: 0
     rc = flag_tp / (flag_tp + flag_fn) if flag_tp + flag_fn else 1.0
+    exact_miss_near = near - exact  # address one level off: counted as right by within1, wrong by exact
     return {"n": n, "is_order_acc": order_ok / n, "address_exact_acc": exact / n, "address_within1_acc": near / n,
             "language_acc": lang_ok / n, "flag_precision": p, "flag_recall": rc,
             "flag_f1": 2 * p * rc / (p + rc) if p + rc else 0.0,
-            "hallucinated_quotes_per_order": hallucinated / n, "paths": paths}
+            "hallucinated_quotes_per_order": hallucinated / n, "paths": paths,
+            "near_misses": exact_miss_near, "example": example}
 
 
 def run_outbound(rows, llm) -> dict:
@@ -99,6 +120,7 @@ def run_outbound(rows, llm) -> dict:
     cfg = default_config()
     tp = tn = fp = fn = held_safe = 0
     misses, by_layer = [], {"prefilter": 0, "classifier": 0, "llm_judge": 0}
+    example = None
     for r in rows:
         d, tmpl = r["input"]["draft"], r["input"]["template"]
         q = "one" if ("?" in tmpl or "؟" in tmpl) else "none"
@@ -122,6 +144,10 @@ def run_outbound(rows, llm) -> dict:
                 held = dec.decision != "send"   # a cleared draft auto-sends, the rest waits for a human
             else:
                 blocked, layer = True, "llm_judge"
+        got = "blocked" if blocked else "held for review" if held else "sent"
+        example = _pick(example, {"id": r["id"], "input": d, "expected": "safe" if r["expected"]["safe"] else "unsafe",
+                                  "got": got},
+                        (got == "sent") != r["expected"]["safe"])
         if not r["expected"]["safe"]:
             stopped = blocked or held
             tp, fn = tp + stopped, fn + (not stopped)
@@ -137,7 +163,7 @@ def run_outbound(rows, llm) -> dict:
     n = tp + tn + fp + fn
     return {"n": n, "task_success": (tp + tn) / n, "unsafe_blocked": tp / (tp + fn) if tp + fn else 1.0,
             "safe_passed": tn / (tn + fp) if tn + fp else 1.0, "safe_held": held_safe,
-            "blocked_by_layer": by_layer, "misses": misses[:20]}
+            "blocked_by_layer": by_layer, "misses": misses[:20], "near_misses": held_safe, "example": example}
 
 
 def run_injection(rows, llm) -> dict:
@@ -146,17 +172,22 @@ def run_injection(rows, llm) -> dict:
     """
     flagged = scored = not_exact = n = 0
     misses = []
+    example = None
     for r in rows:
         n += 1
         res = score_order(score_input(r["input"]["messages"], r["input"]["price_tnd"]), cache=None, llm=llm,
                           meter=None)
+        example = _pick(example, {"id": r["id"], "input": _text(r["input"]["messages"][-1:]), "expected": "trick flagged",
+                                  "got": "flagged" if res.injection_suspected else "not flagged"},
+                        not res.injection_suspected)
         flagged += int(res.injection_suspected)
         if not res.injection_suspected:
             misses.append({"id": r["id"], "lang_group": r.get("lang_group"), "attack": r["input"]["messages"][-1]})
         scored += int(res.is_order and res.assessment is not None)
         lvl = (res.extraction.validated or {}).get("address_level") if res.extraction else None
         not_exact += int(lvl != "exact")
-    out = {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n, "not_promoted_rate": not_exact / n}
+    out = {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n, "not_promoted_rate": not_exact / n,
+           "near_misses": 0, "example": example}
     if misses:
         out["misses"] = misses
     return out
@@ -185,10 +216,15 @@ def run_g1(rows, llm) -> dict:
     (the three non-orders carry no flag labels)."""
     n = order_ok = exact = near = lang_ok = conf_ok = tone_ok = 0
     flag_tp = flag_fp = flag_fn = 0
+    example = None
     for r in rows:
         res = score_order(set_input(r), cache=None, llm=llm, meter=None)
         e, v = r["labels"], (res.extraction.validated if res.extraction else {}) or {}
         n += 1
+        example = _pick(example, {"id": r["id"], "input": _text(r["messages"]),
+                                  "expected": f"order={e['is_order']}, address={e['address_level']}",
+                                  "got": f"order={res.is_order}, address={v.get('address_level', 'none')}"},
+                        res.is_order != e["is_order"] or v.get("address_level", "none") != e["address_level"])
         order_ok += int(res.is_order == e["is_order"])
         got = v.get("address_level", "none")
         exact += int(got == e["address_level"])
@@ -207,16 +243,21 @@ def run_g1(rows, llm) -> dict:
     return {"n": n, "is_order_acc": order_ok / n, "address_exact_acc": exact / n,
             "address_within1_acc": near / n, "language_acc": lang_ok / n, "flag_precision": p,
             "flag_recall": rc, "flag_f1": 2 * p * rc / (p + rc) if p + rc else 0.0,
-            "tone_acc": tone_ok / n, "confirmation_acc": conf_ok / n}
+            "tone_acc": tone_ok / n, "confirmation_acc": conf_ok / n,
+            "near_misses": near - exact, "example": example}
 
 
 def run_g3(rows, llm) -> dict:
     """data/eval/sets/g3_injection.jsonl: 4 bases x 2 appended injections. Protocol: the injection is
     flagged, the order still scores, labels keep their base values, the address is not promoted."""
     flagged = scored = not_exact = preserved = n = 0
+    example = None
     for r in rows:
         n += 1
         res = score_order(set_input(r), cache=None, llm=llm, meter=None)
+        example = _pick(example, {"id": r["id"], "input": _text(r["messages"][-1:]), "expected": "trick flagged",
+                                  "got": "flagged" if res.injection_suspected else "not flagged"},
+                        not res.injection_suspected)
         v = (res.extraction.validated if res.extraction else {}) or {}
         e = r["labels"]
         lvl = v.get("address_level", "none")
@@ -226,7 +267,13 @@ def run_g3(rows, llm) -> dict:
         preserved += int(res.is_order == e["is_order"] and lvl == e["address_level"]
                          and {f["code"] for f in v.get("red_flags", [])} == set(e["flag_codes"]))
     return {"n": n, "flagged_rate": flagged / n, "still_scored_rate": scored / n,
-            "not_promoted_rate": not_exact / n, "labels_preserved_rate": preserved / n}
+            "not_promoted_rate": not_exact / n, "labels_preserved_rate": preserved / n,
+            "near_misses": 0, "example": example}
+
+
+# Which sets were looked at while the rules, lexicon and classifier were built, and which were not.
+PROVENANCE = {"extraction": "tuned", "outbound": "tuned", "injection": "tuned", "g1_conversations": "tuned",
+              "g3_injection": "tuned", "g3_injection_holdout": "held_out", "prefilter_cases": "tuned"}
 
 
 def prefilter_case_rows() -> list[dict]:
@@ -329,12 +376,15 @@ def main(argv=None) -> int:
     report = {"mode": "live" if a.live else "offline", "versions": active_versions(),
               "config_hash": default_config().short_hash, "runtime_s": round(time.monotonic() - t0, 1),
               "results": results, "llm_usage": _usage_delta(usage0, trace.summary()) if a.live else {}}
+    for task, m in results.items():
+        m["provenance"] = PROVENANCE[task]
     report["gate_failures"] = gate(report, th)
     out = ROOT / "data" / "reports" / ("eval_live.json" if a.live else "eval.json")
     if not partial:
         _write_report(out, report)
     for task, m in results.items():
-        print(task, {k: (round(v, 3) if isinstance(v, float) else v) for k, v in m.items() if k != "misses"})
+        shown = {k: v for k, v in m.items() if k not in ("misses", "example")}
+        print(task, {k: (round(v, 3) if isinstance(v, float) else v) for k, v in shown.items()})
     if partial:
         print("eval: PARTIAL run (--limit/--sample): gate not applied, no report written")
         return 3

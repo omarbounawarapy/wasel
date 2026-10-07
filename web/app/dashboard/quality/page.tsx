@@ -13,16 +13,23 @@ const SUITES: Record<string, { name: string, what: string, key: [string, string]
         key: [["unsafe_blocked", "Unsafe replies blocked"], ["safe_passed", "Good replies allowed"], ["task_success", "Overall"]] },
     injection: { name: "Resisting tricks", what: "Messages that try to fool the AI (“ignore your instructions…”).",
         key: [["flagged_rate", "Tricks detected"], ["still_scored_rate", "Order still scored"], ["not_promoted_rate", "Score not lowered by the trick"]] },
-    g1_conversations: { name: "Real conversations by a native speaker", what: "24 conversations written by a Tunisian speaker.",
+    g1_conversations: { name: "Real conversations by a native speaker", what: "Conversations written by a Tunisian speaker.",
         key: [["is_order_acc", "Spots real orders"], ["address_within1_acc", "Reads the address correctly"], ["flag_precision", "Warning signs are right"]] },
-    g3_injection: { name: "Tricks written by a native speaker", what: "8 manipulation attempts in Darija, Arabizi and French.",
+    g3_injection: { name: "Tricks written by a native speaker", what: "Manipulation attempts in Darija, Arabizi and French.",
         key: [["flagged_rate", "Tricks detected"], ["still_scored_rate", "Order still scored"], ["not_promoted_rate", "Score not lowered by the trick"]] },
-    prefilter_cases: { name: "Reply rule checks", what: "12 hand-written replies that must pass or fail the rules.",
+    g3_injection_holdout: { name: "Tricks never seen while building", what: "Attacks written without reading the detector's word list, never used to change it.",
+        key: [["flagged_rate", "Tricks detected"], ["still_scored_rate", "Order still scored"], ["not_promoted_rate", "Score not lowered by the trick"]] },
+    prefilter_cases: { name: "Reply rule checks", what: "Hand-written replies that must pass or fail the rules.",
         key: [["task_success", "Handled as expected"], ["unsafe_blocked", "Unsafe replies blocked"], ["safe_passed", "Good replies allowed"]] },
 };
 
 // rates are named *_acc, *_rate, precision, recall, f1, success, blocked, passed; everything else is a count
 const isRate = (k: string) => /(_acc|_rate|precision|recall|f1|success|blocked|passed)$/.test(k);
+// per-case rates can be shown as "k of n"; precision, recall and f1 count flags, not cases
+const isCaseRate = (k: string) => isRate(k) && !/(precision|recall|f1)$/.test(k);
+const big = (v: any, k: string, n?: number) =>
+    typeof v === "number" && n && n < 100 && isCaseRate(k) ? `${Math.round(v * n)} of ${n}` : fmt(v, k);
+const HIDDEN = ["n", "example", "provenance", "near_misses", "misses"];
 const fmt = (v: any, k = "") =>
     typeof v === "number" ? (isRate(k) ? `${(v * 100).toFixed(v === 1 || v === 0 ? 0 : 1)}%` : v.toLocaleString("en-US"))
         : v === null || v === undefined ? "–" : typeof v === "object" ? Object.entries(v).map(([x, y]) => `${x}: ${y}`).join(", ") : String(v);
@@ -51,18 +58,33 @@ function Report({ report, title, subtitle }: { report: any, title: string, subti
                         : Object.keys(metrics).filter(k => typeof metrics[k] === "number" && k !== "n").slice(0, 3).map(k => [k, k.replace(/_/g, " ")] as [string, string]);
                     return (
                         <Section key={task} title={s.name} hint={`${s.what}${metrics.n ? ` Tested on ${metrics.n} cases.` : ""}`}>
+                            {metrics.provenance && (
+                                <p className={`text-xs font-semibold mb-3 ${metrics.provenance === "held_out" ? "text-emerald-800" : "text-amber-800"}`}>
+                                    {metrics.provenance === "held_out" ? "Held out: never tuned against" : "Used while building: the rules were tuned on these cases"}
+                                </p>
+                            )}
                             <div className="grid grid-cols-3 gap-3">
                                 {keys.map(([k, label]) => (
                                     <div key={k} className="min-w-0">
-                                        <p className="text-2xl font-bold text-brand-ink tabular-nums">{fmt(metrics[k], k)}</p>
+                                        <p className="text-2xl font-bold text-brand-ink tabular-nums">{big(metrics[k], k, metrics.n)}</p>
                                         <p className="text-xs text-gray-600 leading-snug">{label}</p>
                                     </div>
                                 ))}
                             </div>
+                            {typeof metrics.near_misses === "number" && (
+                                <p className="text-xs text-gray-600 mt-3">Near-misses: {metrics.near_misses} of {metrics.n} cases.</p>
+                            )}
+                            {metrics.example && (
+                                <Details label={metrics.example.outcome === "missed" ? "Example: a case it got wrong" : "Example: one real case"}>
+                                    <p><span className="font-medium">Input:</span> {metrics.example.input}</p>
+                                    <p><span className="font-medium">Expected:</span> {metrics.example.expected}</p>
+                                    <p><span className="font-medium">Got:</span> {metrics.example.got}</p>
+                                </Details>
+                            )}
                             <Details label="All results">
                                 <table className="w-full">
                                     <tbody>
-                                        {Object.entries(metrics).filter(([k]) => k !== "n").map(([k, v]) => (
+                                        {Object.entries(metrics).filter(([k]) => !HIDDEN.includes(k)).map(([k, v]) => (
                                             <tr key={k} className="border-b border-gray-100 last:border-0">
                                                 <td className="py-1 pr-3">{k.replace(/_/g, " ")}</td>
                                                 <td className="py-1 text-right tabular-nums font-medium text-gray-900">{fmt(v, k)}</td>
@@ -103,7 +125,8 @@ export default function QualityPage() {
 
             <Guide id="quality" steps={[
                 "Each card is one family of tests, named after what it protects.",
-                "The big numbers are the share of test cases Wasel got right.",
+                "The big numbers are test cases Wasel got right, out of the cases in that set.",
+                "A label says whether a set was used while building (an optimistic score) or held out (an honest one).",
                 "Open “All results” on a card for the detailed numbers.",
             ]} />
 

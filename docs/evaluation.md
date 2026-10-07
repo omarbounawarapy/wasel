@@ -49,6 +49,10 @@ The three **generated** sets (extraction, outbound, injection; `make golden`) ar
 
 The **hand-written** sets are maintained by a native speaker and edited by hand: G1 (six conversations in each of Arabizi, Arabic-script Darija, French and mixed, four with a seller line, three that are not orders), G3, and the prefilter cases.
 
+### Provenance and examples in the report
+
+Each task in `data/reports/eval.json` carries `provenance` (`tuned`: the set was looked at while the rules, lexicon or classifier were built; `held_out`: never used to change them; set in `PROVENANCE` in `run.py`), `near_misses` (extraction and G1: address one level off; outbound: safe drafts held for human review; injection sets: always 0) and `example` (`id`, `input`, `expected`, `got`, `outcome`): the first case that went wrong, else the first case. The Quality checks page shows these on every card, and shows "k of n" instead of a percentage on sets under 100 cases.
+
 ### Limits of the golden sets
 
 Be careful about what a green gate proves.
