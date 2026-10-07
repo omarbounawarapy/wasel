@@ -256,6 +256,7 @@ def _result(tier="high", conf="none", path="llm", inj=False, change=False):
 @pytest.mark.parametrize("current,res,trigger,prior,approved,expected", [
     ("collecting", dict(inj=True, tier="low"), "initial", None, None, "needs_review"),
     ("awaiting_reply", dict(conf="declined", tier="low"), "customer_reply", "high", None, "cancelled"),
+    ("awaiting_reply", dict(conf="declined", tier="low", path="rules"), "customer_reply", "high", None, "needs_review"),
     ("collecting", dict(change=True), "initial", None, None, "needs_review"),
     ("collecting", dict(path="rules", tier="low"), "initial", None, None, "ready_to_ship"),
     ("collecting", dict(path="rules", tier="medium"), "initial", None, None, "awaiting_reply"),

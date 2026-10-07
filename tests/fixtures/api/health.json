@@ -10,7 +10,7 @@
     "started_at": "2026-09-27T10:00:00.000000Z"
   },
   "config": {
-    "config_hash": "034899c8",
+    "config_hash": "db3f8c72",
     "prompt_version": "extract-v1",
     "classifier_version": "xgb_v1-90d41187",
     "seed_version": 1,

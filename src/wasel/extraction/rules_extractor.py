@@ -14,7 +14,7 @@ from itertools import product as cartesian
 
 from wasel.extraction.repair import OrderExtraction
 from wasel.extraction.window import Window
-from wasel.ml.textnorm import find_span, has_building_token, has_phrase, normalize, standalone_numbers, tokens
+from wasel.ml.textnorm import find_span, has_building_token, has_phrase, standalone_numbers, tokens
 
 STREET = ("rue", "avenue", "av", "nahj", "ne7j", "شارع", "نهج", "زنقة", "zen9et",
           "triq", "طريق")                                    # triq/طريق: "road" (used by the hero conversation)
@@ -71,6 +71,65 @@ def _language(texts: list[str]) -> str:
     if ar:
         return "darija_arabic_script"
     return "arabizi" if arabizi else "fr"
+
+
+def _squash(toks: list[str]) -> list[str]:
+    """Collapse stretched letters ("okkk" -> "ok") so a drawn-out ack still matches the lexicon."""
+    return [re.sub(r"(.)\1{2,}", r"\1", t) for t in toks]
+
+
+def _has_any(toks: list[str], phrases: list[str]) -> bool:
+    return any(has_phrase(" ".join(toks), p) for p in phrases)
+
+
+def _negated(toks: list[str]) -> bool:
+    """A French "ne ... pas / plus / jamais" within four tokens."""
+    return any(t == "ne" and any(x in ("pas", "plus", "jamais") for x in toks[i + 1:i + 5])
+               for i, t in enumerate(toks))
+
+
+def _confirmation(text: str, lexicons: dict, *, has_address: bool, has_product: bool = False) -> str:
+    """Label one customer line after the seller line from the whole line, not its first word.
+
+    A contradiction ("oui mais ...", "ok non finalement", "ne ... pas") or an unclear reply is 'ambiguous'. A
+    decline needs a leading decline word or an explicit decline phrase, and positive words after it make the line
+    'ambiguous'. A confirmation is a line made of ack words only, or an ack that names the product or carries an
+    address (the answer to T_CONFIRM or T_ADDRESS).
+    """
+    toks = _squash(tokens(text))
+    if not toks:
+        return "none"
+    ack, decline = lexicons.get("ack", []), lexicons.get("decline", [])
+    lead_ack = any(has_phrase(" ".join(toks[:len(tokens(a))]), a) for a in ack)
+    lead_decline = any(has_phrase(" ".join(toks[:len(tokens(d))]), d) for d in decline)
+    explicit = _has_any(toks, lexicons.get("decline_explicit", []))
+    if _has_any(toks, lexicons.get("unclear", [])):
+        return "ambiguous"
+    if lead_decline or explicit:
+        if lead_ack:
+            return "ambiguous"
+        rest = toks[1:] if lead_decline else toks
+        pos = [p for p in lexicons.get("positive", []) if p not in decline]
+        if lead_decline and not explicit and _has_any(rest, pos):
+            return "ambiguous"
+        if lead_decline and _has_any(rest, ["je prends", "c'est bon", "je confirme"]):
+            return "ambiguous"
+        return "declined"
+    if lead_ack:
+        later = lexicons.get("contradiction", [])
+        if _has_any(toks[1:], later) or _negated(toks):
+            return "ambiguous"
+        left = toks[:]
+        for a in sorted(ack, key=lambda x: -len(tokens(x))):
+            n = tokens(a)
+            i = 0
+            while i <= len(left) - len(n):
+                if n and left[i:i + len(n)] == n:
+                    del left[i:i + len(n)]
+                else:
+                    i += 1
+        return "confirmed" if not left or has_address or has_product else "ambiguous"
+    return "none"
 
 
 def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicons: dict) -> OrderExtraction:
@@ -141,17 +200,18 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
                 flags.append({"evidence": t[sp[0]:sp[1]], "code": code})
                 seen.add(code)
                 break
-    # confirmation (customer lines after the seller line)
+    # confirmation (customer lines after the seller line), read from the whole line
     conf = "none"
     k = w.k
     if k is not None:
-        after = [m.text_orig for m in cust if m.idx > k]
-        for t in after:
-            head = normalize(t)
-            if any(head.startswith(normalize(d)) and has_phrase(t[:40], d) for d in lexicons.get("decline", [])):
-                conf = "declined"
-            elif any(head.startswith(normalize(a)) for a in lexicons.get("ack", [])):
-                conf = "confirmed"
+        for m in cust:
+            if m.idx > k:
+                label = _confirmation(
+                    m.text_orig, lexicons, has_address=any(f[2] == m.idx for f in found),
+                    has_product=any(find_span(m.text_orig, al) is not None for p in catalog["products"]
+                                    for al in [p["name"], *[a for v in p["aliases"].values() for a in v]]))
+                if label != "none":
+                    conf = label
     # A bare flag ("le prix est un peu élevé") or an availability question is a browse, not an
     # order — order evidence is a declarative product mention, an address quote, or a darija intent
     # verb ("nheb wa7ed noir" after the availability question), never a flag alone.

@@ -46,8 +46,19 @@ timeouts:         { debounce_s: { demo: 4, prod: 15 }, no_reply_s: { demo: 60, p
 window:           { max_messages: 12, max_chars: 2000 }
 
 lexicons:
-  ack:     [ok, oui, ey, eyh, behi, "d'accord", merci, "ya3tik saha", "je confirme", "نعم", "باهي", "إيه"]
+  ack:     [ok, oui, "yes", ey, eyh, behi, "d'accord", merci, "ya3tik saha", "je confirme", "نعم", "باهي", "إيه"]
   decline: [non, la, annuler, "ma nhebech", "لا", "ألغي"]
+  # Whole-reply reading used by the rules extractor (rules_v1). A leading ack/decline word alone is not enough.
+  # decline_explicit: a reply containing one is a decline unless it also starts with an ack or positive words.
+  decline_explicit: [annule, annulez, annuler, "ne confirme pas", "confirme pas", "ne veux plus", "veux plus",
+                     "ma nhebech", "ma n7ebech", "ألغي"]
+  # contradiction: after a leading ack word these make the reply ambiguous ("oui mais ...", "ok finalement ...").
+  contradiction: [mais, finalement, enfin, réfléchir, reflechir, pas, jamais, non, "لا", "ما", "مش", mouch, ma,
+                  "7atta", "mafhemtech"]
+  # unclear: the customer did not understand or is calling back; never a confirmation.
+  unclear: [mafhemtech, "3ayet", "3ayetli", "pardon", "comment", "quoi"]
+  # positive: after a leading "non" these make the reply ambiguous ("non ça ne me dérange pas, je prends").
+  positive: ["je prends", "c'est bon", "ça ne me dérange pas", "je confirme", "d'accord", ok, oui, behi, "باهي", "نعم"]
   # a darija commitment with no product name ("nheb wa7ed noir" after "3andkom casque bluetooth?")
   # is an order; the fr ask ("je voudrais connaître la couleur") is not, so no fr verbs here.
   order_intent: [nheb, n7eb, nebghi, نوردر, نحب, نبغي]
