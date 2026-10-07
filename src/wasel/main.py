@@ -90,7 +90,8 @@ class AppState:
         """A new usage meter for `conn` (default: this thread's) with the caps from settings."""
         s = self.settings
         return SqliteUsageMeter(conn or self.conn(), daily_cap=s.daily_cap, public=s.is_public,
-                                visitor_10min=s.visitor_llm_cap_10min, visitor_day=s.visitor_llm_cap_day)
+                                visitor_10min=s.visitor_llm_cap_10min, visitor_day=s.visitor_llm_cap_day,
+                                tokens_per_model_day=s.live_llm_tokens_per_model_day)
 
     def scorer_for(self, conn):
         """A Scorer using `conn`'s extraction cache, the LLM client and a usage meter on the same connection."""

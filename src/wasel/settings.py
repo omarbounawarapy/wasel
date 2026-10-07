@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     draft_llm: bool = False
     # caps and sandbox (daily_cap gives the per-mode default when live_llm_daily_cap is unset)
     live_llm_daily_cap: int | None = None
+    live_llm_tokens_per_model_day: int | None = None  # None = public 120000, else no guard
     visitor_llm_cap_10min: int = 6
     visitor_llm_cap_day: int = 20
     sandbox_ttl_s: int = 7200
@@ -64,10 +65,10 @@ class Settings(BaseSettings):
             log.warning("unknown APP_MODE %r -> public", v)
         return "public"
 
-    @field_validator("live_llm_daily_cap", mode="before")
+    @field_validator("live_llm_daily_cap", "live_llm_tokens_per_model_day", mode="before")
     @classmethod
     def _cap(cls, v):
-        # .env.example ships `LIVE_LLM_DAILY_CAP=` (empty = the mode default); without this a copied example crashes
+        # .env.example ships these two caps empty (= the mode default); without this a copied example crashes
         return None if isinstance(v, str) and not v.strip() else v
 
     # ---- derived (never read from env directly)
