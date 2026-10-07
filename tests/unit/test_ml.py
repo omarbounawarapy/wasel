@@ -290,3 +290,55 @@ def test_train_passing_gates_writes_artifacts(tmp_path):
     assert card["model_sha256"] == hashlib.sha256((root / "models/risk_xgb_v1.json").read_bytes()).hexdigest()
     assert (root / "data/reports/train_metrics.json").exists() and (root / "data/reports/impact.json").exists()
     assert not (root / "tests").exists()
+
+
+def _model_copy(tmp_path, *, card_edit=None, model_bytes=None):
+    import shutil
+    m = tmp_path / "risk_xgb_v1.json"
+    shutil.copy(ROOT / "models/risk_xgb_v1.json", m)
+    card = _card()
+    if model_bytes is not None:
+        m.write_bytes(model_bytes)
+    if card_edit:
+        card.update(card_edit)
+    m.with_suffix(".card.json").write_text(json.dumps(card))
+    return str(m)
+
+
+def test_model_problem_none_for_the_committed_files():
+    from wasel.scoring.model import model_problem
+    assert model_problem(str(ROOT / "models/risk_xgb_v1.json")) is None
+
+
+def test_model_problem_missing_model(tmp_path):
+    from wasel.scoring.model import model_problem
+    assert model_problem(str(tmp_path / "nope.json"))[0] == "model_missing"
+
+
+def test_model_problem_modified_model_is_refused(tmp_path):
+    from wasel.scoring.model import model_problem
+    data = (ROOT / "models/risk_xgb_v1.json").read_bytes() + b"\n"
+    assert model_problem(_model_copy(tmp_path, model_bytes=data))[0] == "model_mismatch"
+
+
+def test_model_problem_modified_card_is_refused(tmp_path):
+    from wasel.scoring.model import model_problem
+    assert model_problem(_model_copy(tmp_path, card_edit={"model_sha256": "0" * 64}))[0] == "model_mismatch"
+    p = _model_copy(tmp_path, card_edit={"FEATURES": list(reversed(FEATURES))})
+    assert model_problem(p)[0] == "model_mismatch"
+
+
+def test_model_problem_booster_without_feature_names(tmp_path):
+    import hashlib
+
+    import xgboost as xgb
+
+    from wasel.scoring.model import model_problem
+    b = xgb.Booster()
+    b.load_model(str(ROOT / "models/risk_xgb_v1.json"))
+    b.feature_names = None
+    stripped = tmp_path / "stripped.json"
+    b.save_model(str(stripped))
+    stripped.with_suffix(".card.json").write_text(json.dumps(
+        dict(_card(), model_sha256=hashlib.sha256(stripped.read_bytes()).hexdigest())))
+    assert model_problem(str(stripped))[0] == "model_mismatch"

@@ -31,7 +31,7 @@ from wasel.llm.prompts import PROMPT_VERSION
 from wasel.outbound.make_draft import make_draft
 from wasel.paths import ROOT
 from wasel.scoring.config import load_config
-from wasel.scoring.model import load_model
+from wasel.scoring.model import load_model, model_problem
 from wasel.scoring.score_order import make_scorer
 from wasel.settings import Settings
 from wasel.worker import drain, process_due, run_loop
@@ -66,6 +66,7 @@ class AppState:
         self.started_at = clock.now()
         self.last_tick_at = None
         self.last_purge_at = None
+        self.model_problem: tuple[str, str] | None = None   # (code, reason) from the boot check of the model file
         self.seed_unscored = 0                          # seeded orders without an assessment after the last seeding
         self.last_webhook_at = None                     # last POST with a valid signature
         self.no_reply_s = self.config.raw["timeouts"]["no_reply_s"]["demo" if settings.demo_mode else "prod"]
@@ -143,6 +144,11 @@ class AppState:
         missing. Rescore states left over from a previous run are reset ('debouncing' if a rescore is pending, else
         'idle'). Seeds the demo orders when the mode is 'always', or 'if_empty' and there are no orders.
         """
+        self.model_problem = model_problem(str(self.config.root / self.config.raw["model"]["file"]))
+        if self.model_problem:
+            log.error("%s: %s", *self.model_problem)
+            if self.model_problem[0] == "model_mismatch" and not self.settings.is_public:
+                raise RuntimeError(f"refusing to start: {self.model_problem[1]}")
         mode = self.settings.seed_mode
         restored = False
         if mode == "always":
@@ -194,7 +200,8 @@ class AppState:
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))
         cap = s.daily_cap
         worker_stale = s.worker_enabled and (self.last_tick_at is None or (now - self.last_tick_at).total_seconds() > 10)
-        degraded = fb or worker_stale or self.seed_unscored or (self.snapshotter is not None and self.snapshotter.failing)
+        degraded = fb or worker_stale or self.seed_unscored or self.model_problem or (
+            self.snapshotter is not None and self.snapshotter.failing)
         return M.HealthResponse(
             status="degraded" if degraded else "ok", mode=s.app_mode, wa_send=s.wa_send_effective,
             webhook="enabled" if s.webhook_mounted else "disabled", db=True, demo_mode=s.demo_mode,
@@ -220,7 +227,8 @@ class AppState:
             real_rows=conn.execute("SELECT COUNT(*) FROM conversations WHERE channel='whatsapp'").fetchone()[0],
             sandbox_orders=conn.execute("SELECT COUNT(*) FROM orders WHERE sandbox_id IS NOT NULL").fetchone()[0],
             wa_auto_send=s.wa_auto_send and not s.is_public,
-            degraded_reason="seed_unscored" if self.seed_unscored else None)
+            degraded_reason=self.model_problem[0] if self.model_problem else "seed_unscored" if self.seed_unscored else None,
+            degraded_detail=self.model_problem[1] if self.model_problem else None)
 
 
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,

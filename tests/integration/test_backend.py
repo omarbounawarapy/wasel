@@ -458,3 +458,26 @@ def test_draft_for_a_product_outside_the_catalog_has_no_empty_slot(dev):
     c.post(f"/api/orders/{oid}/actions", json={"action": "request_confirmation"})
     for d in c.get(f"/api/orders/{oid}").json()["drafts"]:
         assert "  " not in d["text"] and " est à  " not in d["text"] and "de  est" not in d["text"], d["text"]
+
+
+def test_health_is_degraded_in_public_mode_when_the_model_does_not_match_its_card(tmp_path, monkeypatch):
+    monkeypatch.setattr("wasel.main.model_problem", lambda p: ("model_mismatch", "model differs from its card"))
+    c, _, _ = make_client(tmp_path, "public")
+    with c:
+        h = c.get("/api/health").json()
+        assert h["status"] == "degraded" and h["degraded_reason"] == "model_mismatch"
+        assert h["degraded_detail"] == "model differs from its card"
+
+
+def test_dev_mode_refuses_to_start_when_the_model_does_not_match_its_card(tmp_path, monkeypatch):
+    monkeypatch.setattr("wasel.main.model_problem", lambda p: ("model_mismatch", "model differs from its card"))
+    c, _, _ = make_client(tmp_path, "dev")
+    with pytest.raises(RuntimeError, match="refusing to start"), c:
+        pass
+
+
+def test_missing_model_is_degraded_not_ok(tmp_path, monkeypatch):
+    monkeypatch.setattr("wasel.main.model_problem", lambda p: ("model_missing", "model file not found"))
+    c, _, _ = make_client(tmp_path, "dev")
+    with c:
+        assert c.get("/api/health").json()["degraded_reason"] == "model_missing"

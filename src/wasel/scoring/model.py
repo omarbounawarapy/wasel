@@ -3,6 +3,7 @@ contributions (+ bias) in log-odds; points are derived in reason.py."""
 from __future__ import annotations
 
 import hashlib
+import json
 import math
 from dataclasses import dataclass
 from functools import lru_cache
@@ -63,3 +64,26 @@ def load_model(path: str) -> LoadedModel | None:
     b = xgb.Booster()
     b.load_model(str(p))
     return LoadedModel(b, classifier_version_of(p), p)
+
+
+def model_problem(path: str) -> tuple[str, str] | None:
+    """Check the model file against its card (`<model>.card.json`), the FEATURES list and the booster's feature names.
+
+    Returns None when all agree, else (code, reason) with code 'model_missing' or 'model_mismatch'.
+    """
+    p = Path(path)
+    if not p.exists():
+        return "model_missing", f"model file not found: {p.name}"
+    card_path = p.with_suffix(".card.json")
+    try:
+        card = json.loads(card_path.read_text())
+    except (OSError, ValueError) as e:
+        return "model_mismatch", f"model card unreadable: {card_path.name} ({type(e).__name__})"
+    if hashlib.sha256(p.read_bytes()).hexdigest() != card.get("model_sha256"):
+        return "model_mismatch", f"{p.name} does not match model_sha256 in {card_path.name}"
+    if card.get("FEATURES") != list(FEATURES):
+        return "model_mismatch", f"FEATURES in {card_path.name} differ from the code"
+    lm = load_model(str(p))
+    if lm is None or list(lm.booster.feature_names or []) != list(FEATURES):
+        return "model_mismatch", f"feature names in {p.name} differ from FEATURES"
+    return None

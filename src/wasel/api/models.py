@@ -480,7 +480,8 @@ class HealthResponse(BaseModel):
     real_rows: int = 0                            # conversations that arrived over WhatsApp
     sandbox_orders: int = 0
     wa_auto_send: bool = False                    # auto_send drafts go out without a click (never public)
-    degraded_reason: Literal["seed_unscored"] | None = None   # set when seeded orders have no assessment
+    degraded_reason: Literal["seed_unscored", "model_missing", "model_mismatch"] | None = None   # why status is degraded
+    degraded_detail: str | None = None            # human-readable detail for the model reasons
 
 
 class ImpactResponse(BaseModel):
