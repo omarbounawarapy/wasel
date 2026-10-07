@@ -31,7 +31,7 @@ def test_tier_boundaries(config, final, tier):
 @pytest.mark.parametrize("tier,price,conf,path,action", [
     ("high", 249, "none", "llm", "confirm"), ("high", 250, "none", "llm", "prepay"),
     ("medium", 400, "none", "llm", "confirm"), ("low", 400, "none", "llm", "ship"),
-    ("high", 400, "none", "rules", "review"), ("low", 100, "declined", "llm", "cancelled"),
+    ("high", 400, "none", "rules", "prepay"), ("low", 100, "declined", "llm", "cancelled"),
 ])
 def test_action(config, tier, price, conf, path, action):
     assert _action(tier, price, conf, path, config.raw) == action
@@ -115,7 +115,7 @@ def test_everything_down_is_rules_path():
                 ("fallback_provider", "gemini", "g", FailingBackend("5xx"), 8)])
     r = _run(c, inp)
     a = r.assessment
-    assert a.path == "rules" and not r.extraction.valid and a.confidence == "low" and a.action == "review"
+    assert a.path == "rules" and not r.extraction.valid and a.confidence == "low" and a.action == "ship"
     assert r.order_patch.product_id == "P12"
 
 
@@ -299,3 +299,10 @@ def test_declined_adjustment_leads_the_short_reason(config):
     _, short = build_reason(tier="high", final=80, p0=0.3, pts=pts, ctx={"address_quote": "x" * 60}, adjustments=adj,
                             cfg=config["reasons"])
     assert short.startswith("HIGH 80 · Customer declined: order cancelled")
+
+
+def test_rules_path_gives_a_next_step_and_a_drafted_question_for_a_vague_order():
+    c = _chain([("primary", "groq", "120b", FailingBackend("5xx"), 6)])
+    r = _run(c, make_input(["salam, nheb el casque bluetooth. Douar Ouled Ali, 9rib el jemaa"]))
+    assert r.assessment.path == "rules" and r.assessment.tier in ("medium", "high")
+    assert r.assessment.action in ("confirm", "prepay") and r.template_id == "T_ADDRESS"
