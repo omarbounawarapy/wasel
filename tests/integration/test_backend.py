@@ -371,6 +371,30 @@ def test_process_due_stops_taking_orders_once_the_budget_is_spent(dev):
     assert len(process_due(conn, clock.now(), core.scorer_for(conn), core.drafter, ids=core.ids, limit=2)) == 2
 
 
+def test_a_slow_order_hits_the_hard_limit_and_goes_to_needs_review(dev):
+    import time
+
+    from wasel.worker import process_due
+    c, core, clock = dev
+    c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb casque, Sfax"})
+    clock.advance(5)
+    conn = core.conn()
+    real = core.scorer_for(conn)
+
+    def slow(inp):
+        time.sleep(1.0)
+        return real(inp)
+
+    t0 = time.monotonic()
+    assert process_due(conn, clock.now(), slow, core.drafter, ids=core.ids, order_timeout_s=0.1) == []
+    assert time.monotonic() - t0 < 0.8                                    # did not wait for the scorer
+    o = conn.execute("SELECT status, rescore_state, pending_rescore_at FROM orders WHERE status='needs_review'").fetchone()
+    assert o["rescore_state"] == "idle" and o["pending_rescore_at"] is None     # not re-armed
+    ev = conn.execute("SELECT payload FROM events WHERE type='error' ORDER BY rowid DESC LIMIT 1").fetchone()
+    assert json.loads(ev["payload"])["reason"] == "order_timeout"
+    assert process_due(conn, clock.now(), real, core.drafter, ids=core.ids, order_timeout_s=0.1) == []   # no retry
+
+
 def test_actions_table_shape():
     assert ACTIONS["cancel"][1] == "cancelled" and "shipped" not in ACTIONS["cancel"][0]
 

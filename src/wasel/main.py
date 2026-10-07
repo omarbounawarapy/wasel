@@ -38,6 +38,7 @@ from wasel.worker import drain, process_due, run_loop
 
 log = logging.getLogger("cod.main")
 MAX_BODY = 64 * 1024
+ORDER_TIMEOUT_S = 2.0        # hard limit for scoring one order; past it the order goes to needs_review
 TICK_BUDGET_S = 3.0          # the worker takes no new order in a tick once this many seconds have passed
 # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
 # XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.
@@ -121,7 +122,7 @@ class AppState:
                              meter=meter, config=self.config)
         process_due(conn, now, scorer, self.drafter, ids=self.ids, meter=meter,
                     no_reply_s=self.no_reply_s if self.settings.no_reply_enabled else None,
-                    budget_s=TICK_BUDGET_S)
+                    budget_s=TICK_BUDGET_S, order_timeout_s=ORDER_TIMEOUT_S)
         if self.settings.wa_auto_send and not self.settings.is_public:
             from wasel.api.commands import auto_send_due
             auto_send_due(conn, self.ids, now, self.settings, self.sender)
@@ -135,7 +136,7 @@ class AppState:
         number of orders scored."""
         conn = conn or self.conn()
         return drain(conn, self.clock.now(), self.scorer_for(conn), self.drafter, ids=self.ids,
-                     only_order_id=order_id)
+                     only_order_id=order_id, order_timeout_s=ORDER_TIMEOUT_S)
 
     def boot(self) -> None:
         """Prepare the database at startup.

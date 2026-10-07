@@ -5,6 +5,7 @@ from __future__ import annotations
 import asyncio
 import logging
 import sqlite3
+import threading
 import time
 from datetime import datetime, timedelta
 
@@ -18,6 +19,38 @@ from wasel.outbound.templates import format_price, sanitize_first_name
 from wasel.state import next_status
 
 log = logging.getLogger("cod.worker")
+
+
+class OrderTimeout(Exception):
+    """Scoring one order ran past its hard time limit."""
+
+
+def score_with_deadline(scorer: Scorer, inp: ScoreInput, timeout_s: float | None):
+    """Run scorer(inp) on a daemon thread and wait at most `timeout_s`; raise OrderTimeout if it is still running.
+
+    Python cannot kill a thread, so a timed-out scorer is abandoned: its result is discarded and it ends when it ends.
+    It only works on `inp` (a value) and never on the worker's transaction; the worker writes the result itself, so
+    the abandoned thread cannot change order state. Its only possible database use is one autocommit statement
+    (extraction cache or usage meter), which is harmless. With no timeout the scorer runs inline.
+    """
+    if timeout_s is None:
+        return scorer(inp)
+    box: dict = {}
+
+    def run() -> None:
+        try:
+            box["result"] = scorer(inp)
+        except BaseException as e:                          # handed back to the caller's thread
+            box["error"] = e
+
+    t = threading.Thread(target=run, name="score-order", daemon=True)
+    t.start()
+    t.join(timeout_s)
+    if t.is_alive():
+        raise OrderTimeout(f"scoring did not finish within {timeout_s:g} s")
+    if "error" in box:
+        raise box["error"]
+    return box["result"]
 
 
 def fire_no_reply_timeouts(conn, now: datetime, no_reply_s: float) -> list[str]:
@@ -91,11 +124,13 @@ def create_draft(conn, ids: IdGen, now: datetime, order_id: str, drafter: Drafte
 
 def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, limit: int = 10,
                 no_reply_s: float | None = None, meter=None, only_order_id: str | None = None,
-                budget_s: float | None = None) -> list[str]:
+                budget_s: float | None = None, order_timeout_s: float | None = None) -> list[str]:
     """Score every order whose rescore is due at `now`, up to `limit`, and return the ids that were scored.
 
     With `only_order_id` only that order is considered. With `budget_s` no further order is taken once that many
     seconds have passed since the call started, so a queue of slow orders is spread over several ticks.
+    With `order_timeout_s` one order's scoring is abandoned after that many seconds (see score_with_deadline); the
+    order goes to 'needs_review' with an error event whose reason is 'order_timeout', and is not re-armed.
 
     Each order is claimed atomically, scored outside a transaction, then its result, next status and events are written
     in one transaction; a draft is created afterwards if the order is now awaiting a reply. With `no_reply_s`, orders
@@ -126,7 +161,7 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
         try:
             order = repo.get_order(conn, oid)
             inp = build_score_input(conn, order, trigger, now)
-            result = scorer(inp)
+            result = score_with_deadline(scorer, inp, order_timeout_s)
             with tx(conn):
                 order = repo.get_order(conn, oid)
                 nxt = next_status(order["status"], result, trigger, inp.prior.tier if inp.prior else None,
@@ -141,6 +176,14 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
                     create_draft(conn, ids, now, oid, drafter, result.template_id)
                     conn.execute("UPDATE orders SET rescore_state='idle' WHERE order_id=?", (oid,))
             done.append(oid)
+        except OrderTimeout as e:
+            log.error("rescore timed out for %s: %s", oid, e)
+            with tx(conn):
+                conn.execute("UPDATE orders SET status=CASE WHEN status IN ('shipped','delivered','refused','cancelled')"
+                             " THEN status ELSE 'needs_review' END, rescore_state='idle' WHERE order_id=?", (oid,))
+                repo.add_event(conn, now, "error", "error", order_id=oid,
+                               payload={"where": "rescore", "reason": "order_timeout",
+                                        "error": f"Needs review: scoring took longer than {order_timeout_s:g} s"})
         except Exception as e:                              # a failed rescore is never re-armed automatically
             log.exception("rescore failed for %s", oid)
             with tx(conn):
@@ -152,11 +195,12 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
 
 
 def drain(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, max_rounds: int = 200,
-          only_order_id: str | None = None) -> int:
+          only_order_id: str | None = None, order_timeout_s: float | None = None) -> int:
     """Run process_due until nothing is due (seeding, tests); with `only_order_id`, for that order alone."""
     n = 0
     for _ in range(max_rounds):
-        got = process_due(conn, now, scorer, drafter, ids=ids, only_order_id=only_order_id)
+        got = process_due(conn, now, scorer, drafter, ids=ids, only_order_id=only_order_id,
+                          order_timeout_s=order_timeout_s)
         if not got:
             break
         n += len(got)
