@@ -100,7 +100,11 @@ def build_reason(*, tier: str, final: int, p0: float, pts: dict[str, float], ctx
     adj = [adjustment_text(a) for a in adjustments if a.after != a.before or a.rule in ("declined",)]
     reason = " · ".join(parts + drivers + adj)
     short = f"{TIER_WORD[tier]} {final}"
-    for d in drivers + adj:
+    # a cancellation leads the short line: it must not be cut off behind the drivers
+    declined = [adjustment_text(a) for a in adjustments if a.rule == "declined"]
+    if declined:
+        short = f"{short} · {declined[0]}"
+    for d in drivers + [a for a in adj if a not in declined]:
         cand = f"{short} · {d}"
         if len(cand) > 90:
             break
@@ -141,5 +145,5 @@ def build_diff(*, v_prev: int, final_prev: int, v: int, final: int, pts_prev: di
             txt = "order history updated"
         items.append((abs(d), f"{txt} {_pts(d)}"))
     items.sort(key=lambda t: -t[0])
-    adj = [adjustment_text(a) for a in adjustments if a.after != a.before]
+    adj = [adjustment_text(a) for a in adjustments if a.after != a.before or a.rule == "declined"]
     return " · ".join([f"v{v_prev} {final_prev} → v{v} {final}", *[t for _, t in items], *adj])

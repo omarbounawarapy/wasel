@@ -101,11 +101,10 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
             break
     # address
     places = [a for e in zones["entries"] for a in [e["name"], e.get("name_ar", ""), *e.get("aliases", [])] if a]
-    quotes: list[str] = []
-    level_rank = 0
     ranks = {0: "none", 1: "city_only", 2: "area_or_landmark", 3: "street_and_landmark", 4: "exact"}
-    for t in texts:
-        for sent in _sentences(t):
+    found: list[tuple[int, str, int]] = []              # (rank, sentence, message idx)
+    for m in cust:
+        for sent in _sentences(m.text_orig):
             has_street = any(has_phrase(sent, s) for s in STREET)
             has_area = any(has_phrase(sent, a) for a in AREA)
             has_city = any(has_phrase(sent, p) for p in places)
@@ -122,8 +121,14 @@ def rules_extract(w: Window, *, banks: dict, catalog: dict, zones: dict, lexicon
             elif has_city:
                 r = 1
             if r:
-                quotes.append(sent[:160])
-                level_rank = max(level_rank, r)
+                found.append((r, sent[:160], m.idx))
+    # An address in a reply to the seller supersedes the earlier one: the vague span the order was
+    # flagged for must not be quoted as the full address. Newest quote first.
+    if w.k is not None and any(i > w.k for _, _, i in found):
+        found = [f for f in found if f[2] > w.k]
+    found.sort(key=lambda f: -f[2])
+    quotes = [sent for _, sent, _ in found]
+    level_rank = max((r for r, _, _ in found), default=0)
     if w.has_geo_pin:
         level_rank = 4
     # flags

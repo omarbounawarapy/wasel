@@ -249,3 +249,53 @@ def test_make_draft_static_routes_to_review(config):
 def test_adjustment_dataclass_roundtrip():
     a = Adjustment("confirmed", "x", "x0.6", 80.0, 48.0)
     assert json.loads(json.dumps(a.__dict__))["after"] == 48.0
+
+
+# ---------------------------------------------------------------- rules path: replies after the seller line (#45)
+VAGUE = "nheb el casque bluetooth. Douar Ouled Ali, 9rib el jemaa"
+
+
+def _rules_rescore(*texts):
+    c = _chain([("primary", "groq", "120b", FailingBackend("5xx"), 6)])
+    return _run(c, make_input(list(texts), seller_at=1)).assessment
+
+
+@pytest.mark.parametrize("reply", [
+    "oui d'accord, je serai chez moi demain après-midi, maison 14 route de la pharmacie douar ouled ali",
+    "نعم، شارع الحبيب بورقيبة عدد 12 سوسة",
+    "oui, 12 rue de Marseille Ariana",
+])
+def test_rules_reply_address_replaces_the_vague_one(reply):
+    a = _rules_rescore(VAGUE, reply)
+    assert a.path == "rules"
+    assert a.context["address_level_final"] in ("exact", "street_and_landmark")
+    assert "9rib" not in a.reason and "Douar Ouled Ali," not in a.reason
+    assert reply[:15] in a.reason                           # the quote comes from the reply just written
+
+
+def test_rules_reply_address_is_quoted_in_the_reason():
+    a = _rules_rescore(VAGUE, "oui, 12 rue de Marseille Ariana")
+    assert a.context["address_level_final"] == "exact"
+    assert "full address given" in a.reason and "12 rue de Marseille" in a.reason
+    assert "9rib" not in a.reason
+
+
+def test_rules_reply_without_address_keeps_the_earlier_one():
+    a = _rules_rescore(VAGUE, "oui d'accord")
+    assert a.context["address_level_final"] == "area_or_landmark"
+
+
+def test_rules_cancellation_is_named_in_both_reason_lines():
+    a = _rules_rescore(VAGUE, "non finalement j'annule, trop cher")
+    assert a.action == "cancelled"
+    assert "order cancelled" in a.reason and "order cancelled" in a.reason_short
+
+
+def test_declined_adjustment_leads_the_short_reason(config):
+    from wasel.scoring.reason import build_reason
+    adj = [Adjustment("declined", "Customer declined: order cancelled", "none", 80.0, 80.0)]
+    pts = {"address_specificity": 30.0, "red_flag_count": 25.0, "tone_score": 15.0, "price_tnd": 0.0,
+           "zone_encoded": 5.0, "customer_refusal_rate": 0.0}
+    _, short = build_reason(tier="high", final=80, p0=0.3, pts=pts, ctx={"address_quote": "x" * 60}, adjustments=adj,
+                            cfg=config["reasons"])
+    assert short.startswith("HIGH 80 · Customer declined: order cancelled")
