@@ -122,7 +122,7 @@ Retrain when the feature contract, the prior, the catalog or the zones change, w
 
 1. Change the inputs: `data/catalog.yaml`, `data/zones.yaml`, `data/phrase_banks.yaml`, or `PRIOR` and the generator distributions. A change to a `PRIOR` constant or a feature means regenerating and retraining, as the file header of `features.py` says.
 2. `make generate`. It fails on lint errors.
-3. `make train`. Read the printed metrics and the three gates. Compare `data/reports/train_metrics.json`, `impact.json`, the card and `tests/golden/hero.json` in `git diff`.
+3. `make train`. It fits the model in a temporary directory and writes the model, card, reports and hero golden only if the three gates pass; on a failure it prints the metrics, exits 1 and leaves every tracked file unchanged. Read the printed metrics and the three gates. Compare `data/reports/train_metrics.json`, `impact.json`, the card and `tests/golden/hero.json` in `git diff`.
 4. `make golden` (the golden extraction set is drawn from the holdout rows), then `python -m wasel.monitor --build-reference`, then `make eval`.
 5. `make test`. The hero test pins the sample order (87 to 16); if the model change moves it, decide whether the new values are the intended behaviour and update the pinned golden, never the reverse.
 6. Commit the CSV, model, card, reports, golden files and reference together.
