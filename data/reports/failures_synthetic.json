@@ -2024,9 +2024,9 @@
   },
   "runtime": {
     "labeling_s": 0.0,
-    "rules_s": 0.013,
-    "total_s": 0.017,
-    "ms_per_session": 0.13
+    "rules_s": 0.034,
+    "total_s": 0.041,
+    "ms_per_session": 0.31
   },
   "cost": {
     "llm_calls": 0,

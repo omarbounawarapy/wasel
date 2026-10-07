@@ -8,7 +8,7 @@ from wasel.failures import dataset
 from wasel.failures.detect import REPORT_AT, detect
 from wasel.failures.rank import group
 from wasel.failures.run import analyze, score
-from wasel.failures.semantics import LLMSemantics
+from wasel.failures.semantics import LLMSemantics, RuleSemantics
 from wasel.llm.base import CallMeta
 from wasel.llm.client import ChainClient, ChainStep
 
@@ -55,6 +55,18 @@ def test_grouping_merges_error_details_and_ranks_failures_first():
     assert [i["rank"] for i in issues] == list(range(1, len(issues) + 1))
 
 
+def test_rules_recognise_validation_and_departure_wording():
+    sem = RuleSemantics()
+    for text in ["C'est validé ✅ pour demain", "Votre commande est validée", "✅", "Le colis est en route",
+                 "Colis expédié ce matin", "Mriguel el colis", "el commande mrigla", "Yo5rej ghodwa", "c'est ok pour moi",
+                 "C'est bon, on s'en occupe"]:
+        assert sem.claim(text)[0], text
+    for text in ["On la valide ?", "Je peux valider avec vous", "Quelle est votre adresse ?", "Merci, bonne journée",
+                 "Le trajet est long", "Besoin de la route de Sfax"]:
+        assert not sem.claim(text)[0], text
+    assert sem.claim("C'est bon normalement")[1]
+
+
 class Labeler:
     """Scripted backend: labels agent texts containing 'validé'/'mriguel' as success claims."""
 
@@ -65,7 +77,7 @@ class Labeler:
         self.calls += 1
         msgs = json.loads(user)["messages"]
         items = [{"id": m["id"], "hedged": "devrait" in m["text"] or "normalement" in m["text"].lower(),
-                  "success_claim": m["from"] == "agent" and any(w in m["text"].lower() for w in ("validé", "mriguel")),
+                  "success_claim": m["from"] == "agent" and any(w in m["text"].lower() for w in ("validé", "mriguel", "thabet")),
                   "asks": "address" if m["from"] == "agent" and "adresse" in m["text"] else "none",
                   "gives_exact_address": m["from"] == "customer" and any(c.isdigit() for c in m["text"]),
                   "confirms_or_declines": False} for m in msgs]
@@ -73,8 +85,12 @@ class Labeler:
 
 
 def test_llm_layer_recovers_claims_the_rules_miss_on_holdout_wording():
-    sessions = [s for s in dataset.load(dataset.OUT_HOLDOUT)
+    sessions = [json.loads(json.dumps(s)) for s in dataset.load(dataset.OUT_HOLDOUT)
                 if "unsupported_success_claim" in s["label"]["failures"]][:5]
+    for s in sessions:                                   # wording no rule knows
+        for e in s["events"]:
+            if e["type"] == "agent" and RuleSemantics().claim(e["text"])[0]:
+                e["text"] = "Hamdoulah, el commande thabet"
     rules_hits = {f.session_id for s in sessions for f in detect(s) if f.type == "unsupported_success_claim"}
     backend = Labeler()
     sem = LLMSemantics(ChainClient([ChainStep("primary", "groq", "m", backend, 6)]), sessions)

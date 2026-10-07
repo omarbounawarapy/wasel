@@ -3,11 +3,393 @@
   "semantics_mode": "rules",
   "n_sessions": 130,
   "n_events": 2009,
-  "findings": 49,
+  "findings": 58,
   "by_status": {
-    "failure": 49
+    "failure": 58
   },
   "issues": [
+    {
+      "type": "unsupported_success_claim",
+      "status": "failure",
+      "title": "The agent told the customer it succeeded, but no successful tool call backs it.",
+      "signature": "confirm_order never called",
+      "details": {},
+      "sessions": [
+        "H005",
+        "H017",
+        "H026",
+        "H061",
+        "H081",
+        "H092",
+        "H106",
+        "H108",
+        "H111"
+      ],
+      "n_sessions": 9,
+      "share": 0.069,
+      "confidence": 0.85,
+      "severity": 1.0,
+      "priority": 7.65,
+      "findings": [
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H005",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H017",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H026",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H061",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H081",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H092",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 10,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H106",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H108",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H111",
+          "confidence": 0.85,
+          "signature": "confirm_order never called",
+          "summary": "Claimed success without ever calling confirm_order",
+          "evidence": [
+            {
+              "i": 12,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "type": "unsupported_success_claim",
+      "status": "failure",
+      "title": "The agent told the customer it succeeded, but no successful tool call backs it.",
+      "signature": "confirm_order failed",
+      "details": {
+        "out_of_stock": 2,
+        "timeout": 1,
+        "payment_rule_violation": 5
+      },
+      "sessions": [
+        "H031",
+        "H042",
+        "H043",
+        "H048",
+        "H055",
+        "H094",
+        "H095",
+        "H121"
+      ],
+      "n_sessions": 8,
+      "share": 0.062,
+      "confidence": 0.92,
+      "severity": 1.0,
+      "priority": 7.36,
+      "findings": [
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H031",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (out_of_stock)",
+          "summary": "Claimed success after confirm_order returned out_of_stock",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "out_of_stock"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H042",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (timeout)",
+          "summary": "Claimed success after confirm_order returned timeout",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "timeout"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H043",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H048",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H055",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H094",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H095",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (out_of_stock)",
+          "summary": "Claimed success after confirm_order returned out_of_stock",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "out_of_stock"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        },
+        {
+          "type": "unsupported_success_claim",
+          "session_id": "H121",
+          "confidence": 0.92,
+          "signature": "confirm_order failed (payment_rule_violation)",
+          "summary": "Claimed success after confirm_order returned payment_rule_violation",
+          "evidence": [
+            {
+              "i": 13,
+              "type": "tool_result",
+              "tool": "confirm_order",
+              "result": {
+                "error": "payment_rule_violation"
+              },
+              "ok": false
+            },
+            {
+              "i": 14,
+              "type": "agent",
+              "text": "C'est validé ✅ votre colis part demain matin."
+            }
+          ],
+          "status": "failure"
+        }
+      ],
+      "rank": 2
+    },
     {
       "type": "incomplete_marked_done",
       "status": "failure",
@@ -221,7 +603,7 @@
           "status": "failure"
         }
       ],
-      "rank": 1
+      "rank": 3
     },
     {
       "type": "wrong_customer_record",
@@ -442,228 +824,7 @@
           "status": "failure"
         }
       ],
-      "rank": 2
-    },
-    {
-      "type": "tool_error_ignored",
-      "status": "failure",
-      "title": "A tool failed and the agent carried on as if it had worked.",
-      "signature": "confirm_order failed",
-      "details": {
-        "out_of_stock": 2,
-        "timeout": 1,
-        "payment_rule_violation": 5
-      },
-      "sessions": [
-        "H031",
-        "H042",
-        "H043",
-        "H048",
-        "H055",
-        "H094",
-        "H095",
-        "H121"
-      ],
-      "n_sessions": 8,
-      "share": 0.062,
-      "confidence": 0.8,
-      "severity": 0.7,
-      "priority": 4.48,
-      "findings": [
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H031",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (out_of_stock)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "out_of_stock"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
-            }
-          ],
-          "status": "failure"
-        },
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H042",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (timeout)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "timeout"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "C'est validé ✅ votre colis part demain matin."
-            }
-          ],
-          "status": "failure"
-        },
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H043",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (payment_rule_violation)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "payment_rule_violation"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
-            }
-          ],
-          "status": "failure"
-        },
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H048",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (payment_rule_violation)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "payment_rule_violation"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "Mriguel, el colis yo5rej ghodwa sbe7."
-            }
-          ],
-          "status": "failure"
-        },
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H055",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (payment_rule_violation)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "payment_rule_violation"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "C'est validé ✅ votre colis part demain matin."
-            }
-          ],
-          "status": "failure"
-        },
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H094",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (payment_rule_violation)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "payment_rule_violation"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "C'est validé ✅ votre colis part demain matin."
-            }
-          ],
-          "status": "failure"
-        },
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H095",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (out_of_stock)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "out_of_stock"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "C'est validé ✅ votre colis part demain matin."
-            }
-          ],
-          "status": "failure"
-        },
-        {
-          "type": "tool_error_ignored",
-          "session_id": "H121",
-          "confidence": 0.8,
-          "signature": "confirm_order failed (payment_rule_violation)",
-          "summary": "confirm_order failed and the next step was a message",
-          "evidence": [
-            {
-              "i": 13,
-              "type": "tool_result",
-              "tool": "confirm_order",
-              "result": {
-                "error": "payment_rule_violation"
-              },
-              "ok": false
-            },
-            {
-              "i": 14,
-              "type": "agent",
-              "text": "C'est validé ✅ votre colis part demain matin."
-            }
-          ],
-          "status": "failure"
-        }
-      ],
-      "rank": 3
+      "rank": 4
     },
     {
       "type": "no_progress_search",
@@ -1094,7 +1255,7 @@
           "status": "failure"
         }
       ],
-      "rank": 4
+      "rank": 5
     },
     {
       "type": "tool_error_ignored",
@@ -1287,7 +1448,7 @@
           "status": "failure"
         }
       ],
-      "rank": 5
+      "rank": 6
     },
     {
       "type": "repeated_question",
@@ -1486,7 +1647,7 @@
           "status": "failure"
         }
       ],
-      "rank": 6
+      "rank": 7
     },
     {
       "type": "incomplete_marked_done",
@@ -1587,7 +1748,7 @@
           "status": "failure"
         }
       ],
-      "rank": 7
+      "rank": 8
     }
   ],
   "semantics": {
@@ -1595,9 +1756,9 @@
   },
   "runtime": {
     "labeling_s": 0.0,
-    "rules_s": 0.013,
-    "total_s": 0.015,
-    "ms_per_session": 0.11
+    "rules_s": 0.029,
+    "total_s": 0.036,
+    "ms_per_session": 0.27
   },
   "cost": {
     "llm_calls": 0,
@@ -1614,19 +1775,13 @@
     "per_type": {
       "unsupported_success_claim": {
         "support": 17,
-        "tp": 0,
+        "tp": 17,
         "fp": 0,
-        "fn": 17,
-        "precision": null,
-        "recall": 0.0,
+        "fn": 0,
+        "precision": 1.0,
+        "recall": 1.0,
         "false_positive_sessions": [],
-        "missed_sessions": [
-          "H005",
-          "H017",
-          "H026",
-          "H031",
-          "H042"
-        ]
+        "missed_sessions": []
       },
       "wrong_customer_record": {
         "support": 6,
@@ -1651,17 +1806,11 @@
       "tool_error_ignored": {
         "support": 6,
         "tp": 6,
-        "fp": 8,
+        "fp": 0,
         "fn": 0,
-        "precision": 0.429,
+        "precision": 1.0,
         "recall": 1.0,
-        "false_positive_sessions": [
-          "H031",
-          "H042",
-          "H043",
-          "H048",
-          "H055"
-        ],
+        "false_positive_sessions": [],
         "missed_sessions": []
       },
       "no_progress_search": {
@@ -1691,8 +1840,8 @@
         ]
       }
     },
-    "micro_precision": 0.837,
-    "micro_recall": 0.651,
+    "micro_precision": 1.0,
+    "micro_recall": 0.921,
     "clean_sessions_flagged": 0,
     "clean_sessions": 62,
     "recoveries_flagged": [],

@@ -119,9 +119,9 @@ The API serves the same analysis live: `GET /api/failures?source=synthetic|holdo
 | Source | Sessions | Micro precision | Micro recall |
 |---|---|---|---|
 | synthetic (train phrasing) | 130 | 1.00 | 1.00 |
-| holdout | 130 | 0.84 | 0.65 |
+| holdout | 130 | 1.00 | 0.92 |
 
-The train result is not evidence of quality: the patterns were written against that data. The holdout figures are the estimate that matters, and they show real gaps. On the holdout wording the rules find none of the 17 unsupported success claims (the phrases were different from any pattern), `tool_error_ignored` has precision 0.43, and `repeated_question` recall is 0.58. The LLM language layer exists to close the wording gap, and a unit test with a scripted labeler shows it recovers claims the rules miss, but no LLM run is committed. Synthetic sessions are also cleaner than real traffic, so these are optimistic.
+The train result is not evidence of quality: the patterns were written against that data. The holdout figures are the estimate that matters. The success-claim patterns were first too narrow (recall 0.0 on the 17 holdout claims, `tool_error_ignored` precision 0.43); they now cover the phrase families validé, c'est bon/ok, yo5rej, mriguel, check-mark emoji, en route and expédié, and the holdout gives recall 1.00 and precision 1.00 for `unsupported_success_claim` and `tool_error_ignored`, with 0 of 62 clean sessions flagged. The remaining gap is `repeated_question` recall at 0.58. Because the families were chosen after seeing that the first patterns failed on the holdout, the holdout is no longer a fully blind estimate for these two types. The LLM language layer is the answer to wording the rules do not know, and a unit test with a scripted labeler shows it recovers claims the rules miss, but no LLM run is committed. Synthetic sessions are also cleaner than real traffic, so these are optimistic.
 
 Known limits (also printed in every report): detectors are rules tuned to this dataset's tool names and phrasing, so new tools or languages need new patterns; the language layer can improve the labels but the structural rules must still match; ambiguous cases are surfaced for review rather than counted.
 

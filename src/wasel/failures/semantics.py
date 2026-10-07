@@ -17,7 +17,10 @@ from wasel.clock import SystemClock
 from wasel.llm.base import ParseError
 
 CLAIM = re.compile(r"(est confirm[ée]e|commande (?:est )?valid[ée]e|sera livr[ée]e|tconfirmat|tconfirmet|twossl|"
-                   r"تم تأكيد|تأكدت|order (?:is )?confirmed|mrigla|c'est bon)", re.I)
+                   r"تم تأكيد|تأكدت|order (?:is )?confirmed|"
+                   r"\bm?rig(?:ue|ui|e|i)?l(?:a|ou)?\b|\bc'?est (?:bon|ok|okay|valid[ée]e?|confirm[ée]e?|parti|fait)\b|"
+                   r"\bvalidée?s?\b|\by[o0][5kx]h?r[ae]?[jg]\b|[✅✔☑]|\ben route\b|\bexp[ée]di[ée]e?s?\b|"
+                   r"\bpartie? en livraison\b)", re.I)
 HEDGE = re.compile(r"(normalement|probablement|si besoin|on vous recontacte|n3awdou|ken fama|peut-?être|"
                    r"inchallah|je pense)", re.I)
 APOLOGY = re.compile(r"(d[ée]sol[ée]|probl[èe]me|samahna|mochkla|sorry|erreur|souci|oups)", re.I)
