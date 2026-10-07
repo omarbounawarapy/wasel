@@ -247,15 +247,24 @@ def _usage_delta(before: dict, after: dict) -> dict:
 
 
 def gate(report: dict, thresholds: dict) -> list[str]:
-    """The gated metrics that fall below their threshold, as "task.metric = value < floor" strings; empty means pass.
+    """The gate failures as strings; empty means pass.
 
-    Metrics missing from the report are not gated.
+    A gated metric under its floor is "task.metric = value < floor". A gated metric absent from the report is
+    "task.metric missing from report", and a set that ran fewer cases than its `min_cases` is "task.n = N < min_cases".
     """
     fails = []
     for task, metrics in thresholds.items():
+        got_task = report["results"].get(task, {})
         for metric, floor in metrics.items():
-            got = report["results"].get(task, {}).get(metric)
-            if got is not None and got < floor:
+            if metric == "min_cases":
+                n = got_task.get("n", 0)
+                if n < floor:
+                    fails.append(f"{task}.n = {n} < {floor} cases (min_cases)")
+                continue
+            got = got_task.get(metric)
+            if got is None:
+                fails.append(f"{task}.{metric} missing from report")
+            elif got < floor:
                 fails.append(f"{task}.{metric} = {got:.3f} < {floor}")
     return fails
 
@@ -263,8 +272,9 @@ def gate(report: dict, thresholds: dict) -> list[str]:
 def main(argv=None) -> int:
     """CLI entry point. Runs all golden sets, applies the thresholds in config/eval.yaml and writes the report.
 
-    Returns 0 if the gate passes, 1 if any gated metric is below its threshold, 2 if --live has no configured provider.
-    Overwrites data/reports/eval.json (or eval_live.json with --live).
+    Returns 0 if the gate passes, 1 if any gated metric is below its threshold or missing, 2 if --live has no
+    configured provider, 3 for a partial run (--limit, or --sample on the offline run): metrics are printed, the gate
+    is not applied and no report is written. Otherwise overwrites data/reports/eval.json (or eval_live.json with --live).
     """
     ap = argparse.ArgumentParser()
     ap.add_argument("--live", action="store_true")
@@ -288,15 +298,20 @@ def main(argv=None) -> int:
                "g1_conversations": run_g1(paced(load("g1.jsonl", a.limit, base=SETS), a.pace), llm),
                "g3_injection": run_g3(paced(load("g3_injection.jsonl", a.limit, base=SETS), a.pace), llm),
                "prefilter_cases": run_outbound(paced(prefilter_case_rows(), a.pace / 4), llm)}
+    partial = a.limit is not None or (a.sample is not None and not a.live) or (a.live and a.sample not in (None, 40))
     th = yaml.safe_load((ROOT / "config" / "eval.yaml").read_text())["live" if a.live else "offline"]
     report = {"mode": "live" if a.live else "offline", "versions": active_versions(),
               "config_hash": default_config().short_hash, "runtime_s": round(time.monotonic() - t0, 1),
               "results": results, "llm_usage": _usage_delta(usage0, trace.summary()) if a.live else {}}
     report["gate_failures"] = gate(report, th)
     out = ROOT / "data" / "reports" / ("eval_live.json" if a.live else "eval.json")
-    out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    if not partial:
+        out.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     for task, m in results.items():
         print(task, {k: (round(v, 3) if isinstance(v, float) else v) for k, v in m.items() if k != "misses"})
+    if partial:
+        print("eval: PARTIAL run (--limit/--sample): gate not applied, no report written")
+        return 3
     if report["gate_failures"]:
         print("EVAL GATE FAILED:\n  " + "\n  ".join(report["gate_failures"]))
         return 1

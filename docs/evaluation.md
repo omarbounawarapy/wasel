@@ -69,7 +69,7 @@ In the outbound task, a draft is *stopped* if the prefilter fails, the classifie
 
 ## Thresholds and the gate
 
-`config/eval.yaml` has an `offline` and a `live` block, each mapping a set to minimum values. A metric under its floor fails the run. A metric with no floor is reported only, and so is a set with no entry.
+`config/eval.yaml` has an `offline` and a `live` block, each mapping a set to minimum values. A metric under its floor fails the run, and so does a gated metric that is missing from the report (a renamed or dropped key). Each set also has a `min_cases` entry: a set that ran fewer cases than that fails, so a golden set cannot be shrunk without editing `config/eval.yaml` in the same change. A metric with no floor is reported only, and so is a set with no entry.
 
 | Set | Offline floors | Live floors |
 |---|---|---|
@@ -84,14 +84,14 @@ The file's own policy is: raise floors, never lower them without maintainer revi
 
 ### Passing
 
-The gate passes when `gate_failures` in the report is empty. The runner then prints `eval gate: green` and exits 0. It exits 1 if any metric is under its floor (listing each as `set.metric = value < floor`) and 2 if `--live` is used with no provider configured.
+The gate passes when `gate_failures` in the report is empty. The runner then prints `eval gate: green` and exits 0. It exits 1 if any metric is under its floor (listing each as `set.metric = value < floor`), is missing (`set.metric missing from report`) or a set is under its `min_cases`, and 2 if `--live` is used with no provider configured. A partial run (`--limit`, or `--sample` on the offline run, or a live `--sample` other than 40) prints its metrics, does not apply the gate, writes no report and exits 3.
 
 ## Running it
 
 ```bash
 make eval                                  # offline gate; rewrites data/reports/eval.json
 make eval-live                             # needs GROQ_API_KEY in the environment; rewrites data/reports/eval_live.json
-python -m wasel.evaluation.run --limit 20  # first 20 cases of each file-based set, for a quick look
+python -m wasel.evaluation.run --limit 20  # first 20 cases of each file-based set, for a quick look (exits 3, no gate, no report)
 python -m wasel.evaluation.run --live --sample 279 --pace 2   # full extraction set, 2 s between calls
 make golden                                # rebuild data/eval/golden/*.jsonl from the committed sources
 ```
