@@ -819,3 +819,45 @@ def test_boot_adds_the_cache_owner_column_to_an_old_database(tmp_path):
         core.boot()
         assert "sandbox_id" in [r["name"] for r in conn.execute("PRAGMA table_info(extraction_cache)")]
         assert "old" not in {r["input_hash"] for r in _cache_rows(conn)}
+
+
+def _fresh_ids(n, start=100):
+    import uuid
+    return [str(uuid.UUID(int=start + i, version=4)) for i in range(n)]
+
+
+def _ingest(c, vid, ip):
+    return c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"},
+                  headers={"X-Visitor-Id": vid, "CF-Connecting-IP": ip})
+
+
+def test_fresh_visitor_ids_do_not_reset_the_per_address_write_limit(tmp_path):
+    c, core, _ = make_client(tmp_path, "public", client_ip_header="CF-Connecting-IP", addr_writes_10min=30)
+    with c:
+        codes = [_ingest(c, v, "8.8.8.8") for v in _fresh_ids(40)]
+        assert [r.status_code for r in codes[:30]] == [202] * 30
+        assert {r.status_code for r in codes[30:]} == {429}
+        r = codes[30]
+        assert r.json()["error"]["code"] == "RATE_LIMITED" and int(r.headers["retry-after"]) >= 1
+        assert _ingest(c, _fresh_ids(1, 900)[0], "1.1.1.1").status_code == 202     # another address is unaffected
+
+
+def test_per_address_sandbox_order_budget(tmp_path):
+    c, core, _ = make_client(tmp_path, "public", client_ip_header="CF-Connecting-IP", addr_writes_10min=100,
+                             addr_sandbox_orders=5)
+    with c:
+        codes = [_ingest(c, v, "8.8.8.8").status_code for v in _fresh_ids(8)]
+        assert codes == [202] * 5 + [429] * 3
+        assert core.conn().execute("SELECT COUNT(*) FROM orders WHERE sandbox_id IS NOT NULL").fetchone()[0] == 5
+
+
+def test_unknown_address_falls_back_to_the_visitor_limits(tmp_path):
+    c, _, _ = make_client(tmp_path, "public", addr_writes_10min=1)          # no trusted header, test peer is not an IP
+    with c:
+        assert [_ingest(c, v, "8.8.8.8").status_code for v in _fresh_ids(3)] == [202] * 3
+
+
+def test_dev_mode_has_no_address_limit(tmp_path):
+    c, _, _ = make_client(tmp_path, "dev", client_ip_header="CF-Connecting-IP", addr_writes_10min=1)
+    with c:
+        assert [_ingest(c, v, "8.8.8.8").status_code for v in _fresh_ids(3)] == [202] * 3

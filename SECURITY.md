@@ -25,7 +25,7 @@ Wasel is a single-tenant application with no user accounts. It is designed to be
 | Hostile customer text | Never trusted by code, delimited and sanitized for the model, every model quote verified, injection lexicon, deterministic scoring. | [extraction](docs/subsystems/extraction.md) |
 | Unsafe outbound messages | Deterministic prefilter, local classifier, LLM judge with approval recomputed in code, human send by default. | [outbound](docs/subsystems/outbound.md) |
 | Secrets in git | `.env` and databases are ignored and `make hygiene` fails on known key prefixes and secret-name assignments, and CI scans the whole git history with gitleaks. | [configuration](docs/configuration/environment.md) |
-| Cost abuse | Daily and per-visitor caps on LLM calls; sandbox limits; request size limits. | [LLM layer](docs/subsystems/llm.md#caps-and-the-usage-meter) |
+| Cost abuse | Daily, per-visitor and per-client-address caps on LLM calls; sandbox limits per visitor and per address; a write-rate limit per address (`429 RATE_LIMITED`); request size limits. The address comes from `CLIENT_IP_HEADER` (a header the proxy overwrites), never from `X-Forwarded-For`; where it is unknown only the per-visitor limits apply. The counters are in memory and reset on restart. | [LLM layer](docs/subsystems/llm.md#caps-and-the-usage-meter) |
 
 ## Security-sensitive areas
 

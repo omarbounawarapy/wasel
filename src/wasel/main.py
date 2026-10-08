@@ -31,6 +31,7 @@ from wasel.llm.client import build_client
 from wasel.llm.prompts import PROMPT_VERSION
 from wasel.outbound.make_draft import make_draft
 from wasel.paths import ROOT
+from wasel.ratelimit import AddressLimiter
 from wasel.scoring.config import load_config
 from wasel.scoring.model import load_model, model_problem
 from wasel.scoring.score_order import make_scorer
@@ -66,6 +67,7 @@ class AppState:
         self.db_path = str(ROOT / settings.db_path) if not Path(settings.db_path).is_absolute() else settings.db_path
         self._local = threading.local()
         self._tick_lock = threading.Lock()
+        self.limiter = AddressLimiter()                 # per-client-address limits, public mode
         self._degraded_logged = False                   # so the ok -> degraded transition is logged once
         self.started_at = clock.now()
         self.last_tick_at = None
@@ -98,7 +100,9 @@ class AppState:
         s = self.settings
         return SqliteUsageMeter(conn or self.conn(), daily_cap=s.daily_cap, public=s.is_public,
                                 visitor_10min=s.visitor_llm_cap_10min, visitor_day=s.visitor_llm_cap_day,
-                                tokens_per_model_day=s.live_llm_tokens_per_model_day)
+                                tokens_per_model_day=s.live_llm_tokens_per_model_day,
+                                siblings=self.limiter.siblings if s.is_public else None,
+                                address_cap=None if s.daily_cap is None else max(1, int(s.daily_cap * s.addr_llm_share)))
 
     def scorer_for(self, conn):
         """A Scorer using `conn`'s extraction cache, the LLM client and a usage meter on the same connection."""
@@ -421,7 +425,7 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
 
     @app.exception_handler(ApiError)
     async def _api_error(_: Request, e: ApiError):
-        return JSONResponse(e.body(), status_code=e.status)
+        return JSONResponse(e.body(), status_code=e.status, headers=e.headers)
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, e: RequestValidationError):

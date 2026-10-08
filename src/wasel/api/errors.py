@@ -5,9 +5,11 @@ from __future__ import annotations
 class ApiError(Exception):
     """An error that the app turns into `{"error": {"code", "message", "details"?}}` with HTTP `status`."""
 
-    def __init__(self, status: int, code: str, message: str, details: dict | None = None):
+    def __init__(self, status: int, code: str, message: str, details: dict | None = None,
+                 headers: dict[str, str] | None = None):
         super().__init__(message)
         self.status, self.code, self.message, self.details = status, code, message, details
+        self.headers = headers or {}
 
     def body(self) -> dict:
         """The JSON error envelope; `details` is included only when non-empty."""

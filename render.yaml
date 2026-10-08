@@ -11,6 +11,8 @@ services:
     envVars:
       - key: APP_MODE
         value: public
+      - key: CLIENT_IP_HEADER          # Cloudflare in front of Render overwrites this; per-address limits key on it
+        value: CF-Connecting-IP
       - key: GROQ_API_KEY
         sync: false
       - key: ADMIN_TOKEN

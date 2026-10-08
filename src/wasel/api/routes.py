@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hmac
 import json
+import math
 
 from fastapi import APIRouter, Depends, Header, Query, Request
 from fastapi.responses import JSONResponse
@@ -13,8 +14,35 @@ from wasel.api import models as M
 from wasel.api import projections as P
 from wasel.api.errors import ApiError
 from wasel.mode import require_visitor, visitor_id
+from wasel.ratelimit import client_address
 
 router = APIRouter(prefix="/api")
+
+
+def _address_guard(request: Request, st, vid: str | None, *, orders: int = 0) -> str | None:
+    """Public mode: count this write against its client address, which the visitor id cannot reset.
+
+    Raises 429 RATE_LIMITED (with Retry-After) past `addr_writes_10min` writes, or when `orders` more sandbox orders
+    would pass `addr_sandbox_orders`. Returns the address, or None when it is unknown (no trusted header and a
+    proxied or local peer), in which case only the per-visitor limits apply.
+    """
+    s = st.settings
+    if not s.is_public:
+        return None
+    addr = client_address(request.client.host if request.client else None, request.headers, s.client_ip_header)
+    if addr is None:
+        return None
+    now = st.clock.now().timestamp()
+    if vid:
+        st.limiter.note_visitor(addr, vid, now)
+    wait = st.limiter.hit_write(addr, now, s.addr_writes_10min, 600)
+    if wait is None and orders:
+        wait = st.limiter.orders_wait(addr, now, s.addr_sandbox_orders, s.sandbox_ttl_s, adding=orders)
+    if wait is not None:
+        raise ApiError(429, "RATE_LIMITED", "Too many requests from this network, try again later",
+                       headers={"Retry-After": str(math.ceil(wait))})
+    return addr
+
 
 
 def _s(request: Request):
@@ -55,6 +83,7 @@ def ingest(body: M.PasteIngest | M.CsvIngest, request: Request, vid: str | None 
     """Queue a pasted message or a CSV for scoring; the worker scores it after the debounce (`rescore_eta_s`)."""
     st = _s(request)
     vid = require_visitor(request, vid)
+    addr = _address_guard(request, st, vid, orders=1)
     conn, now = st.conn(), st.clock.now()
     if isinstance(body, M.PasteIngest):
         created = [commands.ingest_paste(conn, st.ids, now, st.settings, st.config.raw, vid, text=body.text,
@@ -63,6 +92,8 @@ def ingest(body: M.PasteIngest | M.CsvIngest, request: Request, vid: str | None 
         rejected = []
     else:
         created, rejected = commands.ingest_csv(conn, st.ids, now, st.settings, st.config.raw, vid, body.csv_text)
+    if addr:
+        st.limiter.add_orders(addr, now.timestamp(), len(created))
     eta = st.config.raw["timeouts"]["debounce_s"]["demo" if st.settings.demo_mode else "prod"] + 1
     return M.IngestResponse(created=created, rejected=rejected, rescore_eta_s=eta)
 
@@ -74,8 +105,11 @@ def try_order(order_id: str, request: Request, vid: str | None = Depends(visitor
     if vid is None:
         raise ApiError(400, "VISITOR_ID_REQUIRED", "X-Visitor-Id (uuid v4) is required",
                        {"X-Visitor-Id": ["missing or malformed"]})
+    addr = _address_guard(request, st, vid, orders=1)
     conn = st.conn()
     r = commands.try_order(conn, st.ids, st.clock.now(), st.settings, order_id, vid)
+    if addr:
+        st.limiter.add_orders(addr, st.clock.now().timestamp(), 1)
     st.drain(conn, r["order_id"])                       # only this order; scored immediately: no debounce, cache hit
     return M.TryResponse(**r)
 
@@ -86,6 +120,7 @@ def simulate_reply(conversation_id: str, body: M.SimulateText | M.SimulateLocati
     """Add a simulated customer reply (text or location pin); this arms a rescore."""
     st = _s(request)
     vid = require_visitor(request, vid)
+    _address_guard(request, st, vid)
     kw = {"text": body.text} if isinstance(body, M.SimulateText) else {"lat": body.lat, "lng": body.lng}
     return M.SimulateReplyResponse(**commands.simulate_reply(st.conn(), st.ids, st.clock.now(), st.settings,
                                                              st.config.raw, vid, conversation_id, **kw))
@@ -96,6 +131,7 @@ def rescore(order_id: str, request: Request, vid: str | None = Depends(visitor_i
     """Force a rescore of the order."""
     st = _s(request)
     vid = require_visitor(request, vid)
+    _address_guard(request, st, vid)
     return M.RescoreResponse(**commands.rescore(st.conn(), st.clock.now(), st.settings, vid, order_id))
 
 
@@ -104,6 +140,7 @@ def action(order_id: str, body: M.SellerActionRequest, request: Request, vid: st
     """Apply a seller action (approve, request_confirmation, cancel, ship, mark_delivered, mark_refused)."""
     st = _s(request)
     vid = require_visitor(request, vid)
+    _address_guard(request, st, vid)
     conn = st.conn()
     commands.apply_action(conn, st.ids, st.clock.now(), st.settings, vid, order_id, body.action, st.drafter)
     from wasel.db import repo
@@ -115,6 +152,7 @@ def send_draft(draft_id: str, request: Request, vid: str | None = Depends(visito
     """Send a drafted message. A person triggers this; whether it goes out depends on the mode and WhatsApp settings."""
     st = _s(request)
     vid = require_visitor(request, vid)
+    _address_guard(request, st, vid)
     return M.SendDraftResponse(**commands.send_draft(st.conn(), st.ids, st.clock.now(), st.settings, vid, draft_id,
                                                          st.sender))
 

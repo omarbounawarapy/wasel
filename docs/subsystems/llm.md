@@ -124,6 +124,7 @@ Records go to an in-process ring buffer of 5,000 entries (read by `GET /api/trac
 | Tokens per model per UTC day | 120,000 | public mode only |
 | Calls per visitor per 10 minutes | 6 (`VISITOR_LLM_CAP_10MIN`) | public mode, sandbox traffic |
 | Calls per visitor per UTC day | 20 (`VISITOR_LLM_CAP_DAY`) | public mode, sandbox traffic |
+| Calls per client address per UTC day | 25% of the daily cap (`ADDR_LLM_SHARE`), shared by every visitor id seen from that address | public mode, when the address is known (`CLIENT_IP_HEADER`); the id-to-address map is in memory, so a restart forgets it |
 
 Calls approved during a scoring run but not yet written to `llm_usage` are held as reservations, so a three-step chain cannot overshoot the limit. The worker calls `settle()` after its transaction. The failure analyzer's `--llm` mode passes no meter and is not capped.
 

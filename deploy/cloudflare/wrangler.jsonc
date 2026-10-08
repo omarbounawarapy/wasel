@@ -18,6 +18,7 @@
     "WEBHOOK_ENABLED": "false",
     "SNAPSHOT_URL": "http://state.wasel.internal/snapshot",
     "SNAPSHOT_INTERVAL_S": "60",
+    "CLIENT_IP_HEADER": "CF-Connecting-IP",
     "CONTAINER_SLEEP_AFTER": "15m",
     "GIT_SHA": "dev"
   },
@@ -76,6 +77,7 @@
         "WEBHOOK_ENABLED": "false",
         "SNAPSHOT_URL": "http://state.wasel.internal/snapshot",
         "SNAPSHOT_INTERVAL_S": "60",
+        "CLIENT_IP_HEADER": "CF-Connecting-IP",
         "CONTAINER_SLEEP_AFTER": "15m",
         "GIT_SHA": "dev"
       },
@@ -134,6 +136,7 @@
         "WEBHOOK_ENABLED": "false",
         "SNAPSHOT_URL": "http://state.wasel.internal/snapshot",
         "SNAPSHOT_INTERVAL_S": "60",
+        "CLIENT_IP_HEADER": "CF-Connecting-IP",
         "CONTAINER_SLEEP_AFTER": "15m",
         "GIT_SHA": "dev"
       },

@@ -82,6 +82,10 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `VISITOR_LLM_CAP_DAY` | `20` | Provider calls per visitor per UTC day (public mode) |
 | `SANDBOX_TTL_S` | `7200` | Age after which a visitor's conversations are purged |
 | `SANDBOX_MAX_ORDERS` | `15` | Orders per visitor (429 `SANDBOX_LIMIT`) |
+| `CLIENT_IP_HEADER` | empty | Public mode: a header your proxy overwrites on every request (`CF-Connecting-IP` on Cloudflare and Render). Per-address limits count under it. Empty uses the socket address; a loopback or private peer means an unknown proxy, so only the per-visitor limits apply. Never name a header a client can set freely, such as `X-Forwarded-For` |
+| `ADDR_WRITES_10MIN` | `30` | Public mode: write requests per client address per 10 minutes (429 `RATE_LIMITED` with `Retry-After`). A new visitor id does not reset it |
+| `ADDR_SANDBOX_ORDERS` | `30` | Public mode: sandbox orders one address may create per `SANDBOX_TTL_S` (429 `RATE_LIMITED`) |
+| `ADDR_LLM_SHARE` | `0.25` | Public mode: share of `LIVE_LLM_DAILY_CAP` that all the visitor ids seen from one address may use together; over it, scoring uses the rules path |
 | `SANDBOX_GLOBAL_MAX` | `500` | Sandbox orders in total (429 `DEMO_BUSY`) |
 | `PURGE_INTERVAL_S` | `600` | How often the purge runs |
 | `REPLY_LIMIT` | `5` | Simulated replies per conversation in public mode |

@@ -22,12 +22,14 @@ class SqliteUsageMeter:
     """
 
     def __init__(self, conn: sqlite3.Connection, *, daily_cap: int | None, public: bool,
-                 visitor_10min: int = 6, visitor_day: int = 20, tokens_per_model_day: int | None = None):
+                 visitor_10min: int = 6, visitor_day: int = 20, tokens_per_model_day: int | None = None,
+                 siblings=None, address_cap: int | None = None):
         self.conn, self.daily_cap, self.public = conn, daily_cap, public
         self.visitor_10min, self.visitor_day = visitor_10min, visitor_day
         self.tokens_per_model_day = tokens_per_model_day if tokens_per_model_day is not None else \
             (120_000 if public else None)
         self._pending: dict[str | None, int] = {}
+        self.siblings, self.address_cap = siblings, address_cap      # visitor ids from one address, and its share
 
     def _count(self, sql: str, *args) -> int:
         return int(self.conn.execute(sql, args).fetchone()[0] or 0)
@@ -58,6 +60,12 @@ class SqliteUsageMeter:
             today = self._count("SELECT COUNT(*) FROM llm_usage WHERE sandbox_id=? AND day=?", sandbox_id, day)
             if last10 + mine >= self.visitor_10min or today + mine >= self.visitor_day:
                 return "visitor_cap"
+            if self.siblings is not None and self.address_cap is not None:       # the address, whatever ids it uses
+                ids = self.siblings(sandbox_id)
+                marks = ",".join("?" * len(ids))
+                used = self._count(f"SELECT COUNT(*) FROM llm_usage WHERE day=? AND sandbox_id IN ({marks})", day, *ids)
+                if used + sum(self._pending.get(i, 0) for i in ids) >= self.address_cap:
+                    return "visitor_cap"
         self._pending[sandbox_id] = self._pending.get(sandbox_id, 0) + 1
         return "ok"
 

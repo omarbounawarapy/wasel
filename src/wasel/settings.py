@@ -51,6 +51,11 @@ class Settings(BaseSettings):
     sandbox_global_max: int = 500
     purge_interval_s: int = 600
     reply_limit: int = 5
+    # per client address (public mode); the visitor id is chosen by the client, the address is not
+    client_ip_header: str = ""              # header a trusted proxy overwrites, e.g. CF-Connecting-IP (empty = socket peer)
+    addr_writes_10min: int = 30             # write requests per address per 10 minutes
+    addr_sandbox_orders: int = 30           # sandbox orders created per address per sandbox_ttl_s
+    addr_llm_share: float = 0.25            # share of the daily provider-call cap one address may use
     # runtime
     git_sha: str = "dev"
     frontend_origin: str = "http://localhost:5173"
