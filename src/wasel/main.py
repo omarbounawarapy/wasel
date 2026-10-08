@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from wasel.api import models as M
-from wasel.api.errors import ApiError
+from wasel.api.errors import ApiError, validation_details
 from wasel.api.routes import admin, router
 from wasel.api.routes_webhook import install_log_redaction, webhook
 from wasel.clock import Clock, SystemClock, utc_iso
@@ -269,11 +269,11 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
 
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, e: RequestValidationError):
-        details: dict[str, list[str]] = {}
-        for err in e.errors():
-            details.setdefault(".".join(str(x) for x in err["loc"][1:]) or "body", []).append(err["msg"])
-        return JSONResponse({"error": {"code": "VALIDATION_ERROR", "message": "invalid request", "details": details}},
-                            status_code=422)
+        message, details = validation_details(e.errors())
+        err = {"code": "VALIDATION_ERROR", "message": message}
+        if details:
+            err["details"] = details
+        return JSONResponse({"error": err}, status_code=422)
 
     @app.middleware("http")
     async def _limits_and_headers(request: Request, call_next):

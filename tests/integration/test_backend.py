@@ -196,6 +196,21 @@ def test_csv_ingest_limits_and_rejects(dev):
     assert len(r["created"]) == 1 and [x["row"] for x in r["rejected"]] == [2, 3]
 
 
+def test_union_body_errors_name_the_kind(dev):
+    c, _, _ = dev
+    r = c.post("/api/orders/ingest", json={"text": "x"})
+    assert r.status_code == 422 and r.json()["error"] == {"code": "VALIDATION_ERROR",
+                                                          "message": 'kind must be "paste" or "csv"'}
+    r = c.post("/api/orders/ingest", json={"kind": "csv"}).json()["error"]
+    assert r["message"] == "invalid request" and r["details"] == {"csv_text": ["Field required"]}
+    r = c.post("/api/orders/ingest", json={"kind": "paste", "text": ""}).json()["error"]
+    assert list(r["details"]) == ["text"]
+    cid = c.get("/api/orders").json()["orders"][0]["order_id"]
+    conv = c.get(f"/api/orders/{cid}").json()["conversation"]["conversation_id"]
+    r = c.post(f"/api/conversations/{conv}/simulate-reply", json={"text": "x"}).json()["error"]
+    assert r["message"] == 'kind must be "text" or "location"'
+
+
 # ---------------------------------------------------------------- debounce, append-only assessments, tier boundary
 def test_debounce_and_append_only_versions(dev):
     c, core, clock = dev

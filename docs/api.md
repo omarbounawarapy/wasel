@@ -53,6 +53,8 @@ Fields: `status` (`ok` or `degraded`), `mode`, `wa_send`, `webhook` (`enabled` o
 | `POST /api/conversations/{conversation_id}/simulate-reply` | 202 | `{"kind": "text", "text"}` (up to 600 characters) or `{"kind": "location", "lat", "lng"}`. Adds a simulated customer message and arms a rescore. |
 | `POST /api/drafts/{draft_id}/send` | 200 | Send a draft (or record it as sent, depending on mode and channel; see [outbound](subsystems/outbound.md#sending)). Returns `sent_message_id`, `sent_at`, `delivery`. |
 
+A body without a valid `kind` returns `422` with the message `kind must be "paste" or "csv"` (`"text" or "location"` for simulate-reply).
+
 Structured fields on ingest: `product_name`, `price_tnd` (at least 0), `zone` (`urban`, `suburban`, `rural`), `quantity` (1 to 50). CSV columns: `customer_id, customer_name, product, price_tnd, zone, address, note`; the `customer_id` column is currently ignored.
 
 ### Activity and analysis
