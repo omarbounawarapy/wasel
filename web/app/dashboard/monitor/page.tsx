@@ -52,7 +52,7 @@ export default function MonitorPage() {
                 subtitle={`Watches the last messages Wasel scored and warns you if they start to look different from what it was tested on. AI readings: ${live} live, ${recorded} recorded.`}
                 actions={
                     <button type="button" onClick={load} disabled={refreshing}
-                            className="inline-flex items-center gap-2 px-3 min-h-[40px] rounded-xl bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
+                            className="inline-flex items-center gap-2 px-3 min-h-[44px] rounded-xl bg-white border border-gray-300 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50">
                         <RefreshCw className={`w-4 h-4 ${refreshing ? "animate-spin motion-reduce:animate-none" : ""}`} /> Refresh
                     </button>
                 } />

@@ -84,7 +84,7 @@ export default function PasteOrderPage() {
                         <div className="flex flex-wrap gap-2">
                             {EXAMPLES.map(ex => (
                                 <button key={ex.label} type="button" onClick={() => loadExample(ex)}
-                                        className="text-xs font-medium px-3 min-h-[36px] rounded-full border border-gray-300 bg-white text-gray-700 hover:border-brand/40 hover:text-brand">
+                                        className="text-xs font-medium px-3 min-h-[44px] rounded-full border border-gray-300 bg-white text-gray-700 hover:border-brand/40 hover:text-brand">
                                     {ex.label}{ex.aiReads && <span className="ml-1.5 text-brand">· AI reads more</span>}
                                 </button>
                             ))}
@@ -99,7 +99,7 @@ export default function PasteOrderPage() {
                         <textarea dir="auto" rows={5} maxLength={2000} value={text} onChange={e => setText(e.target.value)}
                                   className="w-full px-3 py-2 rounded-xl border border-gray-300 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand resize-y"
                                   aria-describedby="paste-count" />
-                        <span id="paste-count" className={`block text-right text-xs mt-1 ${text.length >= 1900 ? "text-amber-700" : "text-gray-500"}`}>{text.length} / 2,000</span>
+                        <span id="paste-count" className={`block text-right text-xs mt-1 ${text.length >= 1900 ? "text-amber-700" : "text-gray-600"}`}>{text.length} / 2,000</span>
                     </label>
 
                     <Details label="Order details (optional)">

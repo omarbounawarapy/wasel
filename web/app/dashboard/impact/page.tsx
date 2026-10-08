@@ -42,12 +42,12 @@ export default function ImpactPage() {
                         <p className="text-sm text-white/85 mt-2 max-w-prose">
                             In this run: {num(data.tnd_saved)} TND on {num(data.n_orders)} orders ({num(data.trips_avoided)} refused deliveries avoided, if every recommendation is followed).
                         </p>
-                        <p className="mt-3 inline-block text-[11px] font-bold uppercase tracking-wider bg-white/15 rounded-full px-2.5 py-1">Simulated</p>
+                        <p className="mt-3 inline-block text-xs font-bold uppercase tracking-wider bg-white/15 rounded-full px-2.5 py-1">Simulated</p>
                     </section>
 
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-4">
                         <StatCard label="Refused at the door today" value={pct(data.baseline_refusal_rate)} hint="Without Wasel (synthetic data)" />
-                        <ArrowRight className="w-6 h-6 text-gray-400 mx-auto rotate-90 sm:rotate-0" aria-hidden="true" />
+                        <ArrowRight className="w-6 h-6 text-gray-500 mx-auto rotate-90 sm:rotate-0" aria-hidden="true" />
                         <StatCard label="Refused with Wasel" value={pct(data.projected_refusal_rate)} tone="good"
                                   hint={`${((data.baseline_refusal_rate - data.projected_refusal_rate) * 100).toFixed(1)} points fewer refusals`} />
                     </div>

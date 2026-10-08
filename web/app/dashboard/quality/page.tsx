@@ -118,7 +118,7 @@ export default function QualityPage() {
     }, []);
 
     return (
-        <Page wide>
+        <Page>
             <PageHeader
                 title="Quality checks"
                 subtitle="Before every release, Wasel is tested on hundreds of example conversations. A release only ships when all checks pass." />

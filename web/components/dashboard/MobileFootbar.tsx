@@ -36,7 +36,7 @@ export function MobileFootbar() {
     }, [open]);
 
     const itemClass = (active: boolean) =>
-        `flex flex-col items-center justify-center gap-0.5 min-h-[56px] w-full text-[11px] font-medium whitespace-nowrap ${active ? "text-brand" : "text-gray-500"}`;
+        `flex flex-col items-center justify-center gap-0.5 min-h-[56px] w-full text-xs font-medium whitespace-nowrap ${active ? "text-brand" : "text-gray-600"}`;
 
     return (
         <nav aria-label="Main" className="lg:hidden fixed bottom-3 left-3 right-3 z-50 bg-white rounded-2xl border border-gray-200 shadow-lg">

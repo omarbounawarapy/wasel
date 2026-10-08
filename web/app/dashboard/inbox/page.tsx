@@ -28,7 +28,7 @@ export default function InboxPage() {
     const connected = health?.webhook === "enabled";
 
     return (
-        <Page wide>
+        <Page>
             <PageHeader
                 title="WhatsApp messages"
                 subtitle="Messages your customers send to your WhatsApp business number land here within seconds, already scored." />
@@ -67,7 +67,7 @@ export default function InboxPage() {
                                         className="w-full text-left flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-3.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
                                     <span className="sm:w-[190px] shrink-0 min-w-0">
                                         <bdi className="block font-semibold text-brand-ink truncate">{o.customer.display_name || o.customer.phone_masked || "Unknown"}</bdi>
-                                        <span className="block text-xs text-gray-500 tabular-nums">{o.order_ref} · {tunisTime(o.updated_at)}</span>
+                                        <span className="block text-xs text-gray-600 tabular-nums">{o.order_ref} · {tunisTime(o.updated_at)}</span>
                                     </span>
                                     <bdi dir="auto" className="flex-1 min-w-0 text-sm text-gray-700 truncate">{o.last_message_preview || ""}</bdi>
                                     <span className="flex items-center gap-3 shrink-0">

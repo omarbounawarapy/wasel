@@ -147,8 +147,8 @@ for _t in st.session_state.pop("toasts", []):
     st.toast(_t)
 
 with st.sidebar:
-    if (LOGO / "wasel-logo.png").exists():
-        st.image(str(LOGO / "wasel-logo.png"), width=200)
+    if (LOGO / "wasel-logo-compact.png").exists():
+        st.image(str(LOGO / "wasel-logo-compact.png"), width=200)
     else:
         st.title("Wasel")
     st.radio("Screen", PAGES, key="page", label_visibility="collapsed")

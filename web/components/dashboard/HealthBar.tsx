@@ -55,16 +55,16 @@ export function HealthBar() {
                 {warn ? <AlertTriangle className="w-4 h-4 text-amber-600" /> : <CheckCircle2 className="w-4 h-4 text-emerald-600" />}
                 {ai}
             </span>
-            <span className="hidden sm:inline text-gray-400" aria-hidden="true">·</span>
+            <span className="hidden sm:inline text-gray-500" aria-hidden="true">·</span>
             <span>{whatsapp}</span>
             {health.wa_auto_send && (
                 <>
-                    <span className="hidden sm:inline text-gray-400" aria-hidden="true">·</span>
+                    <span className="hidden sm:inline text-gray-500" aria-hidden="true">·</span>
                     <span className="font-semibold text-brand" title="Replies cleared by every check are sent without a click">Automatic replies on</span>
                 </>
             )}
-            <span className="hidden sm:inline text-gray-400" aria-hidden="true">·</span>
-            <span className="hidden sm:inline text-gray-500">{mode}</span>
+            <span className="hidden sm:inline text-gray-500" aria-hidden="true">·</span>
+            <span className="hidden sm:inline text-gray-600">{mode}</span>
         </div>
     );
 }

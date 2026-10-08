@@ -46,7 +46,7 @@ export default function FailuresPage() {
     const review = data?.by_status?.needs_review ?? 0;
 
     return (
-        <Page wide>
+        <Page>
             <PageHeader
                 title="Silent failures"
                 subtitle="A demonstration of the silent-failure analyzer on synthetic test conversations. It is not a measurement of real Wasel conversations." />
@@ -89,11 +89,11 @@ export default function FailuresPage() {
                                             <p className="text-sm text-gray-700 mb-3">
                                                 Seen in <span className="font-semibold tabular-nums">{total}</span> conversation{total === 1 ? "" : "s"}.
                                             </p>
-                                            <ul className="divide-y divide-gray-100 border border-gray-100 rounded-xl">
+                                            <ul className="divide-y divide-gray-100 border-y border-gray-100">
                                                 {g.cases.map((c: any) => (
-                                                    <li key={c.signature} className="flex items-center justify-between gap-3 px-3 py-2 text-sm">
+                                                    <li key={c.signature} className="flex items-center justify-between gap-3 py-2.5 text-sm">
                                                         <span className="text-gray-800 min-w-0 break-words">{plainSignature(c.signature)}</span>
-                                                        <span className="text-gray-500 tabular-nums shrink-0">{c.n_sessions} × · {Math.round((c.share || 0) * 100)}%</span>
+                                                        <span className="text-gray-600 tabular-nums shrink-0">{c.n_sessions} × · {Math.round((c.share || 0) * 100)}%</span>
                                                     </li>
                                                 ))}
                                             </ul>

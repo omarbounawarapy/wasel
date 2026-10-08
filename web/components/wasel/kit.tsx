@@ -1,14 +1,14 @@
 "use client";
 
-// Wasel UI kit: one card anatomy, one radius (rounded-2xl), one accent (brand navy), reused by every page.
+// Wasel UI kit: one card anatomy, one radius (rounded-2xl), one primary (brand navy), reused by every page.
 import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, Info, X } from "lucide-react";
 
 // ---------------------------------------------------------------- shared labels
 export const TIER: Record<string, { label: string, cls: string, shape: string, meaning: string }> = {
     high: { label: "High", cls: "bg-red-600 text-white", shape: "●", meaning: "Likely refused at the door. Confirm before shipping." },
-    medium: { label: "Medium", cls: "bg-amber-500 text-gray-950", shape: "◆", meaning: "Some doubt. A quick confirmation helps." },
-    low: { label: "Low", cls: "bg-emerald-600 text-white", shape: "▲", meaning: "Looks safe. Ship normally." },
+    medium: { label: "Medium", cls: "bg-amber-500 text-amber-950", shape: "◆", meaning: "Some doubt. A quick confirmation helps." },
+    low: { label: "Low", cls: "bg-emerald-700 text-white", shape: "▲", meaning: "Looks safe. Ship normally." },
 };
 
 export const NEXT_STEP: Record<string, string> = {
@@ -38,8 +38,8 @@ export const tnd = (v?: number | null) =>
     v === null || v === undefined ? "–" : `${Number.isInteger(v) ? v : v.toFixed(1)} TND`;
 
 // ---------------------------------------------------------------- page chrome
-export function Page({ children, wide = false }: { children: ReactNode, wide?: boolean }) {
-    return <div className={`w-full ${wide ? "max-w-7xl" : "max-w-5xl"} space-y-6`}>{children}</div>;
+export function Page({ children }: { children: ReactNode }) {
+    return <div className={`w-full max-w-7xl space-y-6`}>{children}</div>;
 }
 
 export function PageHeader({ title, subtitle, actions }: { title: string, subtitle: string, actions?: ReactNode }) {
@@ -67,13 +67,13 @@ export function Guide({ id, steps }: { id: string, steps: string[] }) {
     if (!open) {
         return (
             <button type="button" onClick={show}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-accent-ink hover:underline min-h-[32px]">
+                    className="inline-flex items-center gap-1.5 text-xs font-medium text-teal-ink hover:underline min-h-[44px]">
                 <Info className="w-3.5 h-3.5" /> How this page works
             </button>
         );
     }
     return (
-        <section aria-label="How this page works" className="rounded-2xl bg-accent-soft border border-accent/20 p-4">
+        <section aria-label="How this page works" className="rounded-2xl bg-teal-soft border border-teal/20 p-4">
             <div className="flex items-start gap-3">
                 <ol className="flex-1 grid gap-3 sm:grid-cols-3">
                     {steps.map((s, i) => (
@@ -84,7 +84,7 @@ export function Guide({ id, steps }: { id: string, steps: string[] }) {
                     ))}
                 </ol>
                 <button type="button" onClick={hide} aria-label="Hide this guide"
-                        className="shrink-0 p-1.5 rounded-lg text-gray-500 hover:text-gray-900 hover:bg-white/70">
+                        className="shrink-0 -m-2 w-11 h-11 inline-flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/70">
                     <X className="w-4 h-4" />
                 </button>
             </div>
@@ -106,7 +106,7 @@ export function Section({ title, hint, step, actions, children, className = "" }
                         )}
                         {title}
                     </h2>
-                    {hint && <p className="text-xs text-gray-500 mt-1">{hint}</p>}
+                    {hint && <p className="text-xs text-gray-600 mt-1">{hint}</p>}
                 </div>
                 {actions}
             </div>
@@ -130,7 +130,7 @@ export function StatCard({ label, value, hint, tone = "default", onClick }: {
              className={`text-left bg-white rounded-2xl border border-gray-200/70 shadow-sm p-3 sm:p-5 min-w-0 ${onClick ? "hover:border-brand/40 hover:shadow focus-visible:outline-2 focus-visible:outline-brand transition" : ""}`}>
             <p className="text-xs sm:text-sm font-medium text-gray-600 leading-snug">{label}</p>
             <p className={`text-2xl sm:text-3xl font-bold tabular-nums mt-1 ${toneCls}`}>{value}</p>
-            {hint && <p className="hidden sm:block text-xs text-gray-500 mt-1">{hint}</p>}
+            {hint && <p className="hidden sm:block text-xs text-gray-600 mt-1">{hint}</p>}
         </Tag>
     );
 }
@@ -139,7 +139,7 @@ export function StatCard({ label, value, hint, tone = "default", onClick }: {
 export function Details({ label = "Details", open, children }: { label?: string, open?: boolean, children: ReactNode }) {
     return (
         <details className="group mt-3" open={open}>
-            <summary className="inline-flex items-center gap-1 text-xs font-medium text-gray-500 hover:text-gray-900 cursor-pointer select-none list-none min-h-[28px]">
+            <summary className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 cursor-pointer select-none list-none min-h-[44px]">
                 <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" /> {label}
             </summary>
             <div className="mt-2 text-xs text-gray-600 space-y-1">{children}</div>
@@ -154,13 +154,13 @@ export function Chip({ children, tone = "gray" }: { children: ReactNode, tone?: 
         blue: "border-brand/30 text-brand bg-brand-soft",
         green: "border-emerald-300 text-emerald-800 bg-emerald-50",
     }[tone];
-    return <span className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${cls}`}>{children}</span>;
+    return <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${cls}`}>{children}</span>;
 }
 
 export function RiskBadge({ tier, score, size = "sm" }: { tier?: string | null, score?: number | null, size?: "sm" | "lg" }) {
     const t = tier ? TIER[tier] : null;
     if (!t || score === null || score === undefined) {
-        return <span className="text-xs font-medium text-gray-500 animate-pulse motion-reduce:animate-none whitespace-nowrap">Scoring…</span>;
+        return <span className="text-xs font-medium text-gray-600 animate-pulse motion-reduce:animate-none whitespace-nowrap">Scoring…</span>;
     }
     return (
         <span aria-label={`${t.label} risk, ${score} out of 100`}
@@ -198,7 +198,7 @@ export function Empty({ title, children }: { title: string, children?: ReactNode
     return (
         <div className="text-center py-10 px-4">
             <p className="font-semibold text-brand-ink">{title}</p>
-            {children && <div className="text-sm text-gray-500 mt-1 max-w-prose mx-auto">{children}</div>}
+            {children && <div className="text-sm text-gray-600 mt-1 max-w-prose mx-auto">{children}</div>}
         </div>
     );
 }

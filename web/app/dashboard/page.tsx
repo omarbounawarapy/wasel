@@ -44,7 +44,7 @@ export default function QueueDashboard() {
     const rows = filter === "all" ? [...scoring, ...scored] : scored.filter(o => o.status === filter);
 
     return (
-        <Page wide>
+        <Page>
             <PageHeader
                 title="Orders to check"
                 subtitle="Wasel reads what each customer wrote and scores how likely the order is to be refused at the door. Riskiest orders are at the top." />
@@ -79,7 +79,7 @@ export default function QueueDashboard() {
                 </div>
                 {filter !== "all" && (
                     <button type="button" onClick={() => setFilter("all")}
-                            className="text-sm font-medium text-brand hover:underline min-h-[36px]">
+                            className="text-sm font-medium text-brand hover:underline min-h-[44px]">
                         Show all orders
                     </button>
                 )}
@@ -100,7 +100,7 @@ export default function QueueDashboard() {
             )}
 
             <section aria-label="Orders by risk" className="bg-white rounded-2xl border border-gray-200/70 shadow-sm overflow-hidden">
-                <div className="hidden md:grid grid-cols-[minmax(0,1.3fr)_auto_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.6fr)] gap-4 px-5 py-3 bg-brand-soft text-[11px] font-bold uppercase tracking-wider text-brand">
+                <div className="hidden md:grid grid-cols-[minmax(0,1.3fr)_auto_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.6fr)] gap-4 px-5 py-3 bg-brand-soft text-xs font-bold uppercase tracking-wider text-brand">
                     <span>Order</span><span className="w-[120px]">Risk</span><span>Next step</span><span>Status</span><span>Why</span>
                 </div>
                 {!queueData && !error ? (
@@ -124,7 +124,7 @@ export default function QueueDashboard() {
                                             {o.channel === "whatsapp" && <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="WhatsApp" />}
                                             {o.is_seeded && o.seed_key && <Chip>Sample</Chip>}
                                         </span>
-                                        <span className="block text-xs text-gray-500 truncate">
+                                        <span className="block text-xs text-gray-600 truncate">
                                             {[o.product_name, o.price_tnd != null ? tnd(o.price_tnd) : null].filter(Boolean).join(" · ") || "Details not given yet"}
                                         </span>
                                     </span>
@@ -135,7 +135,7 @@ export default function QueueDashboard() {
                                     </span>
                                     <span className="text-sm font-medium text-gray-800">{o.score ? NEXT_STEP[o.score.action] ?? o.score.action : "–"}</span>
                                     <span className="text-sm text-gray-600">{STATUS[o.status] ?? o.status}</span>
-                                    <span className="text-xs text-gray-500 truncate" title={o.score?.reason_short || ""}>
+                                    <span className="text-xs text-gray-600 truncate" title={o.score?.reason_short || ""}>
                                         {/* the reason without the tier prefix and the internal point values */}
                                         {(o.score?.reason_short || "").replace(/^(HIGH|MEDIUM|LOW) \d+ · /, "").replace(/ [+−-]\d+(?= ·|$)/g, "")}
                                     </span>

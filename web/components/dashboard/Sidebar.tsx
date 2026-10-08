@@ -1,6 +1,7 @@
 "use client";
 
-import Link from "next/link";
+import Link from "next/link"
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import {
     ListChecks, MessageCircle, ClipboardPaste, LineChart, History, ShieldCheck, SearchCheck, Gauge, ScrollText,
@@ -44,13 +45,13 @@ export const Sidebar = () => {
     return (
         <aside className="w-[248px] flex flex-col h-full overflow-y-auto scrollbar-hide shrink-0">
             <Link prefetch={false} href="/dashboard" className="px-5 pt-7 pb-6 block" aria-label="Wasel home">
-                <img src="/wasel-logo.png" alt="Wasel, COD order risk assessment" width={200} height={49} className="w-[200px] h-auto" />
+                <Image priority src="/wasel-logo-compact.png" alt="Wasel, COD order risk assessment" width={200} height={48} className="w-[200px] h-auto" />
             </Link>
 
             <nav className="px-4 pb-6 space-y-6" aria-label="Main">
                 {NAV_GROUPS.map(group => (
                     <div key={group.title}>
-                        <p className="px-3 mb-2 text-[11px] font-semibold text-gray-500 uppercase tracking-wider">{group.title}</p>
+                        <p className="px-3 mb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">{group.title}</p>
                         <ul className="flex flex-col gap-1">
                             {group.items.map(item => {
                                 const active = isActive(item.path);

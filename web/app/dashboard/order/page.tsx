@@ -80,7 +80,7 @@ function Segments({ segments }: { segments: any[] }) {
     return <>{segments.map((s, i) => s.kind
         ? <mark key={i} tabIndex={0} title={s.label ?? ""}
                 className={s.kind === "risk"
-                    ? "bg-amber-200 text-gray-900 border-b-2 border-dotted border-amber-600 rounded-sm"
+                    ? "bg-amber-200 text-amber-950 underline decoration-dotted decoration-2 underline-offset-2 decoration-amber-600 rounded-sm"
                     : "bg-transparent text-gray-900 border-b-2 border-emerald-600"}>
             {s.text}<span className="sr-only"> ({s.label})</span>
         </mark>
@@ -191,10 +191,10 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
         <details className="group bg-white rounded-2xl border-2 border-dashed border-gray-300 p-5" open={scripted.length > 0}>
             <summary className="cursor-pointer list-none select-none">
                 <span className="text-sm font-bold text-brand-ink">
-                    <span className="text-[10px] font-bold bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded mr-2">DEMO</span>
+                    <span className="text-xs font-bold bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded mr-2">DEMO</span>
                     Pretend to be the customer
                 </span>
-                <span className="block text-xs text-gray-500 mt-1">
+                <span className="block text-xs text-gray-600 mt-1">
                     Type the customer's reply to see Wasel rescore the order. It goes through the same steps as a real WhatsApp message and is marked “Simulated”.
                 </span>
             </summary>
@@ -203,7 +203,7 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
                     <div className="flex flex-wrap gap-2">
                         {scripted.map((s, i) => (
                             <button key={i} type="button" title={s} onClick={() => setReplyText(s)}
-                                    className="text-xs px-3 min-h-[32px] rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 max-w-full truncate">
+                                    className="text-xs px-3 min-h-[44px] rounded-full border border-gray-300 text-gray-700 hover:bg-gray-50 max-w-full truncate">
                                 Scripted: {s.length > 60 ? s.slice(0, 60) + "…" : s}
                             </button>
                         ))}
@@ -229,7 +229,7 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
                     />
                 </label>
                 <div className="flex items-center justify-between">
-                    <span className={`text-xs ${error ? "text-red-700" : "text-gray-500"}`}>{error ?? `${replyText.length} / 1,000`}</span>
+                    <span className={`text-xs ${error ? "text-red-700" : "text-gray-600"}`}>{error ?? `${replyText.length} / 1,000`}</span>
                     <Button size="sm" variant="outline" disabled={sending || !replyText.trim()} onClick={handleSend}>
                         {sending ? "Sending…" : "Send simulated reply"}
                     </Button>
@@ -271,7 +271,7 @@ function DraftChecks({ draft, autoSend }: { draft: any, autoSend: boolean }) {
                     ? <Chip tone={decision.tone}>{decision.label}</Chip>
                     : <Chip>Classifier: n/a</Chip>)}
                 {judge && <Chip tone={judge.tone}>{judge.label}</Chip>}
-                <span className="text-gray-500">{rewrite ? "AI-adapted wording" : "Standard approved wording"}</span>
+                <span className="text-gray-600">{rewrite ? "AI-adapted wording" : "Standard approved wording"}</span>
             </div>
             {rewrite && ROUTE_TEXT[draft.route] && !draft.sent_message_id && (
                 <p className="text-xs text-gray-700">
@@ -412,11 +412,11 @@ function OrderDetailContent() {
         : "New customer";
 
     return (
-        <Page wide>
+        <Page>
             {/* Header: who and what */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                 <div className="min-w-0 space-y-1">
-                    <Link prefetch={false} href="/dashboard" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline min-h-[32px]">
+                    <Link prefetch={false} href="/dashboard" className="inline-flex items-center gap-1 text-sm font-medium text-brand hover:underline min-h-[44px]">
                         <ArrowLeft className="w-4 h-4" /> All orders
                     </Link>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
@@ -433,7 +433,7 @@ function OrderDetailContent() {
                     </p>
                 </div>
                 <Select value={orderId || ""} onValueChange={selectOrder}>
-                    <SelectTrigger className="w-full md:w-[280px] h-10 bg-white" aria-label="Switch order">
+                    <SelectTrigger className="w-full md:w-[280px] h-11 bg-white" aria-label="Switch order">
                         <SelectValue placeholder="Switch order" />
                     </SelectTrigger>
                     <SelectContent>
@@ -454,7 +454,7 @@ function OrderDetailContent() {
                     <ReadBy value={o.score?.read_by} />
                 </div>
                 <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-500">{STATUS[o.status]}</p>
+                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{STATUS[o.status]}</p>
                     <p className="text-lg font-bold text-brand-ink">
                         {o.score ? NEXT_STEP[o.score.action] ?? o.score.action : "Nothing to score yet"}
                     </p>
@@ -508,7 +508,7 @@ function OrderDetailContent() {
                 <div className="flex flex-col gap-6 min-w-0">
                     <Section step={1} title="What the customer said"
                              hint="Highlighted words are what Wasel noticed. Hover or focus a highlight to see why.">
-                        <div className="bg-[#efeae2] rounded-xl p-4 max-h-[460px] overflow-y-auto">
+                        <div className="bg-wa-bg rounded-xl p-4 max-h-[460px] overflow-y-auto">
                             {messages.length > 0 ? (
                                 <div className="flex flex-col gap-2">
                                     {messages.map((m: any) => {
@@ -516,14 +516,14 @@ function OrderDetailContent() {
                                         const sentDraft = (drafts || []).find((d: any) => d.sent_message_id === m.message_id);
                                         return (
                                             <div key={m.message_id} className={`flex flex-col max-w-[85%] ${isCustomer ? 'self-start' : 'self-end'}`}>
-                                                <div className={`p-3 rounded-2xl ${isCustomer ? 'bg-white rounded-bl-sm' : 'bg-[#d9fdd3] rounded-br-sm'} text-gray-900 shadow-sm`}>
+                                                <div className={`p-3 rounded-2xl ${isCustomer ? 'bg-white rounded-bl-sm' : 'bg-wa-out rounded-br-sm'} text-gray-900 shadow-sm`}>
                                                     <p dir="auto" className="whitespace-pre-wrap break-words leading-relaxed text-start">
                                                         {m.segments ? <Segments segments={m.segments} />
                                                             : m.text ?? (m.location
                                                                 ? <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4" /> Location pin {m.location.lat.toFixed(4)}, {m.location.lng.toFixed(4)}</span>
                                                                 : `[${m.kind} message]`)}
                                                     </p>
-                                                    <div className="text-[11px] mt-1 text-gray-500 flex items-center gap-1.5 flex-wrap">
+                                                    <div className="text-xs mt-1 text-gray-600 flex items-center gap-1.5 flex-wrap">
                                                         <span>{tunisTime(m.provider_ts)}</span>
                                                         {!isCustomer && <span>· {sentDraft?.source === "llm_rewrite" ? "AI-adapted message" : sentDraft ? "Standard message" : "You"}</span>}
                                                         {!isCustomer && sentDraft?.decided_by === "system" && <Chip tone="blue">Sent automatically</Chip>}
@@ -543,7 +543,7 @@ function OrderDetailContent() {
                             )}
                         </div>
                         <p className="mt-3 text-xs text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
-                            <span><mark className="bg-amber-200 px-1 rounded-sm border-b-2 border-dotted border-amber-600">amber</mark> raised the risk</span>
+                            <span><mark className="bg-amber-200 text-amber-950 px-1 rounded-sm underline decoration-dotted decoration-2 underline-offset-2 decoration-amber-600">amber</mark> raised the risk</span>
                             <span><span className="border-b-2 border-emerald-600">green underline</span> address detail found</span>
                         </p>
                     </Section>
@@ -638,7 +638,7 @@ function OrderDetailContent() {
                     {capabilities?.can_rescore && (
                         <button type="button" disabled={busy !== null}
                                 onClick={() => run("rescore", () => ordersApi.rescoreOrder(o.order_id))}
-                                className="self-start text-xs font-medium text-gray-500 hover:text-brand hover:underline min-h-[32px]">
+                                className="self-start text-xs font-medium text-gray-600 hover:text-brand hover:underline min-h-[44px]">
                             {busy === "rescore" ? "Rescoring…" : "Rescore this order now"}
                         </button>
                     )}
