@@ -208,8 +208,8 @@
       "assessment_version": 1,
       "template_id": "T_ADDRESS",
       "language": "darija_arabic_script",
-      "text": "باش نحضّرلك التوصيل متاع crème visage، سارة، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟",
-      "canonical_text": "باش نحضّرلك التوصيل متاع crème visage، سارة، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟",
+      "text": "باش نحضّرلك التوصيل متاع crème visage، سارة، ابعثلي العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟",
+      "canonical_text": "باش نحضّرلك التوصيل متاع crème visage، سارة، ابعثلي العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟",
       "source": "static_template",
       "route": "needs_review",
       "prefilter": {

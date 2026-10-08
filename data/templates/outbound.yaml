@@ -31,20 +31,20 @@ templates:
       generic_no_name: "مرحبا، وصلتنا الكوموند متاعك. تأكّدلي إلي باش تاخذها؟"
   T_ADDRESS:                  # address incomplete · ask street + house number · one yes/no question
     arabizi:
-      text: "Bech n7adroulk livraison mta3 {product}, {first_name}, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
-      no_name: "Bech n7adroulk livraison mta3 {product}, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
-      generic: "Bech n7adroulk livraison mta3 commandtek, {first_name}, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
-      generic_no_name: "Bech n7adroulk livraison mta3 commandtek, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
+      text: "Bech n7adroulk livraison mta3 {product}, {first_name}, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
+      no_name: "Bech n7adroulk livraison mta3 {product}, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
+      generic: "Bech n7adroulk livraison mta3 commandtek, {first_name}, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
+      generic_no_name: "Bech n7adroulk livraison mta3 commandtek, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
     fr:
       text: "Pour préparer la livraison de {product}, {first_name}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
       no_name: "Pour préparer la livraison de {product}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
       generic: "Pour préparer la livraison de votre commande, {first_name}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
       generic_no_name: "Pour préparer la livraison de votre commande, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
     darija_arabic_script:
-      text: "باش نحضّرلك التوصيل متاع {product}، {first_name}، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
-      no_name: "باش نحضّرلك التوصيل متاع {product}، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
-      generic: "باش نحضّرلك التوصيل متاع الكوموند متاعك، {first_name}، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
-      generic_no_name: "باش نحضّرلك التوصيل متاع الكوموند متاعك، ابعثلي عفاك العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
+      text: "باش نحضّرلك التوصيل متاع {product}، {first_name}، ابعثلي العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
+      no_name: "باش نحضّرلك التوصيل متاع {product}، ابعثلي العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
+      generic: "باش نحضّرلك التوصيل متاع الكوموند متاعك، {first_name}، ابعثلي العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
+      generic_no_name: "باش نحضّرلك التوصيل متاع الكوموند متاعك، ابعثلي العنوان الكامل: اسم الشارع ونومرو الدار. تنجم تبعثهم؟"
   T_PREPAY:                   # high risk AND price >= 250 TND · payment before delivery · one yes/no question
     arabizi:
       text: "{first_name}, commande {product} b {price_tnd} TND: el paiement ykoun 9bal el livraison. Twaafe9 3al paiement 9bal ma nab3thou?"

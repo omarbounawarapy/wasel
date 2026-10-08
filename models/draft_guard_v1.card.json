@@ -1,12 +1,12 @@
 {
   "name": "draft_guard_v1",
   "bank_sha256": "a3b3522f79ae38fafd907c408b1d2d03634cec755649542d578ca38df7a4cd0f",
-  "artifact_sha256": "c1cfdb95075bb52713d1d99630ab7fd86017b4af9ad966f51e2466ce3107032b",
+  "artifact_sha256": "9f9ad38efd52bbcacbad7d599fe592e476ca10d6ae3e44eb68bd8b6fa24d6c77",
   "versions": {
     "sklearn": "1.9.1",
     "numpy": "2.4.6"
   },
-  "n_features": 5740,
+  "n_features": 5721,
   "classes": [
     "contact",
     "discount",
@@ -41,7 +41,7 @@
     "safe_held": 0.11666666666666667,
     "safe_blocked": 0.0
   },
-  "trained_at": "2026-10-07T23:20:43.867446Z",
+  "trained_at": "2026-10-08T05:31:40.112825Z",
   "notes": [
     "Holdout = bank phrases never used in training, see guard_clf.calibrate().",
     "Retrain with `make train`; a changed bank without a new artifact fails at load."
