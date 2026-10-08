@@ -1,9 +1,9 @@
 pytest==9.1.1
 pytest-cov==7.1.0
-ruff==0.16.9
+ruff==0.16.10
 # make train only (not shipped): fits the XGBoost model and the draft guard classifier
 scikit-learn==1.9.1
 threadpoolctl==3.7.0
 # dashboard: make up / make ui, and tests/e2e/test_dashboard.py in make check
-streamlit==1.64.0
+streamlit==1.65.0
 altair==6.3.0

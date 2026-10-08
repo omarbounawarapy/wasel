@@ -2,7 +2,7 @@
 # Same pins as /requirements.txt, minus what only training and evaluation import (pandas) and with the CPU-only
 # xgboost build (`xgboost-cpu` is the same `import xgboost`, without ~470 MB of CUDA libraries the scorer never uses).
 # tests/unit/test_cloudflare_config.py fails if a pin drifts from /requirements.txt.
-fastapi==0.141.1
+fastapi==0.142.2
 uvicorn[standard]==0.54.0
 pydantic==2.13.5
 pydantic-settings==2.15.0
@@ -10,5 +10,5 @@ httpx==0.28.1
 xgboost-cpu==3.2.0
 numpy==2.4.6
 rapidfuzz==3.14.6
-PyYAML==6.0.1
+PyYAML==6.0.3
 python-ulid==4.0.1
