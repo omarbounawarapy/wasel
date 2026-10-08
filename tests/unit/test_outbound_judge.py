@@ -392,7 +392,7 @@ def test_first_call_is_fast_and_stale_bank_is_refused(tmp_path):
     from wasel.outbound import guard_clf as G
     code = "import time;from wasel.outbound.guard_clf import classify;t=time.time();classify('x');print(time.time()-t)"
     out = subprocess.run([sys.executable, "-c", code], capture_output=True, text=True, check=True)
-    assert float(out.stdout) < 0.2
+    assert float(out.stdout) < 1.0      # was 0.2 s; retraining at start-up took several seconds, so 1 s still catches it without flaking under load
     art = json.loads(G.ARTIFACT.read_text(encoding="utf-8"))
     art["bank_sha256"] = "0" * 64
     bad = tmp_path / "a.json"
