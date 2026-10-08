@@ -86,7 +86,9 @@ export default function MonitorPage() {
                                     <li key={d.feature} className="py-3">
                                         <div className="flex items-center justify-between gap-3">
                                             <span className="text-sm font-medium text-gray-900">{FEATURE[d.feature] ?? d.feature}</span>
-                                            <Chip tone={d.drifted ? "amber" : "green"}>{d.drifted ? "Changed" : "As expected"}</Chip>
+                                            {d.n < (data.min_samples ?? 20)
+                                                ? <Chip tone="gray">Too few readings</Chip>
+                                                : <Chip tone={d.drifted ? "amber" : "green"}>{d.drifted ? "Changed" : "As expected"}</Chip>}
                                         </div>
                                         <p className="text-sm text-gray-700 mt-1">{featureLine(d)}</p>
                                         <Details open>

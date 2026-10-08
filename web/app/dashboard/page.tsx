@@ -128,7 +128,7 @@ export default function QueueDashboard() {
                                             {[o.product_name, o.price_tnd != null ? tnd(o.price_tnd) : null].filter(Boolean).join(" · ") || "Details not given yet"}
                                         </span>
                                     </span>
-                                    <span className="flex items-center gap-1.5 md:w-[120px]">
+                                    <span className="flex flex-wrap items-center gap-1.5 md:w-[120px]">
                                         <RiskBadge tier={o.score?.tier} score={o.score?.final_score} />
                                         <Delta delta={o.score?.delta} />
                                         <ReadBy value={o.score?.read_by} />
