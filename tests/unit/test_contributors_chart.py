@@ -23,5 +23,14 @@ def test_one_person_under_several_identities_is_one_slice():
 def test_svg_has_a_slice_and_a_percentage_per_person():
     svg = chart.render(Counter({"a": 3, "b": 1}))
     assert svg.count("<path") == 2 and "75.0% · 3 commits" in svg and "25.0% · 1 commit<" in svg
+    assert "1,234 lines" in chart.render(Counter({"a": 1234}), "Lines of code added", "line")
     assert "<circle" in chart.render(Counter({"solo": 5}))                      # one person: a full disc, not an arc
     assert chart.render(Counter()).startswith("<svg")                           # empty history does not crash
+
+
+def test_only_source_files_count_as_lines_of_code():
+    for path in ("src/wasel/main.py", "web/app/page.tsx", "docs/api.md", "Makefile.sh", ".github/workflows/ci.yml"):
+        assert chart.counts_as_code(path), path
+    for path in ("web/package-lock.json", "data/reports/eval.json", "tests/fixtures/api/health.json", "docs/assets/a.svg",
+                 "docs/design-explorations/book/x.html", "models/m.json", "data/seed/demo.jsonl"):
+        assert not chart.counts_as_code(path), path

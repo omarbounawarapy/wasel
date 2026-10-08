@@ -127,9 +127,14 @@ docs/           documentation
 
 ## Contributors
 
-![Commits per contributor on main](docs/assets/contributors.svg)
+<table>
+<tr>
+<td><img src="docs/assets/contributors.svg" alt="Commits per contributor on main" width="420"></td>
+<td><img src="docs/assets/contributors-lines.svg" alt="Lines of code added per contributor" width="420"></td>
+</tr>
+</table>
 
-The chart is regenerated from `git log` by `scripts/dev/contributors_chart.py` after every push to `main` (the `contributors-chart` workflow). Identities of one person are merged by GitHub handle; bots are not counted.
+Both charts are regenerated from `git log` by `scripts/dev/contributors_chart.py` after every push to `main` (the `contributors-chart` workflow). Lines are the added lines of source and documentation files, without lockfiles, generated reports, data, fixtures, images and the design exploration pages. Identities of one person are merged by GitHub handle; bots are not counted. Neither chart measures review, design or work done outside git.
 
 ## License
 
