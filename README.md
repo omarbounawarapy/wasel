@@ -125,6 +125,12 @@ deploy/         systemd unit; cloudflare/ = Worker, container image, wrangler co
 docs/           documentation
 ```
 
+## Contributors
+
+![Commits per contributor on main](docs/assets/contributors.svg)
+
+The chart is regenerated from `git log` by `scripts/dev/contributors_chart.py` after every push to `main` (the `contributors-chart` workflow). Identities of one person are merged by GitHub handle; bots are not counted.
+
 ## License
 
 Copyright © 2026 Z-Team. All rights reserved. The demo is public; the code is in a private repository, shared with reviewers on request, and is not open source. See [LICENSE](LICENSE).

@@ -1,0 +1,27 @@
+# Regenerates docs/assets/contributors.svg (the README's commits-per-contributor pie chart) after every push to main
+# and commits it when it changed. Commits made by GITHUB_TOKEN do not start another workflow run, so there is no loop;
+# the chart commit is authored by the repository owner and is not counted by the script.
+name: contributors-chart
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions: { contents: write }
+concurrency: { group: contributors-chart, cancel-in-progress: false }
+jobs:
+  chart:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - run: python3 scripts/dev/contributors_chart.py
+      - name: commit the chart if it changed
+        run: |
+          git diff --quiet -- docs/assets/contributors.svg && exit 0
+          git config user.name "${GITHUB_REPOSITORY_OWNER}"
+          git config user.email "${{ github.repository_owner_id }}+${GITHUB_REPOSITORY_OWNER}@users.noreply.github.com"
+          git add docs/assets/contributors.svg
+          git commit -m "Update the contributors chart"
+          git pull --rebase origin main
+          git push origin HEAD:main
