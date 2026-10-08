@@ -123,7 +123,7 @@ sessions: ## rebuild data/agent_sessions{,_holdout}.jsonl: labeled synthetic age
 	$(PY) -m wasel.failures.dataset
 
 failures: ## hidden-failure analyzer, rules only, on the train + holdout sets and this app's DB -> data/reports/failures_*.json
-	$(PY) -m wasel.failures.run && $(PY) -m wasel.failures.run --source holdout && $(PY) -m wasel.failures.run --source db --db $(DB)
+	$(PY) -m wasel.failures.run && $(PY) -m wasel.failures.run --source holdout && if [ -f $(DB) ]; then $(PY) -m wasel.failures.run --source db --db $(DB); else echo "skipped: no $(DB) yet (start the app once, then re-run)"; fi
 
 failures-llm: ## same with the LLM language layer (needs GROQ_API_KEY) -> data/reports/failures_*_llm.json
 	$(PY) -m wasel.failures.run --llm && $(PY) -m wasel.failures.run --source holdout --llm
