@@ -12,7 +12,7 @@ jobs:
     env: { GROQ_API_KEY: "", GEMINI_API_KEY: "", WA_TOKEN: "" }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version-file: .python-version, cache: pip }
       - run: make setup
       - run: make check PYTEST_ARGS="--junitxml=var/junit.xml"
@@ -22,7 +22,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version-file: .python-version }
       - uses: actions/setup-node@v4
         with: { node-version: 22 }
@@ -59,7 +59,7 @@ jobs:
     env: { GROQ_API_KEY: "", GEMINI_API_KEY: "", WA_TOKEN: "", WA_APP_SECRET: "", WA_VERIFY_TOKEN: "" }
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version-file: .python-version, cache: pip }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
@@ -80,7 +80,7 @@ jobs:
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with: { python-version-file: .python-version, cache: pip }
       - uses: actions/setup-node@v4
         with: { node-version: 22, cache: npm, cache-dependency-path: "web/package-lock.json\ndeploy/cloudflare/package-lock.json" }
