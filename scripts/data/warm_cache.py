@@ -46,7 +46,8 @@ class _HandCache(SqliteExtractionCache):
         hit = super().get(input_hash)
         if hit is None and input_hash in self.pending:
             ext = self.pending[input_hash]
-            self.conn.execute("INSERT OR REPLACE INTO extraction_cache VALUES (?,?,?,?,?,?,?,?)",
+            self.conn.execute("INSERT OR REPLACE INTO extraction_cache (input_hash, prompt_version, provider, model,"
+                              " origin_path, is_primary, extraction_json, created_at) VALUES (?,?,?,?,?,?,?,?)",
                               (input_hash, PROMPT_VERSION, "groq", HAND_MODEL, "llm", 1, json.dumps(ext, ensure_ascii=False),
                                "2026-09-26T12:00:00.000000Z"))
             return CachedExtraction(input_hash, "groq", HAND_MODEL, "llm", ext)
@@ -101,6 +102,10 @@ def main(argv=None) -> int:
         rows_ = conn.execute("SELECT * FROM extraction_cache ORDER BY input_hash").fetchall()
         paths = conn.execute("SELECT o.order_no, a.version, a.path, a.tier, a.final_score FROM risk_assessments a"
                              " JOIN orders o USING(order_id) ORDER BY o.order_no, a.version").fetchall()
+    if not a.live and len(rows_) != len(pending):
+        # a failed insert is swallowed by drain(); never overwrite the committed cache with a partial one
+        print(f"expected {len(pending)} cache entries, got {len(rows_)}; {a.out} left unchanged", file=sys.stderr)
+        return 1
     with open(a.out, "w", encoding="utf-8") as f:
         for r in rows_:
             f.write(json.dumps({"input_hash": r["input_hash"], "prompt_version": r["prompt_version"],
