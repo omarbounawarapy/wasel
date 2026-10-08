@@ -16,6 +16,26 @@ jobs:
         with: { python-version-file: .python-version, cache: pip }
       - run: make setup
       - run: make check PYTEST_ARGS="--junitxml=var/junit.xml"
+  audit:
+    name: known-vulnerability scan (pip-audit, npm audit)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version-file: .python-version }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: python dependencies
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt -r requirements-dev.txt -r dashboard/requirements.txt
+      # Dev tooling is excluded (--omit=dev): eslint-config-next pulls in `braces` (no fixed release exists) and wrangler
+      # pulls in sharp through miniflare. Neither ships in the images; revisit when upstream fixes them.
+      - name: web (what ships in the static export)
+        run: cd web && npm audit --package-lock-only --omit=dev --audit-level=high
+      - name: cloudflare worker
+        run: cd deploy/cloudflare && npm audit --package-lock-only --omit=dev --audit-level=high
   secrets:
     name: secret scan over the whole git history (gitleaks)
     runs-on: ubuntu-latest
