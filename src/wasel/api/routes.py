@@ -152,7 +152,9 @@ def monitor(request: Request):
 def traces(request: Request, role: str | None = None, order_id: str | None = None, limit: int = 100):
     """Recent LLM trace records (ids, versions, model, outcome, latency, tokens; never the customer's text)."""
     from wasel.llm import trace
-    return _nocache_json({"traces": trace.recent(min(limit, 500), role=role, order_id=order_id)})
+    rows = trace.recent(min(limit, 500), role=role, order_id=order_id)
+    rows = [{k: v for k, v in r.items() if k != "sandbox_id"} for r in rows]       # a visitor id is an access key
+    return _nocache_json({"traces": rows})
 
 
 @router.get("/eval")

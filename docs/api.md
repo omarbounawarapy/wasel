@@ -26,7 +26,7 @@ The app factory needs no arguments. Boot prepares the database (creating or rebu
 | `/webhook/whatsapp` | Mounted only when the mode is not public, `WEBHOOK_ENABLED` is on and both secrets are long enough. `GET` verifies with the verify token; `POST` requires a valid `X-Hub-Signature-256` HMAC. |
 | CORS | Only in `dev` mode, for `FRONTEND_ORIGIN`. |
 
-Do not put an instance with real data behind the default `/api` without a network-level control such as an access-restricted tunnel. The observability endpoints (`/api/monitor`, `/api/traces`, `/api/eval`, `/api/failures`) and the impact endpoint are readable by anyone who can reach the server in every mode. They return rates, codes and identifiers, not customer text or phone numbers. See [SECURITY.md](../SECURITY.md).
+Do not put an instance with real data behind the default `/api` without a network-level control such as an access-restricted tunnel. The observability endpoints (`/api/monitor`, `/api/traces`, `/api/eval`, `/api/failures`) and the impact endpoint are readable by anyone who can reach the server in every mode. They return rates, codes and order identifiers, not customer text, phone numbers or visitor ids (`/api/traces` drops `sandbox_id`). See [SECURITY.md](../SECURITY.md).
 
 ## Endpoints
 
