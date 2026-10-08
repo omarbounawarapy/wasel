@@ -464,9 +464,20 @@ class HealthWorker(BaseModel):
     last_purge_at: str | None
 
 
+class HealthSnapshot(BaseModel):
+    """The database snapshot store. `enabled` is false on hosts that keep their disk. `failures` counts saves that
+    failed in a row (three flip the status to degraded); `last_error` is an exception type, never a message."""
+    enabled: bool
+    last_saved_at: str | None = None
+    failures: int = 0
+    last_error: str | None = None
+    size_bytes: int | None = None
+
+
 class HealthResponse(BaseModel):
-    """GET /api/health. `status` is 'degraded' when a fallback path was used in the last five minutes or the worker
-    has not ticked for over 10 s. `wa_send` and `wa_auto_send` are the effective settings, already forced off in public mode.
+    """GET /api/health. `status` is 'degraded' when a fallback path was used in the last five minutes, the worker
+    has not ticked for over 10 s, three snapshot saves in a row failed, the seed is unscored or the model file is
+    wrong; `degraded_reasons` names every cause. `wa_send` and `wa_auto_send` are the effective settings, already forced off in public mode.
     """
     status: Literal["ok", "degraded"]
     mode: AppMode
@@ -484,6 +495,9 @@ class HealthResponse(BaseModel):
     sandbox_orders: int = 0
     wa_auto_send: bool = False                    # auto_send drafts go out without a click (never public)
     degraded_reason: Literal["seed_unscored", "model_missing", "model_mismatch"] | None = None   # why status is degraded
+    degraded_reasons: list[Literal["llm_fallback", "worker_stale", "snapshot_failing", "seed_unscored",
+                                   "model_missing", "model_mismatch"]] = []
+    snapshot: HealthSnapshot = HealthSnapshot(enabled=False)
     degraded_detail: str | None = None            # human-readable detail for the model reasons
 
 

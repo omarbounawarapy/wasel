@@ -168,6 +168,8 @@ class Snapshotter:
         self._last_attempt: datetime | None = None
         self.last_saved_at: datetime | None = None
         self.failures = 0
+        self.last_error: str | None = None              # exception type of the last failed save, no message
+        self.size_bytes: int | None = None              # size of the last saved image
 
     def seed_digest(self, conn: sqlite3.Connection) -> None:
         """Remember the current content as already stored (call right after a restore)."""
@@ -184,11 +186,13 @@ class Snapshotter:
             if digest == self._digest:
                 return False
             self.store.save(data)
-        except (SnapshotError, sqlite3.Error):
+        except (SnapshotError, sqlite3.Error) as e:
             self.failures += 1
+            self.last_error = type(e).__name__
             log.exception("snapshot save failed (%d in a row)", self.failures)
             return False
-        self._digest, self.last_saved_at, self.failures = digest, now, 0
+        self._digest, self.last_saved_at, self.failures, self.last_error = digest, now, 0, None
+        self.size_bytes = len(data)
         log.info("snapshot saved (%d bytes)", len(data))
         return True
 

@@ -164,7 +164,7 @@ The first request after a deploy or an idle period waits for the container to st
 
 ### Monitoring
 
-`npx wrangler tail --env production` streams Worker and container logs (observability is enabled in `wrangler.jsonc`). `/api/health` shows mode, worker tick, LLM path, and `degraded` when snapshots keep failing; `/api/monitor` and `/api/traces` are unchanged. `npx wrangler containers list` shows the application and its instances.
+`npx wrangler tail --env production` streams Worker and container logs (observability is enabled in `wrangler.jsonc`). `/api/health` shows mode, worker tick, LLM path, and `degraded` when snapshots keep failing; `/api/monitor` and `/api/traces` are kept per process, so they are empty after every restart or sleep. `npx wrangler containers list` shows the application and its instances.
 
 ## 8. Known limits
 

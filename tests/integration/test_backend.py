@@ -621,3 +621,22 @@ def test_read_by_and_rules_alone(dev):
     assert detail["order"]["score"]["read_by"] == "rules"
     assert detail["assessments"][-1]["read_by"] == "rules"
     assert detail["assessments"][-1]["rules_alone"] is None
+
+
+def test_health_names_why_it_is_degraded_and_reports_the_snapshot(tmp_path):
+    c, core, clock = make_client(tmp_path, "dev", snapshot_url=f"file://{tmp_path}/no/such/dir/wasel.sqlite")
+    with c:
+        h = c.get("/api/health").json()
+        assert h["status"] == "ok" and h["degraded_reasons"] == []
+        assert h["snapshot"] == {"enabled": True, "last_saved_at": None, "failures": 0, "last_error": None,
+                                 "size_bytes": None}
+        from wasel.db.snapshot import SnapshotError
+
+        def refuse(data):
+            raise SnapshotError("disk")
+        core.snapshotter.store.save = refuse
+        for _ in range(3):
+            core.snapshot(clock.now(), force=True)
+        h = c.get("/api/health").json()
+        assert h["status"] == "degraded" and h["degraded_reasons"] == ["snapshot_failing"]
+        assert h["snapshot"]["failures"] == 3 and h["snapshot"]["last_error"] == "SnapshotError"

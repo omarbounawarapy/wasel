@@ -51,5 +51,13 @@
   "sandbox_orders": 1,
   "wa_auto_send": false,
   "degraded_reason": null,
+  "degraded_reasons": [],
+  "snapshot": {
+    "enabled": false,
+    "last_saved_at": null,
+    "failures": 0,
+    "last_error": null,
+    "size_bytes": null
+  },
   "degraded_detail": null
 }

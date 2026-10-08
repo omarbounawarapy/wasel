@@ -65,6 +65,7 @@ class AppState:
         self.db_path = str(ROOT / settings.db_path) if not Path(settings.db_path).is_absolute() else settings.db_path
         self._local = threading.local()
         self._tick_lock = threading.Lock()
+        self._degraded_logged = False                   # so the ok -> degraded transition is logged once
         self.started_at = clock.now()
         self.last_tick_at = None
         self.last_purge_at = None
@@ -237,10 +238,21 @@ class AppState:
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))
         cap = s.daily_cap
         worker_stale = s.worker_enabled and (self.last_tick_at is None or (now - self.last_tick_at).total_seconds() > 10)
-        degraded = fb or worker_stale or self.seed_unscored or self.model_problem or (
-            self.snapshotter is not None and self.snapshotter.failing)
+        sn = self.snapshotter
+        reasons = [r for r, on in (("llm_fallback", fb), ("worker_stale", worker_stale),
+                                   ("snapshot_failing", sn is not None and sn.failing),
+                                   ("seed_unscored", self.seed_unscored),
+                                   (self.model_problem[0] if self.model_problem else "", self.model_problem)) if on]
+        if reasons and not self._degraded_logged:
+            log.warning("health ok -> degraded: %s", ", ".join(reasons))
+        self._degraded_logged = bool(reasons)
         return M.HealthResponse(
-            status="degraded" if degraded else "ok", mode=s.app_mode, wa_send=s.wa_send_effective,
+            status="degraded" if reasons else "ok",
+            degraded_reasons=reasons,
+            snapshot=M.HealthSnapshot(
+                enabled=sn is not None, last_saved_at=utc_iso(sn.last_saved_at) if sn and sn.last_saved_at else None,
+                failures=sn.failures if sn else 0, last_error=sn.last_error if sn else None,
+                size_bytes=sn.size_bytes if sn else None), mode=s.app_mode, wa_send=s.wa_send_effective,
             webhook="enabled" if s.webhook_mounted else "disabled", db=True, demo_mode=s.demo_mode,
             build=M.HealthBuild(git_sha=s.git_sha, started_at=utc_iso(self.started_at)),
             config=M.HealthConfig(config_hash=self.config.short_hash, prompt_version=PROMPT_VERSION,
