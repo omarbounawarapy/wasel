@@ -206,19 +206,33 @@ def drain(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, 
     return n
 
 
-async def run_loop(state) -> None:
-    """state: app.main.AppState. Every 1 s: asyncio.to_thread(state.tick); purge in public mode."""
-    last_purge = None
-    while True:
-        now = state.clock.now()
-        try:
-            await asyncio.to_thread(state.tick, now)
-            state.last_tick_at = now
-            await asyncio.to_thread(state.snapshot, now)
-            if state.settings.is_public and (last_purge is None or
-                                             (now - last_purge).total_seconds() >= state.settings.purge_interval_s):
-                await asyncio.to_thread(state.purge, now)
-                state.last_purge_at = last_purge = now
-        except Exception:
-            log.exception("worker tick failed")
-        await asyncio.sleep(1)
+async def run_loop(state, interval_s: float = 1.0) -> None:
+    """state: app.main.AppState. Two tasks: the tick (budgeted) and housekeeping (snapshot, purge in public mode).
+
+    They run apart so a slow model in a tick cannot delay the snapshot or the purge.
+    """
+    async def ticks() -> None:
+        while True:
+            now = state.clock.now()
+            try:
+                await asyncio.to_thread(state.tick, now)
+                state.last_tick_at = now
+            except Exception:
+                log.exception("worker tick failed")
+            await asyncio.sleep(interval_s)
+
+    async def housekeeping() -> None:
+        last_purge = None
+        while True:
+            now = state.clock.now()
+            try:
+                await asyncio.to_thread(state.snapshot, now)
+                if state.settings.is_public and (last_purge is None or
+                                                 (now - last_purge).total_seconds() >= state.settings.purge_interval_s):
+                    await asyncio.to_thread(state.purge, now)
+                    state.last_purge_at = last_purge = now
+            except Exception:
+                log.exception("worker housekeeping failed")
+            await asyncio.sleep(interval_s)
+
+    await asyncio.gather(ticks(), housekeeping())

@@ -38,7 +38,7 @@ from wasel.worker import drain, process_due, run_loop
 
 log = logging.getLogger("cod.main")
 MAX_BODY = 64 * 1024
-ORDER_TIMEOUT_S = 2.0        # hard limit for scoring one order; past it the order goes to needs_review
+ORDER_TIMEOUT_S = 25.0       # hard limit for scoring one order (above the AI chain's 20 s); past it: needs_review
 TICK_BUDGET_S = 3.0          # the worker takes no new order in a tick once this many seconds have passed
 # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
 # XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.

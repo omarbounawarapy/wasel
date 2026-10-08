@@ -376,3 +376,31 @@ def test_rules_path_gives_a_next_step_and_a_drafted_question_for_a_vague_order()
     r = _run(c, make_input(["salam, nheb el casque bluetooth. Douar Ouled Ali, 9rib el jemaa"]))
     assert r.assessment.path == "rules" and r.assessment.tier in ("medium", "high")
     assert r.assessment.action in ("confirm", "prepay") and r.template_id == "T_ADDRESS"
+
+
+def test_snapshot_keeps_its_cadence_while_a_tick_is_slow():
+    import asyncio
+    import time
+    from types import SimpleNamespace
+
+    from wasel.worker import run_loop
+    snapshots = []
+
+    class State:
+        clock = SimpleNamespace(now=lambda: 0)
+        settings = SimpleNamespace(is_public=False)
+        last_tick_at = None
+
+        def tick(self, now):
+            time.sleep(1.0)                                  # a slow model holds the tick
+
+        def snapshot(self, now):
+            snapshots.append(time.monotonic())
+
+    async def go():
+        try:
+            await asyncio.wait_for(run_loop(State(), interval_s=0.05), timeout=0.6)
+        except TimeoutError:
+            pass
+    asyncio.run(go())
+    assert len(snapshots) >= 5                               # ran many times while the first tick was still blocked
