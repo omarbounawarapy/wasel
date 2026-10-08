@@ -55,7 +55,7 @@ Fields: `status` (`ok` or `degraded`), `mode`, `wa_send`, `webhook` (`enabled` o
 
 A body without a valid `kind` returns `422` with the message `kind must be "paste" or "csv"` (`"text" or "location"` for simulate-reply).
 
-Structured fields on ingest: `product_name`, `price_tnd` (at least 0), `zone` (`urban`, `suburban`, `rural`), `quantity` (1 to 50). CSV columns: `customer_id, customer_name, product, price_tnd, zone, address, note`; the `customer_id` column is currently ignored.
+Structured fields on ingest: `product_name`, `price_tnd` (at least 0), `zone` (`urban`, `suburban`, `rural`), `quantity` (1 to 50). CSV columns: `customer_id, customer_name, product, price_tnd, zone, address, note`; `customer_id` is stored as the customer's external reference, so rows with the same id share one customer and its history. A row with a price outside 0 to 1000000, a name over 40 characters or a product over 80 is rejected with a reason; a header without `address` or `note`, a file with no rows and unreadable CSV return `422`. All accepted rows are saved together or not at all.
 
 ### Activity and analysis
 

@@ -196,6 +196,24 @@ def test_csv_ingest_limits_and_rejects(dev):
     assert len(r["created"]) == 1 and [x["row"] for x in r["rejected"]] == [2, 3]
 
 
+def test_csv_ingest_rejects_bad_values_and_files(dev):
+    c, core, _ = dev
+    head = "customer_id,customer_name,product,price_tnd,zone,address,note\n"
+    rows = "".join(f"C9,{n},,{p},,douar {i},\n" for i, (n, p) in enumerate(
+        [("a", "-50"), ("a", "nan"), ("a", "inf"), ("x" * 500, "10"), ("ok", "10"), ("ok2", "20")]))
+    r = c.post("/api/orders/ingest", json={"kind": "csv", "csv_text": head + rows}).json()
+    assert [x["row"] for x in r["rejected"]] == [1, 2, 3, 4] and len(r["created"]) == 2
+    assert "price_tnd" in r["rejected"][0]["reason"] and "40 characters" in r["rejected"][3]["reason"]
+    refs = core.conn().execute("SELECT COUNT(*), MIN(external_ref) FROM customers"
+                               " WHERE external_ref = 'C9'").fetchone()
+    assert tuple(refs) == (1, "C9")                                   # same customer_id, one customer
+    for body, word in (("foo,bar\n1,2\n", "header"), ("", "header"), (head, "no rows")):
+        e = c.post("/api/orders/ingest", json={"kind": "csv", "csv_text": body})
+        assert e.status_code == 422 and word in e.json()["error"]["message"], body
+    big = c.post("/api/orders/ingest", json={"kind": "csv", "csv_text": head + "," * 3 + "x" * 140_000 + ",\n"})
+    assert big.status_code in (413, 422)
+
+
 def test_union_body_errors_name_the_kind(dev):
     c, _, _ = dev
     r = c.post("/api/orders/ingest", json={"text": "x"})

@@ -74,10 +74,10 @@ def ingest_paste(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict,
 
 
 def _insert_paste(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, vid: str | None, text: str,
-                  customer_name: str | None, structured: dict | None) -> dict:
+                  customer_name: str | None, structured: dict | None, external_ref: str | None = None) -> dict:
     """The rows of one pasted order. The caller holds the transaction."""
     sid = vid if settings.is_public else None
-    cid = repo.get_or_create_customer(conn, ids, now, sandbox_id=sid,
+    cid = repo.get_or_create_customer(conn, ids, now, sandbox_id=sid, external_ref=external_ref,
                                       display_name=None if settings.is_public else customer_name)
     conv = repo.create_conversation(conn, ids, now, customer_id=cid, sandbox_id=sid, channel="paste")
     st = store_inbound(conn, ids, now, conversation_id=conv, origin="paste", text=text,
@@ -96,13 +96,20 @@ def ingest_csv(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, v
 
     Each row's text is address + note. Rows with no text, an unknown zone, a price that is not a number between 0
     and 1,000,000 or a name over the length limit are rejected with a 1-based row number and the rest go on; a
-    larger file raises 413 and unreadable CSV raises 422. All accepted rows are inserted in one transaction, so an
+    larger file raises 413. A file with no `address` or `note` column, no data rows or unreadable CSV raises 422. The
+    `customer_id` column is stored as the customer's external reference, so rows with the same id share one customer
+    and its history (per visitor in public mode). All accepted rows are inserted in one transaction, so an
     error part-way leaves no rows behind.
     """
     try:
-        rows_ = list(csv.DictReader(io.StringIO(csv_text)))
+        reader = csv.DictReader(io.StringIO(csv_text))
+        rows_ = list(reader)
     except csv.Error as e:
         raise ApiError(422, "VALIDATION_ERROR", f"unreadable CSV: {e}") from None
+    if not {"address", "note"} & set(reader.fieldnames or []):
+        raise ApiError(422, "VALIDATION_ERROR", "the header needs an address or a note column: " + ",".join(CSV_HEADER))
+    if not rows_:
+        raise ApiError(422, "VALIDATION_ERROR", "the CSV has a header but no rows")
     limit = 10 if settings.is_public else 200
     if len(rows_) > limit:
         raise ApiError(413, "PAYLOAD_TOO_LARGE", f"CSV has {len(rows_)} rows; the limit is {limit}")
@@ -135,12 +142,13 @@ def ingest_csv(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, v
         if why:
             rejected.append({"row": i, "reason": why})
         else:
-            accepted.append((text[:2000], name, {"product_name": product, "price_tnd": price, "zone": zone}))
+            ext = (r.get("customer_id") or "").strip()[:60] or None
+            accepted.append((text[:2000], name, {"product_name": product, "price_tnd": price, "zone": zone}, ext))
     created = []
     with tx(conn):
-        for text, name, structured in accepted:
+        for text, name, structured, ext in accepted:
             _sandbox_limits(conn, settings, vid)
-            created.append(_insert_paste(conn, ids, now, settings, cfg, vid, text, name, structured))
+            created.append(_insert_paste(conn, ids, now, settings, cfg, vid, text, name, structured, ext))
     return created, rejected
 
 
