@@ -65,7 +65,7 @@ Templates live in `data/templates/outbound.yaml`.
 
 ## Add a channel
 
-Every channel must end in `store_inbound()`. Add the channel name to `Channel` and `Origin` in `contracts.py` and `api/models.py`, to the check constraints on `conversations.channel` and `messages.origin` in `schema.sql`, create or find the customer and conversation in the new entry code, and call `store_inbound(...)` inside one transaction. Do not score in the request path: the debounce and the worker handle that. For anything internet-facing, follow the webhook's pattern: size cap first, authenticity check on the raw bytes, acknowledge fast, process in a background task, log counts and reasons only.
+Every channel must end in `store_inbound()`. Add the channel name to `Channel` and `Origin` in `contracts.py` and `api/models.py`, to the check constraints on `conversations.channel` and `messages.origin` in `schema.sql`, create or find the customer and conversation in the new entry code, and call `store_inbound(...)` inside one transaction. Do not score in the request path: the debounce and the worker handle that. For anything internet-facing, follow the webhook's pattern: size cap first, authenticity check on the raw bytes, store the message before answering 200 (answer 503 if it could not be stored, so the sender retries), log counts and reasons only.
 
 ## Add an order status or seller action
 

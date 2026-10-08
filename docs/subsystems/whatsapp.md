@@ -30,7 +30,7 @@ Meta calls `GET /webhook/whatsapp?hub.mode=subscribe&hub.verify_token=...&hub.ch
 1. Refuses bodies over 1 MiB (`413`), checking `Content-Length` first and then the streamed size. The rest of the API allows 64 KB.
 2. Verifies `X-Hub-Signature-256` as HMAC-SHA256 of the raw body with `WA_APP_SECRET`. A missing, malformed or mismatching header returns `401` and writes a `webhook.rejected` event with the reason (`missing`, `malformed`, `mismatch`). There is no flag to skip the check.
 3. Records `last_webhook_at` and returns `200 {}` immediately.
-4. Processes the payload in a background task (`process`), which never raises and never shows an error to Meta. Malformed JSON writes `webhook.malformed`; an unexpected shape or a storage error writes `webhook.process_error` with the exception type only.
+4. Stores the payload (`process`, in a worker thread) and answers `200` only after the commit. Malformed JSON writes `webhook.malformed` and an unexpected shape writes `webhook.process_error` with the exception type only; both answer `200` because a retry cannot help. A storage error (for example a locked database) writes `webhook.process_error` if it can and answers `503`, so Meta retries; messages already stored are skipped by their `wamid`.
 
 Processing walks `entry[].changes[].value`, drops changes for another `phone_number_id`, and sorts messages and statuses by provider timestamp, so an out-of-order batch is stored in order:
 

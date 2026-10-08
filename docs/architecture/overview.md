@@ -96,7 +96,7 @@ The scorer receives its cache, LLM client, usage meter and configuration as argu
 - Route handlers are synchronous functions, so FastAPI runs them in its thread pool. Each thread opens its own SQLite connection on first use (`AppState.conn`, thread-local).
 - The worker is an asyncio task started in the app lifespan. Every second it calls `state.tick` through `asyncio.to_thread`, and in public mode it also purges expired sandboxes every `PURGE_INTERVAL_S`.
 - Rescoring is deferred by design: a message only writes `pending_rescore_at`, and the worker later picks the order up. Message bursts therefore collapse into one rescore (see [debounce](order-pipeline.md#debounce-and-claiming)).
-- The WhatsApp webhook acknowledges with `200` after the signature check and processes the payload in a background task, so Meta never waits for storage or scoring.
+- The WhatsApp webhook answers `200` only after the signature check and the commit of the message, and `503` if it could not be stored so Meta retries. Scoring stays with the worker, so Meta never waits for it.
 - LLM calls and WhatsApp sends are blocking `httpx` calls made from whichever thread needs them, normally the worker thread. A slow provider therefore delays the tick; per-step timeouts (6 s, 5 s and 8 s) and a 20 s chain deadline bound it, and `/api/health` reports `degraded` if the worker has not ticked for 10 seconds.
 
 **External services.** Providers are called only through `ChainClient` (`src/wasel/llm/client.py`), with no retries. The WhatsApp sender is the one component that retries (two extra attempts with exponential backoff, transient errors only). Every external call has a timeout, and none is required for the process to run.
