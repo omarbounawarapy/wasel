@@ -1,0 +1,881 @@
+{
+ "note": "All data is synthetic (repo seed data and the offline evaluation set). Nothing here is a real customer or a real measurement.",
+ "generated": "2026-10-07",
+ "shop": {
+  "name": "Synthetic shop",
+  "currency": "TND",
+  "country": "Tunisia"
+ },
+ "now": "14:32",
+ "orders": [
+  {
+   "id": "ord_01M4B4WFJRD2FN5Y9CRKYPHBTT",
+   "ref": "#2609",
+   "conversation_id": "cnv_01M4B4WFJRD2FN5Y9CRKYPHBTR",
+   "customer": "Mehdi",
+   "product": "mixeur",
+   "price_tnd": 129.0,
+   "score": 89,
+   "tier_raw": "high",
+   "action_raw": "confirm",
+   "status_raw": "awaiting_reply",
+   "channel": "paste",
+   "preview": "je prends le mixeur, livraison à Thala. la dernière fois je n'ai pas pris le col",
+   "reason_short": "HIGH 89 · vague address (\"Thala\") +30 · rural delivery zone +11",
+   "has_pending_draft": true,
+   "zone": "rural",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJHJ93DTBJ5JE648TGX",
+   "ref": "#2601",
+   "conversation_id": "cnv_01M4B4WFJG5WVRKEE49102HQQH",
+   "customer": "Sami",
+   "product": "casque bluetooth",
+   "price_tnd": 220.0,
+   "score": 87,
+   "tier_raw": "high",
+   "action_raw": "confirm",
+   "status_raw": "awaiting_reply",
+   "channel": "simulated",
+   "preview": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked",
+   "reason_short": "HIGH 87 · 3 warning signs: \"9rib el jemaa\" +17 · rural delivery zone +13",
+   "has_pending_draft": true,
+   "zone": "rural",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJNGXH23D0AKZCGHV1J",
+   "ref": "#2604",
+   "conversation_id": "cnv_01M4B4WFJNGXH23D0AKZCGHV1G",
+   "customer": "Hedi",
+   "product": "tablette",
+   "price_tnd": 450.0,
+   "score": 85,
+   "tier_raw": "high",
+   "action_raw": "prepay",
+   "status_raw": "awaiting_reply",
+   "channel": "paste",
+   "preview": "douar Sbiba, ki tousel kalemni. ken famma remise",
+   "reason_short": "HIGH 85 · high order value (450 TND) +16 · vague address (\"douar Sbiba\") +14",
+   "has_pending_draft": true,
+   "zone": "rural",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJPSZ3E9SKBE32E9ZFM",
+   "ref": "#2605",
+   "conversation_id": "cnv_01M4B4WFJPSZ3E9SKBE32E9ZFJ",
+   "customer": "Nour",
+   "product": "aspirateur",
+   "price_tnd": 349.0,
+   "score": 71,
+   "tier_raw": "high",
+   "action_raw": "prepay",
+   "status_raw": "awaiting_reply",
+   "channel": "paste",
+   "preview": "nheb el aspirateur, livraison à Kairouan. مانيش ديما في الدار",
+   "reason_short": "HIGH 71 · vague address (\"Kairouan\") +30 · high order value (349 TND) +10",
+   "has_pending_draft": true,
+   "zone": "urban",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJMGZDPXR15NJ0CGA8G",
+   "ref": "#2603",
+   "conversation_id": "cnv_01M4B4WFJKSFJ4ZWC44AZ5X3J3",
+   "customer": "سارة م.",
+   "product": "crème visage",
+   "price_tnd": 35.0,
+   "score": 42,
+   "tier_raw": "medium",
+   "action_raw": "confirm",
+   "status_raw": "awaiting_reply",
+   "channel": "paste",
+   "preview": "حي النصر، قريب من الجامع. أختي هي اللي باش تستلم",
+   "reason_short": "MEDIUM 42 · vague address (\"حي النصر\") +14 · 2 warning signs: \"قريب من الجامع\" +11",
+   "has_pending_draft": true,
+   "zone": "urban",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJRD2FN5Y9CRKYPHBTP",
+   "ref": "#2608",
+   "conversation_id": "cnv_01M4B4WFJQH03MNZ3D4VESN5XE",
+   "customer": "كريم",
+   "product": "montre connectée",
+   "price_tnd": 149.0,
+   "score": 14,
+   "tier_raw": "low",
+   "action_raw": "ship",
+   "status_raw": "ready_to_ship",
+   "channel": "paste",
+   "preview": "نحب ساعة ذكية. نهج ابن خلدون عدد 5، سوسة",
+   "reason_short": "LOW 14 · full address given (\"نهج ابن خلدون عدد 5، سوسة\") −16",
+   "has_pending_draft": false,
+   "zone": "urban",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJPSZ3E9SKBE32E9ZFR",
+   "ref": "#2606",
+   "conversation_id": "cnv_01M4B4WFJPSZ3E9SKBE32E9ZFP",
+   "customer": "Yassine",
+   "product": "jean slim",
+   "price_tnd": 59.0,
+   "score": 9,
+   "tier_raw": "low",
+   "action_raw": "ship",
+   "status_raw": "ready_to_ship",
+   "channel": "paste",
+   "preview": "je veux commander le jean slim. rue de Marseille, à côté de la poste, Sousse",
+   "reason_short": "LOW 9 · good order history (6 delivered) −8 · urban delivery zone −4",
+   "has_pending_draft": false,
+   "zone": "urban",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJKSFJ4ZWC44AZ5X3J1",
+   "ref": "#2602",
+   "conversation_id": "cnv_01M4B4WFJKSFJ4ZWC44AZ5X3HZ",
+   "customer": "Leila M.",
+   "product": "montre connectée",
+   "price_tnd": 149.0,
+   "score": 4,
+   "tier_raw": "low",
+   "action_raw": "ship",
+   "status_raw": "ready_to_ship",
+   "channel": "paste",
+   "preview": "Bonjour, je voudrais la montre connectée. 12 rue Ibn Khaldoun, immeuble Yasmine,",
+   "reason_short": "LOW 4 · full address given (\"12 rue Ibn Khaldoun, immeuble Yasmine, …\") −12",
+   "has_pending_draft": false,
+   "zone": "urban",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  },
+  {
+   "id": "ord_01M4B4WFJQH03MNZ3D4VESN5XC",
+   "ref": "#2607",
+   "conversation_id": "cnv_01M4B4WFJQH03MNZ3D4VESN5XA",
+   "customer": "Rim",
+   "product": "sac en cuir",
+   "price_tnd": 99.0,
+   "score": 4,
+   "tier_raw": "low",
+   "action_raw": "ship",
+   "status_raw": "ready_to_ship",
+   "channel": "paste",
+   "preview": "3andkom sac cuir? nahj el Jazira, dar 22, Monastir. merci barcha",
+   "reason_short": "LOW 4 · full address given (\"nahj el Jazira, dar 22, Monastir\") −12",
+   "has_pending_draft": false,
+   "zone": "urban",
+   "updated_at": "2026-10-07T12:19:48.942108Z"
+  }
+ ],
+ "counts": {
+  "total": 9,
+  "needs_decision": 0,
+  "waiting": 5,
+  "ready": 4,
+  "high": 4,
+  "medium": 1,
+  "low": 4,
+  "tnd_at_risk": 1148.0
+ },
+ "hero": {
+  "ref": "#2601",
+  "customer": "Sami",
+  "product": "casque bluetooth",
+  "price_tnd": 220.0,
+  "messages": [
+   {
+    "author": "customer",
+    "text": "salam, nheb el casque bluetooth",
+    "ts": "2026-10-07T12:09:48.942108Z",
+    "segments": [
+     {
+      "text": "salam, nheb el casque bluetooth",
+      "kind": null,
+      "codes": [],
+      "label": null
+     }
+    ]
+   },
+   {
+    "author": "customer",
+    "text": "Douar Ouled Ali, 9rib el jemaa",
+    "ts": "2026-10-07T12:09:58.942108Z",
+    "segments": [
+     {
+      "text": "Douar Ouled Ali",
+      "kind": "address",
+      "codes": [],
+      "label": "Address detail"
+     },
+     {
+      "text": ", ",
+      "kind": null,
+      "codes": [],
+      "label": null
+     },
+     {
+      "text": "9rib el jemaa",
+      "kind": "risk",
+      "codes": [
+       "vague_location"
+      ],
+      "label": "Vague location"
+     }
+    ]
+   },
+   {
+    "author": "customer",
+    "text": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked",
+    "ts": "2026-10-07T12:10:08.942108Z",
+    "segments": [
+     {
+      "text": "ama ",
+      "kind": null,
+      "codes": [],
+      "label": null
+     },
+     {
+      "text": "ghali chwaya",
+      "kind": "risk",
+      "codes": [
+       "price_hesitation"
+      ],
+      "label": "Price hesitation"
+     },
+     {
+      "text": ". ",
+      "kind": null,
+      "codes": [],
+      "label": null
+     },
+     {
+      "text": "mouch dima fi dar",
+      "kind": "risk",
+      "codes": [
+       "availability_uncertain"
+      ],
+      "label": "May not be home"
+     },
+     {
+      "text": ", 3ayetli 9bal. mazelt manich met2aked",
+      "kind": null,
+      "codes": [],
+      "label": null
+     }
+    ]
+   }
+  ],
+  "flags": [
+   {
+    "code": "vague_location",
+    "label": "Vague location",
+    "quote": "9rib el jemaa"
+   },
+   {
+    "code": "availability_uncertain",
+    "label": "May not be home",
+    "quote": "mouch dima fi dar"
+   },
+   {
+    "code": "price_hesitation",
+    "label": "Price hesitation",
+    "quote": "ghali chwaya"
+   }
+  ],
+  "factors": [
+   {
+    "label": "3 warning signs: \"9rib el jemaa\"",
+    "points": 17
+   },
+   {
+    "label": "rural delivery zone",
+    "points": 12
+   },
+   {
+    "label": "vague address (\"Douar Ouled Ali\")",
+    "points": 12
+   }
+  ],
+  "base": 30,
+  "reason_text": "HIGH 87 · base 30 · 3 warning signs: \"9rib el jemaa\" +17 · rural delivery zone +13 · vague address (\"Douar Ouled Ali\") +12",
+  "draft": {
+   "language": "arabizi",
+   "text": "Bech n7adroulk livraison mta3 casque bluetooth, Sami, ib3athli 3afek el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?",
+   "source": "static_template"
+  },
+  "scripted_reply": "ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ghodwa ba3d 17h nkoun fi dar",
+  "history": [
+   {
+    "version": 1,
+    "score": 87,
+    "label": "First score",
+    "note": "3 warning signs, rural delivery zone, vague address"
+   },
+   {
+    "version": 2,
+    "score": 16,
+    "label": "After the reply",
+    "note": "full address given -32"
+   }
+  ],
+  "arabic_message": "دوار أولاد علي، قريب من الجامع. غالي شوية، مش دايما في الدار",
+  "french_draft": "Bonjour Sami, pouvez-vous nous donner la rue, le numéro et un téléphone pour la livraison ?"
+ },
+ "events": [
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2601",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2601",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2601",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2602",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2603",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2603",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2604",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2604",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2605",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2606",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2607",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2608",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "message.received",
+   "level": "info",
+   "ref": "#2609",
+   "title": "Customer message received",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "cache.hit",
+   "level": "info",
+   "ref": "#2601",
+   "title": "Handled from the extraction cache (no LLM call)",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "order.rescored",
+   "level": "info",
+   "ref": "#2601",
+   "title": "Order rescored",
+   "detail": "HIGH 87 · path cascade_cache · trigger initial"
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "draft.created",
+   "level": "info",
+   "ref": "#2601",
+   "title": "Confirmation drafted",
+   "detail": "T_ADDRESS · arabizi · needs_review"
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "cache.hit",
+   "level": "info",
+   "ref": "#2602",
+   "title": "Handled from the extraction cache (no LLM call)",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "order.rescored",
+   "level": "info",
+   "ref": "#2602",
+   "title": "Order rescored",
+   "detail": "LOW 4 · path cascade_cache · trigger initial"
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "cache.hit",
+   "level": "info",
+   "ref": "#2603",
+   "title": "Handled from the extraction cache (no LLM call)",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "order.rescored",
+   "level": "info",
+   "ref": "#2603",
+   "title": "Order rescored",
+   "detail": "MEDIUM 42 · path cascade_cache · trigger initial"
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "draft.created",
+   "level": "info",
+   "ref": "#2603",
+   "title": "Confirmation drafted",
+   "detail": "T_ADDRESS · darija_arabic_script · needs_review"
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "cache.hit",
+   "level": "info",
+   "ref": "#2604",
+   "title": "Handled from the extraction cache (no LLM call)",
+   "detail": null
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "order.rescored",
+   "level": "info",
+   "ref": "#2604",
+   "title": "Order rescored",
+   "detail": "HIGH 85 · path cascade_cache · trigger initial"
+  },
+  {
+   "ts": "2026-10-07T12:19:48.942108Z",
+   "type": "draft.created",
+   "level": "info",
+   "ref": "#2604",
+   "title": "Confirmation drafted",
+   "detail": "T_PREPAY · arabizi · needs_review"
+  }
+ ],
+ "activity": [
+  {
+   "t": 863,
+   "ts": "14:23",
+   "title": "Order scored",
+   "ref": "#2607",
+   "who": "Rim",
+   "detail": "4"
+  },
+  {
+   "t": 862,
+   "ts": "14:22",
+   "title": "Customer message received",
+   "ref": "#2607",
+   "who": "Rim"
+  },
+  {
+   "t": 858,
+   "ts": "14:18",
+   "title": "Order scored",
+   "ref": "#2602",
+   "who": "Leila M.",
+   "detail": "4"
+  },
+  {
+   "t": 857,
+   "ts": "14:17",
+   "title": "Customer message received",
+   "ref": "#2602",
+   "who": "Leila M."
+  },
+  {
+   "t": 853,
+   "ts": "14:13",
+   "title": "Order scored",
+   "ref": "#2606",
+   "who": "Yassine",
+   "detail": "9"
+  },
+  {
+   "t": 852,
+   "ts": "14:12",
+   "title": "Customer message received",
+   "ref": "#2606",
+   "who": "Yassine"
+  },
+  {
+   "t": 848,
+   "ts": "14:08",
+   "title": "Order scored",
+   "ref": "#2608",
+   "who": "كريم",
+   "detail": "14"
+  },
+  {
+   "t": 847,
+   "ts": "14:07",
+   "title": "Customer message received",
+   "ref": "#2608",
+   "who": "كريم"
+  },
+  {
+   "t": 834,
+   "ts": "13:54",
+   "title": "Confirmation drafted",
+   "ref": "#2603",
+   "who": "سارة م."
+  },
+  {
+   "t": 833,
+   "ts": "13:53",
+   "title": "Order scored",
+   "ref": "#2603",
+   "who": "سارة م.",
+   "detail": "42"
+  },
+  {
+   "t": 832,
+   "ts": "13:52",
+   "title": "Customer message received",
+   "ref": "#2603",
+   "who": "سارة م."
+  },
+  {
+   "t": 804,
+   "ts": "13:24",
+   "title": "Confirmation drafted",
+   "ref": "#2605",
+   "who": "Nour"
+  },
+  {
+   "t": 803,
+   "ts": "13:23",
+   "title": "Order scored",
+   "ref": "#2605",
+   "who": "Nour",
+   "detail": "71"
+  },
+  {
+   "t": 802,
+   "ts": "13:22",
+   "title": "Customer message received",
+   "ref": "#2605",
+   "who": "Nour"
+  },
+  {
+   "t": 744,
+   "ts": "12:24",
+   "title": "Confirmation drafted",
+   "ref": "#2604",
+   "who": "Hedi"
+  },
+  {
+   "t": 743,
+   "ts": "12:23",
+   "title": "Order scored",
+   "ref": "#2604",
+   "who": "Hedi",
+   "detail": "85"
+  },
+  {
+   "t": 742,
+   "ts": "12:22",
+   "title": "Customer message received",
+   "ref": "#2604",
+   "who": "Hedi"
+  },
+  {
+   "t": 684,
+   "ts": "11:24",
+   "title": "Confirmation drafted",
+   "ref": "#2601",
+   "who": "Sami"
+  },
+  {
+   "t": 683,
+   "ts": "11:23",
+   "title": "Order scored",
+   "ref": "#2601",
+   "who": "Sami",
+   "detail": "87"
+  },
+  {
+   "t": 682,
+   "ts": "11:22",
+   "title": "Customer message received",
+   "ref": "#2601",
+   "who": "Sami"
+  },
+  {
+   "t": 679,
+   "ts": "11:19",
+   "title": "Confirmation drafted",
+   "ref": "#2609",
+   "who": "Mehdi"
+  },
+  {
+   "t": 678,
+   "ts": "11:18",
+   "title": "Order scored",
+   "ref": "#2609",
+   "who": "Mehdi",
+   "detail": "89"
+  },
+  {
+   "t": 677,
+   "ts": "11:17",
+   "title": "Customer message received",
+   "ref": "#2609",
+   "who": "Mehdi"
+  }
+ ],
+ "impact": {
+  "tnd_saved": 928.1,
+  "trips_avoided": 128.1,
+  "n_orders": 2001,
+  "baseline": 0.2999,
+  "projected": 0.2358,
+  "assumptions": [
+   "c_fail_tnd: 8.0",
+   "prevent_rate: {'ship': 0.0, 'confirm': 0.3, 'prepay': 0.6}",
+   "prepay_conversion_loss: 0.1",
+   "gross_margin: 0.25",
+   "msg_cost_tnd: 0.0",
+   "sensitivity_confirm: [0.15, 0.3, 0.45]"
+  ],
+  "assumptions_plain": [
+   [
+    "Cost of one failed delivery trip",
+    "8 TND"
+   ],
+   [
+    "Refusals prevented when you ask to confirm",
+    "30%"
+   ],
+   [
+    "Refusals prevented when you ask for prepayment",
+    "60%"
+   ],
+   [
+    "Customers lost when asking for prepayment",
+    "10%"
+   ],
+   [
+    "Gross margin on an order",
+    "25%"
+   ],
+   [
+    "Cost of a message",
+    "0 TND"
+   ]
+  ],
+  "simulated": true
+ },
+ "quality": [
+  {
+   "suite": "Reading customer messages",
+   "n": 279,
+   "metrics": [
+    [
+     "Spots real orders",
+     0.9605734767025089
+    ],
+    [
+     "Reads the address correctly",
+     0.9713261648745519
+    ],
+    [
+     "Recognises the language",
+     0.9032258064516129
+    ]
+   ]
+  },
+  {
+   "suite": "Safety of drafted replies",
+   "n": 165,
+   "metrics": [
+    [
+     "Unsafe replies blocked",
+     1.0
+    ],
+    [
+     "Good replies allowed",
+     1.0
+    ],
+    [
+     "Overall",
+     1.0
+    ]
+   ]
+  },
+  {
+   "suite": "Resisting tricks",
+   "n": 32,
+   "metrics": [
+    [
+     "Tricks detected",
+     1.0
+    ],
+    [
+     "Order still scored",
+     1.0
+    ],
+    [
+     "Score not lowered by the trick",
+     1.0
+    ]
+   ]
+  },
+  {
+   "suite": "Real conversations by a native speaker",
+   "n": 24,
+   "metrics": [
+    [
+     "Spots real orders",
+     1.0
+    ],
+    [
+     "Reads the address correctly",
+     1.0
+    ],
+    [
+     "Warning signs are right",
+     0.9333333333333333
+    ]
+   ]
+  }
+ ],
+ "quality_gate": "all checks passed",
+ "monitor": {
+  "window": 200,
+  "n": 9,
+  "drift": [
+   {
+    "name": "Languages customers write in",
+    "psi": 0.1177,
+    "drifted": false
+   },
+   {
+    "name": "How precise addresses are",
+    "psi": 0.8577,
+    "drifted": false
+   },
+   {
+    "name": "Share of risk levels",
+    "psi": 0.9212,
+    "drifted": false
+   }
+  ],
+  "safety": [
+   [
+    "Invented quotes",
+    0.0
+   ],
+   [
+    "Unreadable AI answers",
+    0.0
+   ],
+   [
+    "Trick attempts",
+    0.0
+   ],
+   [
+    "Fallback used",
+    0.0
+   ]
+  ],
+  "alerts": []
+ },
+ "failures": {
+  "source": "synthetic",
+  "sessions": 130,
+  "events": 1999,
+  "findings": 70
+ },
+ "ops": {
+  "llm_primary": "groq:openai/gpt-oss-120b",
+  "chain": [
+   "groq:openai/gpt-oss-120b",
+   "groq:openai/gpt-oss-20b",
+   "gemini:gemini"
+  ],
+  "mode": "dev",
+  "whatsapp": "off (demo mode)",
+  "ai_calls": 0,
+  "typical_ms": null,
+  "backup_used": 0
+ },
+ "waiting_minutes": {
+  "#2609": 195,
+  "#2601": 190,
+  "#2604": 130,
+  "#2605": 70,
+  "#2603": 40,
+  "#2608": 25,
+  "#2606": 20,
+  "#2602": 15,
+  "#2607": 10
+ }
+}

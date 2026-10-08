@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Wasel survey collector</title>
+<style>
+body{margin:0;background:#F4F5F3;color:#17212B;font:15px/1.5 system-ui,Arial,sans-serif}main{max-width:1100px;margin:0 auto;padding:20px}
+h1{margin:0 0 4px}h2{margin:26px 0 8px;border-bottom:2px solid #0B6E6E;padding-bottom:4px}h3{margin:16px 0 6px;font-size:15px;color:#566270}
+textarea{width:100%;height:120px;font:12px ui-monospace,monospace;border:1px solid #D5DAD6;padding:8px}
+button,.file{background:#0B6E6E;color:#fff;border:0;padding:10px 16px;font:inherit;font-weight:600;cursor:pointer;margin:6px 8px 6px 0;display:inline-block}
+.card{background:#fff;border:1px solid #D5DAD6;padding:12px 16px;margin:10px 0}
+.row{display:grid;grid-template-columns:230px 1fr 46px;gap:8px;align-items:center;margin:3px 0}.row i{display:block;height:14px;background:#0B6E6E}.row span{font-size:14px}.row b{text-align:right}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px}
+.big{font:700 34px system-ui}.mute{color:#566270}.note{border-left:3px solid #0B6E6E;padding:4px 10px;margin:6px 0;background:#fff}
+table{border-collapse:collapse;width:100%}td,th{border-bottom:1px solid #D5DAD6;padding:6px 10px;text-align:left}
+</style></head><body><main>
+<h1>Wasel survey collector</h1>
+<p class="mute">Paste the codes you received (one per line, or a whole WhatsApp message), or add the downloaded .json files. Nothing leaves this page.</p>
+<textarea id="paste" placeholder="W1...."></textarea><br>
+<button id="go">Read the codes</button><label class="file">Add .json files<input id="files" type="file" multiple accept=".json,application/json" style="display:none"></label><button id="csv">Download CSV</button><button id="clr" style="background:#566270">Clear</button>
+<div id="out"></div>
+<script>
+var C = /*__DATA__*/null; var T = C.T, R = {};
+function dec(s){ s = s.replace(/-/g,"+").replace(/_/g,"/"); while(s.length%4) s += "="; var b = atob(s), a = new Uint8Array(b.length); for(var i=0;i<b.length;i++) a[i] = b.charCodeAt(i); return JSON.parse(new TextDecoder().decode(a)); }
+function add(o){ if(o && o.id && o.d){ if(!R[o.id] || (R[o.id].sent||"") < (o.sent||"")) R[o.id] = o; } }
+function readText(txt){ var m, re = /W1\.([A-Za-z0-9_-]+)/g, n = 0; while((m = re.exec(txt))){ try{ add(dec(m[1])); n++; }catch(e){} } return n; }
+document.getElementById("go").onclick = function(){ readText(document.getElementById("paste").value); draw(); };
+document.getElementById("files").onchange = function(e){ var fs = [].slice.call(e.target.files), left = fs.length; if(!left) return; fs.forEach(function(f){ var r = new FileReader(); r.onload = function(){ try{ add(JSON.parse(r.result)); }catch(x){} if(--left===0) draw(); }; r.readAsText(f); }); };
+document.getElementById("clr").onclick = function(){ R = {}; document.getElementById("paste").value = ""; draw(); };
+function lab(k){ return T[k] || k; }
+function bars(counts, keys, n){ var mx = Math.max.apply(null, keys.map(function(k){ return counts[k]||0; }).concat([1])); return keys.map(function(k){ var c = counts[k]||0; return '<div class="row"><span>'+lab(k)+'</span><div><i style="width:'+Math.round(100*c/mx)+'%"></i></div><b>'+c+'</b></div>'; }).join(""); }
+function tally(list, scope, q, id){ var c = {}; list.forEach(function(r){ var a = scope==="d" ? (r.d[id]||{}) : scope==="profile" ? r.profile : r.final; var v = a[q.k]; if(v===undefined) return; (Array.isArray(v)?v:[v]).forEach(function(x){ c[x] = (c[x]||0)+1; }); }); return c; }
+function draw(){
+  var list = Object.keys(R).map(function(k){ return R[k]; }), out = document.getElementById("out");
+  if(!list.length){ out.innerHTML = ""; return; }
+  var ids = Object.keys(C.NAMES), h = '<div class="card"><span class="big">'+list.length+'</span> responses<br><span class="mute">Design letters are random per person; results below are by design name.</span></div>';
+  h += '<h2>Who answered</h2><div class="grid">'+C.PROFILE.map(function(q){ return '<div class="card"><h3>'+lab(q.q)+'</h3>'+bars(tally(list,"profile",q), q.o)+'</div>'; }).join("")+'</div>';
+  h += '<h2>Final choice</h2><div class="grid">'+C.FINAL.filter(function(q){ return q.kind==="design"||q.k==="theme"; }).map(function(q){
+    var c = tally(list,"final",q), keys = q.kind==="design" ? ids.concat(["none"]) : q.o; var cc = {}; Object.keys(c).forEach(function(k){ cc[C.NAMES[k]||k] = c[k]; }); var labs = keys.map(function(k){ return C.NAMES[k]||k; }); var save = T; labs.forEach(function(l){ if(!T[l]) T[l] = l; });
+    return '<div class="card"><h3>'+lab(q.q)+'</h3>'+bars(cc, labs)+'</div>'; }).join("")+'</div>';
+  ids.forEach(function(id){
+    var tr = list.map(function(r){ return +((r.d[id]||{}).trust||0); }).filter(Boolean), avg = tr.length ? (tr.reduce(function(a,b){return a+b;},0)/tr.length).toFixed(1) : "–";
+    h += '<h2>'+C.NAMES[id]+'</h2><div class="card"><span class="big">'+avg+'</span> / 5 average trust ('+tr.length+' answers)</div><div class="grid">'+
+      C.PER.filter(function(q){ return q.kind!=="text"; }).map(function(q){ return '<div class="card"><h3>'+lab(q.q)+'</h3>'+bars(tally(list,"d",q,id), q.o)+'</div>'; }).join("")+'</div>';
+    var notes = list.map(function(r){ return (r.d[id]||{}).note; }).filter(Boolean);
+    if(notes.length) h += '<h3>Comments</h3>'+notes.map(function(n){ return '<div class="note">'+String(n).replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];})+'</div>'; }).join("");
+  });
+  var ch = list.map(function(r){ return r.final.change; }).filter(Boolean), co = list.map(function(r){ return r.final.contact; }).filter(Boolean);
+  if(ch.length) h += '<h2>One thing to change</h2>'+ch.map(function(n){ return '<div class="note">'+n.replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];})+'</div>'; }).join("");
+  if(co.length) h += '<h2>Contacts offered</h2>'+co.map(function(n){ return '<div class="note">'+n.replace(/[&<>]/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;"}[c];})+'</div>'; }).join("");
+  out.innerHTML = h;
+}
+document.getElementById("csv").onclick = function(){
+  var rows = [["response","language","role","device","lang_wanted","design","shown_as","trust","easy","use","words","confusing","likes","pay","note","favourite","not_chosen","theme"]];
+  Object.keys(R).forEach(function(k){ var r = R[k]; r.order.forEach(function(id,i){ var d = r.d[id]||{}, f = r.final||{}, p = r.profile||{};
+    rows.push([r.id,r.lang,p.role,p.dev,p.lang,C.NAMES[id],"ABC"[i],d.trust,d.easy,d.use,(d.imp||[]).join("|"),(d.conf||[]).join("|"),(d.like||[]).join("|"),d.pay,d.note,C.NAMES[f.fav]||f.fav,C.NAMES[f.worst]||f.worst,f.theme]); }); });
+  var csv = rows.map(function(r){ return r.map(function(x){ x = x===undefined?"":String(x); return '"'+x.replace(/"/g,'""')+'"'; }).join(","); }).join("\n");
+  var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob(["﻿"+csv],{type:"text/csv"})); a.download = "wasel-survey.csv"; document.body.appendChild(a); a.click(); a.remove();
+};
+</script></main></body></html>
