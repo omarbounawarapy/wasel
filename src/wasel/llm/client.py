@@ -5,7 +5,8 @@ ChainClient.extract() walks this chain:
   2 Groq gpt-oss-20b             -> 'fallback_model'    (only after 429/400/404/truncated/parse error)
   3 Gemini (if configured)       -> 'fallback_provider' (after any failure, or when step 2 was skipped)
   4 nothing left                 -> the caller runs the rules extractor, path 'rules'
-No retries, no sleeps. ProviderDown opens a 60 s breaker for that provider. A step whose timeout doesn't
+No retries, no sleeps. ProviderDown opens a 60 s breaker for that provider; so do `breaker_after` consecutive
+Timeout or RateLimited results (a longer Retry-After extends it, up to 300 s). A step whose timeout doesn't
 fit in the remaining deadline is skipped. Each attempted call first asks the UsageMeter; a cap stops the
 chain (path 'rules', `cap` set) and never becomes an HTTP error.
 
@@ -44,6 +45,7 @@ from wasel.llm.base import (
 )
 from wasel.paths import ROOT
 
+MAX_BREAKER_S = 300.0
 StepKind = Literal["primary", "fallback_model", "fallback_provider"]
 _PATH = {"primary": "llm", "fallback_model": "fallback_model", "fallback_provider": "fallback_provider"}
 _NEXT_MODEL_ERRORS = (RateLimited, SchemaRejected, ModelGone, Truncated, ParseError)
@@ -96,13 +98,15 @@ class ChainClient:
     """
 
     def __init__(self, steps: list[ChainStep], *, deadline_s: float = 20.0, breaker_s: float = 60.0,
-                 monotonic: Callable[[], float] = time.monotonic, cache_size: int = 512):
+                 breaker_after: int = 3, monotonic: Callable[[], float] = time.monotonic, cache_size: int = 512):
         self.steps = steps
         self._cache: OrderedDict[str, ChainResult] = OrderedDict()
         self.cache_size = cache_size
         self.deadline_s, self.breaker_s = deadline_s, breaker_s
         self._mono = monotonic
         self._breaker_until: dict[str, float] = {}
+        self.breaker_after = breaker_after
+        self._soft_fails: dict[str, int] = {}             # consecutive Timeout / RateLimited per provider
         self._lock = threading.Lock()     # guards _cache and _breaker_until, never held across a network call
 
     @property
@@ -189,12 +193,23 @@ class ChainClient:
                 res.attempts.append(Attempt(step.provider, step.model, e.outcome, latency))
                 res.usage.append(UsageRecord(now, role, step.provider, step.model, e.outcome, None, None, latency))
                 res.errors.append(f"{step.model}:{type(e).__name__}:{str(e)[:120]}")
-                if isinstance(e, ProviderDown):
-                    with self._lock:
+                with self._lock:
+                    if isinstance(e, ProviderDown):
                         self._breaker_until[step.provider] = self._mono() + self.breaker_s
+                    elif isinstance(e, (Timeout, RateLimited)):
+                        n = self._soft_fails.get(step.provider, 0) + 1
+                        if n >= self.breaker_after:
+                            wait = self.breaker_s
+                            if isinstance(e, RateLimited) and e.retry_after_s:
+                                wait = min(max(wait, e.retry_after_s), MAX_BREAKER_S)
+                            self._breaker_until[step.provider] = self._mono() + wait
+                            n = 0
+                        self._soft_fails[step.provider] = n
                 if step.kind == "primary" and not isinstance(e, _NEXT_MODEL_ERRORS):
                     skip_same_provider_fallback = True        # Timeout / ProviderDown skip the sibling
                 continue
+            with self._lock:
+                self._soft_fails[step.provider] = 0
             latency = meta.latency_ms or int((self._mono() - t_call) * 1000)
             res.attempts.append(Attempt(step.provider, step.model, "ok", latency))
             res.usage.append(UsageRecord(now, role, step.provider, step.model, "ok",

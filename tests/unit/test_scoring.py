@@ -161,6 +161,43 @@ def test_breaker_opens_after_provider_down():
     assert be.calls == 1                                    # second call skipped: breaker open 60 s
 
 
+@pytest.mark.parametrize("kind", ["timeout", "429"])
+def test_breaker_opens_after_three_consecutive_soft_failures(kind):
+    now = [0.0]
+    be = FailingBackend(kind)
+    c = ChainClient([ChainStep("primary", "groq", "120b", be, 6)], monotonic=lambda: now[0])
+    inp = make_input(["nheb el casque bluetooth"])
+    for _ in range(3):
+        _run(c, inp)
+    _run(c, inp)
+    assert be.calls == 3                                    # the fourth call is skipped: breaker open
+    now[0] = 61.0
+    _run(c, inp)
+    assert be.calls == 4                                    # window over: tried again
+
+
+def test_rate_limit_retry_after_extends_the_breaker():
+    from wasel.llm.base import RateLimited
+    now = [0.0]
+
+    class Slow:
+        calls = 0
+
+        def complete_json(self, *a):
+            self.calls += 1
+            raise RateLimited(200)
+
+    be = Slow()
+    c = ChainClient([ChainStep("primary", "groq", "120b", be, 6)], monotonic=lambda: now[0])
+    inp = make_input(["nheb el casque bluetooth"])
+    for _ in range(3):
+        _run(c, inp)
+    now[0] = 100.0
+    _run(c, inp)
+    assert be.calls == 3                                    # still open: Retry-After 200 s beat the 60 s window
+
+
+
 def test_deadline_skips_steps_that_do_not_fit():
     be = FailingBackend("429")
     c = ChainClient([ChainStep("primary", "groq", "120b", be, 30)], deadline_s=20)
