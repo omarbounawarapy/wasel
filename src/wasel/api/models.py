@@ -477,7 +477,8 @@ class HealthSnapshot(BaseModel):
 class HealthResponse(BaseModel):
     """GET /api/health. `status` is 'degraded' when a fallback path was used in the last five minutes, the worker
     has not ticked for over 10 s, three snapshot saves in a row failed, the seed is unscored or the model file is
-    wrong; `degraded_reasons` names every cause. `wa_send` and `wa_auto_send` are the effective settings, already forced off in public mode.
+    wrong; `degraded_reasons` names every cause. `wa_send` and `wa_auto_send` are the effective settings, already
+    forced off in public mode.
     """
     status: Literal["ok", "degraded"]
     mode: AppMode
