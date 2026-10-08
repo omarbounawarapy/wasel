@@ -74,7 +74,7 @@ def test_runtime_modules_never_import_pandas(tmp_path):
         "from fastapi.testclient import TestClient",
         "from wasel.main import create_app",
         "from wasel.settings import Settings",
-        "app = create_app(Settings(app_mode='dev', db_path=sys.argv[1], worker_enabled=False, llm_mode='fail_all'))",
+        "app = create_app(Settings(app_mode='dev', db_path=sys.argv[1], worker_enabled=False, llm_mode='fail_all', allowed_hosts='testserver'))",
         "with TestClient(app) as c:",
         "    assert c.get('/api/health').json()['status'] in ('ok', 'degraded')",
         "    assert c.get('/api/failures').status_code == 200",

@@ -328,6 +328,50 @@ class BodyLimit:
         await send({"type": "http.response.body", "body": body})
 
 
+class HostOriginGuard:
+    """Outside public mode, refuse a request for a Host that is not allowed (400) and a state-changing request from
+    another origin (403 BAD_ORIGIN).
+
+    The first stops DNS rebinding: a page whose name resolves to 127.0.0.1 would otherwise be same-origin to the
+    API. The second stops a cross-site form post to routes that take no body. A request without an Origin header
+    (curl, the dashboard server, Meta's webhook) is not affected by the second check.
+    """
+
+    def __init__(self, app, allowed_hosts: list[str], frontend_origin: str):
+        self.app = app
+        self.hosts = {h.strip().lower() for h in allowed_hosts if h.strip()}
+        self.frontend = frontend_origin.rstrip("/").lower()
+
+    @staticmethod
+    def _hostname(value: str) -> str:
+        value = value.strip().lower()
+        if value.startswith("["):                       # IPv6 literal: keep the brackets, drop the port
+            return value[:value.find("]") + 1] if "]" in value else value
+        return value.split(":")[0]
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http":
+            return await self.app(scope, receive, send)
+        headers = {k.decode("latin-1"): v.decode("latin-1") for k, v in scope["headers"]}
+        host = headers.get("host", "")
+        if self._hostname(host) not in self.hosts:
+            return await self._reply(send, 400, "BAD_HOST", "host not allowed (see ALLOWED_HOSTS)")
+        origin = headers.get("origin")
+        if origin and scope["method"] in ("POST", "PUT", "PATCH", "DELETE"):
+            o = origin.rstrip("/").lower()
+            if o != self.frontend and o.split("://", 1)[-1] != host.lower():
+                return await self._reply(send, 403, "BAD_ORIGIN", "cross-origin request refused")
+        await self.app(scope, receive, send)
+
+    @staticmethod
+    async def _reply(send, status: int, code: str, message: str) -> None:
+        body = json.dumps({"error": {"code": code, "message": message}}).encode()
+        headers = [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]
+        headers += [(k.lower().encode(), v.encode()) for k, v in SECURITY_HEADERS.items()]
+        await send({"type": "http.response.start", "status": status, "headers": headers})
+        await send({"type": "http.response.body", "body": body})
+
+
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,
                ids: IdGen | None = None, worker_enabled: bool | None = None) -> FastAPI:
     """Build the FastAPI app. `create_app()` with no arguments works as a uvicorn factory.
@@ -373,6 +417,9 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         return JSONResponse({"error": err}, status_code=422)
 
     app.add_middleware(BodyLimit)
+    if not settings.is_public:
+        app.add_middleware(HostOriginGuard, allowed_hosts=settings.allowed_hosts.split(","),
+                           frontend_origin=settings.frontend_origin)
 
     @app.middleware("http")
     async def _security_headers(request: Request, call_next):

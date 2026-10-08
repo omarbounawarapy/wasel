@@ -54,6 +54,7 @@ class Settings(BaseSettings):
     # runtime
     git_sha: str = "dev"
     frontend_origin: str = "http://localhost:5173"
+    allowed_hosts: str = "localhost,127.0.0.1,[::1]"    # Host values accepted outside public mode (comma separated)
     scoring_config: str = "config/scoring.yaml"
 
     @field_validator("app_mode", mode="before")

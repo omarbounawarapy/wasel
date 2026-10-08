@@ -45,7 +45,7 @@ Therefore:
 - know that `/api/monitor`, `/api/traces`, `/api/eval`, `/api/failures`, `/api/metrics/impact` and `/openapi.json` are readable by anyone who can reach the server in every mode. They return rates, codes, identifiers and configuration versions, not message text or phone numbers. `/api/failures` with `source=app` replaces message bodies by their length;
 - there is no rate limiting on the API. In public mode, orders, replies and LLM calls are capped, which bounds resource use; elsewhere put a limiter in front.
 
-Responses carry `Content-Security-Policy` (default-src 'self', `frame-ancestors 'none'`, and `script-src 'unsafe-inline'` because the static web export needs inline bootstrap scripts), `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`. Requests declaring a body over 64 KB are refused. CORS is enabled only in `dev` mode for one configured origin. The default bind address of `make serve` is `127.0.0.1`.
+Responses carry `Content-Security-Policy` (default-src 'self', `frame-ancestors 'none'`, and `script-src 'unsafe-inline'` because the static web export needs inline bootstrap scripts), `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`. Requests declaring a body over 64 KB are refused. CORS is enabled only in `dev` mode for one configured origin. The default bind address of `make serve` is `127.0.0.1`. Outside `public` mode the API also refuses a `Host` that is not in `ALLOWED_HOSTS` (DNS rebinding) and a state-changing request whose `Origin` is neither its own host nor `FRONTEND_ORIGIN` (cross-site posts); the bind address alone is not a boundary.
 
 ### Administrative endpoint
 

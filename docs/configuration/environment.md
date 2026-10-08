@@ -106,7 +106,8 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `SNAPSHOT_URL` | empty (off) | `file:///abs/path` or `http(s)://…` store the SQLite file is restored from at boot and saved to while running; for hosts with an ephemeral disk ([Cloudflare](../operations/cloudflare.md)). Ignored when `SEED_ON_BOOT` resolves to `always`. A store that errors (other than "no snapshot yet") stops startup |
 | `SNAPSHOT_INTERVAL_S` | `60` | Minimum seconds between snapshot saves (a save happens only if the DB changed, and once at shutdown) |
 | `GIT_SHA` | `dev` | Shown in `/api/health` `build.git_sha` |
-| `FRONTEND_ORIGIN` | `http://localhost:5173` | CORS origin allowed in `dev` mode |
+| `FRONTEND_ORIGIN` | `http://localhost:5173` | CORS origin allowed in `dev` mode, and the one other origin that may send a state-changing request outside `public` mode |
+| `ALLOWED_HOSTS` | `localhost,127.0.0.1,[::1]` | `Host` values the API accepts in `dev` and `event` mode (anything else gets `400 BAD_HOST`, which stops DNS rebinding). Add the public hostname when you publish the app through a tunnel. Not applied in `public` mode, where platform hostnames vary. A `POST`, `PUT`, `PATCH` or `DELETE` that carries an `Origin` other than its own host or `FRONTEND_ORIGIN` gets `403 BAD_ORIGIN`; requests without `Origin` (curl, the dashboard, the Meta webhook) are unaffected |
 | `SCORING_CONFIG` | `config/scoring.yaml` | Alternative scoring file |
 | `OMP_NUM_THREADS`, `OPENBLAS_NUM_THREADS`, `MKL_NUM_THREADS` | set to `1` at import if unset | Keeps NumPy and XGBoost single-threaded; an explicit value wins |
 

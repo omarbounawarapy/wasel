@@ -38,7 +38,7 @@ class Draining:
 
 def boot(tmp_path, mode, **over):
     settings = Settings(app_mode=mode, db_path=str(tmp_path / f"{mode}.db"), worker_enabled=False, demo_mode=True,
-                        admin_token="x" * 24, llm_mode="fail_all", **over)
+                        admin_token="x" * 24, llm_mode="fail_all", **{"allowed_hosts": "testserver", **over})
     clock = FrozenClock(T0)
     app = create_app(settings, clock=clock, llm=build_client("fail_all"), ids=SeqIds(), worker_enabled=False)
     return TestClient(app), app.state.core, clock

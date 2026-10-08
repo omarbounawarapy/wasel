@@ -758,3 +758,24 @@ def test_a_csv_import_that_fails_part_way_leaves_no_rows(public, monkeypatch):
     with pytest.raises(RuntimeError):
         commands.ingest_csv(core.conn(), core.ids, core.clock.now(), core.settings, core.config.raw, VID_A, csv_text)
     assert core.conn().execute("SELECT COUNT(*) FROM orders").fetchone()[0] == before
+
+
+def test_foreign_host_and_cross_origin_posts_are_refused_outside_public_mode(tmp_path):
+    c, core, clock = make_client(tmp_path, "dev", allowed_hosts="testserver,[::1]")
+    with c:
+        oid = hero_id(c)["order_id"]
+        r = c.get("/api/orders", headers={"Host": "attacker.example:8000"})
+        assert r.status_code == 400 and r.json()["error"]["code"] == "BAD_HOST"
+        assert c.get("/api/orders", headers={"Host": "[::1]:8000"}).status_code == 200
+        url = f"/api/orders/{oid}/rescore"
+        bad = c.post(url, headers={"Origin": "https://evil.example", "Content-Type": "text/plain"})
+        assert bad.status_code == 403 and bad.json()["error"]["code"] == "BAD_ORIGIN"
+        assert c.post(url, headers={"Origin": "http://testserver"}).status_code == 202       # its own origin
+        assert c.post(url, headers={"Origin": core.settings.frontend_origin}).status_code == 202
+        assert c.post(url).status_code == 202                                                 # curl: no Origin
+        assert c.get("/api/orders", headers={"Origin": "https://evil.example"}).status_code == 200   # reads: CORS
+
+
+def test_public_mode_accepts_any_host_and_origin(public):
+    c, _, _ = public
+    assert c.get("/api/health", headers={"Host": "anything.onrender.com"}).status_code == 200
