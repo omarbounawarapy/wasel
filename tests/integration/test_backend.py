@@ -640,3 +640,31 @@ def test_health_names_why_it_is_degraded_and_reports_the_snapshot(tmp_path):
         h = c.get("/api/health").json()
         assert h["status"] == "degraded" and h["degraded_reasons"] == ["snapshot_failing"]
         assert h["snapshot"]["failures"] == 3 and h["snapshot"]["last_error"] == "SnapshotError"
+
+
+def test_no_public_endpoint_returns_a_visitor_id(public):
+    """A visitor id grants access to that visitor's sandbox, so no unauthenticated response may contain one."""
+    from wasel.llm import trace
+    c, core, clock = public
+    A = {"X-Visitor-Id": VID_A}
+    assert c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"}, headers=A).status_code == 202
+    settle(core, clock)
+    assert any(t.get("sandbox_id") == VID_A for t in trace.recent(500)), "the ring buffer must carry it for this test"
+    for url in ("/api/traces", "/api/events", "/api/monitor", "/api/failures?source=app", "/api/health", "/api/orders"):
+        assert VID_A not in c.get(url).text, url
+        assert VID_A not in c.get(url, headers={"X-Visitor-Id": VID_B}).text, url
+
+
+def test_a_scoring_failure_shows_only_the_exception_type_in_the_feed(dev, caplog):
+    from wasel.worker import process_due
+    c, core, clock = dev
+    oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"}).json()["created"][0]["order_id"]
+
+    def boom(_inp):
+        raise RuntimeError("/secret/path boom")
+
+    clock.advance(5)
+    process_due(core.conn(), clock.now(), boom, core.drafter, ids=core.ids)
+    feed = c.get("/api/events", params={"order_id": oid}).text
+    assert "RuntimeError" in feed and "/secret/path" not in feed and "boom" not in feed
+    assert "/secret/path boom" in caplog.text                          # the operator still gets the cause

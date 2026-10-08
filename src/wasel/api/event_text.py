@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import re
 
 TITLES = {
     "message.received": "Customer message received",
@@ -66,6 +67,9 @@ def event_text(type_: str, payload_json: str) -> tuple[str, str | None]:
         detail = f"after {p.get('attempts')} attempt(s)"
     elif type_ == "draft.rewrite_unavailable":
         detail = p.get("reason")
-    elif type_ == "error":
-        detail = p.get("error")
+    elif type_ == "error":                              # never an exception message: it can carry paths and internals
+        err = str(p.get("error") or "")
+        detail = err if p.get("reason") == "order_timeout" else (
+            f"Scoring failed ({err}); the cause is in the server log" if re.fullmatch(r"\w{1,60}", err)
+            else "Something failed; the cause is in the server log")
     return title, detail

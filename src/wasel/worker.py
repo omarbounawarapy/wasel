@@ -189,7 +189,7 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
                 conn.execute("UPDATE orders SET status=CASE WHEN status IN ('shipped','delivered','refused','cancelled')"
                              " THEN status ELSE 'needs_review' END, rescore_state='idle' WHERE order_id=?", (oid,))
                 repo.add_event(conn, now, "error", "error", order_id=oid,
-                               payload={"where": "rescore", "error": f"{type(e).__name__}: {str(e)[:200]}"})
+                               payload={"where": "rescore", "error": type(e).__name__})   # the text stays in the log
     return done
 
 

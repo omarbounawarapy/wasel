@@ -115,7 +115,7 @@ The application configures no logging of its own. Uvicorn writes its access log 
 journalctl -u wasel -f
 ```
 
-What to look for: `unknown APP_MODE ... -> public` (a typo in the mode), `webhook rejected: <reason>` (bad signature), `webhook verify refused`, `webhook process_error: <ExceptionType>`, `rescore failed for <order>` with a traceback (an order was moved to `needs_review`), `worker tick failed`, and `whatsapp send ... failed`. The activity feed and `GET /api/events` carry the same information as `events` rows (`error`, `webhook.rejected`, `llm.fallback`, `llm.cap_reached`, `draft.send_failed`). Logs never contain message bodies, sender numbers or secrets, and the webhook's verify token is redacted from the access log. Set `TRACE_FILE` to keep every LLM trace record (no customer text) in a JSONL file.
+What to look for: `unknown APP_MODE ... -> public` (a typo in the mode), `webhook rejected: <reason>` (bad signature), `webhook verify refused`, `webhook process_error: <ExceptionType>`, `rescore failed for <order>` with a traceback (an order was moved to `needs_review`), `worker tick failed`, and `whatsapp send ... failed`. An `error` event holds only the exception type; the message and traceback are in the log, never in the feed. The activity feed and `GET /api/events` carry the same events as `events` rows (`error`, `webhook.rejected`, `llm.fallback`, `llm.cap_reached`, `draft.send_failed`). Logs never contain message bodies, sender numbers or secrets, and the webhook's verify token is redacted from the access log. Set `TRACE_FILE` to keep every LLM trace record (no customer text) in a JSONL file.
 
 ### Restart
 
