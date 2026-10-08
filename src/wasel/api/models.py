@@ -498,6 +498,8 @@ class ImpactResponse(BaseModel):
     projected_refusal_rate: float
     trips_avoided: float
     tnd_saved: float
+    tnd_saved_per_1000_orders: float = 0.0
+    tnd_saved_per_1000_by_confirm_rate: dict[str, float] = {}
     assumptions: list[str]
 
 

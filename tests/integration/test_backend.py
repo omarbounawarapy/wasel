@@ -77,7 +77,8 @@ def test_responses_validate_against_models(dev):
     M.OrderDetailResponse.model_validate(d)
     M.EventsResponse.model_validate(c.get("/api/events").json())
     M.HealthResponse.model_validate(c.get("/api/health").json())
-    M.ImpactResponse.model_validate(c.get("/api/metrics/impact").json())
+    imp = M.ImpactResponse.model_validate(c.get("/api/metrics/impact").json())
+    assert imp.tnd_saved_per_1000_orders > 0 and len(imp.tnd_saved_per_1000_by_confirm_rate) >= 2    # the Money saved hero reads these
 
 
 def test_no_response_model_exposes_phone_or_raw_payload():

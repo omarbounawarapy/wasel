@@ -136,6 +136,8 @@ def impact(request: Request):
                                      baseline_refusal_rate=d.get("baseline_refusal_rate", 0.0),
                                      projected_refusal_rate=d.get("projected_refusal_rate", 0.0),
                                      trips_avoided=d.get("trips_avoided", 0.0), tnd_saved=d.get("tnd_saved", 0.0),
+                                     tnd_saved_per_1000_orders=d.get("tnd_saved_per_1000_orders", 0.0),
+                                     tnd_saved_per_1000_by_confirm_rate=d.get("tnd_saved_per_1000_by_confirm_rate", {}),
                                      assumptions=d.get("assumptions", [])))
 
 
