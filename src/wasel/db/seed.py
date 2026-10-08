@@ -29,6 +29,17 @@ def seed_catalog(conn, catalog: dict) -> None:
         repo.upsert_catalog(conn, catalog)
 
 
+def sync_catalog(conn, catalog: dict) -> tuple[list[str], list[str]]:
+    """Write the product catalog and return the ids of products added and changed since the last call."""
+    old = {r["product_id"]: (r["name"], r["price_tnd"], r["category"]) for r in
+           conn.execute("SELECT product_id, name, price_tnd, category FROM catalog")}
+    seed_catalog(conn, catalog)
+    added = [p["product_id"] for p in catalog["products"] if p["product_id"] not in old]
+    changed = [p["product_id"] for p in catalog["products"]
+               if p["product_id"] in old and old[p["product_id"]] != (p["name"], p["price_tnd"], p["category"])]
+    return added, changed
+
+
 def seed_cache(conn, now: datetime, path: Path = CACHE_FILE) -> int:
     """Load the committed extraction cache (JSONL) into the database. Returns the number of entries loaded, 0 if the file
     is missing.

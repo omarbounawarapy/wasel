@@ -211,6 +211,25 @@ def test_union_body_errors_name_the_kind(dev):
     assert r["message"] == 'kind must be "text" or "location"'
 
 
+def test_catalog_is_loaded_at_every_boot(tmp_path):
+    """SEED_ON_BOOT=never still has the catalog, and a catalog edit is applied by the next boot."""
+    c, core, clock = make_client(tmp_path, "dev", seed_on_boot="never")
+    with c:
+        assert c.get("/api/orders").json()["orders"] == []
+        r = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"}).json()
+        oid = r["created"][0]["order_id"]
+        settle(core, clock)
+        d = c.get(f"/api/orders/{oid}").json()
+        assert d["assessments"]
+        assert not core.conn().execute("SELECT 1 FROM events WHERE type='error' AND order_id=?", (oid,)).fetchone()
+        products = core.config.catalog["products"]
+        products.append({**products[0], "product_id": "P99", "name": "New thing"})
+        products[0] = {**products[0], "price_tnd": 777}
+        core.boot()
+        rows = {r["product_id"]: r["price_tnd"] for r in core.conn().execute("SELECT product_id, price_tnd FROM catalog")}
+        assert rows["P99"] == products[-1]["price_tnd"] and rows[products[0]["product_id"]] == 777
+
+
 # ---------------------------------------------------------------- debounce, append-only assessments, tier boundary
 def test_debounce_and_append_only_versions(dev):
     c, core, clock = dev

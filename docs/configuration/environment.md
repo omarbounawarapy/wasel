@@ -33,7 +33,7 @@ Run the API from the repository root and these all coincide. Invalid values (a b
 | `WA_SEND_ENABLED` | `false` | bool | Allows real WhatsApp sends. Effective only outside `public` mode and with `WA_TOKEN` (and `WA_PHONE_NUMBER_ID` for the sender). |
 | `WA_AUTO_SEND` | `false` | bool | Lets the worker send `auto_send` drafts without a click. Never in `public` mode. |
 | `WEBHOOK_ENABLED` | `false` | bool | Mounts `/webhook/whatsapp` if the mode allows and both secrets are long enough. |
-| `SEED_ON_BOOT` | `auto` | `auto`, `always`, `if_empty`, `never` | `auto` resolves to `always` in `public` mode, else `if_empty`. `always` deletes the database file and rebuilds it. |
+| `SEED_ON_BOOT` | `auto` | `auto`, `always`, `if_empty`, `never` | `auto` resolves to `always` in `public` mode, else `if_empty`. `always` deletes the database file and rebuilds it. `never` creates the schema and the product catalog but no demo orders. The catalog from `data/catalog.yaml` is written at every boot in every mode, so an edit takes effect after a restart. |
 | `DB_PATH` | `var/app.db` | path | The SQLite file. Its parent directory is created if needed. |
 | `DEMO_MODE` | `true` | bool | Selects the short timings: debounce 4 s and no-reply timeout 60 s instead of 15 s and 6 h. Set `false` for a real deployment. |
 | `WORKER_ENABLED` | `true` | bool | `false` starts no worker loop. Tests and `make seed` use this. |

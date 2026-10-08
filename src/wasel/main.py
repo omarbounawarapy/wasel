@@ -22,7 +22,7 @@ from wasel.clock import Clock, SystemClock, utc_iso
 from wasel.db.cache import SqliteExtractionCache
 from wasel.db.conn import connect, create_schema, fresh_db
 from wasel.db.purge import purge_sandboxes, reset_all
-from wasel.db.seed import load_seed, seed_all
+from wasel.db.seed import load_seed, seed_all, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
 from wasel.db.usage import SqliteUsageMeter
 from wasel.ids import IdGen, UlidIds
@@ -143,7 +143,8 @@ class AppState:
 
         With seed mode 'always' the DB is rebuilt from schema.sql and reseeded; otherwise the schema is created if
         missing. Rescore states left over from a previous run are reset ('debouncing' if a rescore is pending, else
-        'idle'). Seeds the demo orders when the mode is 'always', or 'if_empty' and there are no orders.
+        'idle'). Loads the product catalog every time, in every seed mode.
+        Seeds the demo orders when the mode is 'always', or 'if_empty' and there are no orders.
         """
         self.model_problem = model_problem(str(self.config.root / self.config.raw["model"]["file"]))
         if self.model_problem:
@@ -163,6 +164,9 @@ class AppState:
                 create_schema(conn)
         conn.execute("UPDATE orders SET rescore_state = CASE WHEN pending_rescore_at IS NOT NULL THEN 'debouncing'"
                      " ELSE 'idle' END")
+        added, changed = sync_catalog(conn, self.config.catalog)        # every mode: orders reference the catalog
+        if added or changed:
+            log.info("catalog: %d added %s, %d changed %s", len(added), added, len(changed), changed)
         empty = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 0
         if mode == "always" or (mode == "if_empty" and empty):
             n = seed_all(conn, self.ids, self.clock.now(), self.scorer_for(conn), self.drafter, self.config.catalog)
