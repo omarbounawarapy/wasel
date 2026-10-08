@@ -1,0 +1,4 @@
+# Placeholders that look like assignments to scripts/dev/hygiene.sh. One extended regex per line, matched against
+# the `file:line:text` of a hit. Keep each entry as narrow as possible; real secrets never belong here.
+^tests/integration/test_whatsapp\.py:[0-9]+:SECRET = "test-app-secret-not-real-0001"$
+^tests/unit/test_loadenv\.py:[0-9]+:.*ADMIN_TOKEN=abcdefghijklmnopqrstuvwx\$yz12345678

@@ -79,4 +79,4 @@ The hero test replays a fixed three-message conversation and a customer reply th
 3. Never call a real provider. To simulate provider behaviour, use `FailingBackend("429" | "timeout" | "5xx" | ...)`, a `ReplayBackend` over a `replay_dir`, or a fake.
 4. Assert on behaviour and on stored rows, not only on status codes. For a bug fix, add a test that fails without it.
 5. Use `pytest.skip(reason=...)` rather than omitting a test you cannot write yet.
-6. Use fake data only: phone numbers `21600000001` to `...009`, synthetic names. `make hygiene` enforces the phone allowlist for `tests/fixtures` and `data`.
+6. Use fake data only: phone numbers `21600000001` to `...009`, synthetic names. `make hygiene` enforces the phone allowlist for `tests/fixtures` and `data`, and rejects secret-shaped strings: a placeholder that must look like one goes in `scripts/dev/hygiene.allow`. `tests/unit/test_hygiene.py` runs the script on temporary repositories.

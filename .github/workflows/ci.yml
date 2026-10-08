@@ -16,6 +16,21 @@ jobs:
         with: { python-version-file: .python-version, cache: pip }
       - run: make setup
       - run: make check PYTEST_ARGS="--junitxml=var/junit.xml"
+  secrets:
+    name: secret scan over the whole git history (gitleaks)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env: { GITLEAKS_VERSION: "8.21.2" }
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: install gitleaks (version pinned, checksum verified)
+        run: |
+          base=https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}
+          curl -sSfL -O "$base/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" -O "$base/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          grep linux_x64 "gitleaks_${GITLEAKS_VERSION}_checksums.txt" | sha256sum -c -
+          tar xzf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks
+      - run: ./gitleaks git --no-banner --redact -v .
   serve:
     name: host path (make web + make serve) boots safe and serves the UI
     needs: [backend]

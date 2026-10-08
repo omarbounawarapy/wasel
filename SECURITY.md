@@ -24,16 +24,16 @@ Wasel is a single-tenant application with no user accounts. It is designed to be
 | Forged webhook traffic | HMAC-SHA256 on the raw body, verify-token handshake, size cap, deduplication. It fails closed: the route does not exist unless the secrets are long enough. | [WhatsApp](docs/subsystems/whatsapp.md) |
 | Hostile customer text | Never trusted by code, delimited and sanitized for the model, every model quote verified, injection lexicon, deterministic scoring. | [extraction](docs/subsystems/extraction.md) |
 | Unsafe outbound messages | Deterministic prefilter, local classifier, LLM judge with approval recomputed in code, human send by default. | [outbound](docs/subsystems/outbound.md) |
-| Secrets in git | `.env` and databases are ignored and `make hygiene` fails on key-shaped strings. | [configuration](docs/configuration/environment.md) |
+| Secrets in git | `.env` and databases are ignored and `make hygiene` fails on known key prefixes and secret-name assignments, and CI scans the whole git history with gitleaks. | [configuration](docs/configuration/environment.md) |
 | Cost abuse | Daily and per-visitor caps on LLM calls; sandbox limits; request size limits. | [LLM layer](docs/subsystems/llm.md#caps-and-the-usage-meter) |
 
 ## Security-sensitive areas
 
 ### Secrets and environment variables
 
-Secrets are `GROQ_API_KEY`, `GEMINI_API_KEY`, `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN`, `ADMIN_TOKEN` and `CLOUDFLARE_TUNNEL_TOKEN`. They come from the process environment or a git-ignored `.env`. `.env.example` is the only committed env file and holds empty values. `make hygiene` (part of `make check` and CI) fails on tracked `.env`, database or `node_modules` files and on strings shaped like Groq, Gemini, Meta and tunnel-token secrets. `GET /api/health` reveals only whether a WhatsApp token is present, never the value. Application logs do not print secrets.
+Secrets are `GROQ_API_KEY`, `GEMINI_API_KEY`, `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN`, `ADMIN_TOKEN` and `CLOUDFLARE_TUNNEL_TOKEN`. They come from the process environment or a git-ignored `.env`. `.env.example` is the only committed env file and holds empty values. `make hygiene` (part of `make check` and CI) fails on tracked `.env`, database or `node_modules` files on strings with the prefixes of Groq, Gemini, Meta, tunnel, GitHub, AWS, Slack and Stripe secrets and private-key headers, and on `SECRET`/`TOKEN`/`KEY`/`PASSWORD` names assigned a long value (known placeholders are listed in `scripts/dev/hygiene.allow`). The CI `secrets` job runs gitleaks (pinned, checksum-verified) over the full history. `GET /api/health` reveals only whether a WhatsApp token is present, never the value. Application logs do not print secrets.
 
-Limits: `hygiene` recognises known prefixes only. Anyone with shell access to the host can read `.env`; protect it with file permissions.
+Limits: `hygiene` recognises known prefixes and assignment shapes only; a secret in another shape is caught only if gitleaks' rules know it. Anyone with shell access to the host can read `.env`; protect it with file permissions.
 
 ### API exposure
 
