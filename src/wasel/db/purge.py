@@ -19,12 +19,14 @@ DELETE FROM orders           WHERE order_id IN (SELECT order_id FROM _vo);
 DELETE FROM messages         WHERE conversation_id IN (SELECT conversation_id FROM _vc);
 DELETE FROM conversations    WHERE conversation_id IN (SELECT conversation_id FROM _vc);
 DELETE FROM customers        WHERE sandbox_id IS NOT NULL AND customer_id NOT IN (SELECT customer_id FROM conversations);
+DELETE FROM extraction_cache WHERE sandbox_id IS NOT NULL AND created_at < :cutoff;
 DELETE FROM llm_usage        WHERE ts < :usage_cutoff;
 """
 
 
 def purge_sandboxes(conn, now: datetime, ttl_s: int = 7200) -> int:
-    """Deletes visitor rows older than the TTL with all their children. Returns the number of orders purged."""
+    """Deletes visitor rows older than the TTL with all their children, including the cache rows made from their
+    text. Returns the number of orders purged."""
     params = {"cutoff": utc_iso(now - timedelta(seconds=ttl_s)), "usage_cutoff": utc_iso(now - timedelta(days=2))}
     with tx(conn):
         conn.execute("DROP TABLE IF EXISTS temp._vc")
@@ -40,11 +42,13 @@ def purge_sandboxes(conn, now: datetime, ttl_s: int = 7200) -> int:
 
 
 def reset_all(conn) -> int:
-    """Deletes every order-side row; keeps catalog, extraction_cache and llm_usage. The caller reseeds."""
+    """Deletes every order-side row and the cache rows made from visitor text; keeps catalog, the other
+    extraction_cache rows and llm_usage. The caller reseeds."""
     with tx(conn):
         n = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0]
         conn.execute("UPDATE orders SET current_assessment_id = NULL")
         for t in ("events", "outbound_drafts", "risk_assessments", "extraction_runs", "order_messages", "orders",
                   "messages", "conversations", "customers"):
             conn.execute(f"DELETE FROM {t}")
+        conn.execute("DELETE FROM extraction_cache WHERE sandbox_id IS NOT NULL")
     return n

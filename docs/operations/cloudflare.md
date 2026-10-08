@@ -160,7 +160,7 @@ The first request after a deploy or an idle period waits for the container to st
 
 - **Code and config:** check out the previous commit and `make cf-deploy ENV=…` again. (`npx wrangler rollback` exists for Worker versions; it has not been exercised against a container rollout here.)
 - **LLM prompt/model versions:** `scripts/ops/rollback.py`, then deploy, as before.
-- **Data:** R2 holds `wasel.sqlite` and the generation before it, `wasel.sqlite.prev`. To recover, copy the wanted object over `wasel.sqlite` (`wrangler r2 object get` / `put`; see `wrangler r2 object --help`), then restart the container by redeploying.
+- **Data:** public mode on Cloudflare persists the database across restarts (R2 snapshot, `SEED_ON_BOOT=if_empty`), so visitor data lives until the sandbox purge deletes it, and a purge that has not run yet is restored with the snapshot. R2 holds `wasel.sqlite` and the generation before it, `wasel.sqlite.prev`. To recover, copy the wanted object over `wasel.sqlite` (`wrangler r2 object get` / `put`; see `wrangler r2 object --help`), then restart the container by redeploying.
 
 ### Monitoring
 

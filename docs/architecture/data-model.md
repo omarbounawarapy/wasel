@@ -21,7 +21,7 @@ erDiagram
     catalog ||--o{ orders : "matched product"
 ```
 
-Three tables deliberately have no foreign keys into the order graph: `extraction_cache` (reusable LLM results), `llm_usage` (provider calls, which drive the caps) and `events` (the activity feed, cursor `seq`). The cache and the usage rows therefore outlive purged orders; events are deleted explicitly by the purge. [Persistence lifecycle](#persistence-lifecycle) lists what each operation removes.
+Three tables deliberately have no foreign keys into the order graph: `extraction_cache` (reusable LLM results), `llm_usage` (provider calls, which drive the caps) and `events` (the activity feed, cursor `seq`). The usage rows and the cache rows loaded from the seed file or made from event data therefore outlive purged orders; cache rows made from a visitor's text carry that visitor's `sandbox_id` and are deleted with the sandbox; events are deleted explicitly by the purge. [Persistence lifecycle](#persistence-lifecycle) lists what each operation removes.
 
 ## Conventions
 
@@ -123,7 +123,7 @@ The activity log: `message.received`, `order.rescored`, `draft.created`, `draft.
 
 ### LLM usage and extraction cache
 
-`llm_usage` has one row per provider attempt (successful or not) with role, provider, model, outcome, tokens and latency. It counts against the daily and per-visitor caps and outlives orders; purges delete rows older than two days. `extraction_cache` maps `input_hash` to a validated extraction and a prompt version. An upsert replaces an entry only if the new one is at least as primary (`is_primary`), so a fallback result can never overwrite a primary one.
+`llm_usage` has one row per provider attempt (successful or not) with role, provider, model, outcome, tokens and latency. It counts against the daily and per-visitor caps and outlives orders; purges delete rows older than two days. `extraction_cache` maps `input_hash` to a validated extraction and a prompt version; `sandbox_id` names the visitor whose text produced the row (NULL for seed and event data), and an upsert never turns a NULL row into a visitor's. An upsert replaces an entry only if the new one is at least as primary (`is_primary`), so a fallback result can never overwrite a primary one.
 
 ### Catalog
 
@@ -167,6 +167,6 @@ Invariants after `postprocess`: every surviving quote is a verbatim (normalized)
 | Start with `SEED_ON_BOOT=always` (default in `public` mode, and `make up`) | The database file and its WAL files are deleted, the schema is recreated, and the catalog, the committed extraction cache and the nine sample orders are loaded. |
 | Start with `if_empty` (default in `dev` and `event`) | The schema is created if missing; samples are seeded only if there are no orders. Existing data is kept. |
 | Start with `never` | Only the schema is created if missing. |
-| Sandbox purge (public mode, every `PURGE_INTERVAL_S`) | Deletes sandbox conversations opened more than `SANDBOX_TTL_S` (2 h) ago, with their orders, messages, assessments, extraction runs, drafts and events; sandbox customers left without conversations; and `llm_usage` rows older than two days. The TTL runs from when the conversation was opened, not from the last activity. |
-| `POST /api/admin/reset` | Deletes every order-side row (events, drafts, assessments, extraction runs, order messages, orders, messages, conversations, customers) and reseeds. Keeps `catalog`, `extraction_cache` and `llm_usage`. |
+| Sandbox purge (public mode, every `PURGE_INTERVAL_S`) | Deletes sandbox conversations opened more than `SANDBOX_TTL_S` (2 h) ago, with their orders, messages, assessments, extraction runs, drafts and events; sandbox customers left without conversations; `extraction_cache` rows made from sandbox text; and `llm_usage` rows older than two days. The TTL runs from when the conversation was opened, not from the last activity. |
+| `POST /api/admin/reset` | Deletes every order-side row (events, drafts, assessments, extraction runs, order messages, orders, messages, conversations, customers) and reseeds. Deletes the cache rows made from visitor text; keeps `catalog`, the other `extraction_cache` rows and `llm_usage`. |
 | `make clean` | Deletes `var/*.db` and the WAL and SHM files. |

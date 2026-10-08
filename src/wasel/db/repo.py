@@ -237,12 +237,16 @@ def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger:
     if result.cache_put is not None:
         c = result.cache_put
         conn.execute(
-            "INSERT INTO extraction_cache VALUES (?,?,?,?,?,?,?,?) ON CONFLICT(input_hash) DO UPDATE SET"
+            "INSERT INTO extraction_cache (input_hash, prompt_version, provider, model, origin_path, is_primary,"
+            " extraction_json, created_at, sandbox_id) VALUES (?,?,?,?,?,?,?,?,?) ON CONFLICT(input_hash) DO UPDATE SET"
             " prompt_version=excluded.prompt_version, provider=excluded.provider, model=excluded.model,"
             " origin_path=excluded.origin_path, is_primary=excluded.is_primary, extraction_json=excluded.extraction_json,"
-            " created_at=excluded.created_at WHERE excluded.is_primary >= extraction_cache.is_primary",
+            " created_at=excluded.created_at,"
+            # a seed row never becomes a visitor's, so the purge cannot delete it
+            " sandbox_id=CASE WHEN extraction_cache.sandbox_id IS NULL THEN NULL ELSE excluded.sandbox_id END"
+            " WHERE excluded.is_primary >= extraction_cache.is_primary",
             (c.input_hash, c.prompt_version, c.provider, c.model, c.origin_path, int(c.origin_path == "llm"),
-             _j(c.extraction), utc_iso(now)))
+             _j(c.extraction), utc_iso(now), order["sandbox_id"]))
     aid = None
     if result.assessment is not None:
         a = result.assessment

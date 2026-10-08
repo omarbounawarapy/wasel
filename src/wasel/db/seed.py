@@ -54,7 +54,8 @@ def seed_cache(conn, now: datetime, path: Path = CACHE_FILE) -> int:
             if not line.strip():
                 continue
             e = json.loads(line)
-            conn.execute("INSERT OR REPLACE INTO extraction_cache VALUES (?,?,?,?,?,?,?,?)",
+            conn.execute("INSERT OR REPLACE INTO extraction_cache (input_hash, prompt_version, provider, model, origin_path,"
+                         " is_primary, extraction_json, created_at) VALUES (?,?,?,?,?,?,?,?)",
                          (e["input_hash"], e["prompt_version"], e["provider"], e["model"], e["origin_path"],
                           int(e["origin_path"] == "llm"), json.dumps(e["extraction"], ensure_ascii=False),
                           utc_iso(now)))

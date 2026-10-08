@@ -118,7 +118,8 @@ CREATE TABLE extraction_cache (                -- no FK: survives reset and purg
   origin_path    TEXT NOT NULL CHECK (origin_path IN ('llm','fallback_model','fallback_provider')),
   is_primary     INTEGER NOT NULL CHECK (is_primary IN (0,1)),   -- upsert replaces only if new.is_primary >= old
   extraction_json TEXT NOT NULL,               -- after repair + evidence + tone gate; evidence uses msg_idx
-  created_at     TEXT NOT NULL
+  created_at     TEXT NOT NULL,
+  sandbox_id     TEXT                          -- visitor whose text produced the row; purged with the sandbox. NULL = seed file or event data
 );
 
 CREATE TABLE extraction_runs (                 -- append-only; one row per scoring run that produced/reused an extraction

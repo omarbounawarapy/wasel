@@ -23,7 +23,7 @@ from wasel.clock import Clock, SystemClock, utc_iso
 from wasel.db.cache import SqliteExtractionCache
 from wasel.db.conn import connect, create_schema, fresh_db, tx
 from wasel.db.purge import purge_sandboxes, reset_all
-from wasel.db.seed import load_seed, seed_all, sync_catalog
+from wasel.db.seed import load_seed, seed_all, seed_cache, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
 from wasel.db.usage import SqliteUsageMeter
 from wasel.ids import IdGen, UlidIds
@@ -174,6 +174,7 @@ class AppState:
             conn = self.conn()
             if not conn.execute("SELECT name FROM sqlite_master WHERE name='orders'").fetchone():
                 create_schema(conn)
+        self.migrate_cache_owner(conn)
         self.rearm_interrupted(conn)
         conn.execute("UPDATE orders SET rescore_state = CASE WHEN pending_rescore_at IS NOT NULL THEN 'debouncing'"
                      " ELSE 'idle' END")
@@ -192,6 +193,20 @@ class AppState:
                           self.seed_unscored)
         if restored:
             self.snapshotter.seed_digest(conn)          # what was just restored is already stored
+
+    def migrate_cache_owner(self, conn) -> None:
+        """Add extraction_cache.sandbox_id to a database made before it existed.
+
+        The old rows cannot be told apart from rows made from a visitor's text, so they are dropped and the committed
+        seed cache is loaded again. It is only a cache: the next scoring of the same text calls the model once more.
+        """
+        if any(r["name"] == "sandbox_id" for r in conn.execute("PRAGMA table_info(extraction_cache)")):
+            return
+        with tx(conn):
+            conn.execute("ALTER TABLE extraction_cache ADD COLUMN sandbox_id TEXT")
+            conn.execute("DELETE FROM extraction_cache")
+        seed_cache(conn, self.clock.now())
+        log.warning("extraction_cache had no sandbox_id column: old rows dropped, seed cache reloaded")
 
     def rearm_interrupted(self, conn) -> int:
         """Queue a rescore for every open order whose last scoring did not finish, and return how many.

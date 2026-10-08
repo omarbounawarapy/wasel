@@ -779,3 +779,43 @@ def test_foreign_host_and_cross_origin_posts_are_refused_outside_public_mode(tmp
 def test_public_mode_accepts_any_host_and_origin(public):
     c, _, _ = public
     assert c.get("/api/health", headers={"Host": "anything.onrender.com"}).status_code == 200
+
+
+def _cache_rows(conn):
+    return conn.execute("SELECT input_hash, extraction_json, sandbox_id FROM extraction_cache").fetchall()
+
+
+def test_purge_removes_cache_rows_made_from_a_visitors_text_and_keeps_seed_rows(tmp_path):
+    from wasel.contracts import CacheEntry, ScoreResult
+    from wasel.ingress.ingest import store_inbound
+    conn = fresh_db(tmp_path / "p.db")
+    ids = SeqIds()
+    with tx(conn):
+        conn.execute("INSERT INTO extraction_cache (input_hash, prompt_version, provider, model, origin_path, is_primary,"
+                     " extraction_json, created_at) VALUES ('seedhash','extract-v1','groq','m','llm',1,'{}',?)",
+                     (T0.isoformat(),))
+        cus = repo.get_or_create_customer(conn, ids, T0, sandbox_id=VID_A, display_name="x")
+        cnv = repo.create_conversation(conn, ids, T0, customer_id=cus, sandbox_id=VID_A, channel="paste")
+        st = store_inbound(conn, ids, T0, conversation_id=cnv, origin="paste", text="douar Ouled Ali", no_debounce=True)
+    order = conn.execute("SELECT * FROM orders WHERE order_id=?", (st.order_id,)).fetchone()
+    for h, ext in (("h-visitor", {"quote": "douar Ouled Ali"}), ("seedhash", {"quote": "overwritten"})):
+        res = ScoreResult(False, None, CacheEntry(h, "extract-v1", "groq", "m", "llm", ext), None, None, None, [], [])
+        with tx(conn):
+            repo.persist_result(conn, ids, T0, order, "initial", res, None, None, "idle")
+    rows = {r["input_hash"]: r["sandbox_id"] for r in _cache_rows(conn)}
+    assert rows["h-visitor"] == VID_A and rows["seedhash"] is None        # a seed row never becomes a visitor's
+    purge_sandboxes(conn, T0 + timedelta(hours=3), ttl_s=7200)
+    left = _cache_rows(conn)
+    assert "h-visitor" not in {r["input_hash"] for r in left} and "seedhash" in {r["input_hash"] for r in left}
+    assert not any("Ouled Ali" in r["extraction_json"] and r["input_hash"] == "h-visitor" for r in left)
+
+
+def test_boot_adds_the_cache_owner_column_to_an_old_database(tmp_path):
+    c, core, _ = make_client(tmp_path, "dev")
+    with c:
+        conn = core.conn()
+        conn.execute("ALTER TABLE extraction_cache DROP COLUMN sandbox_id")
+        conn.execute("INSERT INTO extraction_cache VALUES ('old','extract-v1','groq','m','llm',1,'{}','2026-01-01')")
+        core.boot()
+        assert "sandbox_id" in [r["name"] for r in conn.execute("PRAGMA table_info(extraction_cache)")]
+        assert "old" not in {r["input_hash"] for r in _cache_rows(conn)}
