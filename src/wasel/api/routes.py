@@ -5,7 +5,7 @@ from __future__ import annotations
 import hmac
 import json
 
-from fastapi import APIRouter, Depends, Header, Request
+from fastapi import APIRouter, Depends, Header, Query, Request
 from fastapi.responses import JSONResponse
 
 from wasel.api import commands
@@ -34,11 +34,12 @@ def health(request: Request):
 
 @router.get("/orders")
 def list_orders(request: Request, tier: str | None = None, status: str | None = None,
-                include_collecting: bool = False, limit: int = 100, vid: str | None = Depends(visitor_id)):
+                include_collecting: bool = False, limit: int = Query(100, ge=1, le=500),
+                vid: str | None = Depends(visitor_id)):
     """The order queue, riskiest first; filter by tier or status. Capped at 500 rows."""
     st = _s(request)
     return _nocache(P.list_orders(st.conn(), st.settings, vid, tier=tier, status=status,
-                                  include_collecting=include_collecting, limit=min(limit, 500)))
+                                  include_collecting=include_collecting, limit=limit))
 
 
 @router.get("/orders/{order_id}")
@@ -119,11 +120,11 @@ def send_draft(draft_id: str, request: Request, vid: str | None = Depends(visito
 
 
 @router.get("/events")
-def events(request: Request, after: int = 0, order_id: str | None = None, limit: int = 50,
+def events(request: Request, after: int = 0, order_id: str | None = None, limit: int = Query(50, ge=1, le=200),
            vid: str | None = Depends(visitor_id)):
     """The activity log, optionally after an event id or for one order. Capped at 200 rows."""
     st = _s(request)
-    return _nocache(P.list_events(st.conn(), st.settings, vid, after=after, order_id=order_id, limit=min(limit, 200)))
+    return _nocache(P.list_events(st.conn(), st.settings, vid, after=after, order_id=order_id, limit=limit))
 
 
 @router.get("/metrics/impact")
@@ -149,10 +150,11 @@ def monitor(request: Request):
 
 
 @router.get("/traces")
-def traces(request: Request, role: str | None = None, order_id: str | None = None, limit: int = 100):
+def traces(request: Request, role: str | None = None, order_id: str | None = None,
+           limit: int = Query(100, ge=1, le=500)):
     """Recent LLM trace records (ids, versions, model, outcome, latency, tokens; never the customer's text)."""
     from wasel.llm import trace
-    rows = trace.recent(min(limit, 500), role=role, order_id=order_id)
+    rows = trace.recent(limit, role=role, order_id=order_id)
     rows = [{k: v for k, v in r.items() if k != "sandbox_id"} for r in rows]       # a visitor id is an access key
     return _nocache_json({"traces": rows})
 
@@ -231,7 +233,7 @@ admin = APIRouter(prefix="/api/admin")
 def reset(request: Request, x_admin_token: str | None = Header(default=None)):
     """Delete every order and reseed the demo data. Needs the X-Admin-Token header."""
     st = _s(request)
-    if not x_admin_token or not hmac.compare_digest(x_admin_token, st.settings.admin_token):
+    if not x_admin_token or not hmac.compare_digest(x_admin_token.encode(), st.settings.admin_token.encode()):
         raise ApiError(401, "UNAUTHORIZED", "admin token required")
     purged, reseeded = st.reset()
     return M.ResetResponse(reseeded_orders=reseeded, purged_rows=purged)

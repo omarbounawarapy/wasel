@@ -69,14 +69,20 @@ def ingest_paste(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict,
         raise ApiError(413 if len(text) > 2000 else 422, "PAYLOAD_TOO_LARGE" if len(text) > 2000 else "VALIDATION_ERROR",
                        "paste text must be 1..2000 characters")
     _sandbox_limits(conn, settings, vid)
-    sid = vid if settings.is_public else None
     with tx(conn):
-        cid = repo.get_or_create_customer(conn, ids, now, sandbox_id=sid,
-                                          display_name=None if settings.is_public else customer_name)
-        conv = repo.create_conversation(conn, ids, now, customer_id=cid, sandbox_id=sid, channel="paste")
-        st = store_inbound(conn, ids, now, conversation_id=conv, origin="paste", text=text,
-                           debounce_s=_debounce(settings, cfg), structured={k: v for k, v in (structured or {}).items()
-                                                                           if v is not None})
+        return _insert_paste(conn, ids, now, settings, cfg, vid, text, customer_name, structured)
+
+
+def _insert_paste(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, vid: str | None, text: str,
+                  customer_name: str | None, structured: dict | None) -> dict:
+    """The rows of one pasted order. The caller holds the transaction."""
+    sid = vid if settings.is_public else None
+    cid = repo.get_or_create_customer(conn, ids, now, sandbox_id=sid,
+                                      display_name=None if settings.is_public else customer_name)
+    conv = repo.create_conversation(conn, ids, now, customer_id=cid, sandbox_id=sid, channel="paste")
+    st = store_inbound(conn, ids, now, conversation_id=conv, origin="paste", text=text,
+                       debounce_s=_debounce(settings, cfg), structured={k: v for k, v in (structured or {}).items()
+                                                                       if v is not None})
     o = repo.get_order(conn, st.order_id)
     return {"order_id": st.order_id, "order_ref": f"#{o['order_no']}", "conversation_id": conv,
             "message_id": st.message_id}
@@ -86,35 +92,55 @@ CSV_HEADER = ["customer_id", "customer_name", "product", "price_tnd", "zone", "a
 
 
 def ingest_csv(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dict, vid: str | None, csv_text: str) -> tuple:
-    """Ingest up to 10 (public) or 200 rows via ingest_paste. Returns (created, rejected).
+    """Ingest up to 10 (public) or 200 rows as pasted orders. Returns (created, rejected).
 
-    Each row's text is address + note. Rows with no text, an unknown zone or a non-numeric price are rejected with a
-    1-based row number and the rest go on; a larger file raises 413. Each accepted row commits on its own.
+    Each row's text is address + note. Rows with no text, an unknown zone, a price that is not a number between 0
+    and 1,000,000 or a name over the length limit are rejected with a 1-based row number and the rest go on; a
+    larger file raises 413 and unreadable CSV raises 422. All accepted rows are inserted in one transaction, so an
+    error part-way leaves no rows behind.
     """
-    reader = csv.DictReader(io.StringIO(csv_text))
-    rows_ = list(reader)
+    try:
+        rows_ = list(csv.DictReader(io.StringIO(csv_text)))
+    except csv.Error as e:
+        raise ApiError(422, "VALIDATION_ERROR", f"unreadable CSV: {e}") from None
     limit = 10 if settings.is_public else 200
     if len(rows_) > limit:
         raise ApiError(413, "PAYLOAD_TOO_LARGE", f"CSV has {len(rows_)} rows; the limit is {limit}")
-    created, rejected = [], []
+    accepted, rejected = [], []
     for i, r in enumerate(rows_, start=1):
         text = " ".join(x for x in ((r.get("address") or "").strip(), (r.get("note") or "").strip()) if x)
-        if not text:
-            rejected.append({"row": i, "reason": "address and note are both empty"})
-            continue
         zone = (r.get("zone") or "").strip().lower() or None
-        if zone and zone not in ("urban", "suburban", "rural"):
-            rejected.append({"row": i, "reason": f"unknown zone {zone!r}"})
-            continue
-        try:
-            price = float(r["price_tnd"]) if (r.get("price_tnd") or "").strip() else None
-        except ValueError:
-            rejected.append({"row": i, "reason": "price_tnd is not a number"})
-            continue
-        created.append(ingest_paste(conn, ids, now, settings, cfg, vid, text=text[:2000],
-                                    customer_name=r.get("customer_name"),
-                                    structured={"product_name": (r.get("product") or None), "price_tnd": price,
-                                                "zone": zone}))
+        name = (r.get("customer_name") or "").strip() or None
+        product = (r.get("product") or "").strip() or None
+        price, why = None, None
+        if not text:
+            why = "address and note are both empty"
+        elif zone and zone not in ("urban", "suburban", "rural"):
+            why = f"unknown zone {zone!r}"
+        elif name and len(name) > 40 or product and len(product) > 80:
+            why = "customer_name is over 40 characters or product over 80"
+        else:
+            try:
+                price = float(r["price_tnd"]) if (r.get("price_tnd") or "").strip() else None
+                if price is not None and not 0 <= price <= 1_000_000:       # also rejects nan and inf
+                    raise ValueError
+            except ValueError:
+                why = "price_tnd is not a number between 0 and 1000000"
+        if why is None:
+            try:
+                for cell in (text, name, product):
+                    (cell or "").encode("utf-8")
+            except UnicodeEncodeError:
+                why = "contains a character that is not valid text"
+        if why:
+            rejected.append({"row": i, "reason": why})
+        else:
+            accepted.append((text[:2000], name, {"product_name": product, "price_tnd": price, "zone": zone}))
+    created = []
+    with tx(conn):
+        for text, name, structured in accepted:
+            _sandbox_limits(conn, settings, vid)
+            created.append(_insert_paste(conn, ids, now, settings, cfg, vid, text, name, structured))
     return created, rejected
 
 

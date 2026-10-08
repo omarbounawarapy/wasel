@@ -5,10 +5,21 @@ appear only masked). Request models (PasteIngest, CsvIngest, SimulateText, ...) 
 `seed_key`, `injection_suspected` and `visitor_cap` are optional additions with defaults, so older clients keep working."""
 from __future__ import annotations
 
-from typing import Literal
+from typing import Annotated, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import AfterValidator, BaseModel, Field
 
+
+def _storable(s: str) -> str:
+    """Reject a lone surrogate: it cannot be encoded as UTF-8, so SQLite would fail on it with a 500."""
+    try:
+        s.encode("utf-8")
+    except UnicodeEncodeError:
+        raise ValueError("contains a character that is not valid text") from None
+    return s
+
+
+Text = Annotated[str, AfterValidator(_storable)]          # every free-text request field uses this
 AppMode = Literal["dev", "event", "public"]
 Tier = Literal["low", "medium", "high"]
 Action = Literal["ship", "confirm", "prepay", "review", "cancelled"]
@@ -301,8 +312,8 @@ class OrderDetailResponse(BaseModel):
 # ---------------------------------------------------------------- commands
 class StructuredIn(BaseModel):
     """Seller-entered order fields. When set they take precedence over the catalog and gazetteer."""
-    product_name: str | None = None
-    price_tnd: float | None = Field(default=None, ge=0)
+    product_name: Text | None = Field(default=None, max_length=80)
+    price_tnd: float | None = Field(default=None, ge=0, le=1_000_000, allow_inf_nan=False)
     zone: Zone | None = None
     quantity: int | None = Field(default=None, ge=1, le=50)
 
@@ -310,8 +321,8 @@ class StructuredIn(BaseModel):
 class PasteIngest(BaseModel):
     """Request body: one pasted customer message becomes one order. Text is at most 2000 characters, name 40."""
     kind: Literal["paste"]
-    text: str = Field(min_length=1)
-    customer_name: str | None = Field(default=None, max_length=40)
+    text: Text = Field(min_length=1)
+    customer_name: Text | None = Field(default=None, max_length=40)
     structured: StructuredIn | None = None
 
 
@@ -321,7 +332,7 @@ class CsvIngest(BaseModel):
     At most 10 rows in public mode, 200 otherwise.
     """
     kind: Literal["csv"]
-    csv_text: str
+    csv_text: Text
 
 
 class CreatedRef(BaseModel):
@@ -355,14 +366,14 @@ class TryResponse(BaseModel):
 class SimulateText(BaseModel):
     """Request body: a simulated customer text reply (max 600 characters)."""
     kind: Literal["text"]
-    text: str = Field(min_length=1)
+    text: Text = Field(min_length=1)
 
 
 class SimulateLocation(BaseModel):
     """Request body: a simulated customer location pin."""
     kind: Literal["location"]
-    lat: float
-    lng: float
+    lat: float = Field(ge=-90, le=90)
+    lng: float = Field(ge=-180, le=180)
 
 
 class SimulateReplyResponse(BaseModel):
@@ -385,7 +396,7 @@ class RescoreResponse(BaseModel):
 class SellerActionRequest(BaseModel):
     """Request body for a status-changing seller action. `note` is accepted but not stored."""
     action: SellerAction
-    note: str | None = None
+    note: Text | None = Field(default=None, max_length=500)
 
 
 class SendDraftResponse(BaseModel):

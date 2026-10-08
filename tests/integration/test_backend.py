@@ -692,3 +692,51 @@ def test_body_cap_applies_to_chunked_requests(tmp_path, mode):
         small = c.post("/api/orders/ingest", headers={"X-Visitor-Id": VID_A, "Content-Type": "application/json"},
                        content=iter([b'{"kind":"paste",', b'"text":"nheb mixeur"}']))
         assert small.status_code == 202
+
+
+@pytest.mark.parametrize("payload", [
+    {"kind": "paste", "text": "x", "structured": {"price_tnd": 1e999}},
+    {"kind": "paste", "text": "x", "structured": {"price_tnd": 2_000_000}},
+    {"kind": "paste", "text": "x", "structured": {"product_name": "p" * 81}},
+    {"kind": "paste", "text": "x", "structured": {"product_name": "\\ud800x"}},
+    {"kind": "csv", "csv_text": "customer_id,customer_name,product,price_tnd,zone,address,note\\n,,,,,a\\ud800,\\n"},
+])
+def test_hostile_input_gets_a_4xx_envelope(dev, payload):
+    import json as _json
+    c, _, _ = dev
+    body = _json.dumps(payload).replace("\\\\ud800", "\\ud800").replace("1e999", "1e999").encode("ascii")
+    r = c.post("/api/orders/ingest", content=body, headers={"Content-Type": "application/json"})
+    assert 400 <= r.status_code < 500 and r.json()["error"]["code"] in ("VALIDATION_ERROR", "PAYLOAD_TOO_LARGE")
+
+
+@pytest.mark.parametrize("url", ["/api/orders?limit=-1", "/api/events?limit=-1", "/api/traces?limit=-1",
+                                 "/api/orders?limit=0", "/api/events?limit=201"])
+def test_list_limits_are_bounded(dev, url):
+    assert dev[0].get(url).status_code == 422
+
+
+def test_admin_token_with_non_ascii_is_refused_not_a_500(tmp_path):
+    c, _, _ = make_client(tmp_path, "dev")
+    with c:
+        assert c.post("/api/admin/reset", headers={"X-Admin-Token": "é".encode()}).status_code == 401
+
+
+def test_a_csv_import_that_fails_part_way_leaves_no_rows(public, monkeypatch):
+    from wasel.api import commands
+    c, core, _ = public
+    real = commands._insert_paste
+    calls = []
+
+    def flaky(*a, **kw):
+        calls.append(1)
+        if len(calls) == 3:
+            raise RuntimeError("boom")
+        return real(*a, **kw)
+
+    monkeypatch.setattr(commands, "_insert_paste", flaky)
+    csv_text = "customer_id,customer_name,product,price_tnd,zone,address,note\n" + "\n".join(
+        f",,,,,douar {i}," for i in range(4)) + "\n"
+    before = core.conn().execute("SELECT COUNT(*) FROM orders").fetchone()[0]
+    with pytest.raises(RuntimeError):
+        commands.ingest_csv(core.conn(), core.ids, core.clock.now(), core.settings, core.config.raw, VID_A, csv_text)
+    assert core.conn().execute("SELECT COUNT(*) FROM orders").fetchone()[0] == before
