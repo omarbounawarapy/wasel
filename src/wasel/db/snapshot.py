@@ -153,7 +153,9 @@ def restore(store: SnapshotStore, db_path: str | Path) -> bool:
     for suffix in ("-wal", "-shm"):
         Path(str(p) + suffix).unlink(missing_ok=True)
     tmp = p.with_name(p.name + ".restore")
-    tmp.write_bytes(data)
+    fd = os.open(tmp, os.O_CREAT | os.O_TRUNC | os.O_WRONLY, 0o600)        # customer data: owner only
+    with os.fdopen(fd, "wb") as f:
+        f.write(data)
     os.replace(tmp, p)
     log.info("restored %s from snapshot (%d bytes)", p, len(data))
     return True

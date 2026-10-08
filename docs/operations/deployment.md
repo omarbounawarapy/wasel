@@ -12,7 +12,7 @@ Wasel runs as one Python process (`make serve`) on an always-on machine. A Cloud
         optional:        GPU host running vLLM ◀── HTTPS ── the LLM layer (GROQ_BASE_URL)
 ```
 
-What `make serve` does: it sources `.env`, prints `Wasel on http://HOST:PORT mode=<mode>`, and runs `uvicorn wasel.main:create_app --factory --host $HOST --port $PORT --workers 1`. The worker count must stay at one: the process owns the SQLite file and runs the in-process worker loop, so a second worker would duplicate the loop and the sandbox purge. `make tunnel` runs `cloudflared tunnel run` with the token from `.env`. `make deploy` updates the checkout. `deploy/wasel.service` is a systemd unit for Linux. Nothing else is provisioned.
+What `make serve` does: it loads `.env` (parsed, never run as shell code), prints `Wasel on http://HOST:PORT mode=<mode>`, and runs `uvicorn wasel.main:create_app --factory --host $HOST --port $PORT --workers 1`. The worker count must stay at one: the process owns the SQLite file and runs the in-process worker loop, so a second worker would duplicate the loop and the sandbox purge. `make tunnel` runs `cloudflared tunnel run` with the token from `.env`. `make deploy` updates the checkout. `deploy/wasel.service` is a systemd unit for Linux. Nothing else is provisioned.
 
 ## Requirements
 
@@ -46,6 +46,8 @@ python3.11 -m venv .venv
 make setup            # Python dependencies and the package
 make web              # builds web/dist, which make serve serves at /
 cp .env.example .env  # then edit it
+chmod 600 .env        # it will hold WA_TOKEN, WA_APP_SECRET and the provider keys
+install -d -m 700 var # the SQLite file and its -wal/-shm files live here
 ```
 
 Install `cloudflared` from Cloudflare's downloads (on Windows, save the executable as `~/.local/bin/cloudflared.exe`, where `make tunnel` looks for it).
@@ -78,7 +80,7 @@ make tunnel    # connects the tunnel; the public URL starts answering
 
 Always on, on Linux:
 
-1. Copy `deploy/wasel.service` to `/etc/systemd/system/wasel.service` and edit `User` (default `wasel`) and `WorkingDirectory` (default `/opt/wasel`). The unit runs `ExecStart=/usr/bin/make serve` with `Restart=always` and `RestartSec=3`, after `network-online.target`. Adjust the path if `make` is elsewhere (`command -v make`). The Makefile finds `.venv` under the working directory, so the virtual environment and `.env` must be there and readable by that user.
+1. Copy `deploy/wasel.service` to `/etc/systemd/system/wasel.service` and edit `User` (default `wasel`) and `WorkingDirectory` (default `/opt/wasel`). The unit runs `ExecStart=/usr/bin/make serve` with `Restart=always` and `RestartSec=3`, after `network-online.target`. Adjust the path if `make` is elsewhere (`command -v make`). The Makefile finds `.venv` under the working directory, so the virtual environment and `.env` must be there and readable by that user (keep `.env` at mode 600 and `var/` at 700). The unit sandboxes the process: `NoNewPrivileges`, `ProtectSystem=strict` with only `/opt/wasel/var` writable, `ProtectHome`, `PrivateTmp`, no capabilities, no raw sockets, `UMask=0077`, `MemoryMax=1G`, `TasksMax=256`. Keep the checkout under `/opt/wasel` (a path under `/home` is hidden by `ProtectHome`) and check the result with `systemd-analyze security wasel`. The app creates the database with mode 600 whatever the umask.
 2. `sudo systemctl daemon-reload && sudo systemctl enable --now wasel`.
 3. Install the tunnel as its own service: `sudo cloudflared service install <CLOUDFLARE_TUNNEL_TOKEN>`.
 

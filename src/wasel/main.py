@@ -169,7 +169,7 @@ class AppState:
             conn = fresh_db(self.db_path)
             self._local.conn = conn
         else:
-            Path(self.db_path).parent.mkdir(parents=True, exist_ok=True)
+            Path(self.db_path).parent.mkdir(mode=0o700, parents=True, exist_ok=True)
             restored = self.snapshot_store is not None and restore(self.snapshot_store, self.db_path)
             conn = self.conn()
             if not conn.execute("SELECT name FROM sqlite_master WHERE name='orders'").fetchone():

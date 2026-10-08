@@ -12,6 +12,21 @@ WorkingDirectory=/opt/wasel
 ExecStart=/usr/bin/make serve
 Restart=always
 RestartSec=3
+# Sandboxing: the process can write only under var/ and gains no privileges. UMask makes the database and its
+# -wal/-shm files owner-only. Run `systemd-analyze security wasel` after changing any of this.
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/opt/wasel/var
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+CapabilityBoundingSet=
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+LockPersonality=true
+UMask=0077
+MemoryMax=1G
+TasksMax=256
 
 [Install]
 WantedBy=multi-user.target

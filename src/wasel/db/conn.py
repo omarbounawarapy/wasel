@@ -2,6 +2,7 @@
 The DB is rebuilt from schema.sql (no migrations)."""
 from __future__ import annotations
 
+import os
 import sqlite3
 from pathlib import Path
 
@@ -13,7 +14,17 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
     The connection may be used from any thread, but callers keep one per thread (see AppState.conn). Transactions are
     explicit, via `tx`.
+
+    A new database file is created with mode 0600 (SQLite gives the -wal and -shm files the same mode), and an
+    existing one that other users can read is tightened to 0600: it holds customer messages and phone numbers.
     """
+    if str(path) != ":memory:":
+        try:
+            os.close(os.open(path, os.O_CREAT | os.O_RDWR, 0o600))
+            if os.stat(path).st_mode & 0o077:
+                os.chmod(path, 0o600)
+        except OSError:
+            pass                                        # a read-only or special path: let sqlite3 report it
     conn = sqlite3.connect(str(path), check_same_thread=False, isolation_level=None)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode=WAL")
@@ -33,7 +44,7 @@ def fresh_db(path: str | Path) -> sqlite3.Connection:
     p = Path(path)
     for suffix in ("", "-wal", "-shm"):
         Path(str(p) + suffix).unlink(missing_ok=True)
-    p.parent.mkdir(parents=True, exist_ok=True)
+    p.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
     conn = connect(p)
     create_schema(conn)
     return conn
