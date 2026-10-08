@@ -19,7 +19,7 @@ TEST_ENV := APP_MODE=dev LLM_MODE=fail_all WORKER_ENABLED=false DEMO_MODE=true G
             GROQ_API_KEY= GEMINI_API_KEY= WA_TOKEN= WA_APP_SECRET= WA_VERIFY_TOKEN= WA_SEND_ENABLED=false
 
 up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set; reads .env). Ctrl-C stops both
-	@set -a; [ -f .env ] && . ./.env; set +a; \
+	@eval "$$($(PY) scripts/dev/loadenv.py)"; \
 	APP_MODE=$${APP_MODE:-dev} SEED_ON_BOOT=$${SEED_ON_BOOT:-always} \
 	  $(PY) -m uvicorn wasel.main:create_app --factory --port $(API_PORT) & api=$$!; \
 	trap 'kill $$api 2>/dev/null; wait $$api 2>/dev/null || true' EXIT; trap 'exit 0' INT TERM; \
@@ -39,10 +39,10 @@ web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make
 
 # ---- hosting with make and Cloudflare Tunnel (docs/operations/deployment.md): the app runs with make, Cloudflare Tunnel publishes it
 serve: ## host run: API + web UI, no reload, settings from .env (unset APP_MODE = public), on HOST:PORT (127.0.0.1:8000)
-	@set -a; [ -f .env ] && . ./.env; set +a; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn wasel.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
+	@eval "$$($(PY) scripts/dev/loadenv.py)"; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn wasel.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
 
 tunnel: ## publish `make serve` on your Cloudflare hostname (named tunnel; CLOUDFLARE_TUNNEL_TOKEN in .env)
-	@set -a; [ -f .env ] && . ./.env; set +a; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/operations/deployment.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
+	@eval "$$($(PY) scripts/dev/loadenv.py)"; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/operations/deployment.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
 
 deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `make serve` and run `make smoke URL=<public url>`
 	git pull --ff-only

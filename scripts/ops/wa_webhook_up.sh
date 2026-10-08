@@ -20,7 +20,8 @@ PYTHON="${PYTHON:-$(for p in .venv/bin/python .venv/Scripts/python.exe; do [ -x 
 PYTHON="${PYTHON:-python3}"
 [ -x "$CLOUDFLARED" ] || { echo "cloudflared not found (set CLOUDFLARED=… or install it)" >&2; exit 1; }
 
-[ -f .env ] && { set -a; . ./.env; set +a; }
+# .env is parsed like the app does and every value is quoted: nothing in it is evaluated by the shell
+eval "$("$PYTHON" scripts/dev/loadenv.py)"
 : "${META_APP_ID:?META_APP_ID missing (.env): the id of your Meta app}"
 APP_ID="$META_APP_ID"
 : "${WA_APP_SECRET:?WA_APP_SECRET missing (.env)}"

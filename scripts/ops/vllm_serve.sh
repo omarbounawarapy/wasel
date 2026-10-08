@@ -14,13 +14,10 @@ cd "$ROOT"
 
 # .env provides defaults, but the caller's environment always wins (so
 # `MODEL=openai/gpt-oss-120b bash scripts/ops/vllm_serve.sh serve` works even with a stale .env).
-# Values are loaded under a DOTENV_ prefix — names rewritten, values untouched, nothing executed.
+# Values are loaded under a DOTENV_ prefix by scripts/dev/loadenv.py, which parses .env like the app and quotes
+# every value, so a `$` or `$(...)` in a value is data and nothing in .env is executed.
 if [ -f .env ]; then
-  set -a
-  source /dev/stdin <<EOF2
-$(sed -E 's/^([A-Za-z_][A-Za-z0-9_]*)=/DOTENV_\1=/' .env)
-EOF2
-  set +a
+  eval "$(python3 scripts/dev/loadenv.py --prefix DOTENV_)"
 fi
 cfg() { # cfg VAR [default] — caller env > .env > default; echoes the resolved value
   local v="$1" n="DOTENV_$1"
