@@ -25,6 +25,8 @@ def next_status(current: str, result: ScoreResult, trigger: str, prior_tier: str
                 seller_approved_at: str | None) -> str:
     """First match wins."""
     a = result.assessment
+    if current in TERMINAL:                                                 # a closed order stays closed
+        return current
     if result.injection_suspected:                                          # 0
         return "needs_review"
     if not result.is_order or a is None:                                    # 1

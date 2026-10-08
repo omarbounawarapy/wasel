@@ -230,6 +230,24 @@ def test_catalog_is_loaded_at_every_boot(tmp_path):
         assert rows["P99"] == products[-1]["price_tnd"] and rows[products[0]["product_id"]] == 777
 
 
+@pytest.mark.parametrize("action,frm", [("cancel", "awaiting_reply"), ("ship", "ready_to_ship"),
+                                        ("mark_delivered", "shipped"), ("mark_refused", "shipped")])
+def test_terminal_action_cancels_a_pending_rescore(dev, action, frm):
+    c, core, clock = dev
+    oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"}).json()["created"][0]["order_id"]
+    settle(core, clock)
+    conv = c.get(f"/api/orders/{oid}").json()["conversation"]["conversation_id"]
+    core.conn().execute("UPDATE orders SET status=? WHERE order_id=?", (frm, oid))
+    drafts = "SELECT COUNT(*) FROM outbound_drafts WHERE order_id=?"
+    before = core.conn().execute(drafts, (oid,)).fetchone()[0]
+    assert c.post(f"/api/conversations/{conv}/simulate-reply", json={"kind": "text", "text": "oui confirme"}).status_code == 202
+    assert c.post(f"/api/orders/{oid}/actions", json={"action": action}).status_code == 200
+    settle(core, clock)
+    o = c.get(f"/api/orders/{oid}").json()["order"]
+    assert o["status"] == ACTIONS[action][1] and o["rescore_state"] == "idle"
+    assert core.conn().execute(drafts, (oid,)).fetchone()[0] == before
+
+
 # ---------------------------------------------------------------- debounce, append-only assessments, tier boundary
 def test_debounce_and_append_only_versions(dev):
     c, core, clock = dev
@@ -303,6 +321,10 @@ def _result(tier="high", conf="none", path="llm", inj=False, change=False):
     ("collecting", dict(tier="low"), "initial", None, None, "ready_to_ship"),
     ("needs_review", dict(tier="medium"), "customer_reply", "high", None, "needs_review"),
     ("collecting", dict(tier="medium"), "initial", None, None, "awaiting_reply"),
+    ("cancelled", dict(tier="medium"), "customer_reply", "high", None, "cancelled"),
+    ("shipped", dict(tier="low"), "customer_reply", "high", "t", "shipped"),
+    ("delivered", dict(conf="declined"), "customer_reply", None, None, "delivered"),
+    ("refused", dict(tier="medium"), "no_reply_timeout", None, None, "refused"),
 ])
 def test_next_status_table(current, res, trigger, prior, approved, expected):
     assert next_status(current, _result(**res), trigger, prior, approved) == expected

@@ -202,6 +202,9 @@ def apply_action(conn, ids: IdGen, now: datetime, settings: Settings, vid: str |
     to = ACTIONS[action][1]
     with tx(conn):
         conn.execute("UPDATE orders SET status=?, updated_at=? WHERE order_id=?", (to, utc_iso(now), order_id))
+        if to in TERMINAL:                              # a rescore armed before the action must not outlive it
+            conn.execute("UPDATE orders SET pending_rescore_at=NULL, pending_trigger=NULL, rescore_state='idle'"
+                         " WHERE order_id=?", (order_id,))
         if action == "approve":
             conn.execute("UPDATE orders SET seller_approved_at=? WHERE order_id=?", (utc_iso(now), order_id))
         elif action in ("mark_delivered", "mark_refused"):
