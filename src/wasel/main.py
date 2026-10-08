@@ -3,6 +3,7 @@ One container, one process: /api/*, the worker loop, and the static bundle at / 
 from __future__ import annotations
 
 import asyncio
+import json
 import logging
 import threading
 from contextlib import asynccontextmanager
@@ -280,6 +281,53 @@ class AppState:
             degraded_detail=self.model_problem[1] if self.model_problem else None)
 
 
+class BodyLimit:
+    """Refuse a request body over MAX_BODY with the 413 envelope, whether or not it declares its length.
+
+    A declared Content-Length is checked up front. Without one (chunked transfer) the bytes are counted as the
+    handler reads them, and the response is replaced by the 413 as soon as the limit is passed, so the rest of
+    the body is never read. The webhook has its own 1 MiB limit.
+    """
+
+    def __init__(self, app):
+        self.app = app
+
+    async def __call__(self, scope, receive, send):
+        if scope["type"] != "http" or scope["path"] == "/webhook/whatsapp":
+            return await self.app(scope, receive, send)
+        declared = dict(scope["headers"]).get(b"content-length", b"")
+        if declared.isdigit() and int(declared) > MAX_BODY:
+            return await self._refuse(send)
+        seen, over = 0, False
+
+        async def counted():
+            nonlocal seen, over
+            msg = await receive()
+            if msg["type"] == "http.request":
+                seen += len(msg.get("body", b""))
+                if seen > MAX_BODY:
+                    over = True
+                    return {"type": "http.request", "body": b"", "more_body": False}    # stop reading
+            return msg
+
+        async def guarded(msg):
+            if over:
+                if msg["type"] == "http.response.start":
+                    await self._refuse(send)
+                return                                  # drop whatever the handler made of the truncated body
+            await send(msg)
+
+        await self.app(scope, counted, guarded)
+
+    @staticmethod
+    async def _refuse(send) -> None:
+        body = json.dumps({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "body over 64 KB"}}).encode()
+        headers = [(b"content-type", b"application/json"), (b"content-length", str(len(body)).encode())]
+        headers += [(k.lower().encode(), v.encode()) for k, v in SECURITY_HEADERS.items()]
+        await send({"type": "http.response.start", "status": 413, "headers": headers})
+        await send({"type": "http.response.body", "body": body})
+
+
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,
                ids: IdGen | None = None, worker_enabled: bool | None = None) -> FastAPI:
     """Build the FastAPI app. `create_app()` with no arguments works as a uvicorn factory.
@@ -324,11 +372,10 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
             err["details"] = details
         return JSONResponse({"error": err}, status_code=422)
 
+    app.add_middleware(BodyLimit)
+
     @app.middleware("http")
-    async def _limits_and_headers(request: Request, call_next):
-        cl = request.headers.get("content-length")
-        if cl and cl.isdigit() and int(cl) > MAX_BODY and request.url.path != "/webhook/whatsapp":   # 1 MiB there
-            return JSONResponse({"error": {"code": "PAYLOAD_TOO_LARGE", "message": "body over 64 KB"}}, status_code=413)
+    async def _security_headers(request: Request, call_next):
         resp = await call_next(request)
         for k, v in SECURITY_HEADERS.items():
             resp.headers[k] = v

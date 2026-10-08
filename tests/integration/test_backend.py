@@ -668,3 +668,27 @@ def test_a_scoring_failure_shows_only_the_exception_type_in_the_feed(dev, caplog
     feed = c.get("/api/events", params={"order_id": oid}).text
     assert "RuntimeError" in feed and "/secret/path" not in feed and "boom" not in feed
     assert "/secret/path boom" in caplog.text                          # the operator still gets the cause
+
+
+def _chunks(total: int, size: int = 8192):
+    sent = 0
+    while sent < total:
+        n = min(size, total - sent)
+        sent += n
+        yield b"x" * n
+
+
+@pytest.mark.parametrize("mode", ["public", "dev"])
+def test_body_cap_applies_to_chunked_requests(tmp_path, mode):
+    c, core, clock = make_client(tmp_path, mode)
+    with c:
+        head = b'{"kind":"csv","csv_text":"'
+        big = c.post("/api/orders/ingest", content=_chunks(5_000_000), headers={"X-Visitor-Id": VID_A,
+                                                                              "Content-Type": "application/json"})
+        assert big.status_code == 413 and big.json()["error"]["code"] == "PAYLOAD_TOO_LARGE"
+        assert big.headers["x-content-type-options"] == "nosniff"
+        declared = c.post("/api/orders/ingest", content=head + b"x" * 70_000 + b'"}', headers={"X-Visitor-Id": VID_A})
+        assert declared.status_code == 413
+        small = c.post("/api/orders/ingest", headers={"X-Visitor-Id": VID_A, "Content-Type": "application/json"},
+                       content=iter([b'{"kind":"paste",', b'"text":"nheb mixeur"}']))
+        assert small.status_code == 202
