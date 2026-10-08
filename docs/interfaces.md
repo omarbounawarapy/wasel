@@ -9,6 +9,7 @@ Wasel has two seller-facing interfaces. They are separate programs that talk to 
 | Start | `make web`, then `make demo` or `make serve` | `make up`, or `make run` and `make ui` |
 | URL | http://localhost:8000/ (redirects to `/dashboard`) | http://localhost:8501 |
 | Visitor id (public mode) | a UUID in the browser's `localStorage` (`cod_visitor_id`), so it survives reloads | a new UUID per Streamlit session, so a browser reload starts a fresh sandbox |
+| Network | served by the API (`HOST`, default `127.0.0.1`) | `127.0.0.1` only (`UI_HOST`); it has no login |
 | Backend address | its own origin (`/api`), or `NEXT_PUBLIC_API_URL` | `API_BASE_URL` |
 | Detailed guide | [`web/README.md`](../web/README.md) | [`dashboard/README.md`](../dashboard/README.md) |
 | Tested by | the CI `serve` job (built and served) | `tests/e2e/test_dashboard.py` in `make check` |

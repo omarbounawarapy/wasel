@@ -4,6 +4,7 @@ primaryColor = "#12386b"   # Wasel navy
 
 [server]
 headless = true
+address = "127.0.0.1"   # no login: keep it on loopback; `UI_HOST=0.0.0.0 make ui` opens it on purpose
 
 [browser]
 gatherUsageStats = false

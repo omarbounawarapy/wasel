@@ -12,7 +12,7 @@ Wasel runs as one Python process (`make serve`) on an always-on machine. A Cloud
         optional:        GPU host running vLLM ◀── HTTPS ── the LLM layer (GROQ_BASE_URL)
 ```
 
-What `make serve` does: it loads `.env` (parsed, never run as shell code), prints `Wasel on http://HOST:PORT mode=<mode>`, and runs `uvicorn wasel.main:create_app --factory --host $HOST --port $PORT --workers 1`. The worker count must stay at one: the process owns the SQLite file and runs the in-process worker loop, so a second worker would duplicate the loop and the sandbox purge. `make tunnel` runs `cloudflared tunnel run` with the token from `.env`. `make deploy` updates the checkout. `deploy/wasel.service` is a systemd unit for Linux. Nothing else is provisioned.
+What `make serve` does: it loads `.env` (parsed, never run as shell code), prints `Wasel on http://HOST:PORT mode=<mode>`, and runs `uvicorn wasel.main:create_app --factory --host $HOST --port $PORT --workers 1`. The worker count must stay at one: the process owns the SQLite file and runs the in-process worker loop, so a second worker would duplicate the loop and the sandbox purge. `make tunnel` runs `cloudflared tunnel run` with the token from `.env`. `make deploy` updates the checkout. `deploy/wasel.service` is a systemd unit for Linux. The Streamlit dashboard (`make up`, `make ui`) is not part of this setup: it has no login and listens on `127.0.0.1` (`UI_HOST`), so publish it only behind an access-controlled tunnel or reverse proxy. Nothing else is provisioned.
 
 ## Requirements
 

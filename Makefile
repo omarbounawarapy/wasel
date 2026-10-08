@@ -11,6 +11,7 @@ RUFF        := $(PY) -m ruff
 URL         ?= http://localhost:8000
 API_PORT    ?= 8000
 UI_PORT     ?= 8501
+UI_HOST     ?= 127.0.0.1
 DB          ?= var/app.db
 PYTEST_ARGS ?=
 
@@ -26,10 +27,10 @@ up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set
 	$(PY) scripts/dev/wait_health.py http://localhost:$(API_PORT) || exit 1; \
 	echo "API        http://localhost:$(API_PORT)   (docs: /docs)"; \
 	echo "Dashboard  http://localhost:$(UI_PORT)"; \
-	cd dashboard && API_BASE_URL=http://localhost:$(API_PORT) $(PY) -m streamlit run app.py --server.port $(UI_PORT)
+	cd dashboard && API_BASE_URL=http://localhost:$(API_PORT) $(PY) -m streamlit run app.py --server.address $(UI_HOST) --server.port $(UI_PORT)
 
 ui: ## dashboard only on :8501, against API_BASE_URL (default :8000)
-	cd dashboard && API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run app.py --server.port $(UI_PORT)
+	cd dashboard && API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run app.py --server.address $(UI_HOST) --server.port $(UI_PORT)
 
 web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make demo` then serve it at :8000/
 	cd web && npm ci --no-audit --no-fund && npm run build

@@ -20,7 +20,9 @@ make ui        # dashboard on :8501, against API_BASE_URL (default http://localh
 
 `make up` starts the API with `APP_MODE=dev` unless you set another, waits for `/api/health`, then runs `streamlit run app.py` from `dashboard/` with `API_BASE_URL` pointing at it. `make ui` runs only the dashboard, so the API must already be up.
 
-To deploy the dashboard as its own service next to the API, install `dashboard/requirements.txt` (`streamlit`, `altair`, `httpx`, `pandas`, pinned) and run `streamlit run dashboard/app.py --server.port 8501` with `API_BASE_URL` set to the API's URL. The dashboard does not need the `wasel` package, only network access to the API.
+The dashboard has no login. It listens on `127.0.0.1` (`UI_HOST`, `--server.address`); set `UI_HOST=0.0.0.0` only behind an access-controlled tunnel or reverse proxy, because anyone who can reach it can read every order and press Approve, Cancel or Send.
+
+To deploy the dashboard as its own service next to the API, install `dashboard/requirements.txt` (`streamlit`, `altair`, `httpx`, `pandas`, pinned) and run `streamlit run dashboard/app.py --server.address 127.0.0.1 --server.port 8501` with `API_BASE_URL` set to the API's URL. The dashboard does not need the `wasel` package, only network access to the API.
 
 ## Configuration
 
