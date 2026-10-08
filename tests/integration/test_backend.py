@@ -248,6 +248,54 @@ def test_terminal_action_cancels_a_pending_rescore(dev, action, frm):
     assert core.conn().execute(drafts, (oid,)).fetchone()[0] == before
 
 
+def _die(_inp):
+    raise SystemExit(137)
+
+
+def test_boot_rearms_a_rescore_that_a_stop_interrupted(dev):
+    from wasel.worker import process_due
+    c, core, clock = dev
+    oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"}).json()["created"][0]["order_id"]
+    settle(core, clock)
+    conv = c.get(f"/api/orders/{oid}").json()["conversation"]["conversation_id"]
+    before = len(c.get(f"/api/orders/{oid}").json()["assessments"])
+    c.post(f"/api/conversations/{conv}/simulate-reply", json={"kind": "text", "text": "non annule ma commande"})
+    clock.advance(5)
+    with pytest.raises(SystemExit):                                 # the claim is committed, the result never is
+        process_due(core.conn(), clock.now(), _die, core.drafter, ids=core.ids)
+    row = core.conn().execute("SELECT rescore_state, pending_rescore_at FROM orders WHERE order_id=?", (oid,)).fetchone()
+    assert (row["rescore_state"], row["pending_rescore_at"]) == ("scoring", None)
+    core.boot()                                                     # a fresh process on the same database
+    assert core.drain() == 1
+    assert len(c.get(f"/api/orders/{oid}").json()["assessments"]) == before + 1
+
+
+def test_boot_rearms_an_order_whose_draft_window_was_interrupted(dev):
+    c, core, clock = dev
+    oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"}).json()["created"][0]["order_id"]
+    settle(core, clock)
+    before = len(c.get(f"/api/orders/{oid}").json()["assessments"])
+    core.conn().execute("UPDATE orders SET rescore_state='drafting', pending_rescore_at=NULL WHERE order_id=?", (oid,))
+    core.boot()
+    assert core.conn().execute("SELECT rescore_state FROM orders WHERE order_id=?", (oid,)).fetchone()[0] == "debouncing"
+    assert core.drain() == 1
+    assert len(c.get(f"/api/orders/{oid}").json()["assessments"]) == before + 1
+
+
+def test_boot_rearms_an_open_order_with_an_unscored_customer_message(dev):
+    c, core, clock = dev
+    oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb mixeur"}).json()["created"][0]["order_id"]
+    settle(core, clock)
+    conv = c.get(f"/api/orders/{oid}").json()["conversation"]["conversation_id"]
+    core.conn().execute("UPDATE orders SET status='awaiting_reply' WHERE order_id=?", (oid,))
+    clock.advance(1)
+    c.post(f"/api/conversations/{conv}/simulate-reply", json={"kind": "text", "text": "oui confirme"})
+    core.conn().execute("UPDATE orders SET pending_rescore_at=NULL, pending_trigger=NULL, rescore_state='idle'"
+                        " WHERE order_id=?", (oid,))                # the state the old boot left behind
+    assert core.rearm_interrupted(core.conn()) == 1
+    assert core.rearm_interrupted(core.conn()) == 0                 # nothing left to re-arm
+
+
 # ---------------------------------------------------------------- debounce, append-only assessments, tier boundary
 def test_debounce_and_append_only_versions(dev):
     c, core, clock = dev

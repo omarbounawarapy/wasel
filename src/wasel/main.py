@@ -20,7 +20,7 @@ from wasel.api.routes import admin, router
 from wasel.api.routes_webhook import install_log_redaction, webhook
 from wasel.clock import Clock, SystemClock, utc_iso
 from wasel.db.cache import SqliteExtractionCache
-from wasel.db.conn import connect, create_schema, fresh_db
+from wasel.db.conn import connect, create_schema, fresh_db, tx
 from wasel.db.purge import purge_sandboxes, reset_all
 from wasel.db.seed import load_seed, seed_all, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
@@ -64,6 +64,7 @@ class AppState:
         self.config = load_config(settings.scoring_config)
         self.db_path = str(ROOT / settings.db_path) if not Path(settings.db_path).is_absolute() else settings.db_path
         self._local = threading.local()
+        self._tick_lock = threading.Lock()
         self.started_at = clock.now()
         self.last_tick_at = None
         self.last_purge_at = None
@@ -115,7 +116,16 @@ class AppState:
                           config=self.config)
 
     def tick(self, now) -> None:
-        """One worker step on this thread's connection."""
+        """One worker step on this thread's connection. `wait_for_tick` blocks until a running one has finished."""
+        with self._tick_lock:
+            self._tick(now)
+
+    def wait_for_tick(self) -> None:
+        """Return once no tick is running. The loop task can be cancelled while its tick thread is still scoring."""
+        with self._tick_lock:
+            pass
+
+    def _tick(self, now) -> None:
         conn = self.conn()
         meter = self.meter(conn)
         scorer = make_scorer(cache=SqliteExtractionCache(conn, PROMPT_VERSION), llm=self.llm,
@@ -162,6 +172,7 @@ class AppState:
             conn = self.conn()
             if not conn.execute("SELECT name FROM sqlite_master WHERE name='orders'").fetchone():
                 create_schema(conn)
+        self.rearm_interrupted(conn)
         conn.execute("UPDATE orders SET rescore_state = CASE WHEN pending_rescore_at IS NOT NULL THEN 'debouncing'"
                      " ELSE 'idle' END")
         added, changed = sync_catalog(conn, self.config.catalog)        # every mode: orders reference the catalog
@@ -179,6 +190,27 @@ class AppState:
                           self.seed_unscored)
         if restored:
             self.snapshotter.seed_digest(conn)          # what was just restored is already stored
+
+    def rearm_interrupted(self, conn) -> int:
+        """Queue a rescore for every open order whose last scoring did not finish, and return how many.
+
+        That is an order a stop left in 'scoring' or 'drafting' (the claim clears the pending time, so nothing else
+        would score it again), and an order, other than one in 'needs_review', whose newest customer message is newer
+        than its current assessment and has no rescore pending.
+        """
+        newest = ("(SELECT MAX(m.received_at) FROM messages m WHERE m.conversation_id = o.conversation_id"
+                  " AND m.direction = 'inbound')")
+        with tx(conn):
+            cur = conn.execute(
+                "UPDATE orders AS o SET pending_rescore_at=?, pending_trigger='customer_reply', updated_at=?"
+                " WHERE pending_rescore_at IS NULL AND status NOT IN ('shipped','delivered','refused','cancelled')"
+                " AND (rescore_state IN ('scoring','drafting') OR (status <> 'needs_review' AND " + newest + " >"
+                " COALESCE((SELECT a.created_at FROM risk_assessments a"
+                "           WHERE a.assessment_id = o.current_assessment_id), '')))",
+                (utc_iso(self.clock.now()),) * 2)
+        if cur.rowcount:
+            log.info("re-armed %d interrupted rescores", cur.rowcount)
+        return cur.rowcount
 
     def snapshot(self, now, *, force: bool = False) -> bool:
         """Save the DB to the snapshot store if one is configured and a save is due (or `force`). Never raises."""
@@ -261,6 +293,7 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         if task:
             task.cancel()
             await asyncio.gather(task, return_exceptions=True)
+            await asyncio.to_thread(state.wait_for_tick)        # the cancelled tick's thread may still be writing
         await asyncio.to_thread(state.snapshot, state.clock.now(), force=True)     # last write before the disk goes
 
     app = FastAPI(title="Wasel", lifespan=lifespan, docs_url=None if settings.is_public else "/docs",
