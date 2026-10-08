@@ -472,3 +472,29 @@ def test_public_mode_never_builds_a_sender(tmp_path):
     c, core, _ = make_client(tmp_path, "public", wa_send_enabled=True, wa_token="test-token", wa_auto_send=True, **WA)
     with c:
         assert core.sender is None
+
+
+def test_a_message_that_could_not_be_stored_is_not_acknowledged(wa, monkeypatch):
+    """200 means committed: on a locked database the answer is 503 and the retry stores the message exactly once."""
+    import sqlite3
+
+    from wasel.api import routes_webhook
+    c, core, _ = wa
+    real = routes_webhook.store_message
+    calls = []
+
+    def locked(*a, **kw):
+        calls.append(1)
+        if len(calls) == 1:
+            raise sqlite3.OperationalError("database is locked")
+        return real(*a, **kw)
+
+    monkeypatch.setattr(routes_webhook, "store_message", locked)
+    r = wa_post(c, "hero_v1_inbound")
+    assert r.status_code == 503 and r.json()["error"]["code"] == "WEBHOOK_NOT_STORED"
+    stored = n_messages(core.conn())                                 # the payload has two messages, one was lost
+    assert wa_post(c, "hero_v1_inbound").status_code == 200
+    total = n_messages(core.conn())
+    assert total > stored
+    assert wa_post(c, "hero_v1_inbound").status_code == 200          # Meta may deliver it again: nothing doubles
+    assert n_messages(core.conn()) == total

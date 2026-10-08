@@ -3,10 +3,11 @@ settings.webhook_mounted (never in public mode, never with a short secret or ver
 Logs carry counts and reasons only: never the body, the sender's number, or a secret."""
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
 
-from fastapi import APIRouter, BackgroundTasks, Request
+from fastapi import APIRouter, Request
 from fastapi.responses import JSONResponse, PlainTextResponse, Response
 
 from wasel.db import repo
@@ -54,11 +55,12 @@ def _too_large() -> JSONResponse:
 
 
 @webhook.post("/webhook/whatsapp")
-async def receive(request: Request, background: BackgroundTasks):
+async def receive(request: Request):
     """Accept a WhatsApp webhook POST.
 
     Checks the size cap and the X-Hub-Signature-256 signature on the raw body (401 and a webhook.rejected event on
-    failure), then acknowledges with 200 and processes the payload in a background task.
+    failure), then stores the payload and answers 200 only after it is committed. If a message could not be stored
+    (a locked database) the answer is 503, so Meta retries; messages already stored are skipped by their wamid.
     """
     core = request.app.state.core
     cl = request.headers.get("content-length")
@@ -79,25 +81,31 @@ async def receive(request: Request, background: BackgroundTasks):
             repo.add_event(conn, core.clock.now(), "webhook.rejected", "warning", payload={"reason": reason})
         return JSONResponse({"error": {"code": "UNAUTHORIZED", "message": "invalid_signature"}}, status_code=401)
     core.last_webhook_at = core.clock.now()
-    background.add_task(process, core, raw)
+    counts = await asyncio.to_thread(process, core, raw)
+    if counts["errors"]:
+        return JSONResponse({"error": {"code": "WEBHOOK_NOT_STORED", "message": "try again"}}, status_code=503)
     return JSONResponse({})
 
 
 def process(core, raw: bytes) -> dict:
-    """Background half: never raises. Returns counts (tests read them)."""
+    """Store the payload: never raises. Returns counts; `errors` > 0 means something was not stored."""
     conn, now = core.conn(), core.clock.now()
     counts = {"new": 0, "duplicate": 0, "statuses": 0, "ignored": 0, "errors": 0}
     try:
         payload = json.loads(raw)
     except (ValueError, UnicodeDecodeError):
         log.warning("webhook malformed JSON (%d bytes)", len(raw))
-        with tx(conn):
-            repo.add_event(conn, now, "webhook.malformed", "warning")
+        try:
+            with tx(conn):
+                repo.add_event(conn, now, "webhook.malformed", "warning")
+        except Exception as e:                           # noqa: BLE001 - the body is unusable either way
+            log.error("webhook.malformed event not stored: %s", type(e).__name__)
         return counts
     try:
         batch = wa.parse_payload(payload, core.settings.wa_phone_number_id)
     except Exception as e:                               # noqa: BLE001 - a signed but odd shape: log, never a 5xx
         _process_error(conn, now, e, counts)
+        counts["errors"] = 0                             # retrying the same odd body cannot help: answer 200
         return counts
     counts["ignored"] = batch.ignored_foreign + batch.skipped
     if batch.ignored_foreign:
@@ -122,8 +130,11 @@ def process(core, raw: bytes) -> dict:
 def _process_error(conn, now, e: Exception, counts: dict) -> None:
     counts["errors"] += 1
     log.error("webhook process_error: %s", type(e).__name__)          # the type only: no payload, no number
-    with tx(conn):
-        repo.add_event(conn, now, "webhook.process_error", "error", payload={"error": type(e).__name__})
+    try:
+        with tx(conn):
+            repo.add_event(conn, now, "webhook.process_error", "error", payload={"error": type(e).__name__})
+    except Exception as e2:                              # noqa: BLE001 - the same lock that failed the first write
+        log.error("webhook process_error event not stored: %s (counts %s)", type(e2).__name__, counts)
 
 
 def store_message(conn, ids, now, m: wa.Inbound, debounce_s: float) -> bool:
