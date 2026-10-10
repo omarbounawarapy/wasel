@@ -29,13 +29,13 @@ jobs:
       - name: python dependencies
         run: |
           pip install pip-audit
-          pip-audit -r requirements.txt -r requirements-dev.txt -r dashboard/requirements.txt
-      # Dev tooling is excluded (--omit=dev): eslint-config-next pulls in `braces` (no fixed release exists) and wrangler
-      # pulls in sharp through miniflare. Neither ships in the images; revisit when upstream fixes them.
-      - name: web (what ships in the static export)
-        run: cd web && npm audit --package-lock-only --omit=dev --audit-level=high
-      - name: cloudflare worker
-        run: cd deploy/cloudflare && npm audit --package-lock-only --omit=dev --audit-level=high
+          pip-audit -r requirements.lock --require-hashes
+      # The whole npm tree is checked (dev tooling included). The gate fails on any high or critical advisory that is not
+      # on its documented allowlist (scripts/ops/npm_audit_gate.py): the one accepted is braces, reached only via the linter.
+      - name: web (whole tree, dev tooling included)
+        run: python3 scripts/ops/npm_audit_gate.py web
+      - name: cloudflare worker (whole tree)
+        run: python3 scripts/ops/npm_audit_gate.py deploy/cloudflare
   secrets:
     name: secret scan over the whole git history (gitleaks)
     runs-on: ubuntu-latest

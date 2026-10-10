@@ -52,7 +52,8 @@ deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `m
 	@echo "then check it from outside: make smoke URL=<your public URL>"
 
 # ---- Cloudflare (Worker + Container + R2; docs/operations/cloudflare.md). Needs no Cloudflare account except cf-deploy-*
-lock: ## regenerate deploy/cloudflare/container/requirements.lock (hashed, linux/amd64 wheels; needs uv)
+lock: ## regenerate the hashed locks: requirements.lock (dev + dashboard, any OS) and the container's (linux/amd64); needs uv
+	uv pip compile requirements.txt requirements-dev.txt dashboard/requirements.txt --universal --generate-hashes --python-version 3.11 --no-strip-extras -o requirements.lock
 	uv pip compile deploy/cloudflare/container/requirements.txt --generate-hashes --python-version 3.11 --python-platform x86_64-manylinux_2_28 --no-strip-extras -o deploy/cloudflare/container/requirements.lock
 
 cf-install: ## npm ci for deploy/cloudflare (wrangler, @cloudflare/containers)
@@ -100,7 +101,7 @@ help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
 
 setup: ## pinned deps + the wasel package (editable, src/ layout)
-	$(PY) -m pip install -q -r requirements.txt -r requirements-dev.txt
+	$(PY) -m pip install -q --require-hashes -r requirements.lock
 	$(PY) -m pip install -q --no-deps -e .
 
 run: ## API on :8000 (APP_MODE=dev unless set; live LLM only if GROQ_API_KEY is set)

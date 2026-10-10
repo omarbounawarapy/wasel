@@ -1,12 +1,19 @@
-"""The container lock (deploy/cloudflare/container/requirements.lock, `make lock`) must agree with the pins it is generated
-from and must hash every package, so both images install exactly what was reviewed. Offline: no network, no uv."""
+"""Each hashed lock (`make lock`) must agree with the pins it is generated from and must hash every package, so the
+dev setup, the audit and the container images install exactly what was reviewed. Offline: no network, no uv."""
 from __future__ import annotations
 
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[2]
 CONTAINER = ROOT / "deploy" / "cloudflare" / "container"
+# lock file -> the requirement files it was compiled from
+LOCKS = {
+    ROOT / "requirements.lock": [ROOT / "requirements.txt", ROOT / "requirements-dev.txt", ROOT / "dashboard" / "requirements.txt"],
+    CONTAINER / "requirements.lock": [CONTAINER / "requirements.txt"],
+}
 
 
 def _name(raw: str) -> str:
@@ -24,10 +31,10 @@ def _pins(path: Path) -> dict[str, str]:
     return out
 
 
-def _locked() -> tuple[dict[str, str], dict[str, bool]]:
+def _locked(lock: Path) -> tuple[dict[str, str], dict[str, bool]]:
     versions, hashed = {}, {}
     current = None
-    for line in (CONTAINER / "requirements.lock").read_text().splitlines():
+    for line in lock.read_text().splitlines():
         if not line.startswith((" ", "#")) and "==" in line:
             name, _, rest = line.partition("==")
             current = _name(name)
@@ -38,15 +45,19 @@ def _locked() -> tuple[dict[str, str], dict[str, bool]]:
     return versions, hashed
 
 
-def test_lock_matches_the_source_pins():
-    pins = _pins(CONTAINER / "requirements.txt")
-    versions, _ = _locked()
+@pytest.mark.parametrize("lock", list(LOCKS), ids=lambda p: str(p.relative_to(ROOT)))
+def test_lock_matches_the_source_pins(lock):
+    pins = {}
+    for source in LOCKS[lock]:
+        pins.update(_pins(source))
+    versions, _ = _locked(lock)
     for name, version in pins.items():
-        assert versions.get(name) == version, f"{name}: lock has {versions.get(name)}, requirements.txt pins {version}"
+        assert versions.get(name) == version, f"{name}: lock has {versions.get(name)}, source pins {version}"
 
 
-def test_every_locked_package_has_a_hash():
-    _, hashed = _locked()
+@pytest.mark.parametrize("lock", list(LOCKS), ids=lambda p: str(p.relative_to(ROOT)))
+def test_every_locked_package_has_a_hash(lock):
+    _, hashed = _locked(lock)
     assert hashed, "no packages found in the lock"
     missing = sorted(name for name, ok in hashed.items() if not ok)
     assert missing == [], f"packages without --hash: {missing}"
