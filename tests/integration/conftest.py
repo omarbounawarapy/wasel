@@ -49,3 +49,30 @@ def settle(core, clock, seconds=5):
 def hero_id(client, headers=None):
     orders = client.get("/api/orders", headers=headers or {}).json()["orders"]
     return next(o for o in orders if o["seed_key"] == "hero" and o["is_seeded"])
+
+
+# ---------------------------------------------------------------- contract: every status seen is declared
+def _template_regex(path: str):
+    import re
+    return re.compile("^" + re.sub(r"\{[^}/]+\}", "[^/]+", path) + "$")
+
+
+@pytest.fixture(autouse=True)
+def _every_status_is_declared(monkeypatch):
+    """Fail the test that sees a status under /api that the OpenAPI document does not declare for that operation."""
+    original = TestClient.request
+
+    def checked(self, method, url, *a, **kw):
+        resp = original(self, method, url, *a, **kw)
+        path = str(resp.request.url.path)
+        if path.startswith("/api/") and not getattr(self.app, "_contract_skip", False):
+            doc = self.app.openapi()
+            for template, ops in doc["paths"].items():
+                if _template_regex(template).match(path) and method.lower() in ops:
+                    declared = ops[method.lower()]["responses"]
+                    ok = str(resp.status_code) in declared or str(resp.status_code)[0] == "2" and "default" in declared
+                    assert ok, f"{method.upper()} {template} answered {resp.status_code}, declared {sorted(declared)}"
+                    break
+        return resp
+    monkeypatch.setattr(TestClient, "request", checked)
+    yield

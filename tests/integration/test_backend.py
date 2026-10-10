@@ -1021,3 +1021,35 @@ def test_purge_history_removes_old_rows_keeps_young_and_current_evidence(dev):
     off = purge_history(conn, clock.now() + timedelta(days=900), events_days=0, usage_days=0, runs_days=0)
     assert off == {"events": 0, "llm_usage": 0, "extraction_runs": 0}
     assert c.get(f"/api/orders/{hero_id(c)['order_id']}").status_code == 200
+
+
+def test_every_error_under_api_is_the_json_envelope(dev):
+    c, _, _ = dev
+    for method, url in (("get", "/api/nope"), ("get", "/api/health/"), ("get", "/api/orders/ord_nope")):
+        r = c.request(method, url)
+        assert r.status_code == 404 and r.headers["content-type"].startswith("application/json")
+        assert r.json()["error"]["code"] == "NOT_FOUND"
+    r = c.delete("/api/orders")
+    assert r.status_code == 405 and r.json()["error"]["code"] == "METHOD_NOT_ALLOWED" and "GET" in r.headers["allow"]
+
+
+def test_bad_filters_and_unknown_fields_are_422_with_field_names(dev):
+    c, _, _ = dev
+    for q in ("tier=bogus", "status=bogus"):
+        r = c.get(f"/api/orders?{q}")
+        assert r.status_code == 422 and list(r.json()["error"]["details"]) == [q.split("=")[0]]
+    r = c.post("/api/orders/ingest", json={"kind": "paste", "text": "x", "extra_field": 1})
+    assert r.status_code == 422 and "extra_field" in r.json()["error"]["details"]
+    r = c.post("/api/orders/ingest", content=b"{bad", headers={"content-type": "application/json"})
+    assert r.status_code == 422 and list(r.json()["error"]["details"]) == ["body"]
+    r = c.post("/api/orders/ingest", json={"kind": "paste"})
+    assert list(r.json()["error"]["details"]) == ["text"]
+
+
+def test_openapi_declares_the_error_envelope(dev):
+    c, _, _ = dev
+    doc = c.get("/openapi.json").json()
+    assert "HTTPValidationError" not in doc["components"]["schemas"]
+    op = doc["paths"]["/api/orders/{order_id}/actions"]["post"]["responses"]
+    for status in ("404", "409", "422"):
+        assert op[status]["content"]["application/json"]["schema"]["$ref"].endswith("/ErrorEnvelope")

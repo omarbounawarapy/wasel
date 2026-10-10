@@ -11,9 +11,11 @@ from datetime import timedelta
 from pathlib import Path
 
 from fastapi import FastAPI, Request
+from fastapi.exception_handlers import http_exception_handler
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.exceptions import HTTPException as StarletteHTTPException
 
 from wasel.api import models as M
 from wasel.api.errors import ApiError, validation_details
@@ -484,6 +486,22 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
     async def _api_error(_: Request, e: ApiError):
         return JSONResponse(e.body(), status_code=e.status, headers=e.headers)
 
+    @app.exception_handler(StarletteHTTPException)
+    async def _http_error(request: Request, e: StarletteHTTPException):
+        if not request.url.path.startswith("/api"):
+            return await http_exception_handler(request, e)
+        if e.status_code == 404:                        # the web mount answers before the router can say 405
+            from starlette.routing import Match, Mount
+            routes = [r for r in request.app.router.routes if not isinstance(r, Mount)]
+            allow = [m for m in ("GET", "POST", "PUT", "PATCH", "DELETE") if any(
+                r.matches({"type": "http", "path": request.url.path, "method": m})[0] == Match.FULL for r in routes)]
+            if allow:
+                e = StarletteHTTPException(405, headers={"Allow": ", ".join(allow)})
+        code = {404: "NOT_FOUND", 405: "METHOD_NOT_ALLOWED"}.get(e.status_code, "HTTP_ERROR")
+        msg = {404: "no such endpoint", 405: "method not allowed for this endpoint"}.get(e.status_code, str(e.detail))
+        return JSONResponse({"error": {"code": code, "message": msg}}, status_code=e.status_code,
+                            headers=getattr(e, "headers", None))
+
     @app.exception_handler(RequestValidationError)
     async def _validation(_: Request, e: RequestValidationError):
         message, details = validation_details(e.errors())
@@ -520,5 +538,34 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
              settings.wa_send_effective)
     dist = ROOT / "web" / "dist"
     if dist.exists():
-        app.mount("/", StaticFiles(directory=str(dist), html=True), name="web")
+        app.mount("/", WebBundle(directory=str(dist), html=True), name="web")
+    app.openapi = lambda: _openapi(app)                 # the error envelope replaces FastAPI's default 422 body
     return app
+
+
+class WebBundle(StaticFiles):
+    """The web UI at `/`. A path under /api that no route matched is an API 404 (JSON), not the UI's 404 page."""
+
+    async def get_response(self, path: str, scope):
+        if scope["path"] == "/api" or scope["path"].startswith("/api/"):
+            raise StarletteHTTPException(404)
+        return await super().get_response(path, scope)
+
+
+def _openapi(app: FastAPI) -> dict:
+    """The OpenAPI document with every 422 pointing at ErrorEnvelope instead of HTTPValidationError."""
+    if app.openapi_schema:
+        return app.openapi_schema
+    from fastapi.openapi.utils import get_openapi
+    doc = get_openapi(title=app.title, version=app.version, routes=app.routes, description=app.description)
+    ref = {"$ref": "#/components/schemas/ErrorEnvelope"}
+    for ops in doc["paths"].values():
+        for op in ops.values():
+            r = op.get("responses", {})
+            if "422" in r:
+                r["422"] = {"description": "VALIDATION_ERROR; `details` maps field names to messages",
+                            "content": {"application/json": {"schema": ref}}}
+    for name in ("HTTPValidationError", "ValidationError"):
+        doc.get("components", {}).get("schemas", {}).pop(name, None)
+    app.openapi_schema = doc
+    return doc

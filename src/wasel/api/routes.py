@@ -16,7 +16,25 @@ from wasel.api.errors import ApiError
 from wasel.mode import require_visitor, visitor_id
 from wasel.ratelimit import client_address
 
-router = APIRouter(prefix="/api")
+
+def _errors(*statuses: int) -> dict[int, dict]:
+    """OpenAPI `responses` entries that point at the error envelope."""
+    return {s: {"model": M.ErrorEnvelope, "description": _ERROR_TEXT[s]} for s in statuses}
+
+
+_ERROR_TEXT = {
+    400: "BAD_HOST, or VISITOR_ID_REQUIRED in public mode",
+    401: "UNAUTHORIZED",
+    403: "BAD_ORIGIN, or a mutation refused for this address",
+    404: "NOT_FOUND",
+    409: "INVALID_TRANSITION, SEEDED_READ_ONLY or another state conflict; `details` may list what is allowed",
+    413: "PAYLOAD_TOO_LARGE",
+    422: "VALIDATION_ERROR; `details` maps field names to messages",
+    429: "RATE_LIMITED",
+    502: "WHATSAPP_SEND_FAILED",
+}
+# what the middleware and guards can answer on any operation
+router = APIRouter(prefix="/api", responses=_errors(400, 403, 413, 429))
 
 
 def _address_guard(request: Request, st, vid: str | None, *, orders: int = 0) -> str | None:
@@ -61,7 +79,7 @@ def health(request: Request):
 
 
 @router.get("/orders")
-def list_orders(request: Request, tier: str | None = None, status: str | None = None,
+def list_orders(request: Request, tier: M.Tier | None = None, status: M.OrderStatus | None = None,
                 include_collecting: bool = False, limit: int = Query(100, ge=1, le=500),
                 vid: str | None = Depends(visitor_id)):
     """The order queue, riskiest first; filter by tier or status. Capped at 500 rows."""
@@ -70,7 +88,7 @@ def list_orders(request: Request, tier: str | None = None, status: str | None = 
                                   include_collecting=include_collecting, limit=limit))
 
 
-@router.get("/orders/{order_id}")
+@router.get("/orders/{order_id}", responses=_errors(404))
 def get_order(order_id: str, request: Request, vid: str | None = Depends(visitor_id)):
     """One order in full: messages, assessments, drafts and the actions allowed now."""
     st = _s(request)
@@ -98,7 +116,7 @@ def ingest(body: M.PasteIngest | M.CsvIngest, request: Request, vid: str | None 
     return M.IngestResponse(created=created, rejected=rejected, rescore_eta_s=eta)
 
 
-@router.post("/orders/{order_id}/try", status_code=201)
+@router.post("/orders/{order_id}/try", status_code=201, responses=_errors(404, 409))
 def try_order(order_id: str, request: Request, vid: str | None = Depends(visitor_id)):
     """Copy a seeded sample order into the visitor's sandbox and score it at once."""
     st = _s(request)
@@ -114,7 +132,8 @@ def try_order(order_id: str, request: Request, vid: str | None = Depends(visitor
     return M.TryResponse(**r)
 
 
-@router.post("/conversations/{conversation_id}/simulate-reply", status_code=202)
+@router.post("/conversations/{conversation_id}/simulate-reply", status_code=202,
+             responses=_errors(404, 409))
 def simulate_reply(conversation_id: str, body: M.SimulateText | M.SimulateLocation, request: Request,
                    vid: str | None = Depends(visitor_id)):
     """Add a simulated customer reply (text or location pin); this arms a rescore."""
@@ -126,7 +145,7 @@ def simulate_reply(conversation_id: str, body: M.SimulateText | M.SimulateLocati
                                                              st.config.raw, vid, conversation_id, **kw))
 
 
-@router.post("/orders/{order_id}/rescore", status_code=202)
+@router.post("/orders/{order_id}/rescore", status_code=202, responses=_errors(404, 409))
 def rescore(order_id: str, request: Request, vid: str | None = Depends(visitor_id)):
     """Force a rescore of the order."""
     st = _s(request)
@@ -135,7 +154,7 @@ def rescore(order_id: str, request: Request, vid: str | None = Depends(visitor_i
     return M.RescoreResponse(**commands.rescore(st.conn(), st.clock.now(), st.settings, vid, order_id))
 
 
-@router.post("/orders/{order_id}/actions")
+@router.post("/orders/{order_id}/actions", responses=_errors(404, 409))
 def action(order_id: str, body: M.SellerActionRequest, request: Request, vid: str | None = Depends(visitor_id)):
     """Apply a seller action (approve, request_confirmation, cancel, ship, mark_delivered, mark_refused)."""
     st = _s(request)
@@ -147,7 +166,7 @@ def action(order_id: str, body: M.SellerActionRequest, request: Request, vid: st
     return P.order_summary(conn, st.settings, repo.get_order(conn, order_id))
 
 
-@router.post("/drafts/{draft_id}/send")
+@router.post("/drafts/{draft_id}/send", responses=_errors(404, 409, 502))
 def send_draft(draft_id: str, request: Request, vid: str | None = Depends(visitor_id)):
     """Send a drafted message. A person triggers this; whether it goes out depends on the mode and WhatsApp settings."""
     st = _s(request)
@@ -265,7 +284,7 @@ def _nocache_json(d: dict) -> JSONResponse:
     return JSONResponse(d, headers={"Cache-Control": "no-store"})
 
 
-admin = APIRouter(prefix="/api/admin")
+admin = APIRouter(prefix="/api/admin", responses=_errors(401, 400, 403, 413))
 
 
 @admin.post("/reset")

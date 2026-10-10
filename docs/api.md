@@ -93,7 +93,7 @@ Errors use one envelope:
 {"error": {"code": "INVALID_TRANSITION", "message": "not allowed from the current status", "details": {"allowed": ["approve", "cancel"]}}}
 ```
 
-Request validation failures are `422 VALIDATION_ERROR` with `details` keyed by field. Unknown routes return FastAPI's default `{"detail": "Not Found"}`, not this envelope.
+Request validation failures are `422 VALIDATION_ERROR` with `details` keyed by field name (`body` for a body that is not JSON). Request bodies refuse unknown fields, and `tier` and `status` on `GET /api/orders` refuse values outside their lists. Every error under `/api` has this shape, including an unknown path (`404 NOT_FOUND`) and a wrong method (`405 METHOD_NOT_ALLOWED`, with an `Allow` header). `GET /openapi.json` declares the envelope for each status an operation can return, and a test fails if an API test sees a status the document does not declare.
 
 | Status | Codes |
 |---|---|

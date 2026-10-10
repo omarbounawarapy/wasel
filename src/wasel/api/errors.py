@@ -61,5 +61,7 @@ def validation_details(errors: list[dict]) -> tuple[str, dict[str, list[str]]]:
     details: dict[str, list[str]] = {}
     for err in errors:
         loc = [x for x in err["loc"][1:] if x not in UNION_KINDS]
+        if err.get("type") == "json_invalid":           # the location is the character offset, not a field
+            loc = []
         details.setdefault(".".join(str(x) for x in loc) or "body", []).append(err["msg"])
     return "invalid request", details

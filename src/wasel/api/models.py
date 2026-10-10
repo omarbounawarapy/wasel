@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, BaseModel, Field
+from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
 
 def _storable(s: str) -> str:
@@ -309,9 +309,24 @@ class OrderDetailResponse(BaseModel):
     scripted_replies: list[str]
 
 
+# ---------------------------------------------------------------- errors
+class ErrorDetail(BaseModel):
+    """The body of every error under /api. `details` is present for validation errors (field name to messages) and
+    for INVALID_TRANSITION (`allowed`)."""
+    code: str
+    message: str
+    details: dict[str, list[str]] | dict[str, list] | None = None
+
+
+class ErrorEnvelope(BaseModel):
+    """`{"error": {"code", "message", "details"?}}`: the one error shape of the API, for every status."""
+    error: ErrorDetail
+
+
 # ---------------------------------------------------------------- commands
 class StructuredIn(BaseModel):
     """Seller-entered order fields. When set they take precedence over the catalog and gazetteer."""
+    model_config = ConfigDict(extra="forbid")
     product_name: Text | None = Field(default=None, max_length=80)
     price_tnd: float | None = Field(default=None, ge=0, le=1_000_000, allow_inf_nan=False)
     zone: Zone | None = None
@@ -320,6 +335,7 @@ class StructuredIn(BaseModel):
 
 class PasteIngest(BaseModel):
     """Request body: one pasted customer message becomes one order. Text is at most 2000 characters, name 40."""
+    model_config = ConfigDict(extra="forbid")
     kind: Literal["paste"]
     text: Text = Field(min_length=1)
     customer_name: Text | None = Field(default=None, max_length=40)
@@ -331,6 +347,7 @@ class CsvIngest(BaseModel):
 
     At most 10 rows in public mode, 200 otherwise.
     """
+    model_config = ConfigDict(extra="forbid")
     kind: Literal["csv"]
     csv_text: Text
 
@@ -365,12 +382,14 @@ class TryResponse(BaseModel):
 
 class SimulateText(BaseModel):
     """Request body: a simulated customer text reply (max 600 characters)."""
+    model_config = ConfigDict(extra="forbid")
     kind: Literal["text"]
     text: Text = Field(min_length=1)
 
 
 class SimulateLocation(BaseModel):
     """Request body: a simulated customer location pin."""
+    model_config = ConfigDict(extra="forbid")
     kind: Literal["location"]
     lat: float = Field(ge=-90, le=90)
     lng: float = Field(ge=-180, le=180)
@@ -395,6 +414,7 @@ class RescoreResponse(BaseModel):
 
 class SellerActionRequest(BaseModel):
     """Request body for a status-changing seller action. `note` is accepted but not stored."""
+    model_config = ConfigDict(extra="forbid")
     action: SellerAction
     note: Text | None = Field(default=None, max_length=500)
 
