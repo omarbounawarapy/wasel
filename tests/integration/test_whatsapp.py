@@ -560,3 +560,46 @@ def test_send_is_refused_while_another_request_holds_the_claim(wa_send):
     conn.execute("UPDATE outbound_drafts SET sending_at=? WHERE draft_id=?",
                  (utc_iso(clock.now() - timedelta(minutes=10)), d["draft_id"]))
     assert c.post(f"/api/drafts/{d['draft_id']}/send").status_code == 200 and len(calls) == 1
+
+
+def test_concurrent_sends_of_one_draft_reach_whatsapp_once(wa_send):
+    import threading
+    import time
+
+    from wasel.api.commands import send_draft
+    from wasel.api.errors import ApiError
+    from wasel.db.conn import connect
+
+    c, core, clock = wa_send
+    conn, o, d = _draft_for(c, core, clock)
+    calls: list = []
+    lock = threading.Lock()
+
+    class CountingSender:
+        def send_text(self, to_e164, text):
+            with lock:
+                calls.append(text)
+            time.sleep(0.05)                                     # keep the claim open long enough to overlap
+            return "wamid.RACE"
+
+    results, barrier = [], threading.Barrier(6)
+
+    def worker():
+        own = connect(core.db_path)
+        barrier.wait()
+        try:
+            send_draft(own, core.ids, clock.now(), core.settings, None, d["draft_id"], CountingSender())
+            results.append("ok")
+        except ApiError as e:
+            results.append(e.code)
+        finally:
+            own.close()
+
+    threads = [threading.Thread(target=worker) for _ in range(6)]
+    for t in threads:
+        t.start()
+    for t in threads:
+        t.join()
+    assert len(calls) == 1
+    assert results.count("ok") == 1 and set(results) - {"ok"} <= {"ALREADY_SENT", "SEND_IN_PROGRESS"}
+    assert repo.unsent_draft(conn, o["order_id"]) is None

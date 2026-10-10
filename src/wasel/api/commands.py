@@ -179,20 +179,20 @@ def simulate_reply(conn, ids: IdGen, now: datetime, settings: Settings, cfg: dic
     unknown or foreign conversations, 409 on seeded ones (public), 413 above 600 characters, 429 past `reply_limit` in
     public mode. Returns the message id and when the rescore is due.
     """
-    conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", conversation_id)
-    if conv is None or (settings.is_public and conv["sandbox_id"] not in (None, vid)):
-        raise not_found("conversation")
-    if settings.is_public and conv["sandbox_id"] is None:
-        raise seeded_read_only()
-    if text is not None and len(text) > 600:
-        raise ApiError(413, "PAYLOAD_TOO_LARGE", "a simulated reply is at most 600 characters")
-    if settings.is_public:
-        n = conn.execute("SELECT COUNT(*) FROM messages WHERE conversation_id=? AND origin='simulated' AND"
-                         " direction='inbound'", (conversation_id,)).fetchone()[0]
-        if n >= settings.reply_limit:
-            raise ApiError(429, "REPLY_LIMIT", f"{settings.reply_limit} simulated replies per conversation")
     recorded = None
-    with tx(conn):
+    with tx(conn):                  # the checks and the writes share one write lock, so the reply limit holds under races
+        conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", conversation_id)
+        if conv is None or (settings.is_public and conv["sandbox_id"] not in (None, vid)):
+            raise not_found("conversation")
+        if settings.is_public and conv["sandbox_id"] is None:
+            raise seeded_read_only()
+        if text is not None and len(text) > 600:
+            raise ApiError(413, "PAYLOAD_TOO_LARGE", "a simulated reply is at most 600 characters")
+        if settings.is_public:
+            n = conn.execute("SELECT COUNT(*) FROM messages WHERE conversation_id=? AND origin='simulated' AND"
+                             " direction='inbound'", (conversation_id,)).fetchone()[0]
+            if n >= settings.reply_limit:
+                raise ApiError(429, "REPLY_LIMIT", f"{settings.reply_limit} simulated replies per conversation")
         order = repo.open_order(conn, conversation_id)
         if order is not None and (d := repo.unsent_draft(conn, order["order_id"])) is not None:
             repo.mark_draft_sent(conn, ids, now, d, origin="simulated", delivery="recorded_only", decided_by="human")
@@ -214,10 +214,10 @@ def rescore(conn, now: datetime, settings: Settings, vid: str | None, order_id: 
 
     Raises 409 INVALID_TRANSITION for orders in a terminal status.
     """
-    o = writable_order(conn, order_id, settings, vid)
-    if o["status"] in TERMINAL:
-        raise invalid_transition(allowed_actions(o["status"]))
-    with tx(conn):
+    with tx(conn):                  # status read and rescore armed under one write lock
+        o = writable_order(conn, order_id, settings, vid)
+        if o["status"] in TERMINAL:
+            raise invalid_transition(allowed_actions(o["status"]))
         repo.arm_rescore(conn, order_id, "manual", now, now, keep_trigger=False)
     return {"order_id": order_id, "rescore_state": "debouncing", "rescore_at": utc_iso(now)}
 
