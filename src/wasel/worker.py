@@ -233,9 +233,10 @@ async def run_loop(state, interval_s: float = 1.0) -> None:
             now = state.clock.now()
             try:
                 await asyncio.to_thread(state.snapshot, now)
-                if state.settings.is_public and (last_purge is None or
-                                                 (now - last_purge).total_seconds() >= state.settings.purge_interval_s):
-                    await asyncio.to_thread(state.purge, now)
+                if last_purge is None or (now - last_purge).total_seconds() >= state.settings.purge_interval_s:
+                    if state.settings.is_public:
+                        await asyncio.to_thread(state.purge, now)
+                    await asyncio.to_thread(state.purge_history, now)
                     state.last_purge_at = last_purge = now
             except Exception:
                 log.exception("worker housekeeping failed")

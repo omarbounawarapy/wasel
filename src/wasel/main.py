@@ -22,7 +22,7 @@ from wasel.api.routes_webhook import install_log_redaction, webhook
 from wasel.clock import Clock, SystemClock, utc_iso
 from wasel.db.cache import SqliteExtractionCache
 from wasel.db.conn import connect, create_schema, fresh_db, schema_problem, stamp_schema, tx
-from wasel.db.purge import purge_sandboxes, reset_all
+from wasel.db.purge import purge_history, purge_sandboxes, reset_all
 from wasel.db.seed import load_seed, seed_all, seed_cache, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
 from wasel.db.usage import SqliteUsageMeter
@@ -172,6 +172,12 @@ class AppState:
     def purge(self, now) -> int:
         """Delete visitor sandbox rows older than the TTL. Returns the number of orders purged."""
         return purge_sandboxes(self.conn(), now, self.settings.sandbox_ttl_s)
+
+    def purge_history(self, now) -> dict[str, int]:
+        """Apply the retention days to events, llm_usage and extraction_runs (any mode)."""
+        s = self.settings
+        return purge_history(self.conn(), now, events_days=s.retention_events_days,
+                             usage_days=s.retention_llm_usage_days, runs_days=s.retention_extraction_runs_days)
 
     def drain(self, conn=None, order_id: str | None = None):
         """Score everything that is due now (or only `order_id`), repeatedly, until nothing is left. Returns the

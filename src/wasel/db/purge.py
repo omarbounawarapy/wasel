@@ -1,4 +1,5 @@
-"""purge_sandboxes (public mode, every PURGE_INTERVAL_S) and reset_all (admin reset)."""
+"""purge_sandboxes (public mode), purge_history (every mode) and reset_all (admin reset); the purges run every
+PURGE_INTERVAL_S."""
 from __future__ import annotations
 
 from datetime import datetime, timedelta
@@ -39,6 +40,31 @@ def purge_sandboxes(conn, now: datetime, ttl_s: int = 7200) -> int:
         conn.execute("DROP TABLE _vc")
         conn.execute("DROP TABLE _vo")
     return n
+
+
+def purge_history(conn, now: datetime, *, events_days: int, usage_days: int, runs_days: int) -> dict[str, int]:
+    """Bound the append-only tables so a database that keeps real orders stops growing. 0 days keeps a table whole.
+
+    `extraction_runs` rows still shown as the evidence of an order's current score are kept; an older assessment that
+    pointed at a deleted run loses that link (the column is nullable). Returns the rows deleted per table.
+    """
+    out = {"events": 0, "llm_usage": 0, "extraction_runs": 0}
+    with tx(conn):
+        if events_days > 0:
+            out["events"] = conn.execute("DELETE FROM events WHERE ts < ?",
+                                         (utc_iso(now - timedelta(days=events_days)),)).rowcount
+        if usage_days > 0:
+            out["llm_usage"] = conn.execute("DELETE FROM llm_usage WHERE ts < ?",
+                                            (utc_iso(now - timedelta(days=usage_days)),)).rowcount
+        if runs_days > 0:
+            cutoff = utc_iso(now - timedelta(days=runs_days))
+            old = ("SELECT extraction_id FROM extraction_runs WHERE created_at < ? AND extraction_id NOT IN"
+                   " (SELECT a.extraction_id FROM orders o JOIN risk_assessments a"
+                   "  ON a.assessment_id = o.current_assessment_id WHERE a.extraction_id IS NOT NULL)")
+            conn.execute(f"UPDATE risk_assessments SET extraction_id = NULL WHERE extraction_id IN ({old})", (cutoff,))
+            out["extraction_runs"] = conn.execute(f"DELETE FROM extraction_runs WHERE extraction_id IN ({old})",
+                                                  (cutoff,)).rowcount
+    return out
 
 
 def reset_all(conn) -> int:

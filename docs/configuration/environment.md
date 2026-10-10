@@ -86,7 +86,10 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `ADDR_SANDBOX_ORDERS` | `30` | Public mode: sandbox orders one address may create per `SANDBOX_TTL_S` (429 `RATE_LIMITED`) |
 | `ADDR_LLM_SHARE` | `0.25` | Public mode: share of `LIVE_LLM_DAILY_CAP` that all the visitor ids seen from one address may use together; over it, scoring uses the rules path |
 | `SANDBOX_GLOBAL_MAX` | `500` | Sandbox orders in total (429 `DEMO_BUSY`) |
-| `PURGE_INTERVAL_S` | `600` | How often the purge runs |
+| `PURGE_INTERVAL_S` | `600` | How often the purges run |
+| `RETENTION_EVENTS_DAYS` | `90` | Any mode: `events` older than this are deleted at each purge. `0` keeps them all |
+| `RETENTION_LLM_USAGE_DAYS` | `30` | Any mode: `llm_usage` rows older than this are deleted (the daily cap only needs today). `0` keeps them all |
+| `RETENTION_EXTRACTION_RUNS_DAYS` | `30` | Any mode: `extraction_runs` older than this are deleted, except the run behind an order's current score. `0` keeps them all |
 | `REPLY_LIMIT` | `5` | Simulated replies per conversation in public mode |
 
 `SANDBOX_GLOBAL_MAX` and `REPLY_LIMIT` are read by `Settings` but are not listed in `.env.example`.

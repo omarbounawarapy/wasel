@@ -998,3 +998,26 @@ def test_sandbox_order_limit_and_demo_capacity_at_the_boundary(tmp_path):
         assert c.post(f"/api/orders/{hero}/try", headers=B).status_code == 201       # demo: 3 of 3
         r = c.post(f"/api/orders/{hero}/try", headers=B)
         assert r.status_code == 429 and r.json()["error"]["code"] == "DEMO_BUSY"
+
+
+def test_purge_history_removes_old_rows_keeps_young_and_current_evidence(dev):
+    from wasel.db.purge import purge_history
+    c, core, clock = dev
+    conn = core.conn()
+    n = lambda t: conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0]       # noqa: E731
+    runs, events = n("extraction_runs"), n("events")
+    current = conn.execute("SELECT COUNT(DISTINCT a.extraction_id) FROM orders o JOIN risk_assessments a"
+                           " ON a.assessment_id=o.current_assessment_id WHERE a.extraction_id IS NOT NULL").fetchone()[0]
+    assert runs > 0 and events > 0 and current > 0
+    kw = dict(events_days=90, usage_days=30, runs_days=30)
+    young = purge_history(conn, clock.now() + timedelta(days=10), **kw)       # nothing is older than its window
+    assert young == {"events": 0, "llm_usage": 0, "extraction_runs": 0} and n("events") == events
+    mid = purge_history(conn, clock.now() + timedelta(days=40), **kw)         # runs and usage age out, events do not
+    assert mid["events"] == 0 and n("events") == events
+    assert n("extraction_runs") == current                                   # the evidence behind a current score stays
+    assert mid["extraction_runs"] == runs - current
+    old = purge_history(conn, clock.now() + timedelta(days=100), **kw)
+    assert old["events"] == events and n("events") == 0
+    off = purge_history(conn, clock.now() + timedelta(days=900), events_days=0, usage_days=0, runs_days=0)
+    assert off == {"events": 0, "llm_usage": 0, "extraction_runs": 0}
+    assert c.get(f"/api/orders/{hero_id(c)['order_id']}").status_code == 200

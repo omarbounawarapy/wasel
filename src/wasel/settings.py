@@ -80,6 +80,9 @@ class Settings(BaseSettings):
     sandbox_max_orders: int = 15
     sandbox_global_max: int = 500
     purge_interval_s: int = 600
+    retention_events_days: int = 90                 # 0 keeps the table whole (all three retention settings)
+    retention_llm_usage_days: int = 30
+    retention_extraction_runs_days: int = 30
     reply_limit: int = 5
     # per client address (public mode); the visitor id is chosen by the client, the address is not
     client_ip_header: str = ""              # header a trusted proxy overwrites, e.g. CF-Connecting-IP (empty = socket peer)
