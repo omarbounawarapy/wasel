@@ -13,6 +13,7 @@ curl -s 'localhost:8000/api/events?limit=30'                  # recent events: e
 
 | Symptom | Cause and diagnostic |
 |---|---|
+| No log output at start (only uvicorn's lines) | The logging subsystem is never configured. Add `LOG_LEVEL` to `.env` or the environment (`INFO` shows boot messages; `WARNING` silences them). See [environment](../configuration/environment.md#hosting-and-runtime). |
 | The API exits at start with `PromptVersionMismatch: config/prompts/... changed without a version bump` | A locked prompt file no longer matches `config/prompts/VERSIONS`. Either you edited a prompt in place (create a new version instead, [procedure](../configuration/llm-registry.md#procedures)) or a Windows checkout converted line endings to CRLF (`git config core.autocrlf false`, re-checkout; `.gitattributes` forces LF). List what the code sees: `python -c "from wasel.llm.prompts import check_versions; print(check_versions())"`. |
 | `PromptVersionMismatch: ... is not a listed version` or `is not locked as ...` | `config/llm.yaml` names a version that is missing from its `versions:` block, or a file under it is not listed in `VERSIONS` under that same version. |
 | Start-up validation error from pydantic (`Input should be ...`) | An invalid value in `.env` or the environment for a typed setting such as `SEED_ON_BOOT`, `LLM_MODE` or a boolean. The message names the field. Values are listed in [environment](../configuration/environment.md). |

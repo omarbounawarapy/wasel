@@ -54,6 +54,27 @@ SECURITY_HEADERS = {
 }
 
 
+def _setup_logging(log_level: str) -> None:
+    """Configure root logging with a stderr handler.
+
+    The format includes timestamp, level and logger name. Runs once: if handlers already exist, it does nothing.
+    This ensures boot messages (`mode=...`, `seeded N orders`) and warnings reach the host log (e.g. Render logs).
+
+    Args:
+        log_level: Root logger level (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+    """
+    if logging.getLogger().handlers:    # already configured: nothing to do (tests may call create_app twice)
+        return
+    level = getattr(logging, log_level.upper(), logging.INFO)
+    fmt = logging.Formatter("%(asctime)s %(levelname)s %(name)s: %(message)s", "%Y-%m-%d %H:%M:%S")
+    handler = logging.StreamHandler()
+    handler.setFormatter(fmt)
+    handler.setLevel(level)
+    root = logging.getLogger()
+    root.setLevel(level)
+    root.addHandler(handler)
+
+
 class AppState:
     """Process-wide application state, held at `app.state.core`: settings, clock, id generator, LLM client and scoring
     config, plus the worker's bookkeeping (last tick, purge and webhook times).
@@ -439,6 +460,8 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
     if not settings.is_public:
         app.add_middleware(HostOriginGuard, allowed_hosts=settings.allowed_hosts.split(","),
                            frontend_origin=settings.frontend_origin)
+
+    _setup_logging(settings.log_level)
 
     @app.middleware("http")
     async def _security_headers(request: Request, call_next):

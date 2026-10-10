@@ -61,6 +61,7 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
     allowed_hosts: str = "localhost,127.0.0.1,[::1]"    # Host values accepted outside public mode (comma separated)
     scoring_config: str = "config/scoring.yaml"
+    log_level: str = "INFO"      # root logger level: DEBUG, INFO, WARNING, ERROR, CRITICAL
 
     @field_validator("app_mode", mode="before")
     @classmethod
