@@ -214,6 +214,7 @@ CREATE TABLE outbound_drafts (
   decided_by      TEXT CHECK (decided_by IN ('system','human')),
   sent_message_id TEXT REFERENCES messages,
   sent_at         TEXT,
+  sending_at      TEXT,                      -- claimed by one send attempt (commands.send_draft); NULL when free
   delivery        TEXT CHECK (delivery IN ('whatsapp_sent','recorded_only')),
   created_at      TEXT NOT NULL,
   CHECK ((sent_message_id IS NULL) = (sent_at IS NULL)),

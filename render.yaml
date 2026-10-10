@@ -8,6 +8,7 @@ services:
     dockerContext: .
     healthCheckPath: /api/health
     autoDeploy: true
+    autoDeployTrigger: checksPass     # deploy a commit only after its CI checks pass
     envVars:
       - key: APP_MODE
         value: public

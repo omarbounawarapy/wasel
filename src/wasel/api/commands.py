@@ -233,9 +233,15 @@ def apply_action(conn, ids: IdGen, now: datetime, settings: Settings, vid: str |
     o = writable_order(conn, order_id, settings, vid)
     if action not in ACTIONS or o["status"] not in ACTIONS[action][0]:
         raise invalid_transition(allowed_actions(o["status"]))
-    to = ACTIONS[action][1]
+    allowed_from, to = ACTIONS[action]
     with tx(conn):
-        conn.execute("UPDATE orders SET status=?, updated_at=? WHERE order_id=?", (to, utc_iso(now), order_id))
+        # the status check is repeated inside the transaction: of two concurrent requests only one moves the order
+        marks = ",".join("?" * len(allowed_from))
+        moved = conn.execute(f"UPDATE orders SET status=?, updated_at=? WHERE order_id=? AND status IN ({marks})",
+                             (to, utc_iso(now), order_id, *allowed_from)).rowcount
+        if moved != 1:
+            current = repo.row(conn, "SELECT status FROM orders WHERE order_id=?", order_id)
+            raise invalid_transition(allowed_actions(current["status"]))
         if to in TERMINAL:                              # a rescore armed before the action must not outlive it
             conn.execute("UPDATE orders SET pending_rescore_at=NULL, pending_trigger=NULL, rescore_state='idle'"
                          " WHERE order_id=?", (order_id,))
@@ -252,6 +258,7 @@ def apply_action(conn, ids: IdGen, now: datetime, settings: Settings, vid: str |
 
 
 WA_WINDOW = timedelta(hours=24)
+SEND_CLAIM = timedelta(seconds=120)     # a send claim older than this is treated as abandoned (the process died mid-send)
 
 
 def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | None, draft_id: str,
@@ -261,7 +268,11 @@ def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | N
     Real sends happen only for WhatsApp conversations when sending is effective and `sender` is given, and only within the
     customer's 24 h window. Otherwise the draft is recorded as sent ('recorded_only') without leaving the system.
     `decided_by='system'` is only accepted for auto_send drafts. Raises 404/409 (already sent, blocked, needs review,
-    outside the 24 h window, no recipient) and 502 if WhatsApp refuses; the failure is logged as an event.
+    outside the 24 h window, no recipient, a send already in progress) and 502 if WhatsApp refuses; the failure is
+    logged as an event and the draft can be sent again.
+
+    The draft is claimed (`sending_at`) before anything leaves the system, so two concurrent sends of one draft cannot
+    both reach WhatsApp.
     """
     d = repo.row(conn, "SELECT * FROM outbound_drafts WHERE draft_id=?", draft_id)
     if d is None:
@@ -274,8 +285,8 @@ def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | N
     if decided_by == "system" and d["route"] != "auto_send":
         raise ApiError(409, "NEEDS_REVIEW", "only an auto_send draft goes out without a human click")
     conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", o["conversation_id"])
-    delivery, origin, wamid = "recorded_only", "dashboard", None
-    if conv["channel"] == "whatsapp" and settings.wa_send_effective and sender is not None:
+    real = conv["channel"] == "whatsapp" and settings.wa_send_effective and sender is not None
+    if real:
         # free-form text is only allowed inside the 24 h customer-service window
         last_in = conv["last_inbound_at"]
         if not last_in or now - parse_utc(last_in) > WA_WINDOW:
@@ -283,14 +294,27 @@ def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | N
         cust = repo.row(conn, "SELECT phone_e164 FROM customers WHERE customer_id=?", o["customer_id"])
         if not cust or not cust["phone_e164"]:
             raise ApiError(409, "NO_RECIPIENT", "this customer has no WhatsApp number")
+    with tx(conn):
+        claimed = repo.claim_draft(conn, draft_id, now, stale_before=now - SEND_CLAIM)
+    if not claimed:
+        if repo.row(conn, "SELECT sent_message_id FROM outbound_drafts WHERE draft_id=?", draft_id)["sent_message_id"]:
+            raise ApiError(409, "ALREADY_SENT", "this draft was already sent")
+        raise ApiError(409, "SEND_IN_PROGRESS", "this draft is being sent")
+    delivery, origin, wamid = "recorded_only", "dashboard", None
+    if real:
         from wasel.outbound.whatsapp_send import SendFailed
         try:
             wamid = sender.send_text(cust["phone_e164"], d["rendered_text"])
         except SendFailed as e:
             with tx(conn):
+                repo.release_draft(conn, draft_id)
                 repo.add_event(conn, now, "draft.send_failed", "error", order_id=o["order_id"],
                                sandbox_id=o["sandbox_id"], entity_id=draft_id, payload={"reason": e.reason})
             raise ApiError(502, "WHATSAPP_SEND_FAILED", f"WhatsApp refused the message ({e.reason})") from e
+        except Exception:
+            with tx(conn):
+                repo.release_draft(conn, draft_id)
+            raise
         delivery, origin = "whatsapp_sent", "whatsapp"
     with tx(conn):
         mid = repo.mark_draft_sent(conn, ids, now, d, origin=origin, delivery=delivery, decided_by=decided_by,
@@ -305,17 +329,27 @@ def auto_send_due(conn, ids: IdGen, now: datetime, settings: Settings, sender) -
     """Send every unsent auto_send draft (WA_AUTO_SEND, never in public mode). route=auto_send already means
     the auto_send gate passed (route.py): the classifier cleared the draft, confidence high, price under the
     cap, loop guard and 24 h window. Real WhatsApp conversations go out through the Cloud API; any other
-    channel records the send as simulated, so the threshold loop is visible in the demo. Failures stay
-    unsent and visible for a human."""
+    channel records the send as simulated, so the threshold loop is visible in the demo.
+
+    A draft gets one automatic attempt. If it fails (WhatsApp refused, outside the 24 h window, no recipient) it moves to
+    needs_review with one error event, so the worker does not retry it every tick and a person decides what happens next.
+    """
     if not settings.wa_auto_send or settings.is_public:
         return []
     sent = []
-    for d in conn.execute("SELECT d.draft_id FROM outbound_drafts d JOIN orders o ON o.order_id=d.order_id"
+    for d in conn.execute("SELECT d.draft_id, d.order_id, o.sandbox_id FROM outbound_drafts d"
+                          " JOIN orders o ON o.order_id=d.order_id"
                           " WHERE d.sent_message_id IS NULL AND d.route='auto_send'"
                           " AND o.sandbox_id IS NULL").fetchall():
         try:
             send_draft(conn, ids, now, settings, None, d["draft_id"], sender, decided_by="system")
             sent.append(d["draft_id"])
-        except ApiError:
-            continue
+        except ApiError as e:
+            if e.code in ("ALREADY_SENT", "SEND_IN_PROGRESS"):      # a person got there first
+                continue
+            with tx(conn):
+                repo.hold_for_review(conn, d["draft_id"])
+                if e.code != "WHATSAPP_SEND_FAILED":                 # send_draft already logged a refused send
+                    repo.add_event(conn, now, "draft.send_failed", "error", order_id=d["order_id"],
+                                   sandbox_id=d["sandbox_id"], entity_id=d["draft_id"], payload={"reason": e.code})
     return sent

@@ -3,12 +3,42 @@ Secrets come from the host env / .env and are never committed."""
 from __future__ import annotations
 
 import logging
+import os
+import subprocess
+from functools import lru_cache
+from pathlib import Path
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 log = logging.getLogger("cod.settings")
+
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+@lru_cache(maxsize=1)
+def _git_head(root: str) -> str:
+    """Short HEAD of the checkout at `root`, or '' when there is no .git (a container image) or no git."""
+    if not (Path(root) / ".git").exists():
+        return ""
+    try:
+        out = subprocess.run(["git", "rev-parse", "--short=12", "HEAD"], cwd=root, capture_output=True, text=True,
+                             timeout=5, check=True)
+    except (OSError, subprocess.SubprocessError):
+        return ""
+    return out.stdout.strip()
+
+
+def build_id(explicit: str = "", env=None, root: Path = ROOT) -> str:
+    """The commit this process runs, for /api/health and the ops scripts. Precedence: an explicit GIT_SHA, then
+    RENDER_GIT_COMMIT (set by Render), then `git rev-parse` in a checkout, else 'dev'. Never raises."""
+    env = os.environ if env is None else env
+    for value in (explicit, env.get("RENDER_GIT_COMMIT", ""), _git_head(str(root))):
+        if value and value.strip():
+            return value.strip()[:12]
+    return "dev"
 
 
 class Settings(BaseSettings):
@@ -57,11 +87,16 @@ class Settings(BaseSettings):
     addr_sandbox_orders: int = 30           # sandbox orders created per address per sandbox_ttl_s
     addr_llm_share: float = 0.25            # share of the daily provider-call cap one address may use
     # runtime
-    git_sha: str = "dev"
+    git_sha: str = ""                  # build id; empty resolves through build_id() (GIT_SHA, RENDER_GIT_COMMIT, git, dev)
     frontend_origin: str = "http://localhost:5173"
     allowed_hosts: str = "localhost,127.0.0.1,[::1]"    # Host values accepted outside public mode (comma separated)
     scoring_config: str = "config/scoring.yaml"
     log_level: str = "INFO"      # root logger level: DEBUG, INFO, WARNING, ERROR, CRITICAL
+
+    @model_validator(mode="after")
+    def _build_id(self):
+        self.git_sha = build_id(self.git_sha)
+        return self
 
     @field_validator("app_mode", mode="before")
     @classmethod

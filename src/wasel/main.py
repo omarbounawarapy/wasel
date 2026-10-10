@@ -200,6 +200,7 @@ class AppState:
             if not conn.execute("SELECT name FROM sqlite_master WHERE name='orders'").fetchone():
                 create_schema(conn)
         self.migrate_cache_owner(conn)
+        self.migrate_send_claim(conn)
         self.rearm_interrupted(conn)
         conn.execute("UPDATE orders SET rescore_state = CASE WHEN pending_rescore_at IS NOT NULL THEN 'debouncing'"
                      " ELSE 'idle' END")
@@ -232,6 +233,14 @@ class AppState:
             conn.execute("DELETE FROM extraction_cache")
         seed_cache(conn, self.clock.now())
         log.warning("extraction_cache had no sandbox_id column: old rows dropped, seed cache reloaded")
+
+    def migrate_send_claim(self, conn) -> None:
+        """Add outbound_drafts.sending_at to a database made before send claims existed. Existing drafts are kept:
+        a NULL claim is simply free."""
+        if any(r["name"] == "sending_at" for r in conn.execute("PRAGMA table_info(outbound_drafts)")):
+            return
+        with tx(conn):
+            conn.execute("ALTER TABLE outbound_drafts ADD COLUMN sending_at TEXT")
 
     def rearm_interrupted(self, conn) -> int:
         """Queue a rescore for every open order whose last scoring did not finish, and return how many.

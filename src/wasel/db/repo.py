@@ -303,6 +303,29 @@ def unsent_draft(conn, order_id) -> sqlite3.Row | None:
     return row(conn, "SELECT * FROM outbound_drafts WHERE order_id=? AND sent_message_id IS NULL", order_id)
 
 
+def claim_draft(conn, draft_id, now: datetime, stale_before: datetime) -> bool:
+    """Mark an unsent draft as being sent by this request. True only for the one caller that wins the claim.
+
+    A claim older than `stale_before` (a send whose process died) counts as free. Callers release the claim with
+    `release_draft` when the send fails.
+    """
+    cur = conn.execute("UPDATE outbound_drafts SET sending_at=? WHERE draft_id=? AND sent_message_id IS NULL"
+                       " AND (sending_at IS NULL OR sending_at < ?)",
+                       (utc_iso(now), draft_id, utc_iso(stale_before)))
+    return cur.rowcount == 1
+
+
+def release_draft(conn, draft_id) -> None:
+    """Drop a send claim after a failed send so a person can try again."""
+    conn.execute("UPDATE outbound_drafts SET sending_at=NULL WHERE draft_id=? AND sent_message_id IS NULL", (draft_id,))
+
+
+def hold_for_review(conn, draft_id) -> None:
+    """Move an auto_send draft that failed to go out to needs_review, so the worker stops retrying it."""
+    conn.execute("UPDATE outbound_drafts SET route='needs_review' WHERE draft_id=? AND sent_message_id IS NULL"
+                 " AND route='auto_send'", (draft_id,))
+
+
 def insert_draft(conn, ids: IdGen, now: datetime, order_id, assessment_id, d: DraftRecord) -> str:
     """Store a drafted message for the order, tied to the assessment it was made from. Returns the draft id."""
     did = ids("drf")
@@ -329,8 +352,8 @@ def mark_draft_sent(conn, ids: IdGen, now: datetime, draft: sqlite3.Row, *, orig
                          template_id=draft["template_id"], delivery_status="sent" if delivery == "whatsapp_sent" else None,
                          channel_message_id=channel_message_id)
     link(conn, order["order_id"], mid)
-    conn.execute("UPDATE outbound_drafts SET sent_message_id=?, sent_at=?, delivery=?, decided_by=? WHERE draft_id=?",
-                 (mid, utc_iso(now), delivery, decided_by, draft["draft_id"]))
+    conn.execute("UPDATE outbound_drafts SET sent_message_id=?, sent_at=?, delivery=?, decided_by=?, sending_at=NULL"
+                 " WHERE draft_id=?", (mid, utc_iso(now), delivery, decided_by, draft["draft_id"]))
     conn.execute("UPDATE conversations SET last_outbound_at=? WHERE conversation_id=?",
                  (utc_iso(now), order["conversation_id"]))
     conn.execute("UPDATE orders SET awaiting_reply_since=?, updated_at=?,"

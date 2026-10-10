@@ -115,7 +115,7 @@ A check ties two fields together: `action = 'cancelled'` exactly when `confirmat
 
 A drafted message for an order, tied to the assessment it was made from. `canonical_text` is the rendered static template; `rendered_text` is what would be sent (the approved rewrite, or the canonical text); `source` is `llm_rewrite` or `static_template`. `prefilter_json` holds the deterministic check result. `judge_json` holds the judge and guard-classifier result, is null for static templates, and is required (a check) for rewrites; `{"unavailable": true, ...}` means the judge could not answer. `route` is `auto_send`, `needs_review` or `blocked`.
 
-An order can have any number of sent drafts but at most one unsent draft (partial unique index). Sending sets `sent_message_id`, `sent_at`, `delivery` (`whatsapp_sent` or `recorded_only`) and `decided_by` (`human` or `system`), and creates the outbound message. See [outbound](../subsystems/outbound.md).
+An order can have any number of sent drafts but at most one unsent draft (partial unique index). A send first sets `sending_at` (a claim, cleared on failure), then sets `sent_message_id`, `sent_at`, `delivery` (`whatsapp_sent` or `recorded_only`) and `decided_by` (`human` or `system`), and creates the outbound message. See [outbound](../subsystems/outbound.md).
 
 ### Event
 

@@ -25,7 +25,7 @@ def main(url: str) -> int:
     health = c.get(f"{url}/api/health").json()
     mode = health["mode"]
     step("health", mode != "public" or (health["wa_send"] is False and health["webhook"] == "disabled"),
-         f"mode={mode} cap={health['llm']['live_call_cap']}")
+         f"mode={mode} cap={health['llm']['live_call_cap']} build={health['build']['git_sha']}")
     step("GET /", c.get(f"{url}/").status_code in (200, 404))
     orders = c.get(f"{url}/api/orders", headers=h).json()["orders"]
     seeded = next(o for o in orders if o.get("seed_key") == "hero" and o["is_seeded"])

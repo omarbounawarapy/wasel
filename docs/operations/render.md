@@ -14,6 +14,7 @@ One free Render web service runs the API and the built web UI from a single imag
 2. New, then Blueprint, select this repository. Render reads `render.yaml`.
 3. Optional secrets in the service's Environment tab: `GROQ_API_KEY` (capped key), `ADMIN_TOKEN` (24+ characters). Without a key the app scores with recorded extractions and rules.
 4. Verify: `make smoke URL=https://<name>.onrender.com`, expect `SMOKE PASS ... public v1=87 v2=16`.
+5. Deploys follow `render.yaml`'s `autoDeployTrigger: checksPass`: a commit goes live only after its CI checks pass. `/api/health` shows `build.git_sha`, the commit the service runs (`RENDER_GIT_COMMIT`, unless `GIT_SHA` is set).
 
 ## Custom domain (runs-on.dev)
 

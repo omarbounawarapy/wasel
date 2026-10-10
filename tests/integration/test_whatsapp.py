@@ -498,3 +498,65 @@ def test_a_message_that_could_not_be_stored_is_not_acknowledged(wa, monkeypatch)
     assert total > stored
     assert wa_post(c, "hero_v1_inbound").status_code == 200          # Meta may deliver it again: nothing doubles
     assert n_messages(core.conn()) == total
+
+
+def test_failed_auto_send_is_attempted_once_then_held_for_review(wa_send):
+    from wasel.api.commands import auto_send_due
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls, status=400)                       # permanent refusal: one attempt
+    conn, o, d = _draft_for(c, core, clock)
+    conn.execute("UPDATE outbound_drafts SET route='auto_send' WHERE draft_id=?", (d["draft_id"],))
+    s = core.settings.model_copy(update={"wa_auto_send": True})
+    for _ in range(3):
+        assert auto_send_due(conn, core.ids, clock.now(), s, core.sender) == []
+    assert len(calls) == 1
+    held = repo.unsent_draft(conn, o["order_id"])
+    assert held["route"] == "needs_review" and held["sending_at"] is None
+    assert conn.execute("SELECT COUNT(*) FROM events WHERE type='draft.send_failed' AND entity_id=?",
+                        (d["draft_id"],)).fetchone()[0] == 1
+
+
+def test_auto_send_outside_24h_window_is_not_retried(wa_send):
+    from wasel.api.commands import auto_send_due
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls)
+    conn, o, d = _draft_for(c, core, clock)
+    conn.execute("UPDATE outbound_drafts SET route='auto_send' WHERE draft_id=?", (d["draft_id"],))
+    clock.advance(25 * 3600)
+    s = core.settings.model_copy(update={"wa_auto_send": True})
+    auto_send_due(conn, core.ids, clock.now(), s, core.sender)
+    auto_send_due(conn, core.ids, clock.now(), s, core.sender)
+    assert calls == []
+    assert repo.unsent_draft(conn, o["order_id"])["route"] == "needs_review"
+    assert conn.execute("SELECT COUNT(*) FROM events WHERE type='draft.send_failed' AND entity_id=?",
+                        (d["draft_id"],)).fetchone()[0] == 1
+
+
+def test_person_can_send_a_draft_after_a_failed_attempt(wa_send):
+    c, core, clock = wa_send
+    core.sender = _sender([], status=400)
+    conn, o, d = _draft_for(c, core, clock)
+    assert c.post(f"/api/drafts/{d['draft_id']}/send").status_code == 502
+    assert repo.unsent_draft(conn, o["order_id"])["sending_at"] is None
+    calls: list = []
+    core.sender = _sender(calls)
+    assert c.post(f"/api/drafts/{d['draft_id']}/send").status_code == 200 and len(calls) == 1
+
+
+def test_send_is_refused_while_another_request_holds_the_claim(wa_send):
+    from datetime import timedelta
+
+    from wasel.clock import utc_iso
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls)
+    conn, o, d = _draft_for(c, core, clock)
+    conn.execute("UPDATE outbound_drafts SET sending_at=? WHERE draft_id=?",
+                 (utc_iso(clock.now()), d["draft_id"]))
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 409 and r.json()["error"]["code"] == "SEND_IN_PROGRESS" and calls == []
+    conn.execute("UPDATE outbound_drafts SET sending_at=? WHERE draft_id=?",
+                 (utc_iso(clock.now() - timedelta(minutes=10)), d["draft_id"]))
+    assert c.post(f"/api/drafts/{d['draft_id']}/send").status_code == 200 and len(calls) == 1

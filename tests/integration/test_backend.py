@@ -861,3 +861,40 @@ def test_dev_mode_has_no_address_limit(tmp_path):
     c, _, _ = make_client(tmp_path, "dev", client_ip_header="CF-Connecting-IP", addr_writes_10min=1)
     with c:
         assert [_ingest(c, v, "8.8.8.8").status_code for v in _fresh_ids(3)] == [202] * 3
+
+
+def test_concurrent_mark_delivered_moves_the_order_and_counter_once(tmp_path):
+    import threading
+
+    from wasel.api.commands import apply_action
+    from wasel.api.errors import ApiError
+    from wasel.db.conn import connect
+    c, core, clock = make_client(tmp_path, "dev")
+    with c:
+        conn = core.conn()
+        oid = hero_id(c)["order_id"]
+        conn.execute("UPDATE orders SET status='shipped' WHERE order_id=?", (oid,))
+        cid = conn.execute("SELECT customer_id FROM orders WHERE order_id=?", (oid,)).fetchone()[0]
+        before = conn.execute("SELECT completed_orders FROM customers WHERE customer_id=?", (cid,)).fetchone()[0]
+        settings = core.settings
+        results, barrier = [], threading.Barrier(8)
+
+        def worker():
+            own = connect(core.db_path)
+            barrier.wait()
+            try:
+                apply_action(own, core.ids, clock.now(), settings, None, oid, "mark_delivered", None)
+                results.append("ok")
+            except ApiError as e:
+                results.append(e.code)
+            finally:
+                own.close()
+
+        threads = [threading.Thread(target=worker) for _ in range(8)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        assert results.count("ok") == 1 and results.count("INVALID_TRANSITION") == 7
+        after = conn.execute("SELECT completed_orders FROM customers WHERE customer_id=?", (cid,)).fetchone()[0]
+        assert after == before + 1
