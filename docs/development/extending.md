@@ -88,7 +88,7 @@ Compute it in `monitor.py` inside the appropriate group (`faithfulness`, `safety
 
 ## Update the sample data
 
-`data/seed/demo_seed.json` defines the nine sample conversations and scripted replies. A new or edited conversation needs entries in `data/seed/hand_extractions.json` (one extraction per turn), a `make warm` run so the extraction cache has a matching entry for each rendered window, a check that `test_seed_all_cache_hits_under_fail_all` passes, and `make mocks` if the frozen API responses should reflect it.
+`data/seed/demo_seed.json` defines the eleven sample conversations and scripted replies. A conversation can carry an `answer` (the customer's reply, stored after the first score so the order gets a second one). A new or edited conversation needs entries in `data/seed/hand_extractions.json` (one extraction per turn), a `make warm` run so the extraction cache has a matching entry for each rendered window, a check that `test_seed_all_cache_hits_under_fail_all` passes, and `make mocks` if the frozen API responses should reflect it.
 
 ## Conventions
 

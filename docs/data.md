@@ -11,7 +11,7 @@ data/
 ├── templates/
 │   └── outbound.yaml       outbound message templates                 hand-maintained
 ├── seed/
-│   ├── demo_seed.json      the nine sample conversations              hand-maintained
+│   ├── demo_seed.json      the eleven sample conversations             hand-maintained
 │   ├── hand_extractions.json  extractions for those samples           hand-maintained
 │   └── extraction_cache.jsonl recorded extractions, loaded at boot    generated (make warm)
 ├── synth_v1.csv            10,000 synthetic orders                    generated (make generate)

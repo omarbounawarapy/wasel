@@ -74,7 +74,7 @@ const LANGUAGE: Record<string, string> = {
 };
 
 const RESCORE: Record<string, string> = {
-    debouncing: "Waiting for the customer to finish typing…",
+    debouncing: "Wasel is rereading the conversation…",
     scoring: "Rescoring…",
     drafting: "Drafting the reply…",
 };
@@ -488,6 +488,18 @@ function OrderDetailContent() {
                                     if (res?.order_id) selectOrder(res.order_id);
                                 }}>
                             {busy === "try" ? "Copying…" : "Try this order"}
+                        </Button>
+                    )}
+                    {capabilities?.can_try && scripted_replies?.length > 0 && (
+                        <Button variant="outline" className="min-h-[44px]" disabled={busy !== null}
+                                onClick={async () => {
+                                    // one click: copy the sample, send the scripted reply to the copy, open the copy while Wasel rereads it
+                                    const copy = await run("try", () => ordersApi.tryOrder(o.order_id));
+                                    if (!copy?.order_id) return;
+                                    const answered = await run("answer", () => ordersApi.simulateTextReply(copy.conversation_id, scripted_replies[0]));
+                                    if (answered) selectOrder(copy.order_id);
+                                }}>
+                            {busy === "try" || busy === "answer" ? "Working…" : `See what happens when ${(customer?.display_name || "the customer").split(" ")[0]} answers`}
                         </Button>
                     )}
                     {unsentDraft && capabilities?.can_send_drafts && (

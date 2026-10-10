@@ -37,7 +37,7 @@ Conventions used below:
 | `serve` | Reads `.env`, then `uvicorn ... --host $HOST --port $PORT --workers 1`, no reload. Prints the mode. Unset `APP_MODE` means public. | from `.env`; public reseeds every start | yes |
 | `web` | `cd web && npm ci && npm run build`: Next.js static export into `web/dist` | Node 22, network | replaces `web/node_modules` and `web/dist` (both ignored by git) |
 | `web-dev` | `cd web && npm run dev`: Next.js dev server on :5173 with hot reload against the API on :8000 (needs `node_modules` and an API in `dev` mode) | | yes |
-| `seed` | Rebuilds the database from scratch (`SEED_ON_BOOT=always`, worker disabled) at `DB` (default `var/app.db`): schema, catalog, committed extraction cache, nine sample orders, all scored with no LLM call | | **deletes and recreates the database** |
+| `seed` | Rebuilds the database from scratch (`SEED_ON_BOOT=always`, worker disabled) at `DB` (default `var/app.db`): schema, catalog, committed extraction cache, eleven sample orders, all scored with no LLM call | | **deletes and recreates the database** |
 
 ## Hosting and integrations
 

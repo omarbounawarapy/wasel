@@ -28,7 +28,7 @@ Three tables deliberately have no foreign keys into the order graph: `extraction
 | Topic | Rule |
 |---|---|
 | Identifiers | Text ids made of a prefix and a ULID: `cus_`, `cnv_`, `msg_`, `ord_`, `ext_`, `asm_`, `drf_` (`wasel/ids.py`). Tests use sequential ids (`ord_0001`). The human-facing order reference is `#<order_no>`. |
-| Order numbers | Unique integers. The nine sample orders are 2601 to 2609; a new order takes `MAX(order_no) + 1` (2601 when the table is empty), computed inside the write transaction. |
+| Order numbers | Unique integers. The eleven sample orders are 2601 to 2611; a new order takes `MAX(order_no) + 1` (2601 when the table is empty), computed inside the write transaction. |
 | Timestamps | UTC text `YYYY-MM-DDTHH:MM:SS.ffffffZ`, produced only by `wasel.clock.utc_iso()`. The fixed width makes them sort lexicographically. `hygiene` forbids reading the clock anywhere else. |
 | Sandbox scoping | `sandbox_id` is `NULL` for seeded and real (`event`/`dev`) rows, and the visitor's `X-Visitor-Id` UUID for rows created in `public` mode. The header is not authentication: it scopes visibility, nothing more. |
 | Personal data | `customers.phone_e164` never leaves the database unmasked (`+216 •• ••• 001`), and is never sent to an LLM. API response models contain neither `phone_e164` nor `raw_payload`; a test checks this. |
@@ -164,7 +164,7 @@ Invariants after `postprocess`: every surviving quote is a verbatim (normalized)
 
 | Event | Effect on stored data |
 |---|---|
-| Start with `SEED_ON_BOOT=always` (default in `public` mode, and `make up`) | The database file and its WAL files are deleted, the schema is recreated, and the catalog, the committed extraction cache and the nine sample orders are loaded. |
+| Start with `SEED_ON_BOOT=always` (default in `public` mode, and `make up`) | The database file and its WAL files are deleted, the schema is recreated, and the catalog, the committed extraction cache and the eleven sample orders are loaded. |
 | Start with `if_empty` (default in `dev` and `event`) | The schema is created if missing; samples are seeded only if there are no orders. Existing data is kept. |
 | Start with `never` | Only the schema is created if missing. |
 | Sandbox purge (public mode, every `PURGE_INTERVAL_S`) | Deletes sandbox conversations opened more than `SANDBOX_TTL_S` (2 h) ago, with their orders, messages, assessments, extraction runs, drafts and events; sandbox customers left without conversations; `extraction_cache` rows made from sandbox text; and `llm_usage` rows older than two days. The TTL runs from when the conversation was opened, not from the last activity. |

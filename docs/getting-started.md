@@ -56,7 +56,7 @@ cp .env.example .env
 | `make serve` | API + web UI on `HOST:PORT` (default 127.0.0.1:8000), no reload, settings from `.env` | from `.env`, unset = `public` | per `SEED_ON_BOOT`; `public` reseeds on every start |
 | `make web-dev` | Next.js dev server on :5173 with hot reload (start `make run` first) | | |
 
-The database file is `var/app.db` (`DB_PATH`, resolved relative to the repository root). There is no separate initialization step: on startup the app creates the schema from `src/wasel/db/schema.sql` if the file is missing, mirrors `data/catalog.yaml` into the `catalog` table, loads the extraction cache and creates the nine sample orders from `data/seed/demo_seed.json`, scoring them through the worker. `make seed` does the same without starting a server and always rebuilds `var/app.db` from scratch.
+The database file is `var/app.db` (`DB_PATH`, resolved relative to the repository root). There is no separate initialization step: on startup the app creates the schema from `src/wasel/db/schema.sql` if the file is missing, mirrors `data/catalog.yaml` into the `catalog` table, loads the extraction cache and creates the eleven sample orders from `data/seed/demo_seed.json`, scoring them through the worker. Two of them (#2610, #2611) already have the customer's reply, so each has a second score. `make seed` does the same without starting a server and always rebuilds `var/app.db` from scratch.
 
 Cold start (imports, model load, seeding) can take up to about a minute; `make up` waits up to 180 seconds for `/api/health` before it starts the dashboard.
 

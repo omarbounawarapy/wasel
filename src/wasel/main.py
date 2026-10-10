@@ -27,7 +27,7 @@ from wasel.db.seed import load_seed, seed_all, seed_cache, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
 from wasel.db.usage import SqliteUsageMeter
 from wasel.ids import IdGen, UlidIds
-from wasel.llm.client import build_client
+from wasel.llm.client import ChainClient, build_client
 from wasel.llm.prompts import PROMPT_VERSION
 from wasel.outbound.make_draft import make_draft
 from wasel.paths import ROOT
@@ -130,6 +130,12 @@ class AppState:
         return make_scorer(cache=SqliteExtractionCache(conn, PROMPT_VERSION), llm=self.llm,
                            meter=self.meter(conn), config=self.config)
 
+    def seed_scorer(self, conn):
+        """The scorer for the demo seed: an empty LLM chain, so no provider is called at boot whatever keys are set. The
+        committed samples come from the extraction cache; the answered samples take the rules path."""
+        return make_scorer(cache=SqliteExtractionCache(conn, PROMPT_VERSION), llm=ChainClient([], deadline_s=20.0),
+                           meter=self.meter(conn), config=self.config)
+
     @property
     def draft_llm(self):
         """rewrite + judge runs only with DRAFT_LLM=true and a provider configured; else static templates."""
@@ -211,7 +217,7 @@ class AppState:
             log.info("catalog: %d added %s, %d changed %s", len(added), added, len(changed), changed)
         empty = conn.execute("SELECT COUNT(*) FROM orders").fetchone()[0] == 0
         if mode == "always" or (mode == "if_empty" and empty):
-            n = seed_all(conn, self.ids, self.clock.now(), self.scorer_for(conn), self.drafter, self.config.catalog)
+            n = seed_all(conn, self.ids, self.clock.now(), self.seed_scorer(conn), self.drafter, self.config.catalog)
             log.info("seeded %d orders", n)
             self.seed_unscored = conn.execute(
                 "SELECT COUNT(*) FROM orders o JOIN conversations c USING (conversation_id)"
@@ -279,7 +285,7 @@ class AppState:
         """Delete every order and its related rows, then reseed. Returns (orders deleted, orders reseeded)."""
         conn = self.conn()
         purged = reset_all(conn)
-        n = seed_all(conn, self.ids, self.clock.now(), self.scorer_for(conn), self.drafter, self.config.catalog)
+        n = seed_all(conn, self.ids, self.clock.now(), self.seed_scorer(conn), self.drafter, self.config.catalog)
         return purged, n
 
     def health(self, conn) -> M.HealthResponse:
@@ -289,8 +295,11 @@ class AppState:
         calls = conn.execute("SELECT COUNT(*) FROM llm_usage WHERE day=?", (day,)).fetchone()[0]
         recent = conn.execute("SELECT path, created_at FROM risk_assessments ORDER BY created_at DESC LIMIT 1").fetchone()
         five = utc_iso(now - timedelta(minutes=5))
-        fb = conn.execute("SELECT path FROM risk_assessments WHERE created_at >= ? AND path IN"
-                          " ('fallback_model','fallback_provider','rules') ORDER BY created_at DESC LIMIT 1",
+        # sample conversations (seed_key) are not traffic: their rules scores at boot do not mean the AI is down
+        fb = conn.execute("SELECT a.path FROM risk_assessments a JOIN orders o ON o.order_id = a.order_id"
+                          " JOIN conversations c ON c.conversation_id = o.conversation_id"
+                          " WHERE a.created_at >= ? AND c.seed_key IS NULL AND a.path IN"
+                          " ('fallback_model','fallback_provider','rules') ORDER BY a.created_at DESC LIMIT 1",
                           (five,)).fetchone()
         pending = conn.execute("SELECT COUNT(*) FROM orders WHERE pending_rescore_at IS NOT NULL").fetchone()[0]
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))

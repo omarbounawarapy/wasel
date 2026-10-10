@@ -24,10 +24,15 @@ HERO_V2 = ("ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem
 
 # ---------------------------------------------------------------- seed + M1
 def test_seed_all_cache_hits_under_fail_all(dev):
-    """Every seeded order scores from the committed cache with every provider failing (zero tokens at boot)."""
+    """Every seeded order scores with every provider failing and zero LLM calls. The original samples come from the
+    committed cache; the two answered samples are new text and take the rules path."""
     c, core, _ = dev
-    rows = core.conn().execute("SELECT a.path FROM risk_assessments a").fetchall()
-    assert rows and {r["path"] for r in rows} == {"cascade_cache"}
+    rows = core.conn().execute("SELECT c.seed_key, a.path FROM risk_assessments a JOIN orders o ON o.order_id = a.order_id"
+                               " JOIN conversations c ON c.conversation_id = o.conversation_id"
+                               " WHERE c.seed_key IS NOT NULL").fetchall()
+    answered = {"answered_address", "answered_declined"}
+    assert {r["path"] for r in rows if r["seed_key"] not in answered} == {"cascade_cache"}
+    assert {r["path"] for r in rows if r["seed_key"] in answered} == {"rules"}
     assert core.conn().execute("SELECT COUNT(*) FROM llm_usage").fetchone()[0] == 0
 
 

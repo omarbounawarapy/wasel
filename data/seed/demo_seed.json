@@ -203,6 +203,56 @@
         }
       ],
       "scripted_replies": []
+    },
+    {
+      "key": "answered_address",
+      "channel": "paste",
+      "order_no": 2610,
+      "customer": {
+        "display_name": "Sarra",
+        "external_ref": null,
+        "completed_orders": 0,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "salam, nheb el sac, ama mouch 3ref l'adresse",
+          "offset_s": 0
+        }
+      ],
+      "answer": {
+        "text": "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, ba3d el 18h"
+      },
+      "scripted_replies": [
+        "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, ba3d el 18h"
+      ]
+    },
+    {
+      "key": "answered_declined",
+      "channel": "paste",
+      "order_no": 2611,
+      "customer": {
+        "display_name": "Yassine",
+        "external_ref": null,
+        "completed_orders": 0,
+        "refusals_total": 0
+      },
+      "structured": {},
+      "messages": [
+        {
+          "author": "customer",
+          "text": "nheb les chaussures pointure 42, livraison Sousse",
+          "offset_s": 0
+        }
+      ],
+      "answer": {
+        "text": "la, mouch nheb"
+      },
+      "scripted_replies": [
+        "la, mouch nheb"
+      ]
     }
   ]
 }

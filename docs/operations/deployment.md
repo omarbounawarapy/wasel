@@ -65,7 +65,7 @@ Host `.env` for **public mode**, the default and the safe choice for anonymous v
 | `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN` | empty: a public host must not hold WhatsApp secrets |
 | `WA_AUTO_SEND`, `DRAFT_LLM` | `false` |
 
-**Public mode deletes the database on every start** (`SEED_ON_BOOT=auto` resolves to `always`): the schema is rebuilt and the nine sample orders are reseeded. That is intended for a stateless demo. A deployment that must keep data needs `APP_MODE=event` (or `dev`) with the default `SEED_ON_BOOT`, which keeps existing rows.
+**Public mode deletes the database on every start** (`SEED_ON_BOOT=auto` resolves to `always`): the schema is rebuilt and the eleven sample orders are reseeded. That is intended for a stateless demo. A deployment that must keep data needs `APP_MODE=event` (or `dev`) with the default `SEED_ON_BOOT`, which keeps existing rows.
 
 The full variable reference is [configuration/environment.md](../configuration/environment.md).
 
@@ -153,7 +153,7 @@ The only state is `var/app.db` (and its `-wal` and `-shm` files). In public mode
 
 ### Cache warming
 
-`make warm` is a development step, not an operational one. It rebuilds `data/seed/extraction_cache.jsonl`, the recorded extractions that make the nine sample orders score identically with no LLM call. You need it after changing a sample conversation, a template's canonical text, the window rules or the extract prompt version. In production the persistent cache also fills by itself: every successful primary-model extraction is stored in the `extraction_cache` table, and an identical conversation window later costs no call.
+`make warm` is a development step, not an operational one. It rebuilds `data/seed/extraction_cache.jsonl`, the recorded extractions that make the nine cache-scored sample orders score identically with no LLM call (the two answered samples take the rules path and never call an LLM). You need it after changing a sample conversation, a template's canonical text, the window rules or the extract prompt version. In production the persistent cache also fills by itself: every successful primary-model extraction is stored in the `extraction_cache` table, and an identical conversation window later costs no call.
 
 ### Cost and rate controls
 

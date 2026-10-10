@@ -95,7 +95,29 @@ def seed_all(conn, ids: IdGen, now: datetime, scorer, drafter, catalog: dict) ->
     data = load_seed()
     for fx in data["conversations"]:
         seed_conversation(conn, ids, now, fx, None)
-    return drain(conn, now, scorer, drafter, ids=ids)
+    scored = drain(conn, now, scorer, drafter, ids=ids)
+    # a fixture with an "answer" already has the customer's reply: score the order before it, then after it, so the
+    # sample order carries two versions (the reason diff shows in its score history)
+    for fx in data["conversations"]:
+        if fx.get("answer"):
+            answer_seeded_conversation(conn, ids, now, fx)
+    drain(conn, now, scorer, drafter, ids=ids)           # the second pass re-scores the answered orders only
+    return scored
+
+
+def answer_seeded_conversation(conn, ids: IdGen, now: datetime, fx: dict) -> None:
+    """Store the customer's reply from a seed fixture's `answer` on its (seeded, non-sandbox) conversation, after the
+    draft the first score made. The caller scores afterwards, so the order gets a second assessment."""
+    cid = conn.execute("SELECT conversation_id FROM conversations WHERE seed_key=? AND sandbox_id IS NULL",
+                       (fx["key"],)).fetchone()[0]
+    with tx(conn):
+        order = repo.open_order(conn, cid)
+        if order is not None and (d := repo.unsent_draft(conn, order["order_id"])) is not None:
+            # as in commands.simulate_reply: the reply implies the draft went out, so the reply reads as an answer to it
+            repo.mark_draft_sent(conn, ids, now, d, origin="simulated", delivery="recorded_only", decided_by="human")
+        store_inbound(conn, ids, now, conversation_id=cid, origin="seed", text=fx["answer"]["text"],
+                      provider_ts=now + timedelta(microseconds=1),     # after the draft recorded above, as simulate_reply
+                      no_debounce=True)
 
 
 def fixture_for(seed_key: str) -> dict | None:

@@ -107,7 +107,7 @@ def test_queue_shows_backend_orders_and_counts(server):
     metrics = {m.label: m.value for m in at.metric}
     assert metrics["High risk"] == str(counts["high"]) and metrics["Low risk"] == str(counts["low"])
     df = at.dataframe[0].value
-    assert len(df) == 9 and "#2601 (sample)" in set(df["Order"])
+    assert len(df) == 11 and "#2601 (sample)" in set(df["Order"])     # 9 sample conversations + 2 answered samples
     assert "TND" in texts(at)                               # impact banner from /api/metrics/impact
 
 
