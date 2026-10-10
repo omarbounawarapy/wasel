@@ -236,6 +236,7 @@ export interface EventView {
     order_ref: string | null;
     title: string;
     detail: string | null;
+    sample?: boolean;
 }
 
 export interface EventsResponse {

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
-import { Page, PageHeader, StatCard, Chip, Empty, LoadError, tunisTime } from "@/components/wasel/kit";
+import { Page, PageHeader, StatCard, Chip, Empty, LoadError, whenLabel } from "@/components/wasel/kit";
 
 const ROLE: Record<string, string> = { extract: "Read a message", judge: "Checked a reply", rewrite: "Wrote a reply", failure_label: "Labelled a failure" };
 const ROLES = [["", "All calls"], ["extract", "Reading messages"], ["judge", "Checking replies"], ["rewrite", "Writing replies"]];
@@ -67,7 +67,7 @@ export default function TracesPage() {
                                     <button type="button" disabled={!t.order_id}
                                             onClick={() => t.order_id && router.push(`/dashboard/order?id=${t.order_id}`)}
                                             className="w-full text-left flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 hover:bg-gray-50 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
-                                        <span className="w-12 text-xs text-gray-600 tabular-nums">{tunisTime(t.ts)}</span>
+                                        <span className="w-28 shrink-0 text-xs text-gray-600 tabular-nums">{whenLabel(t.ts)}</span>
                                         <span className="w-40 text-sm font-medium text-gray-900">{ROLE[t.role] ?? t.role}</span>
                                         <span className="flex-1 min-w-0 text-xs text-gray-600 truncate">
                                             {t.cache_hit ? "Recorded answer reused" : `${t.provider ?? ""} ${t.model ?? ""}`}

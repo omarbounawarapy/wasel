@@ -419,6 +419,7 @@ class EventView(BaseModel):
     order_ref: str | None
     title: str
     detail: str | None
+    sample: bool = False             # from a sample order that was loaded with the demo (grouped in the feed)
 
 
 class EventsResponse(BaseModel):

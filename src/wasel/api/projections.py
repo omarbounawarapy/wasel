@@ -230,11 +230,14 @@ def list_events(conn, settings: Settings, vid: str | None, *, after: int = 0, or
     if order_id:
         where.append("e.order_id = ?")
         args.append(order_id)
-    rs = conn.execute("SELECT e.*, o.order_no FROM events e LEFT JOIN orders o ON o.order_id = e.order_id WHERE "
+    rs = conn.execute("SELECT e.*, o.order_no, (c.seed_key IS NOT NULL AND c.sandbox_id IS NULL) AS sample"
+                      " FROM events e LEFT JOIN orders o ON o.order_id = e.order_id"
+                      " LEFT JOIN conversations c ON c.conversation_id = o.conversation_id WHERE "
                       + " AND ".join(where) + " ORDER BY e.seq LIMIT ?", (*args, limit)).fetchall()
     evs = []
     for r in rs:
         title, detail = event_text(r["type"], r["payload"])
         evs.append(M.EventView(seq=r["seq"], ts=r["ts"], type=r["type"], level=r["level"], order_id=r["order_id"],
-                               order_ref=f"#{r['order_no']}" if r["order_no"] else None, title=title, detail=detail))
+                               order_ref=f"#{r['order_no']}" if r["order_no"] else None, title=title, detail=detail,
+                               sample=bool(r["sample"])))
     return M.EventsResponse(events=evs, last_seq=evs[-1].seq if evs else after)

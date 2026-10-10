@@ -12,7 +12,7 @@ import type {
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
-    Page, Section, Details, Chip, ReadBy, RiskBadge, Delta, Empty, TIER, NEXT_STEP, STATUS, tunisTime, tnd,
+    Page, Section, Details, Chip, ReadBy, RiskBadge, Delta, Empty, TIER, NEXT_STEP, STATUS, whenLabel, tnd,
 } from '@/components/wasel/kit';
 
 // Server-built strings (reasons, flag labels) are shown verbatim.
@@ -120,7 +120,7 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: AssessmentVi
                 <li key={a.assessment_id} className="rounded-xl border border-gray-200 p-3">
                     <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-semibold text-gray-700">
-                            v{a.version} · {TRIGGER[a.trigger] ?? a.trigger} · {tunisTime(a.created_at)}
+                            v{a.version} · {TRIGGER[a.trigger] ?? a.trigger} · {whenLabel(a.created_at)}
                         </span>
                         <span className="flex items-center gap-2">
                             <ReadBy value={a.read_by} />
@@ -533,7 +533,7 @@ function OrderDetailContent() {
                                                                 : `[${m.kind} message]`)}
                                                     </p>
                                                     <div className="text-xs mt-1 text-gray-600 flex items-center gap-1.5 flex-wrap">
-                                                        <span>{tunisTime(m.provider_ts)}</span>
+                                                        <span>{whenLabel(m.provider_ts)}</span>
                                                         {!isCustomer && <span>· {sentDraft?.source === "llm_rewrite" ? "AI-adapted message" : sentDraft ? "Standard message" : "You"}</span>}
                                                         {!isCustomer && sentDraft?.decided_by === "system" && <Chip tone="blue">Sent automatically</Chip>}
                                                         {m.origin === "simulated" && <Chip tone="amber">Simulated</Chip>}
@@ -583,7 +583,7 @@ function OrderDetailContent() {
                                 ) : (
                                     <p className="mt-4 text-sm text-emerald-800 flex items-center gap-1.5">
                                         <Check className="w-4 h-4" />
-                                        {currentDraft.decided_by === "system" ? "Sent automatically" : "Sent"}{currentDraft.delivery === "recorded_only" ? " (simulated)" : " on WhatsApp"} at {tunisTime(currentDraft.sent_at)}
+                                        {currentDraft.decided_by === "system" ? "Sent automatically" : "Sent"}{currentDraft.delivery === "recorded_only" ? " (simulated)" : " on WhatsApp"} at {whenLabel(currentDraft.sent_at)}
                                     </p>
                                 )}
                             </Section>

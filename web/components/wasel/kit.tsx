@@ -30,9 +30,19 @@ export const STATUS: Record<string, string> = {
     cancelled: "Cancelled",
 };
 
-export const tunisTime = (iso?: string | null) => iso
-    ? new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Tunis", hour: "2-digit", minute: "2-digit" }).format(new Date(iso))
-    : "";
+// "just now", "7 min ago", "today 20:26" or "9 Oct 20:26", in Tunisia time: every time says its day or its age
+export const whenLabel = (iso?: string | null, now: number = Date.now()) => {
+    if (!iso) return "";
+    const t = new Date(iso).getTime();
+    const mins = Math.round((now - t) / 60000);
+    if (mins >= 0 && mins < 1) return "just now";
+    if (mins >= 1 && mins < 60) return `${mins} min ago`;
+    const clock = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Tunis", hour: "2-digit", minute: "2-digit" }).format(new Date(iso));
+    const dayKey = (ms: number) => new Intl.DateTimeFormat("en-CA", { timeZone: "Africa/Tunis", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(ms));
+    if (dayKey(t) === dayKey(now)) return `today ${clock}`;
+    const date = new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Tunis", day: "numeric", month: "short" }).format(new Date(iso));
+    return `${date} ${clock}`;
+};
 
 export const tnd = (v?: number | null) =>
     v === null || v === undefined ? "–" : `${Number.isInteger(v) ? v : v.toFixed(1)} TND`;

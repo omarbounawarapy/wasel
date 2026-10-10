@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Info, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
 import type { EventView } from "@/lib/api/types";
-import { Page, PageHeader, StatCard, Empty, LoadError, tunisTime } from "@/components/wasel/kit";
+import { Page, PageHeader, StatCard, Empty, LoadError, whenLabel } from "@/components/wasel/kit";
 
 // the server titles seller actions as "Order <action>": say them in plain words
 const ACTION_TITLE: Record<string, string> = {
@@ -28,6 +28,7 @@ export default function ActivityPage() {
     const [events, setEvents] = useState<EventView[] | null>(null);
     const [error, setError] = useState(false);
     const [onlyWarnings, setOnlyWarnings] = useState(false);
+    const [showSample, setShowSample] = useState(false);
 
     useEffect(() => {
         const load = async () => {
@@ -49,9 +50,13 @@ export default function ActivityPage() {
         return () => clearInterval(iv);
     }, []);
 
+    // sample orders loaded with the demo are one line until the visitor asks for them
     const list = events || [];
-    const count = (types: string[]) => list.filter(x => types.includes(x.type)).length;
-    const shown = onlyWarnings ? list.filter(e => e.level === "warning" || e.level === "error") : list;
+    const sampleCount = list.filter(x => x.sample).length;
+    const visitor = list.filter(x => !x.sample);
+    const base = showSample ? list : visitor;
+    const count = (types: string[]) => visitor.filter(x => types.includes(x.type)).length;
+    const shown = onlyWarnings ? base.filter(e => e.level === "warning" || e.level === "error") : base;
 
     return (
         <Page>
@@ -77,6 +82,15 @@ export default function ActivityPage() {
                         Only warnings
                     </label>
                 </div>
+                {sampleCount > 0 && (
+                    <div className="flex flex-wrap items-center justify-between gap-3 px-5 py-3 bg-gray-50 border-b border-gray-100 text-sm text-gray-700">
+                        <span>Sample data loaded: {sampleCount} events from the demo orders{showSample ? "" : " (hidden)"}.</span>
+                        <button type="button" onClick={() => setShowSample(v => !v)}
+                                className="min-h-[44px] px-3 text-sm font-semibold text-brand hover:underline">
+                            {showSample ? "Hide sample data" : "Show sample data"}
+                        </button>
+                    </div>
+                )}
                 {events === null && !error ? (
                     <p className="p-5 text-sm text-gray-600">Loading…</p>
                 ) : shown.length === 0 ? (
@@ -89,7 +103,7 @@ export default function ActivityPage() {
                             return (
                                 <li key={ev.seq} className="flex items-start gap-3 px-5 py-3">
                                     <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${lvl.cls}`} aria-label={lvl.label} />
-                                    <span className="w-12 shrink-0 text-xs text-gray-600 tabular-nums mt-0.5">{tunisTime(ev.ts)}</span>
+                                    <span className="w-28 shrink-0 text-xs text-gray-600 tabular-nums mt-0.5">{whenLabel(ev.ts)}</span>
                                     <span className="flex-1 min-w-0">
                                         <span className="block text-sm text-gray-900" title={ev.type}>{plainTitle(ev.title)}</span>
                                         {ev.detail && <span className="block text-xs text-gray-600 break-words">{ev.detail}</span>}
