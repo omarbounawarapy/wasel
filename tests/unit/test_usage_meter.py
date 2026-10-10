@@ -132,3 +132,9 @@ def test_day_rolls_over_at_utc_midnight(conn):
     assert m.allow("extract", None, late + timedelta(seconds=30)) == "global_cap"
     assert m.allow("extract", None, late + timedelta(minutes=1)) == "ok"
     assert m.calls_today(late + timedelta(minutes=1)) == 0
+
+
+def test_daily_cap_one_call_below_still_allows(conn):
+    for _ in range(2):
+        add(conn)
+    assert meter(conn, daily_cap=3).allow("extract", None, NOW) == "ok"

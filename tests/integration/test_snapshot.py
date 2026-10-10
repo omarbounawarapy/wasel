@@ -9,7 +9,7 @@ from tests.conftest import T0
 from tests.integration.conftest import make_client
 from wasel.clock import FrozenClock
 from wasel.db import snapshot as S
-from wasel.db.conn import connect, create_schema
+from wasel.db.conn import SCHEMA_VERSION, connect, create_schema
 
 
 def _url(tmp_path):
@@ -137,3 +137,104 @@ def test_snapshotter_interval_change_detection_and_failure_reporting(tmp_path):
     store.fail = False
     clock.advance(61)
     assert sn.tick(conn, clock.now()) is True and not sn.failing
+
+
+def _set_user_version(path, version):
+    import sqlite3
+    raw = sqlite3.connect(path, isolation_level=None)
+    raw.execute(f"PRAGMA user_version = {int(version)}")
+    raw.close()
+
+
+def _user_version(path):
+    import sqlite3
+    raw = sqlite3.connect(path)
+    try:
+        return raw.execute("PRAGMA user_version").fetchone()[0]
+    finally:
+        raw.close()
+
+
+def test_fresh_database_is_stamped_with_the_schema_version(tmp_path):
+    from wasel.db.conn import SCHEMA_VERSION, fresh_db
+    conn = fresh_db(tmp_path / "fresh.db")
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == SCHEMA_VERSION
+
+
+def test_boot_refuses_a_database_from_another_schema_version(tmp_path):
+    c, _, _ = make_client(tmp_path, "dev", seed_on_boot="if_empty")
+    with c:
+        pass
+    _set_user_version(tmp_path / "app.db", 99)
+    c2, _, _ = make_client(tmp_path, "dev", seed_on_boot="if_empty")
+    with pytest.raises(RuntimeError, match="schema version 99, this build expects 1"), c2:
+        pass
+    assert _user_version(tmp_path / "app.db") == 99                 # refused, not migrated or stamped
+
+
+def test_unversioned_database_with_current_tables_is_accepted_and_stamped(tmp_path):
+    c, _, _ = make_client(tmp_path, "dev", seed_on_boot="if_empty")
+    with c:
+        pass
+    _set_user_version(tmp_path / "app.db", 0)
+    c2, core2, _ = make_client(tmp_path, "dev", seed_on_boot="if_empty")
+    with c2:
+        assert _orders(core2) > 0
+    assert _user_version(tmp_path / "app.db") == SCHEMA_VERSION
+
+
+def test_snapshot_from_another_schema_version_is_refused_by_restore(tmp_path):
+    import sqlite3
+    m = sqlite3.connect(":memory:")
+    m.execute("CREATE TABLE orders(x)")
+    m.execute("PRAGMA user_version = 99")
+    with pytest.raises(S.SnapshotError, match="schema version 99"):
+        S.check_image(m.serialize())
+    store = S.FileSnapshotStore(tmp_path / "store.sqlite")
+    store.save(m.serialize())
+    with pytest.raises(S.SnapshotError, match="schema version 99"):
+        S.restore(store, tmp_path / "restored.db")
+    assert not (tmp_path / "restored.db").exists()
+
+
+def _healthy_image(tmp_path, rows=0):
+    import sqlite3
+    path = tmp_path / "src.sqlite"
+    raw = sqlite3.connect(path, isolation_level=None)
+    raw.execute("CREATE TABLE orders(order_id TEXT PRIMARY KEY, note TEXT)")
+    raw.execute("BEGIN")
+    for i in range(rows):
+        raw.execute("INSERT INTO orders VALUES (?, ?)", (f"o{i}", "x" * 200))
+    raw.execute("COMMIT")
+    raw.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+    raw.close()
+    return path.read_bytes()
+
+
+def test_restore_removes_stale_wal_and_shm_files(tmp_path):
+    store = S.FileSnapshotStore(tmp_path / "store.sqlite")
+    store.save(_healthy_image(tmp_path))
+    db = tmp_path / "app.db"
+    wal, shm = tmp_path / "app.db-wal", tmp_path / "app.db-shm"
+    wal.write_bytes(b"stale journal from the old database")
+    shm.write_bytes(b"stale index")
+    assert S.restore(store, db) is True
+    assert not wal.exists() and not shm.exists()
+    assert db.exists()
+
+
+def test_restore_rejects_an_image_that_fails_the_integrity_check(tmp_path):
+    import sqlite3
+    data = bytearray(_healthy_image(tmp_path, rows=2000))
+    page = 4096
+    for n in range(2, len(data) // page):                # damage the content of table pages, keep the header
+        data[n * page + 300:n * page + 364] = b"\xff" * 64
+    img = bytes(data)
+    mem = sqlite3.connect(":memory:")
+    mem.deserialize(img)
+    assert mem.execute("PRAGMA integrity_check").fetchone()[0] != "ok"      # the damage is real
+    store = S.FileSnapshotStore(tmp_path / "store.sqlite")
+    store.save(img)
+    with pytest.raises(S.SnapshotError, match="integrity_check"):
+        S.restore(store, tmp_path / "app.db")
+    assert not (tmp_path / "app.db").exists()

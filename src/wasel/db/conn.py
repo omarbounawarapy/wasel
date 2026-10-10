@@ -7,6 +7,10 @@ import sqlite3
 from pathlib import Path
 
 SCHEMA = Path(__file__).with_name("schema.sql")
+# Bump this with every change to schema.sql. It is stored in the file header (PRAGMA user_version). A database with
+# another non-zero version is refused at boot and in snapshot restore; version 0 is an unversioned database made before
+# this check existed, accepted once and stamped (see main.AppState.boot).
+SCHEMA_VERSION = 1
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
@@ -35,8 +39,22 @@ def connect(path: str | Path) -> sqlite3.Connection:
 
 
 def create_schema(conn: sqlite3.Connection) -> None:
-    """Run schema.sql on the connection. The schema has no migrations."""
+    """Run schema.sql on the connection and stamp SCHEMA_VERSION. The schema has no migrations."""
     conn.executescript(SCHEMA.read_text(encoding="utf-8"))
+    stamp_schema(conn)
+
+
+def stamp_schema(conn: sqlite3.Connection) -> None:
+    """Write SCHEMA_VERSION into the database header."""
+    conn.execute(f"PRAGMA user_version = {int(SCHEMA_VERSION)}")
+
+
+def schema_problem(version: int) -> str | None:
+    """None if a database with this user_version can be used by this build; otherwise the reason it cannot."""
+    if version in (0, SCHEMA_VERSION):
+        return None
+    return (f"database schema version {version}, this build expects {SCHEMA_VERSION}. Either delete the database file "
+            f"(its data is lost) or restore a snapshot made by a compatible build")
 
 
 def fresh_db(path: str | Path) -> sqlite3.Connection:

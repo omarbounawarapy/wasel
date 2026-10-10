@@ -603,3 +603,27 @@ def test_concurrent_sends_of_one_draft_reach_whatsapp_once(wa_send):
     assert len(calls) == 1
     assert results.count("ok") == 1 and set(results) - {"ok"} <= {"ALREADY_SENT", "SEND_IN_PROGRESS"}
     assert repo.unsent_draft(conn, o["order_id"]) is None
+
+
+def test_a_blocked_draft_cannot_be_sent(wa_send):
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls)
+    conn, o, d = _draft_for(c, core, clock)
+    conn.execute("UPDATE outbound_drafts SET route='blocked' WHERE draft_id=?", (d["draft_id"],))
+    r = c.post(f"/api/drafts/{d['draft_id']}/send")
+    assert r.status_code == 409 and r.json()["error"]["code"] == "DRAFT_BLOCKED" and calls == []
+
+
+def test_a_system_send_is_refused_for_a_draft_not_cleared_for_auto_send(wa_send):
+    from wasel.api.commands import send_draft
+    from wasel.api.errors import ApiError
+    c, core, clock = wa_send
+    calls: list = []
+    core.sender = _sender(calls)
+    conn, o, d = _draft_for(c, core, clock)
+    assert d["route"] != "auto_send"
+    with pytest.raises(ApiError) as e:
+        send_draft(conn, core.ids, clock.now(), core.settings, None, d["draft_id"], core.sender, decided_by="system")
+    assert e.value.code == "NEEDS_REVIEW" and calls == []
+    assert repo.unsent_draft(conn, o["order_id"])["draft_id"] == d["draft_id"]

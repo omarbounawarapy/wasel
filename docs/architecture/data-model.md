@@ -33,7 +33,7 @@ Three tables deliberately have no foreign keys into the order graph: `extraction
 | Sandbox scoping | `sandbox_id` is `NULL` for seeded and real (`event`/`dev`) rows, and the visitor's `X-Visitor-Id` UUID for rows created in `public` mode. The header is not authentication: it scopes visibility, nothing more. |
 | Personal data | `customers.phone_e164` never leaves the database unmasked (`+216 •• ••• 001`), and is never sent to an LLM. API response models contain neither `phone_e164` nor `raw_payload`; a test checks this. |
 | JSON columns | Text columns ending in `_json` hold JSON written by the repository (`repo._j`). They are documented below where they matter. |
-| Schema changes | There are no migrations. `schema.sql` is the schema; changing it means rebuilding the database (`make seed`, or any start with `SEED_ON_BOOT=always`). |
+| Schema changes | There are no migrations. `schema.sql` is the schema; changing it means bumping `SCHEMA_VERSION` in `src/wasel/db/conn.py` and rebuilding the database (`make seed`, or any start with `SEED_ON_BOOT=always`). The version is stored in the file (`PRAGMA user_version`): a database or snapshot with another non-zero version is refused at boot and in restore. An unversioned database (version 0) with the current tables is accepted once and stamped. |
 
 ## Entities
 

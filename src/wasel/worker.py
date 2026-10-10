@@ -121,6 +121,16 @@ def create_draft(conn, ids: IdGen, now: datetime, order_id: str, drafter: Drafte
     return did
 
 
+def claim_due(conn, order_id: str, due_at: str) -> bool:
+    """Take a pending rescore for scoring (compare-and-set): clears it and marks the order 'scoring', but only while
+    it is still armed for `due_at`. False if another claimer took it or a newer message re-armed it since it was read.
+    """
+    with tx(conn):
+        cur = conn.execute("UPDATE orders SET pending_rescore_at=NULL, pending_trigger=NULL, rescore_state='scoring'"
+                           " WHERE order_id=? AND pending_rescore_at=?", (order_id, due_at))
+    return cur.rowcount == 1
+
+
 def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: IdGen, limit: int = 10,
                 no_reply_s: float | None = None, meter=None, only_order_id: str | None = None,
                 budget_s: float | None = None, order_timeout_s: float | None = None) -> list[str]:
@@ -150,11 +160,7 @@ def process_due(conn, now: datetime, scorer: Scorer, drafter: Drafter, *, ids: I
                               " LIMIT 1", utc_iso(now), *only_args)
         if cand is None:
             break
-        with tx(conn):                                      # claim (CAS)
-            cur = conn.execute("UPDATE orders SET pending_rescore_at=NULL, pending_trigger=NULL, rescore_state='scoring'"
-                               " WHERE order_id=? AND pending_rescore_at=?",
-                               (cand["order_id"], cand["pending_rescore_at"]))
-        if cur.rowcount == 0:
+        if not claim_due(conn, cand["order_id"], cand["pending_rescore_at"]):
             continue
         oid, trigger = cand["order_id"], cand["pending_trigger"] or "manual"
         try:

@@ -26,6 +26,8 @@ from urllib.parse import unquote, urlparse
 
 import httpx
 
+from wasel.db.conn import schema_problem
+
 log = logging.getLogger("cod.snapshot")
 
 
@@ -133,6 +135,9 @@ def check_image(data: bytes) -> None:
             raise SnapshotError("snapshot failed PRAGMA integrity_check")
         if not mem.execute("SELECT 1 FROM sqlite_master WHERE name='orders'").fetchone():
             raise SnapshotError("snapshot has no orders table: not a Wasel database")
+        problem = schema_problem(mem.execute("PRAGMA user_version").fetchone()[0])
+        if problem:
+            raise SnapshotError(f"snapshot refused: {problem}")
     except sqlite3.DatabaseError as e:
         raise SnapshotError(f"snapshot is not a readable SQLite database: {e}") from e
     finally:

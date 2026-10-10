@@ -21,7 +21,7 @@ from wasel.api.routes import admin, router
 from wasel.api.routes_webhook import install_log_redaction, webhook
 from wasel.clock import Clock, SystemClock, utc_iso
 from wasel.db.cache import SqliteExtractionCache
-from wasel.db.conn import connect, create_schema, fresh_db, tx
+from wasel.db.conn import connect, create_schema, fresh_db, schema_problem, stamp_schema, tx
 from wasel.db.purge import purge_sandboxes, reset_all
 from wasel.db.seed import load_seed, seed_all, seed_cache, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
@@ -199,8 +199,10 @@ class AppState:
             conn = self.conn()
             if not conn.execute("SELECT name FROM sqlite_master WHERE name='orders'").fetchone():
                 create_schema(conn)
+        self.check_schema(conn)
         self.migrate_cache_owner(conn)
         self.migrate_send_claim(conn)
+        stamp_schema(conn)                              # adopts an unversioned database once; no-op when current
         self.rearm_interrupted(conn)
         conn.execute("UPDATE orders SET rescore_state = CASE WHEN pending_rescore_at IS NOT NULL THEN 'debouncing'"
                      " ELSE 'idle' END")
@@ -219,6 +221,12 @@ class AppState:
                           self.seed_unscored)
         if restored:
             self.snapshotter.seed_digest(conn)          # what was just restored is already stored
+
+    def check_schema(self, conn) -> None:
+        """Refuse to start on a database that another schema version made (user_version is neither 0 nor current)."""
+        problem = schema_problem(conn.execute("PRAGMA user_version").fetchone()[0])
+        if problem:
+            raise RuntimeError(f"refusing to start: {problem}")
 
     def migrate_cache_owner(self, conn) -> None:
         """Add extraction_cache.sandbox_id to a database made before it existed.

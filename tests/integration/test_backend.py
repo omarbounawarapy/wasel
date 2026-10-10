@@ -898,3 +898,98 @@ def test_concurrent_mark_delivered_moves_the_order_and_counter_once(tmp_path):
         assert results.count("ok") == 1 and results.count("INVALID_TRANSITION") == 7
         after = conn.execute("SELECT completed_orders FROM customers WHERE customer_id=?", (cid,)).fetchone()[0]
         assert after == before + 1
+
+
+# ---------------------------------------------------------------- #64: guards that had no test
+def test_claim_is_compare_and_set_on_the_due_time(dev):
+    from wasel.clock import utc_iso
+    from wasel.worker import claim_due
+    c, core, clock = dev
+    conn = core.conn()
+    oid = hero_id(c)["order_id"]
+    with tx(conn):
+        repo.arm_rescore(conn, oid, "manual", clock.now(), clock.now())
+    due = conn.execute("SELECT pending_rescore_at FROM orders WHERE order_id=?", (oid,)).fetchone()[0]
+    assert claim_due(conn, oid, utc_iso(clock.now() - timedelta(seconds=1))) is False    # armed for another time
+    assert conn.execute("SELECT pending_rescore_at FROM orders WHERE order_id=?", (oid,)).fetchone()[0] == due
+    assert claim_due(conn, oid, due) is True
+    assert claim_due(conn, oid, due) is False                                              # a second claimer loses
+
+
+def test_no_reply_timeout_waits_while_a_rescore_is_pending(dev):
+    from wasel.worker import fire_no_reply_timeouts
+    c, core, clock = dev
+    conn = core.conn()
+    oid = hero_id(c)["order_id"]
+    from wasel.clock import utc_iso
+    conn.execute("UPDATE orders SET status='awaiting_reply', awaiting_reply_since=? WHERE order_id=?",
+                 (utc_iso(clock.now() - timedelta(hours=2)), oid))
+    with tx(conn):
+        repo.arm_rescore(conn, oid, "customer_reply", clock.now(), clock.now())
+    assert fire_no_reply_timeouts(conn, clock.now(), 3600) == []
+    conn.execute("UPDATE orders SET pending_rescore_at=NULL, pending_trigger=NULL, rescore_state='idle' WHERE order_id=?",
+                 (oid,))
+    assert fire_no_reply_timeouts(conn, clock.now(), 3600) == [oid]
+
+
+def test_a_failed_rescore_never_moves_a_terminal_order(dev):
+    from wasel.worker import process_due
+    c, core, clock = dev
+    conn = core.conn()
+    oid = hero_id(c)["order_id"]
+
+    def boom(_inp):
+        raise RuntimeError("provider exploded")
+
+    def status():
+        return conn.execute("SELECT status, rescore_state FROM orders WHERE order_id=?", (oid,)).fetchone()
+
+    conn.execute("UPDATE orders SET status='shipped' WHERE order_id=?", (oid,))
+    with tx(conn):
+        repo.arm_rescore(conn, oid, "manual", clock.now(), clock.now())
+    process_due(conn, clock.now(), boom, None, ids=core.ids, only_order_id=oid)
+    assert tuple(status()) == ("shipped", "idle")
+    assert conn.execute("SELECT COUNT(*) FROM events WHERE type='error' AND order_id=?", (oid,)).fetchone()[0] == 1
+    conn.execute("UPDATE orders SET status='awaiting_reply' WHERE order_id=?", (oid,))
+    with tx(conn):
+        repo.arm_rescore(conn, oid, "manual", clock.now(), clock.now())
+    process_due(conn, clock.now(), boom, None, ids=core.ids, only_order_id=oid)
+    assert tuple(status()) == ("needs_review", "idle")                                    # a live order does
+
+
+def test_boot_keeps_a_pending_rescore_debouncing(tmp_path):
+    over = dict(seed_on_boot="if_empty")
+    c, core, clock = make_client(tmp_path, "dev", **over)
+    with c:
+        pending = hero_id(c)["order_id"]
+        other = core.conn().execute("SELECT order_id FROM orders WHERE order_id<>? LIMIT 1", (pending,)).fetchone()[0]
+        with tx(core.conn()):
+            repo.arm_rescore(core.conn(), pending, "manual", clock.now() + timedelta(hours=1), clock.now())
+    c2, core2, _ = make_client(tmp_path, "dev", **over)
+    with c2:
+        conn = core2.conn()
+        assert tuple(conn.execute("SELECT rescore_state, pending_rescore_at IS NOT NULL FROM orders WHERE order_id=?",
+                                  (pending,)).fetchone()) == ("debouncing", 1)
+        assert conn.execute("SELECT rescore_state FROM orders WHERE order_id=?", (other,)).fetchone()[0] == "idle"
+
+
+def test_purge_keeps_rows_younger_than_the_ttl(public):
+    c, core, clock = public
+    A = {"X-Visitor-Id": VID_A}
+    mine = c.post(f"/api/orders/{hero_id(c, A)['order_id']}/try", headers=A).json()
+    assert purge_sandboxes(core.conn(), clock.now() + timedelta(hours=1), 7200) == 0
+    assert core.conn().execute("SELECT COUNT(*) FROM orders WHERE order_id=?", (mine["order_id"],)).fetchone()[0] == 1
+
+
+def test_sandbox_order_limit_and_demo_capacity_at_the_boundary(tmp_path):
+    c, core, clock = make_client(tmp_path, "public", sandbox_max_orders=2, sandbox_global_max=3)
+    A, B = {"X-Visitor-Id": VID_A}, {"X-Visitor-Id": VID_B}
+    with c:
+        hero = hero_id(c, A)["order_id"]
+        assert c.post(f"/api/orders/{hero}/try", headers=A).status_code == 201       # visitor A: 1 of 2
+        assert c.post(f"/api/orders/{hero}/try", headers=A).status_code == 201       # visitor A: 2 of 2
+        r = c.post(f"/api/orders/{hero}/try", headers=A)
+        assert r.status_code == 429 and r.json()["error"]["code"] == "SANDBOX_LIMIT"
+        assert c.post(f"/api/orders/{hero}/try", headers=B).status_code == 201       # demo: 3 of 3
+        r = c.post(f"/api/orders/{hero}/try", headers=B)
+        assert r.status_code == 429 and r.json()["error"]["code"] == "DEMO_BUSY"
