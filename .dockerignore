@@ -5,6 +5,7 @@
 !models/
 !data/
 !deploy/cloudflare/container/requirements.txt
+!deploy/cloudflare/container/requirements.lock
 # training / evaluation data the runtime never opens
 data/synth_v1.csv
 data/eval/

@@ -95,7 +95,7 @@ All queries are parameterized; the few statements that interpolate text use cons
 
 ### Supply chain
 
-Dependencies are pinned to exact versions in `requirements*.txt` and `web/package-lock.json`, CI runs with `contents: read` permission, and no LLM SDKs are used (providers are called with `httpx`). The CI `audit` job runs `pip-audit` over the Python requirements and `npm audit --omit=dev --audit-level=high` for `web/` and `deploy/cloudflare/`, and Dependabot proposes updates weekly. Accepted exceptions: development-only tools (`eslint-config-next` pulls in `braces`, which has no fixed release; `wrangler` pulls in `sharp`), which are not in the images. Not yet done: transitive Python dependencies are not pinned with hashes, and GitHub Actions are pinned by tag, not by commit.
+Dependencies are pinned to exact versions in `requirements*.txt` and `web/package-lock.json`. The images install the container's transitive Python packages from `deploy/cloudflare/container/requirements.lock` with `--require-hashes` (regenerate with `make lock`; `tests/unit/test_requirements_lock.py` checks it against the pins). The Render and Cloudflare base images are pinned by digest. CI actions are pinned to commit SHAs, CI runs with `contents: read` permission, and no LLM SDKs are used (providers are called with `httpx`). The CI `audit` job runs `pip-audit` over the Python requirements and `npm audit --omit=dev --audit-level=high` for `web/` and `deploy/cloudflare/`, and Dependabot proposes updates weekly for pip, npm, Docker and GitHub Actions. Accepted exceptions: development-only tools (`eslint-config-next` pulls in `braces`, which has no fixed release; `wrangler` pulls in `sharp`), which are not in the images. The lock covers linux/amd64 wheels only.
 
 ## Data
 

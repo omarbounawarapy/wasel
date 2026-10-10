@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { RefreshCw } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
@@ -16,14 +16,14 @@ export default function TracesPage() {
     const [refreshing, setRefreshing] = useState(false);
     const [role, setRole] = useState("");
 
-    const load = () => {
+    const load = useCallback(() => {
         setRefreshing(true);
         ordersApi.getTraces({ limit: 100, ...(role ? { role } : {}) })
             .then(res => { setTraces(res?.traces || []); setError(false); })
             .catch(() => setError(true))
             .finally(() => setRefreshing(false));
-    };
-    useEffect(() => { load(); }, [role]);
+    }, [role]);
+    useEffect(() => { load(); }, [load]);
 
     const list = traces || [];
     const live = list.filter(t => !t.cache_hit);

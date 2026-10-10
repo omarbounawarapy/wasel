@@ -5,6 +5,7 @@
 !data/
 !web/
 !deploy/cloudflare/container/requirements.txt
+!deploy/cloudflare/container/requirements.lock
 data/synth_v1.csv
 data/eval/
 data/raw/

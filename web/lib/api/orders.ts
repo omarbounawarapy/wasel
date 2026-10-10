@@ -1,23 +1,24 @@
 import { apiClient } from '../api';
+import type { EventsResponse, HealthResponse, ImpactResponse, IngestResponse, OrderDetailResponse, OrderListResponse } from './types';
 
 export const ordersApi = {
     // Health & System
     health: async () => {
-        return apiClient.get('/health');
+        return apiClient.get<HealthResponse>('/health');
     },
 
     // Orders & Queue
     getOrders: async (params?: { tier?: string; include_collecting?: boolean; limit?: number }) => {
-        return apiClient.get('/orders', { params });
+        return apiClient.get<OrderListResponse>('/orders', { params });
     },
     
     getOrder: async (orderId: string) => {
-        return apiClient.get(`/orders/${orderId}`);
+        return apiClient.get<OrderDetailResponse>(`/orders/${orderId}`);
     },
 
     // Ingestion
     ingestPaste: async (data: { text: string; customer_name?: string; structured?: any }) => {
-        return apiClient.post('/orders/ingest', {
+        return apiClient.post<IngestResponse>('/orders/ingest', {
             kind: 'paste',
             ...data
         });
@@ -59,12 +60,12 @@ export const ordersApi = {
 
     // Events (for activity and toast updates)
     getEvents: async (params?: { after?: number; order_id?: string; limit?: number }) => {
-        return apiClient.get('/events', { params });
+        return apiClient.get<EventsResponse>('/events', { params });
     },
 
     // Analytics
     getImpact: async () => {
-        return apiClient.get('/metrics/impact');
+        return apiClient.get<ImpactResponse>('/metrics/impact');
     },
     
     getEvalReports: async () => {

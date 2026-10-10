@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
@@ -32,6 +32,9 @@ export default function PasteOrderPage() {
     const [zone, setZone] = useState("");
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
+    // The public demo discards the customer name (the server never stores it), so the field is not shown there.
+    const [publicDemo, setPublicDemo] = useState(false);
+    useEffect(() => { ordersApi.health().then(h => setPublicDemo(h?.mode === "public")).catch(() => {}); }, []);
 
     const loadExample = (ex: { text: string, name: string, product: string, price: number, zone: string }) => {
         setText(ex.text); setName(ex.name); setProduct(ex.product); setPrice(String(ex.price)); setZone(ex.zone); setError("");
@@ -44,7 +47,7 @@ export default function PasteOrderPage() {
         try {
             const res = await ordersApi.ingestPaste({
                 text: text.trim(),
-                customer_name: name || undefined,
+                customer_name: publicDemo ? undefined : name || undefined,
                 structured: { product_name: product || undefined, price_tnd: price ? parseFloat(price) : undefined, zone: zone || undefined },
             });
             const orderId = res?.created?.[0]?.order_id;
@@ -104,8 +107,10 @@ export default function PasteOrderPage() {
 
                     <Details label="Order details (optional)">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                            <label className="block"><span className="block text-sm font-medium text-gray-800 mb-1.5">Customer name</span>
-                                <input dir="auto" className={field} maxLength={40} value={name} onChange={e => setName(e.target.value)} /></label>
+                            {!publicDemo && (
+                                <label className="block"><span className="block text-sm font-medium text-gray-800 mb-1.5">Customer name</span>
+                                    <input dir="auto" className={field} maxLength={40} value={name} onChange={e => setName(e.target.value)} /></label>
+                            )}
                             <label className="block"><span className="block text-sm font-medium text-gray-800 mb-1.5">Product</span>
                                 <input className={field} value={product} onChange={e => setProduct(e.target.value)} /></label>
                             <label className="block"><span className="block text-sm font-medium text-gray-800 mb-1.5">Price (TND)</span>

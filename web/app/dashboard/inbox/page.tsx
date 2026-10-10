@@ -3,12 +3,13 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ordersApi } from "@/lib/api/orders";
-import { Page, PageHeader, Guide, StatCard, ReadBy, RiskBadge, Empty, LoadError, STATUS, tunisTime } from "@/components/wasel/kit";
+import type { HealthResponse, OrderListResponse, OrderSummary } from "@/lib/api/types";
+import { Page, PageHeader, Guide, Section, StatCard, ReadBy, RiskBadge, Empty, LoadError, STATUS, tunisTime } from "@/components/wasel/kit";
 
 export default function InboxPage() {
     const router = useRouter();
-    const [data, setData] = useState<any>(null);
-    const [health, setHealth] = useState<any>(null);
+    const [data, setData] = useState<OrderListResponse | null>(null);
+    const [health, setHealth] = useState<HealthResponse | null>(null);
     const [error, setError] = useState(false);
 
     useEffect(() => {
@@ -22,10 +23,12 @@ export default function InboxPage() {
     }, []);
 
     const rows = (data?.orders || [])
-        .filter((r: any) => r.channel === "whatsapp")
-        .sort((a: any, b: any) => b.updated_at.localeCompare(a.updated_at));
-    const count = (s: string) => rows.filter((r: any) => r.status === s).length;
+        .filter((r: OrderSummary) => r.channel === "whatsapp")
+        .sort((a: OrderSummary, b: OrderSummary) => b.updated_at.localeCompare(a.updated_at));
+    const count = (s: string) => rows.filter((r: OrderSummary) => r.status === s).length;
     const connected = health?.webhook === "enabled";
+    // Public demo without WhatsApp: nothing will ever arrive here, so explain the page instead of showing zeros.
+    const publicDemo = health?.mode === "public" && !connected && rows.length === 0;
 
     return (
         <Page>
@@ -46,10 +49,22 @@ export default function InboxPage() {
             )}
             {error && <LoadError what="the WhatsApp messages" />}
 
+            {publicDemo ? (
+                <Section title="What arrives here on a live server">
+                    <p className="text-sm text-gray-700 max-w-prose">
+                        Each WhatsApp message a customer sends to your business number lands on this page within seconds, already scored.
+                        The public demo has no WhatsApp number connected, so nothing arrives here.
+                    </p>
+                    <button type="button" onClick={() => router.push("/dashboard/paste")}
+                            className="mt-4 min-h-[44px] px-4 rounded-xl bg-brand text-white text-sm font-semibold hover:bg-brand-hover">
+                        Try it with a pasted message
+                    </button>
+                </Section>
+            ) : (<>
             <div className="grid grid-cols-3 gap-2 sm:gap-4">
-                <StatCard label="Conversations" value={rows.length} hint="From WhatsApp" />
-                <StatCard label="Needs your decision" value={count("needs_review")} tone={count("needs_review") ? "warn" : "default"} hint="Open them first" />
-                <StatCard label="Waiting for customer" value={count("awaiting_reply")} hint="A question was sent" />
+                <StatCard label="Conversations" value={data ? rows.length : "–"} hint="From WhatsApp" />
+                <StatCard label="Needs your decision" value={data ? count("needs_review") : "–"} tone={count("needs_review") ? "warn" : "default"} hint="Open them first" />
+                <StatCard label="Waiting for customer" value={data ? count("awaiting_reply") : "–"} hint="A question was sent" />
             </div>
 
             <section aria-label="WhatsApp conversations" className="bg-white rounded-2xl border border-gray-200/70 shadow-sm overflow-hidden">
@@ -61,7 +76,7 @@ export default function InboxPage() {
                     </Empty>
                 ) : (
                     <ul className="divide-y divide-gray-100">
-                        {rows.map((o: any) => (
+                        {rows.map((o: OrderSummary) => (
                             <li key={o.order_id}>
                                 <button type="button" onClick={() => router.push(`/dashboard/order?id=${o.order_id}`)}
                                         className="w-full text-left flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-3.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
@@ -85,6 +100,7 @@ export default function InboxPage() {
                     </ul>
                 )}
             </section>
+            </>)}
         </Page>
     );
 }

@@ -5,6 +5,10 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { ArrowLeft, Check, Lock, MapPin, X, ShieldAlert } from 'lucide-react';
 import { ordersApi } from '@/lib/api/orders';
+import type {
+    AdjustmentView, AssessmentView, DraftJudge, DraftView, FactorView, FlagView, HealthResponse, MessageView,
+    OrderDetailResponse, OrderSummary, Segment,
+} from '@/lib/api/types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import {
@@ -76,7 +80,7 @@ const RESCORE: Record<string, string> = {
 };
 
 // Server segments: text nodes only, no HTML; the join of segment texts equals the message text.
-function Segments({ segments }: { segments: any[] }) {
+function Segments({ segments }: { segments: Segment[] }) {
     return <>{segments.map((s, i) => s.kind
         ? <mark key={i} tabIndex={0} title={s.label ?? ""}
                 className={s.kind === "risk"
@@ -89,17 +93,20 @@ function Segments({ segments }: { segments: any[] }) {
 
 // resolved_flags can come back empty even when reason_diff lists resolved signs: fall back to the
 // previous version's flag codes that are gone from this one.
-function resolvedFlags(a: any, prev: any | undefined): string[] {
+// Assessment cards with the warning signs this version resolved (computed from the previous version when the API leaves it empty).
+type AssessmentCard = AssessmentView & { resolved: string[] };
+
+function resolvedFlags(a: AssessmentView, prev: AssessmentView | undefined): string[] {
     if (a.resolved_flags?.length) return a.resolved_flags;
     if (!prev) return [];
-    const now = new Set((a.flags || []).map((f: any) => f.code));
-    return [...new Set<string>((prev.flags || []).map((f: any) => f.code))].filter(c => !now.has(c));
+    const now = new Set<string>((a.flags || []).map(f => f.code));
+    return [...new Set<string>((prev.flags || []).map(f => f.code))].filter(c => !now.has(c));
 }
 
 const stripTier = (s?: string | null) => (s || "").replace(/^(HIGH|MEDIUM|LOW) \d+ · /, "");
 
-function ScoreHistory({ assessments, rescoreState }: { assessments: any[], rescoreState: string }) {
-    const cards = assessments.map((a, i) => ({ ...a, resolved: resolvedFlags(a, assessments[i - 1]) })).reverse();
+function ScoreHistory({ assessments, rescoreState }: { assessments: AssessmentView[], rescoreState: string }) {
+    const cards: AssessmentCard[] = assessments.map((a, i) => ({ ...a, resolved: resolvedFlags(a, assessments[i - 1]) })).reverse();
     return (
         <ol className="space-y-3">
             <li aria-live="polite" className="list-none">
@@ -109,7 +116,7 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: any[], resco
                     </div>
                 )}
             </li>
-            {cards.map((a: any) => (
+            {cards.map((a: AssessmentCard) => (
                 <li key={a.assessment_id} className="rounded-xl border border-gray-200 p-3">
                     <div className="flex items-center justify-between gap-2">
                         <span className="text-xs font-semibold text-gray-700">
@@ -129,12 +136,12 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: any[], resco
                     )}
                     {a.flags?.length > 0 && (
                         <p className="text-sm text-gray-700 mt-2">
-                            Warning signs: {a.flags.map((f: any, i: number) => (
+                            Warning signs: {a.flags.map((f: FlagView, i: number) => (
                                 <span key={i}>{i > 0 && ", "}{FLAG[f.code] ?? f.label} (“<bdi dir="auto">{f.quote}</bdi>”)</span>
                             ))}
                         </p>
                     )}
-                    {a.rules_alone && (a.rules_alone.tier !== a.tier || a.rules_alone.reason_short !== a.reason_short) && (
+                    {a.rules_alone && (a.rules_alone.tier !== a.tier || a.rules_alone.final_score !== a.final_score) && (
                         <p className="text-xs text-gray-700 mt-2 rounded-lg bg-gray-50 border border-gray-200 px-2.5 py-1.5">
                             <span className="font-semibold">What the rules alone would have said:</span>{" "}
                             {(TIER[a.rules_alone.tier]?.label ?? a.rules_alone.tier)} {a.rules_alone.final_score}
@@ -150,7 +157,7 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: any[], resco
                         {a.adjustments?.length > 0 && (
                             <p className="font-mono">
                                 Model {Math.round(a.model_score)}
-                                {a.adjustments.map((adj: any, i: number) => <span key={i}> → {adj.label} ({adj.effect})</span>)}
+                                {a.adjustments.map((adj: AdjustmentView, i: number) => <span key={i}> → {adj.label} ({adj.effect})</span>)}
                                 {" "}→ {a.final_score}
                             </p>
                         )}
@@ -252,9 +259,9 @@ const ROUTE_TEXT: Record<string, string> = {
     blocked: "Blocked by the checks: the standard message is used instead.",
 };
 
-function DraftChecks({ draft, autoSend }: { draft: any, autoSend: boolean }) {
-    const j = draft.judge || {};
-    const clf = j.classifier || {};
+function DraftChecks({ draft, autoSend }: { draft: DraftView, autoSend: boolean }) {
+    const j: DraftJudge = draft.judge || {};
+    const clf: NonNullable<DraftJudge['classifier']> = j.classifier || {};
     const decision = clf.decision ? DECISION[clf.decision] : null;
     const rewrite = draft.source === "llm_rewrite";
     const judge = !rewrite ? null
@@ -296,7 +303,7 @@ function DraftChecks({ draft, autoSend }: { draft: any, autoSend: boolean }) {
                         ? `unavailable (${j.reason ?? "no answer"}), ${clf.decision === "send" ? "sent on the safety model's clear" : "a person must check it"}.`
                         : j.decided_by === "llm" ? `${j.approved ? "approved" : "rejected"}${j.judge_model ? ` by ${j.judge_model}` : ""}; the decision is re-checked in code.`
                         : "not reached (the safety model decided)."}</p>
-                    {j.unsupported_claims?.length > 0 && <p>Claims the order doesn't support: {j.unsupported_claims.join("; ")}</p>}
+                    {(j.unsupported_claims ?? []).length > 0 && <p>Claims the order doesn't support: {(j.unsupported_claims ?? []).join("; ")}</p>}
                     {draft.canonical_text && <p>Adapted from the approved message: <bdi dir="auto">{draft.canonical_text}</bdi></p>}
                 </Details>
             )}
@@ -308,14 +315,16 @@ function OrderDetailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [orderId, setOrderId] = useState<string | null>(searchParams.get('id'));
-    const [orderData, setOrderData] = useState<any>(null);
-    const [allOrders, setAllOrders] = useState<any[]>([]);
-    const [health, setHealth] = useState<any>(null);
+    const [orderData, setOrderData] = useState<OrderDetailResponse | null>(null);
+    const [allOrders, setAllOrders] = useState<OrderSummary[]>([]);
+    const [health, setHealth] = useState<HealthResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
     const [busy, setBusy] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const fastUntil = useRef(0);
+    // The id the page opened with: decides, once on mount, whether to select the newest order.
+    const openedWithId = useRef(orderId);
 
     const loadList = useCallback(() => ordersApi.getOrders({ include_collecting: true }).then((res) => {
         setAllOrders(res.orders || []);
@@ -336,14 +345,14 @@ function OrderDetailContent() {
 
     useEffect(() => {
         ordersApi.health().then(setHealth).catch(() => {});
-        loadList().then((orders: any[]) => {
-            if (!orderId && orders.length > 0) {
+        loadList().then((orders: OrderSummary[]) => {
+            if (!openedWithId.current && orders.length > 0) {
                 const firstId = orders[0].order_id;
                 setOrderId(firstId);
                 router.replace(`/dashboard/order?id=${firstId}`);
             }
         }).catch(() => setLoading(false));
-    }, []);
+    }, [loadList, router]);
 
     // Poll the selected order: 1 s while it is rescoring (or right after a reply/Try), else 3 s.
     useEffect(() => {
@@ -401,8 +410,8 @@ function OrderDetailContent() {
 
     const { order: o, assessments, customer, drafts, scripted_replies, capabilities, conversation } = orderData;
     const latest = assessments?.length ? assessments[assessments.length - 1] : null;
-    const messages = [...(conversation?.messages || [])].sort((a: any, b: any) => a.provider_ts.localeCompare(b.provider_ts));
-    const currentDraft = [...(drafts || [])].reverse().find((d: any) => d.route !== "blocked") ?? null;
+    const messages = [...(conversation?.messages || [])].sort((a: MessageView, b: MessageView) => a.provider_ts.localeCompare(b.provider_ts));
+    const currentDraft = [...(drafts || [])].reverse().find((d: DraftView) => d.route !== "blocked") ?? null;
     const unsentDraft = currentDraft && !currentDraft.sent_message_id ? currentDraft : null;
     const waSend = health?.wa_send === true;
     const primary = capabilities?.read_only ? null : PRIMARY_BY_STATUS[o.status];
@@ -426,7 +435,7 @@ function OrderDetailContent() {
                         {!o.is_seeded && o.seed_key && <Chip tone="blue">Your copy</Chip>}
                     </div>
                     <p className="text-sm text-gray-600">
-                        {[o.product_name ? `${o.product_name}${o.quantity > 1 ? ` × ${o.quantity}` : ""}` : null,
+                        {[o.product_name ? `${o.product_name}${(o.quantity ?? 0) > 1 ? ` × ${o.quantity}` : ""}` : null,
                           o.price_tnd != null ? tnd(o.price_tnd) : null,
                           o.zone ? `${o.zone} zone${o.zone_source === "default" ? " (assumed)" : ""}` : null,
                           history].filter(Boolean).join(" · ")}
@@ -437,7 +446,7 @@ function OrderDetailContent() {
                         <SelectValue placeholder="Switch order" />
                     </SelectTrigger>
                     <SelectContent>
-                        {allOrders.map((ord: any) => (
+                        {allOrders.map((ord: OrderSummary) => (
                             <SelectItem key={ord.order_id} value={ord.order_id}>
                                 {ord.order_ref} · {ord.customer?.display_name || '?'} · {ord.score ? `${TIER[ord.score.tier]?.label} ${ord.score.final_score}` : 'scoring'}
                             </SelectItem>
@@ -511,9 +520,9 @@ function OrderDetailContent() {
                         <div className="bg-wa-bg rounded-xl p-4 max-h-[460px] overflow-y-auto">
                             {messages.length > 0 ? (
                                 <div className="flex flex-col gap-2">
-                                    {messages.map((m: any) => {
+                                    {messages.map((m: MessageView) => {
                                         const isCustomer = m.author === 'customer';
-                                        const sentDraft = (drafts || []).find((d: any) => d.sent_message_id === m.message_id);
+                                        const sentDraft = (drafts || []).find((d: DraftView) => d.sent_message_id === m.message_id);
                                         return (
                                             <div key={m.message_id} className={`flex flex-col max-w-[85%] ${isCustomer ? 'self-start' : 'self-end'}`}>
                                                 <div className={`p-3 rounded-2xl ${isCustomer ? 'bg-white rounded-bl-sm' : 'bg-wa-out rounded-br-sm'} text-gray-900 shadow-sm`}>
@@ -601,7 +610,7 @@ function OrderDetailContent() {
                             <>
                                 {latest.top_factors?.length > 0 ? (
                                     <ul className="space-y-3">
-                                        {latest.top_factors.slice(0, 4).map((f: any, idx: number) => {
+                                        {latest.top_factors.slice(0, 4).map((f: FactorView, idx: number) => {
                                             const isRisk = f.contribution > 0;
                                             return (
                                                 <li key={idx}>

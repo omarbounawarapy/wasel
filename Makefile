@@ -52,6 +52,9 @@ deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `m
 	@echo "then check it from outside: make smoke URL=<your public URL>"
 
 # ---- Cloudflare (Worker + Container + R2; docs/operations/cloudflare.md). Needs no Cloudflare account except cf-deploy-*
+lock: ## regenerate deploy/cloudflare/container/requirements.lock (hashed, linux/amd64 wheels; needs uv)
+	uv pip compile deploy/cloudflare/container/requirements.txt --generate-hashes --python-version 3.11 --python-platform x86_64-manylinux_2_28 --no-strip-extras -o deploy/cloudflare/container/requirements.lock
+
 cf-install: ## npm ci for deploy/cloudflare (wrangler, @cloudflare/containers)
 	cd deploy/cloudflare && npm ci --no-audit --no-fund
 
@@ -64,6 +67,13 @@ cf-image: ## build the container image locally (what wrangler deploys), tag wase
 
 cf-smoke: ## run the image locally (docker/podman): keyless boot, smoke test, state survives a wiped disk, corrupt snapshot refused
 	$(PY) scripts/ops/cf_local_smoke.py
+
+render-smoke: ## build the Render image, run it on :10000 and smoke-test it (docker/podman; CI runs this)
+	docker build -f deploy/render/Dockerfile -t wasel-render .
+	-docker rm -f wasel-render-smoke >/dev/null 2>&1
+	docker run -d --name wasel-render-smoke -p 10000:10000 -e PORT=10000 wasel-render >/dev/null
+	trap 'docker rm -f wasel-render-smoke >/dev/null 2>&1' EXIT; \
+	$(PY) scripts/dev/wait_health.py http://127.0.0.1:10000 && $(PY) scripts/ops/smoke.py http://127.0.0.1:10000
 
 cf-dev: web ## wrangler dev: the Worker + container locally on :8787 (needs Docker; secrets from deploy/cloudflare/.dev.vars)
 	cd deploy/cloudflare && npx wrangler dev --port 8787
@@ -84,7 +94,7 @@ llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_AR
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)
 	bash scripts/ops/vllm_serve.sh check
 
-.PHONY: help setup run up ui web web-dev serve tunnel deploy cf-install cf-check cf-image cf-smoke cf-dev cf-dry-run cf-deploy wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
+.PHONY: help setup lock run up ui web web-dev serve tunnel deploy cf-install cf-check cf-image cf-smoke render-smoke cf-dev cf-dry-run cf-deploy wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

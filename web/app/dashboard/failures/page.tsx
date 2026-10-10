@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ordersApi } from "@/lib/api/orders";
-import { Page, PageHeader, Guide, Section, StatCard, Details, Chip, Empty } from "@/components/wasel/kit";
+import { Page, PageHeader, Guide, Section, StatCard, Details, Chip, Empty, LoadError } from "@/components/wasel/kit";
 
 // Group ranked issues by problem (same type), keep the best rank first.
 function groupIssues(issues: any[]) {
@@ -36,10 +36,13 @@ const plainSignature = (sig: string) => SIGNATURE_LABELS[sig] ?? String(sig).rep
 export default function FailuresPage() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-    useEffect(() => {
-        ordersApi.getFailures().then(setData).catch(() => {}).finally(() => setLoading(false));
+    const load = useCallback(() => {
+        setLoading(true);
+        ordersApi.getFailures().then(d => { setData(d); setError(false); }).catch(() => setError(true)).finally(() => setLoading(false));
     }, []);
+    useEffect(() => { load(); }, [load]);
 
     const groups = data?.issues ? groupIssues(data.issues) : [];
     const failed = data?.by_status?.failure ?? 0;
@@ -57,7 +60,7 @@ export default function FailuresPage() {
                 "Each card lists the specific cases and how often they happened.",
             ]} />
 
-            {loading ? <p className="text-gray-600">Loading…</p> : !data?.issues ? (
+            {error ? <LoadError what="the silent-failure report" onRetry={load} /> : loading ? <p className="text-gray-600">Loading…</p> : !data?.issues ? (
                 <Section title="No report yet"><Empty title="The silent-failure analysis hasn't been run on this server." /></Section>
             ) : (
                 <>

@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
-import { Page, PageHeader, Section, StatCard, Details, Empty } from "@/components/wasel/kit";
+import { Page, PageHeader, Section, StatCard, Details, Empty, LoadError } from "@/components/wasel/kit";
 
 const pct = (v: number) => `${(v * 100).toFixed(0)}%`;
 const num = (v: number) => Math.round(v).toLocaleString("en-US");
@@ -11,10 +11,13 @@ const num = (v: number) => Math.round(v).toLocaleString("en-US");
 export default function ImpactPage() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-    useEffect(() => {
-        ordersApi.getImpact().then(setData).catch(() => {}).finally(() => setLoading(false));
+    const load = useCallback(() => {
+        setLoading(true);
+        ordersApi.getImpact().then(d => { setData(d); setError(false); }).catch(() => setError(true)).finally(() => setLoading(false));
     }, []);
+    useEffect(() => { load(); }, [load]);
 
     const sens = data?.tnd_saved_per_1000_by_confirm_rate;
     const vals: number[] = sens ? Object.values(sens).map(Number) : [];
@@ -26,7 +29,7 @@ export default function ImpactPage() {
                 title="Money saved"
                 subtitle="How much wasted delivery cost Wasel avoids when you follow its advice. This is a simulation on synthetic orders, not real sales." />
 
-            {loading ? <p className="text-gray-600">Loading…</p> : !data?.n_orders ? (
+            {error ? <LoadError what="the money-saved report" onRetry={load} /> : loading ? <p className="text-gray-600">Loading…</p> : !data?.n_orders ? (
                 <Section title="No estimate yet"><Empty title="The impact report hasn't been generated on this server." /></Section>
             ) : (
                 <>

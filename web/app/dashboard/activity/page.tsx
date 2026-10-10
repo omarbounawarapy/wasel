@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Info, CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
+import type { EventView } from "@/lib/api/types";
 import { Page, PageHeader, StatCard, Empty, LoadError, tunisTime } from "@/components/wasel/kit";
 
 // the server titles seller actions as "Order <action>": say them in plain words
@@ -24,8 +25,7 @@ const LEVEL: Record<string, { icon: typeof Info, cls: string, label: string }> =
 };
 
 export default function ActivityPage() {
-    const router = useRouter();
-    const [events, setEvents] = useState<any[] | null>(null);
+    const [events, setEvents] = useState<EventView[] | null>(null);
     const [error, setError] = useState(false);
     const [onlyWarnings, setOnlyWarnings] = useState(false);
 
@@ -33,7 +33,7 @@ export default function ActivityPage() {
         const load = async () => {
             try {
                 // the API pages forward from `after`: walk to the end, keep the newest 300
-                let after = 0, out: any[] = [];
+                let after = 0, out: EventView[] = [];
                 for (let i = 0; i < 10; i++) {
                     const page = await ordersApi.getEvents({ after, limit: 200 });
                     out = out.concat(page.events || []);
@@ -95,10 +95,10 @@ export default function ActivityPage() {
                                         {ev.detail && <span className="block text-xs text-gray-600 break-words">{ev.detail}</span>}
                                     </span>
                                     {ev.order_ref && ev.order_id && (
-                                        <button type="button" onClick={() => router.push(`/dashboard/order?id=${ev.order_id}`)}
-                                                className="shrink-0 text-xs font-semibold text-brand hover:underline tabular-nums min-h-[44px] min-w-[44px]">
+                                        <Link href={`/dashboard/order?id=${ev.order_id}`} prefetch={false}
+                                              className="shrink-0 inline-flex items-center text-xs font-semibold text-brand hover:underline tabular-nums min-h-[44px] min-w-[44px]">
                                             {ev.order_ref}
-                                        </button>
+                                        </Link>
                                     )}
                                 </li>
                             );

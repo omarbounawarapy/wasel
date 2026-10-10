@@ -1,9 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { CheckCircle2, XCircle } from "lucide-react";
 import { ordersApi } from "@/lib/api/orders";
-import { Page, PageHeader, Guide, Section, Details, Empty } from "@/components/wasel/kit";
+import { Page, PageHeader, Guide, Section, Details, Empty, LoadError } from "@/components/wasel/kit";
 
 // Plain names and the few numbers that matter per test suite; everything else sits under "All results".
 const SUITES: Record<string, { name: string, what: string, key: [string, string][] }> = {
@@ -112,10 +112,13 @@ function Report({ report, title, subtitle }: { report: any, title: string, subti
 export default function QualityPage() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
 
-    useEffect(() => {
-        ordersApi.getEvalReports().then(setData).catch(() => {}).finally(() => setLoading(false));
+    const load = useCallback(() => {
+        setLoading(true);
+        ordersApi.getEvalReports().then(d => { setData(d); setError(false); }).catch(() => setError(true)).finally(() => setLoading(false));
     }, []);
+    useEffect(() => { load(); }, [load]);
 
     return (
         <Page>
@@ -130,7 +133,7 @@ export default function QualityPage() {
                 "Open “All results” on a card for the detailed numbers.",
             ]} />
 
-            {loading ? <p className="text-gray-600">Loading…</p> : !data?.offline && !data?.live ? (
+            {error ? <LoadError what="the quality reports" onRetry={load} /> : loading ? <p className="text-gray-600">Loading…</p> : !data?.offline && !data?.live ? (
                 <Section title="No test results yet"><Empty title="The quality reports haven't been generated on this server." /></Section>
             ) : (
                 <div className="space-y-10">

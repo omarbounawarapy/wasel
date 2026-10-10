@@ -12,8 +12,9 @@ ENV PYTHONUNBUFFERED=1 \
     PORT=8000
 
 WORKDIR /app
-COPY deploy/cloudflare/container/requirements.txt /tmp/requirements.txt
-RUN pip install -r /tmp/requirements.txt && rm /tmp/requirements.txt
+# Hashed lock (make lock): every transitive package is pinned and verified, not just the direct ones.
+COPY deploy/cloudflare/container/requirements.lock /tmp/requirements.lock
+RUN pip install --require-hashes -r /tmp/requirements.lock && rm /tmp/requirements.lock
 
 # immutable deployment assets (wasel.paths.ROOT is /app: src/wasel/paths.py -> parents[2])
 COPY src ./src

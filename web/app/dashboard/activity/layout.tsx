@@ -1,0 +1,10 @@
+import type { Metadata } from "next"
+
+export const metadata: Metadata = {
+    title: "Activity log · Wasel",
+}
+
+// Server layout only: gives this route its own browser-tab title in the static export.
+export default function Layout({ children }: { children: React.ReactNode }) {
+    return children
+}

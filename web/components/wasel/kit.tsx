@@ -203,10 +203,16 @@ export function Empty({ title, children }: { title: string, children?: ReactNode
     );
 }
 
-export function LoadError({ what }: { what: string }) {
+export function LoadError({ what, onRetry }: { what: string, onRetry?: () => void }) {
     return (
-        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 text-red-800 text-sm p-4">
-            Could not load {what}. Check that the Wasel server is running, then refresh the page.
+        <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 text-red-800 text-sm p-4 flex flex-wrap items-center justify-between gap-3">
+            <span>Could not load {what}. Check that the Wasel server is running, then {onRetry ? "try again." : "refresh the page."}</span>
+            {onRetry && (
+                <button type="button" onClick={onRetry}
+                        className="min-h-[44px] px-4 rounded-xl bg-white border border-red-300 font-medium text-red-900 hover:bg-red-100">
+                    Retry
+                </button>
+            )}
         </div>
     );
 }
