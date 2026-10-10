@@ -167,7 +167,7 @@ class AppState:
                     budget_s=TICK_BUDGET_S, order_timeout_s=ORDER_TIMEOUT_S)
         if self.settings.wa_auto_send and not self.settings.is_public:
             from wasel.api.commands import auto_send_due
-            auto_send_due(conn, self.ids, now, self.settings, self.sender)
+            auto_send_due(conn, self.ids, now, self.settings, self.sender, on_sent=self.flush)
 
     def purge(self, now) -> int:
         """Delete visitor sandbox rows older than the TTL. Returns the number of orders purged."""
@@ -279,6 +279,11 @@ class AppState:
     def snapshot(self, now, *, force: bool = False) -> bool:
         """Save the DB to the snapshot store if one is configured and a save is due (or `force`). Never raises."""
         return self.snapshotter is not None and self.snapshotter.tick(self.conn(), now, force=force)
+
+    def flush(self) -> bool:
+        """Make the snapshot store current before a boundary operation returns. True when there is no store or it
+        now holds this content. Never raises."""
+        return self.snapshotter is None or self.snapshotter.flush(self.conn(), self.clock.now())
 
     def reset(self) -> tuple[int, int]:
         """Delete every order and its related rows, then reseed. Returns (orders deleted, orders reseeded)."""

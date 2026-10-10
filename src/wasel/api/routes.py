@@ -153,8 +153,9 @@ def send_draft(draft_id: str, request: Request, vid: str | None = Depends(visito
     st = _s(request)
     vid = require_visitor(request, vid)
     _address_guard(request, st, vid)
-    return M.SendDraftResponse(**commands.send_draft(st.conn(), st.ids, st.clock.now(), st.settings, vid, draft_id,
-                                                         st.sender))
+    out = commands.send_draft(st.conn(), st.ids, st.clock.now(), st.settings, vid, draft_id, st.sender)
+    st.flush()                  # the send happened; a failed save shows in /api/health, it cannot undo the send
+    return M.SendDraftResponse(**out)
 
 
 @router.get("/events")

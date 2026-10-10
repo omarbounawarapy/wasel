@@ -59,8 +59,9 @@ async def receive(request: Request):
     """Accept a WhatsApp webhook POST.
 
     Checks the size cap and the X-Hub-Signature-256 signature on the raw body (401 and a webhook.rejected event on
-    failure), then stores the payload and answers 200 only after it is committed. If a message could not be stored
-    (a locked database) the answer is 503, so Meta retries; messages already stored are skipped by their wamid.
+    failure), then stores the payload and answers 200 only after it is committed and, when a snapshot store is set,
+    saved to it. If a message could not be stored or saved (a locked database) the answer is 503, so Meta retries;
+    messages already stored are skipped by their wamid.
     """
     core = request.app.state.core
     cl = request.headers.get("content-length")
@@ -84,6 +85,9 @@ async def receive(request: Request):
     counts = await asyncio.to_thread(process, core, raw)
     if counts["errors"]:
         return JSONResponse({"error": {"code": "WEBHOOK_NOT_STORED", "message": "try again"}}, status_code=503)
+    if counts["new"] or counts["duplicate"] or counts["statuses"]:
+        if not await asyncio.to_thread(core.flush):         # Meta's 200 means "kept": not before the store has it
+            return JSONResponse({"error": {"code": "WEBHOOK_NOT_STORED", "message": "try again"}}, status_code=503)
     return JSONResponse({})
 
 

@@ -238,3 +238,59 @@ def test_restore_rejects_an_image_that_fails_the_integrity_check(tmp_path):
     with pytest.raises(S.SnapshotError, match="integrity_check"):
         S.restore(store, tmp_path / "app.db")
     assert not (tmp_path / "app.db").exists()
+
+
+# ---------------------------------------------------------------- durability at the boundary operations
+def _restored_orders(tmp_path, store_url):
+    """What a brand-new disk would hold right now, read from the store (the process is still running)."""
+    disk = tmp_path / "fresh-disk"
+    disk.mkdir(exist_ok=True)
+    db = disk / "restored.db"
+    S.restore(S.store_from_url(store_url), db)
+    conn = connect(db)
+    try:
+        return {r["channel_message_id"] for r in conn.execute("SELECT channel_message_id FROM messages")}, \
+            {r["draft_id"] for r in conn.execute("SELECT draft_id FROM outbound_drafts WHERE sent_message_id IS NOT NULL")}
+    finally:
+        conn.close()
+
+
+def _sub(tmp_path):
+    d = tmp_path / "a"
+    d.mkdir(exist_ok=True)
+    return d
+
+
+def test_acknowledged_webhook_message_is_in_the_store_before_the_200(tmp_path):
+    from tests.integration.test_whatsapp import WA, wa_post
+    c, core, _ = make_client(_sub(tmp_path), "dev", snapshot_url=_url(tmp_path), seed_on_boot="if_empty", **WA)
+    with c:
+        assert wa_post(c, "text_inbound").status_code == 200
+        # no shutdown, no interval tick: only what the request itself saved
+        wamids, _ = _restored_orders(tmp_path, _url(tmp_path))
+        assert "wamid.TEST1" in wamids
+
+
+def test_failed_save_makes_the_webhook_answer_503_so_meta_retries(tmp_path):
+    from tests.integration.test_whatsapp import WA, wa_post
+    c, core, _ = make_client(_sub(tmp_path), "dev", snapshot_url=_url(tmp_path), seed_on_boot="if_empty", **WA)
+    with c:
+        def broken(data):
+            raise S.SnapshotError("disk full")
+        core.snapshotter.store.save = broken
+        r = wa_post(c, "text_inbound")
+        assert r.status_code == 503 and r.json()["error"]["code"] == "WEBHOOK_NOT_STORED"
+        del core.snapshotter.store.save                      # the store is back: the retry is a duplicate and saves
+        assert wa_post(c, "text_inbound").status_code == 200
+        assert "wamid.TEST1" in _restored_orders(tmp_path, _url(tmp_path))[0]
+
+
+def test_recorded_send_is_in_the_store_when_the_request_returns(tmp_path):
+    from tests.integration.test_whatsapp import WA, _draft_for, _sender
+    c, core, clock = make_client(_sub(tmp_path), "dev", snapshot_url=_url(tmp_path), seed_on_boot="if_empty",
+                                 wa_send_enabled=True, wa_token="test-token", **WA)
+    with c:
+        core.sender = _sender([])
+        _, _, d = _draft_for(c, core, clock)
+        assert c.post(f"/api/drafts/{d['draft_id']}/send").status_code == 200
+        assert d["draft_id"] in _restored_orders(tmp_path, _url(tmp_path))[1]

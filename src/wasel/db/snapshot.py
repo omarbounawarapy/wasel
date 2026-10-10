@@ -18,6 +18,7 @@ import hashlib
 import logging
 import os
 import sqlite3
+import threading
 from datetime import datetime
 from pathlib import Path
 from typing import Protocol
@@ -176,13 +177,26 @@ class Snapshotter:
         self.failures = 0
         self.last_error: str | None = None              # exception type of the last failed save, no message
         self.size_bytes: int | None = None              # size of the last saved image
+        self._lock = threading.Lock()                   # one save in flight; a caller that waits saves the newer state
 
     def seed_digest(self, conn: sqlite3.Connection) -> None:
         """Remember the current content as already stored (call right after a restore)."""
         self._digest = hashlib.sha256(serialize_db(conn)).hexdigest()
 
+    def flush(self, conn: sqlite3.Connection, now: datetime) -> bool:
+        """Save now unless the stored copy already matches. True if the store holds the current content afterwards.
+
+        For the moments that must not be lost (an acknowledged webhook, a recorded send). Never raises.
+        """
+        self.tick(conn, now, force=True)
+        return self.failures == 0
+
     def tick(self, conn: sqlite3.Connection, now: datetime, *, force: bool = False) -> bool:
         """Save if due (or `force`) and changed. True if a save happened. Never raises: failures are counted."""
+        with self._lock:
+            return self._tick(conn, now, force)
+
+    def _tick(self, conn: sqlite3.Connection, now: datetime, force: bool) -> bool:
         if not force and self._last_attempt and (now - self._last_attempt).total_seconds() < self.interval_s:
             return False
         self._last_attempt = now

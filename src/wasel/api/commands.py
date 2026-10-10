@@ -325,7 +325,7 @@ def send_draft(conn, ids: IdGen, now: datetime, settings: Settings, vid: str | N
     return {"draft_id": draft_id, "sent_message_id": mid, "sent_at": utc_iso(now), "delivery": delivery}
 
 
-def auto_send_due(conn, ids: IdGen, now: datetime, settings: Settings, sender) -> list[str]:
+def auto_send_due(conn, ids: IdGen, now: datetime, settings: Settings, sender, on_sent=None) -> list[str]:
     """Send every unsent auto_send draft (WA_AUTO_SEND, never in public mode). route=auto_send already means
     the auto_send gate passed (route.py): the classifier cleared the draft, confidence high, price under the
     cap, loop guard and 24 h window. Real WhatsApp conversations go out through the Cloud API; any other
@@ -333,6 +333,7 @@ def auto_send_due(conn, ids: IdGen, now: datetime, settings: Settings, sender) -
 
     A draft gets one automatic attempt. If it fails (WhatsApp refused, outside the 24 h window, no recipient) it moves to
     needs_review with one error event, so the worker does not retry it every tick and a person decides what happens next.
+    `on_sent` runs after each recorded send (the app passes the snapshot flush, so a crash cannot replay the send).
     """
     if not settings.wa_auto_send or settings.is_public:
         return []
@@ -344,6 +345,8 @@ def auto_send_due(conn, ids: IdGen, now: datetime, settings: Settings, sender) -
         try:
             send_draft(conn, ids, now, settings, None, d["draft_id"], sender, decided_by="system")
             sent.append(d["draft_id"])
+            if on_sent:
+                on_sent()
         except ApiError as e:
             if e.code in ("ALREADY_SENT", "SEND_IN_PROGRESS"):      # a person got there first
                 continue
