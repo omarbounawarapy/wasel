@@ -19,7 +19,7 @@ curl -s 'localhost:8000/api/events?limit=30'                  # recent events: e
 | Start-up validation error from pydantic (`Input should be ...`) | An invalid value in `.env` or the environment for a typed setting such as `SEED_ON_BOOT`, `LLM_MODE` or a boolean. The message names the field. Values are listed in [environment](../configuration/environment.md). |
 | `ModuleNotFoundError: No module named 'wasel'` | The package is not installed in the interpreter you are using. Run `make setup` (it installs the package editable) and use the same `.venv`, or `PY=...`. |
 | `make up` prints `API at ... did not answer /api/health within 180 s` | The API process died or hangs. Run `make run` in the foreground to see the traceback. |
-| `Address already in use` | Another process holds 8000 or 8501. Use `make up API_PORT=8001 UI_PORT=8502`, or find the process (`ss -ltnp \| grep 8000`). |
+| `Address already in use` | Another process holds 8000 or 8501. Use `make up API_PORT=8001` (and `make ui` with a matching `API_BASE_URL` and `UI_PORT`), or find the process (`ss -ltnp \| grep 8000`). |
 | Warning `unknown APP_MODE 'x' -> public` | A typo in `APP_MODE`. Only `dev`, `event` and `public` are valid. |
 | Scores say `(model unavailable: documented prior)` and `classifier_version` is `prior_v1` | `models/risk_xgb_v1.json` (the `model.file` in `scoring.yaml`) is missing. Restore it from git or run `make train`. |
 

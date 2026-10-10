@@ -68,12 +68,12 @@ You need Python 3.11 and `make`. The web UI build also needs Node 22.
 git clone https://github.com/omarbounawarapy/wasel.git && cd wasel
 python3.11 -m venv .venv
 make setup      # pinned dependencies + the wasel package (editable)
-make up         # API :8000 + Streamlit dashboard :8501, freshly seeded. Ctrl-C stops both
+make up         # the seller UI and API on :8000, freshly seeded (builds the UI on first run). Ctrl-C stops it
 ```
 
-Open http://localhost:8501 for the dashboard and http://localhost:8000/docs for the interactive API reference. No keys are needed: the sample orders use recorded extractions and new text goes through the rules extractor.
+Open http://localhost:8000 for the seller UI and http://localhost:8000/docs for the interactive API reference. No keys are needed: the sample orders use recorded extractions and new text goes through the rules extractor.
 
-For the Next.js UI, run `make web` once and then `make demo`; the API serves the UI at http://localhost:8000/.
+For the analyst view (Streamlit operator tools, not the seller UI), keep `make up` running and run `make ui` in a second terminal, then open http://localhost:8501.
 
 To use a live LLM, copy `.env.example` to `.env`, set `GROQ_API_KEY`, and start with `make up`, `make run` or `make serve` from the repository root (the LLM layer reads `.env` itself). See [configuration](docs/configuration/README.md) for every setting and [getting started](docs/getting-started.md) for the full walkthrough, health checks and first-run problems.
 

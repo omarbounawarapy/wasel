@@ -2,7 +2,7 @@
 
 `GET /api/monitor` reports whether the system is drifting or misbehaving, computed from data the app already stores. It answers "is the input mix changing, is the model inventing evidence, are the safety layers doing their job, are the providers healthy" without exposing customer text. The thresholds are in [`config/monitor.yaml`](../../config/monitor.yaml).
 
-Code: `src/wasel/monitor.py`; trace summary from `src/wasel/llm/trace.py`. Web pages: "Live monitor", "AI call log" and "Quality checks" in the [web UI](../interfaces.md); the dashboard's "AI quality" page.
+Code: `src/wasel/monitor.py`; trace summary from `src/wasel/llm/trace.py`. Web pages: "Live monitor", "AI call log" and "Quality checks" in the [web UI](../interfaces.md); the analyst view's "Quality checks" page.
 
 ## What is measured
 

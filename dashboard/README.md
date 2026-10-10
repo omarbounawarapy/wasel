@@ -1,6 +1,6 @@
 # Streamlit dashboard
 
-A Streamlit interface for Wasel in which every read and every button goes through the FastAPI backend in `src/wasel/`. It has no database, model or LLM of its own. The production interface is the Next.js app in [`web/`](../web/README.md), served by the API at `/`; this dashboard is a lighter alternative that needs no build step and runs with `make up`. Both are compared in [docs/interfaces.md](../docs/interfaces.md).
+A Streamlit analyst view for Wasel, for operators: evaluation, failures and monitoring in depth. Every read and every button goes through the FastAPI backend in `src/wasel/`. It has no database, model or LLM of its own. The seller product is the Next.js app in [`web/`](../web/README.md), served by the API at `/`. Both are compared in [docs/interfaces.md](../docs/interfaces.md).
 
 ```
 browser ──► dashboard/app.py ──HTTP──► FastAPI  /api/*  ──► SQLite, worker, LLM chain, classifier, rules
@@ -11,14 +11,14 @@ browser ──► dashboard/app.py ──HTTP──► FastAPI  /api/*  ──�
 ## Run
 
 ```bash
-make up        # from the repository root: API :8000 + dashboard :8501, Ctrl-C stops both
+make up        # from the repository root: the seller UI and API on :8000
+make ui        # this analyst view on :8501, against API_BASE_URL (default http://localhost:8000); run it alongside make up
 
-# or separately
+# or the API alone
 make run       # API on :8000
-make ui        # dashboard on :8501, against API_BASE_URL (default http://localhost:8000)
 ```
 
-`make up` starts the API with `APP_MODE=dev` unless you set another, waits for `/api/health`, then runs `streamlit run app.py` from `dashboard/` with `API_BASE_URL` pointing at it. `make ui` runs only the dashboard, so the API must already be up.
+`make up` starts the API with `APP_MODE=dev` unless you set another, and serves the web UI from it. `make ui` runs `streamlit run app.py` from `dashboard/` with `API_BASE_URL` pointing at the API, so the API must already be up.
 
 The dashboard has no login. It listens on `127.0.0.1` (`UI_HOST`, `--server.address`); set `UI_HOST=0.0.0.0` only behind an access-controlled tunnel or reverse proxy, because anyone who can reach it can read every order and press Approve, Cancel or Send.
 
@@ -40,14 +40,14 @@ Each Streamlit session creates its own visitor id (a UUID v4) and sends it as `X
 
 | Screen | What it shows | Backend |
 |---|---|---|
-| Risk Queue | Tier counts, the simulated-savings banner, and orders sorted by risk with the one-line reason | `GET /api/orders`, `GET /api/metrics/impact` |
-| Order Detail | The conversation with flagged phrases highlighted, top-factors chart, rules applied, pipeline trace, seller actions, the drafted message with every check layer and Send, a simulated customer reply (text or map pin), and the score history with reason diffs | `GET /api/orders/{id}`, `POST .../actions`, `POST /api/drafts/{id}/send`, `POST /api/conversations/{id}/simulate-reply`, `POST .../rescore`, `POST .../try` (public mode) |
-| Paste an order | Scores pasted text live. For text that looks like an instruction aimed at the AI, it scores a clean twin as well and compares. | `POST /api/orders/ingest`, then polls `GET /api/orders/{id}` |
-| WhatsApp inbox | Orders that came in through the webhook, with their threads | `GET /api/orders` (channel `whatsapp`), `GET /api/health` |
-| Activity | The backend's event feed | `GET /api/events` |
-| Impact (simulated) | Refusal rate before and after, TND avoided, assumptions | `GET /api/metrics/impact` |
-| AI quality | The offline and live evaluation reports, the drift and safety monitor, and recent LLM calls | `GET /api/eval`, `/api/monitor`, `/api/traces` |
-| Hidden failures | Ranked silent failures with evidence, on the synthetic sets and on this app's orders | `GET /api/failures`, `GET /api/failures/sessions/{id}` |
+| Orders to check | Tier counts, the simulated-savings banner, and orders sorted by risk with the one-line reason | `GET /api/orders`, `GET /api/metrics/impact` |
+| Order | The conversation with flagged phrases highlighted, top-factors chart, rules applied, pipeline trace, seller actions, the drafted message with every check layer and Send, a simulated customer reply (text or map pin), and the score history with reason diffs | `GET /api/orders/{id}`, `POST .../actions`, `POST /api/drafts/{id}/send`, `POST /api/conversations/{id}/simulate-reply`, `POST .../rescore`, `POST .../try` (public mode) |
+| Add an order | Scores pasted text live. For text that looks like an instruction aimed at the AI, it scores a clean twin as well and compares. | `POST /api/orders/ingest`, then polls `GET /api/orders/{id}` |
+| WhatsApp messages | Orders that came in through the webhook, with their threads | `GET /api/orders` (channel `whatsapp`), `GET /api/health` |
+| Activity log | The backend's event feed | `GET /api/events` |
+| Money saved | Refusal rate before and after, TND avoided, assumptions | `GET /api/metrics/impact` |
+| Quality checks | The offline and live evaluation reports, the drift and safety monitor, and recent LLM calls | `GET /api/eval`, `/api/monitor`, `/api/traces` |
+| Silent failures | Ranked silent failures with evidence, on the synthetic sets and on this app's orders | `GET /api/failures`, `GET /api/failures/sessions/{id}` |
 
 The sidebar polls `/api/events` every five seconds; a new customer message or rescore shows a toast and refreshes the page. While an order is rescoring, its page shows a banner and refreshes itself until the new version arrives.
 
@@ -66,4 +66,4 @@ make check                                  # includes these tests
 python -m pytest tests/e2e/test_dashboard.py -q
 ```
 
-The tests boot the real backend in-process (temporary database, frozen clock, an LLM chain that fails everywhere so new text takes the rules path) and drive the dashboard with Streamlit's `AppTest`. They cover every screen, the sample scenario (reply, rescore, lower score), sending, seller actions, paste with the injection check, the "not an order" case, public-mode read-only samples and "Try this order", a signed WhatsApp webhook message reaching the inbox, the judge and classifier layers in the draft view, the AI quality and hidden-failure pages, and the backend being down.
+The tests boot the real backend in-process (temporary database, frozen clock, an LLM chain that fails everywhere so new text takes the rules path) and drive the dashboard with Streamlit's `AppTest`. They cover every screen, the sample scenario (reply, rescore, lower score), sending, seller actions, paste with the injection check, the "not an order" case, public-mode read-only samples and "Try this order", a signed WhatsApp webhook message reaching WhatsApp messages, the judge and classifier layers in the draft view, the quality checks and silent-failure pages, and the backend being down.

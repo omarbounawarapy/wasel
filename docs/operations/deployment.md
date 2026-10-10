@@ -166,7 +166,7 @@ A capped API key at the provider is the outermost limit. Inside the app, `LIVE_L
 1. In `.env` set `APP_MODE=event`, `DEMO_MODE=false` (real timings: 15 s debounce, 6 h no-reply timeout), `WA_TOKEN`, `WA_APP_SECRET` (at least 16 characters), `WA_VERIFY_TOKEN` (at least 24), `WA_PHONE_NUMBER_ID`, `WEBHOOK_ENABLED=true`, `WA_SEND_ENABLED=true`, a `GROQ_API_KEY`, and a `LIVE_LLM_DAILY_CAP` that fits your budget (the event default is 300). Add `DRAFT_LLM=true` and `WA_AUTO_SEND=true` only if cleared replies should go out without a click.
 2. Restart. `/api/health` must show `mode=event` and `webhook=enabled`.
 3. In the Meta console (your app, WhatsApp, Configuration) set the callback URL to `https://wasel.<your-domain>/webhook/whatsapp`, the verify token to `WA_VERIFY_TOKEN`, and subscribe to the `messages` field.
-4. Send a message from a registered phone and check that it appears in the WhatsApp inbox.
+4. Send a message from a registered phone and check that it appears under WhatsApp messages.
 
 To return to public mode: empty `APP_MODE`, remove the WhatsApp secrets, set `WEBHOOK_ENABLED=false` and `WA_AUTO_SEND=false`, restart (public mode reseeds, which removes the real rows), remove the callback in the Meta console, then run the verification in section 4. For testing without a permanent host, see [WhatsApp](../subsystems/whatsapp.md#testing-locally).
 

@@ -85,11 +85,11 @@ Prerequisites:
 Run:
 
 ```bash
-make up          # API :8000 + dashboard :8501
+make up          # the seller UI and API on :8000 (make ui: analyst view on :8501)
 make wa-up       # tunnel + callback registration
 ```
 
-The script checks that `/api/health` reports `"webhook":"enabled"` before it starts. Send a WhatsApp message to the business number; it appears in the WhatsApp inbox within a couple of seconds and goes through extraction, scoring and drafting.
+The script checks that `/api/health` reports `"webhook":"enabled"` before it starts. Send a WhatsApp message to the business number; it appears under WhatsApp messages within a couple of seconds and goes through extraction, scoring and drafting.
 
 Checks and caveats:
 

@@ -19,17 +19,14 @@ PYTEST_ARGS ?=
 TEST_ENV := APP_MODE=dev LLM_MODE=fail_all WORKER_ENABLED=false DEMO_MODE=true GEMINI_ENABLED=false \
             GROQ_API_KEY= GEMINI_API_KEY= WA_TOKEN= WA_APP_SECRET= WA_VERIFY_TOKEN= WA_SEND_ENABLED=false
 
-up: ## backend :8000 + dashboard :8501 together, seeded (APP_MODE=dev unless set; reads .env). Ctrl-C stops both
+up: ## the seller UI and API on :8000, seeded (APP_MODE=dev unless set; reads .env). Builds web/ if missing. Ctrl-C stops it
+	@test -f web/dist/index.html || $(MAKE) web
 	@eval "$$($(PY) scripts/dev/loadenv.py)"; \
+	echo "Wasel on http://localhost:$(API_PORT)   (seller UI; API reference at /docs; analyst view: make ui)"; \
 	APP_MODE=$${APP_MODE:-dev} SEED_ON_BOOT=$${SEED_ON_BOOT:-always} \
-	  $(PY) -m uvicorn wasel.main:create_app --factory --port $(API_PORT) & api=$$!; \
-	trap 'kill $$api 2>/dev/null; wait $$api 2>/dev/null || true' EXIT; trap 'exit 0' INT TERM; \
-	$(PY) scripts/dev/wait_health.py http://localhost:$(API_PORT) || exit 1; \
-	echo "API        http://localhost:$(API_PORT)   (docs: /docs)"; \
-	echo "Dashboard  http://localhost:$(UI_PORT)"; \
-	cd dashboard && API_BASE_URL=http://localhost:$(API_PORT) $(PY) -m streamlit run app.py --server.address $(UI_HOST) --server.port $(UI_PORT)
+	  $(PY) -m uvicorn wasel.main:create_app --factory --port $(API_PORT)
 
-ui: ## dashboard only on :8501, against API_BASE_URL (default :8000)
+ui: ## analyst view (Streamlit operator tools) on :8501, against API_BASE_URL (default :8000); needs the API running
 	cd dashboard && API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run app.py --server.address $(UI_HOST) --server.port $(UI_PORT)
 
 web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make demo` then serve it at :8000/

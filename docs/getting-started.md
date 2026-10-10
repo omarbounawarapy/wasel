@@ -49,7 +49,7 @@ cp .env.example .env
 
 | Command | Starts | Mode | Database |
 |---|---|---|---|
-| `make up` | API on :8000, then the Streamlit dashboard on :8501 | `dev` unless `APP_MODE` is set | **deleted and reseeded on every start** (`SEED_ON_BOOT=always`) |
+| `make up` | the seller UI and API on :8000 (the analyst view is `make ui`, on :8501) | `dev` unless `APP_MODE` is set | **deleted and reseeded on every start** (`SEED_ON_BOOT=always`) |
 | `make run` | API on :8000 with auto-reload | `dev` unless set | kept; seeded only if empty |
 | `make ui` | dashboard only, against `API_BASE_URL` (default http://localhost:8000) | | |
 | `make demo` | API on :8000, serving the built web UI at `/` | `public` | deleted and reseeded on every start |
@@ -105,7 +105,7 @@ after the reply:
   diff:   v1 87 → v2 16 · full address given ("Douar Ouled Ali, triq el jemaa, dar 14") −32 · ...
 ```
 
-`path=cascade_cache` means the extraction came from the committed cache, not from a fresh LLM call. To score your own text, use `examples/01_score_a_pasted_order.py`, the dashboard's "Paste an order" page, or `POST /api/orders/ingest` (see [api.md](api.md)). The scores you get for new text depend on the extraction path: without a key it is the rules extractor, which always leaves the order in `needs_review`.
+`path=cascade_cache` means the extraction came from the committed cache, not from a fresh LLM call. To score your own text, use `examples/01_score_a_pasted_order.py`, the "Add an order" page, or `POST /api/orders/ingest` (see [api.md](api.md)). The scores you get for new text depend on the extraction path: without a key it is the rules extractor, which always leaves the order in `needs_review`.
 
 ## Tests
 
@@ -123,7 +123,7 @@ make eval       # evaluation gate only
 |---|---|
 | `make: python3: command not found` or wrong Python | The Makefile uses `.venv` if it exists. Create it with `python3.11 -m venv .venv` before `make setup`. |
 | `make up` stops with `API at http://localhost:8000 did not answer /api/health within 180 s` | The API process crashed on start. Run `make run` to see the traceback. A common cause is a prompt file edited without a version bump, which raises `PromptVersionMismatch` at import ([LLM registry](configuration/llm-registry.md)). |
-| Port 8000 or 8501 already in use | `make up API_PORT=8001 UI_PORT=8502`. `make ui` needs `API_BASE_URL` to match the API port. |
+| Port 8000 or 8501 already in use | `make up API_PORT=8001`, and `make ui API_BASE_URL=http://localhost:8001 UI_PORT=8502`. |
 | `/` returns 404 | `web/dist` does not exist. Run `make web`. |
 | `GROQ_API_KEY` is in `.env` but orders still say `path=rules` | The API was not started from the repository root (the `.env` lookup is relative to the working directory), `LLM_MODE` is not `live`, or the provider is failing or capped. `/api/health` shows `llm.chain_extract` (empty means no key was found), `llm.cap_reached` and `llm.fallback_reason`. |
 | `POST` calls return `400 VISITOR_ID_REQUIRED` | The API is in `public` mode. Send an `X-Visitor-Id` header containing a UUID v4, or use `APP_MODE=dev`. |

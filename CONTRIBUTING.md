@@ -16,7 +16,7 @@ You need Python 3.11, `make`, and Node 22 if you work on the web UI.
 python3.11 -m venv .venv
 make setup        # pinned Python dependencies + the wasel package (editable install)
 make check        # hygiene + ruff + offline tests + evaluation gate; needs no API keys, about a minute
-make up           # API on :8000 + Streamlit dashboard on :8501, seeded
+make up           # the seller UI and API on :8000, seeded (make ui for the analyst view on :8501)
 make web          # build the Next.js UI into web/dist (served by the API at /)
 make run && make web-dev    # API in dev mode + Next.js dev server on :5173
 ```

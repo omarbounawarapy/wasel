@@ -19,19 +19,19 @@ LOGO = Path(__file__).resolve().parent.parent / "web" / "public"
 st.set_page_config(page_title="Wasel · COD order risk", layout="wide",
                    page_icon=str(LOGO / "wasel-mark.png") if (LOGO / "wasel-mark.png").exists() else None)
 
-PAGES = ["Risk Queue", "Order Detail", "Paste an order", "WhatsApp inbox", "Activity", "Impact (simulated)",
-         "AI quality", "Hidden failures"]
+PAGES = ["Orders to check", "Order", "Add an order", "WhatsApp messages", "Activity log", "Money saved",
+         "Quality checks", "Silent failures"]
 # shape + text for each tier, never colour alone
-TIER = {"high": ("High", "#d93025", "●"), "medium": ("Med", "#f29900", "◆"), "low": ("Low", "#188038", "▲")}
+TIER = {"high": ("High", "#d93025", "●"), "medium": ("Medium", "#f29900", "◆"), "low": ("Low", "#188038", "▲")}
 ACTION_LABELS = {"confirm": "Confirm with the customer", "prepay": "Ask for prepayment", "ship": "Ship normally",
-                 "review": "Needs your review", "cancelled": "Cancelled"}
+                 "review": "Needs your decision", "cancelled": "Cancelled"}
 SELLER_ACTIONS = {"approve": "Approve for shipping", "request_confirmation": "Ask the customer to confirm",
                   "ship": "Mark shipped", "mark_delivered": "Mark delivered", "mark_refused": "Refused at door",
                   "cancel": "Cancel order"}
 RECOMMENDED = {"confirm": "request_confirmation", "prepay": "request_confirmation", "ship": "approve"}
-STATUS = {"collecting": "Collecting details", "awaiting_reply": "Waiting for customer", "needs_review": "Needs review",
-          "ready_to_ship": "Ready to ship", "shipped": "Shipped", "delivered": "Delivered",
-          "refused": "Refused at door", "cancelled": "Cancelled"}
+STATUS = {"collecting": "Collecting details", "awaiting_reply": "Waiting for customer",
+          "needs_review": "Needs your decision", "ready_to_ship": "Ready to ship", "shipped": "Shipped",
+          "delivered": "Delivered", "refused": "Refused at door", "cancelled": "Cancelled"}
 PATH = {"llm": "LLM extraction", "fallback_model": "backup LLM model", "fallback_provider": "backup LLM provider",
         "cascade_ack": "short reply, no LLM call", "cascade_cache": "recorded LLM result, no new call",
         "rules": "rules only (no LLM)"}
@@ -88,7 +88,7 @@ if "goto" in st.session_state:
 
 def open_order(order_id: str) -> None:
     st.session_state.order_id = order_id
-    st.session_state.goto = "Order Detail"
+    st.session_state.goto = "Order"
     st.rerun()
 
 
@@ -151,6 +151,7 @@ with st.sidebar:
         st.image(str(LOGO / "wasel-logo-compact.png"), width=200)
     else:
         st.title("Wasel")
+    st.caption(f"Operator view for analysts. Seller screens: {api.base_url}/")
     st.radio("Screen", PAGES, key="page", label_visibility="collapsed")
     st.divider()
     st.caption({"public": "Public demo", "event": "Live pilot · a person approves every send",
@@ -200,7 +201,7 @@ def owner(r: dict) -> str:
     return " (sample)" if r["seed_key"] and r["is_seeded"] else ""
 
 
-# --- Risk Queue --------------------------------------------------------------------------------
+# --- Orders to check --------------------------------------------------------------------------------
 
 def page_queue():
     impact = call(api.impact, quiet=True)
@@ -219,14 +220,14 @@ def page_queue():
     cols = st.columns(4)
     for col, t in zip(cols, ["high", "medium", "low"], strict=False):
         col.metric(f"{TIER[t][0]} risk", c.get(t, 0))
-    cols[3].metric("Needs review", c.get("needs_review", 0))
+    cols[3].metric("Needs your decision", c.get("needs_review", 0))
     st.caption(f"{c.get('awaiting_reply', 0)} waiting for the customer · {c.get('ready_to_ship', 0)} ready to ship")
 
-    tiers = st.segmented_control("Filter", ["High", "Med", "Low"], selection_mode="multi",
-                                 default=["High", "Med", "Low"], label_visibility="collapsed")
+    tiers = st.segmented_control("Filter", ["High", "Medium", "Low"], selection_mode="multi",
+                                 default=["High", "Medium", "Low"], label_visibility="collapsed")
     shown = [r for r in rows if r["score"] is None or TIER[r["score"]["tier"]][0] in (tiers or [])]
     if not shown:
-        st.info("No orders to show. Paste one on **Paste an order**, or send a WhatsApp message to the business "
+        st.info("No orders to show. Paste one on **Add an order**, or send a WhatsApp message to the business "
                 "number.")
         return
     df = pd.DataFrame([{
@@ -252,7 +253,7 @@ def page_queue():
         open_order(shown[ev.selection.rows[0]]["order_id"])
 
 
-# --- conversation thread (shared by Order Detail, Paste and Inbox) -----------------------------
+# --- conversation thread (shared by Order, Paste and Inbox) -----------------------------
 
 def thread(d: dict) -> None:
     msgs = d["conversation"]["messages"]
@@ -315,7 +316,7 @@ def wait_until_scored(order_id: str, timeout_s: float = 30, status=None) -> dict
     return d
 
 
-# --- Order Detail ------------------------------------------------------------------------------
+# --- Order ------------------------------------------------------------------------------
 
 def factor_chart(a: dict) -> alt.Chart:
     data = pd.DataFrame([{"factor": f["label"].replace("⁨", "").replace("⁩", ""),
@@ -419,7 +420,7 @@ def draft_checks(dr: dict, oid: str) -> None:
 def page_detail():
     rows = order_list(include_collecting=True)["orders"]
     if not rows:
-        st.info("No orders yet. Paste one on **Paste an order**.")
+        st.info("No orders yet. Paste one on **Add an order**.")
         return
     ids = [r["order_id"] for r in rows]
     def name(r: dict) -> str:
@@ -565,7 +566,7 @@ def page_detail():
                     st.caption("Resolved by the reply: " + ", ".join(x["resolved_flags"]))
 
 
-# --- Paste an order ----------------------------------------------------------------------------
+# --- Add an order ----------------------------------------------------------------------------
 
 EXAMPLES = {
     "Vague address, hesitant (Derja)": dict(text="nheb el casque bluetooth. Sidi Bouzid, 9rib mel centre. nchouf ken "
@@ -653,7 +654,7 @@ def show_paste(res: dict) -> None:
                        "details* until the customer says what they want. Add the product to the message.")
         else:
             st.info("Still scoring: this refreshes when the backend is done.")
-        if st.button("Open in Order Detail →"):
+        if st.button("Open order →"):
             open_order(res["order_id"])
         return
     s, a = o["score"], d["assessments"][-1]
@@ -681,11 +682,11 @@ def show_paste(res: dict) -> None:
     if pending:
         st.markdown(f"**Drafted message** ({pending[0]['template_id']}, route `{pending[0]['route']}`):")
         st.code(pending[0]["text"], language=None, wrap_lines=True)
-    if st.button("Open in Order Detail →"):
+    if st.button("Open order →"):
         open_order(res["order_id"])
 
 
-# --- WhatsApp inbox ----------------------------------------------------------------------------
+# --- WhatsApp messages ----------------------------------------------------------------------------
 
 @st.fragment(run_every=5)
 def inbox_table() -> list[dict]:
@@ -693,7 +694,7 @@ def inbox_table() -> list[dict]:
     c = st.columns(4)
     c[0].metric("WhatsApp conversations", len(rows))
     c[1].metric("Waiting for customer", sum(r["status"] == "awaiting_reply" for r in rows))
-    c[2].metric("Needs review", sum(r["status"] == "needs_review" for r in rows))
+    c[2].metric("Needs your decision", sum(r["status"] == "needs_review" for r in rows))
     c[3].metric("Ready to ship", sum(r["status"] == "ready_to_ship" for r in rows))
     if not rows:
         st.info("No WhatsApp messages yet. They arrive through the backend's webhook (`/webhook/whatsapp`), which "
@@ -712,7 +713,7 @@ def inbox_table() -> list[dict]:
 
 
 def page_inbox():
-    st.markdown("#### WhatsApp inbox")
+    st.markdown("#### WhatsApp messages")
     hook = health["webhook"]
     st.caption(f"Customer messages reach the backend through Meta's webhook (**{hook}** on this backend) and show "
                "up here within 5 s. Each message rescores its order.")
@@ -762,7 +763,7 @@ def page_activity():
 # --- Impact ------------------------------------------------------------------------------------
 
 def page_impact():
-    st.markdown("#### Impact (simulated)")
+    st.markdown("#### Money saved (simulated)")
     m = call(api.impact)
     if not m or not m["n_orders"]:
         st.info("No impact report on the backend yet (`data/reports/impact.json`, written by `python -m wasel.ml.train`).")
@@ -779,10 +780,10 @@ def page_impact():
     st.markdown("\n".join(f"- `{x}`" for x in m["assumptions"]))
     st.markdown("##### What a real pilot would measure")
     st.markdown("Real savings = avoided refusals × trip cost − lost conversions × margin − messaging cost − LLM "
-                "cost, measured against a ~5% random ship-normally control group of Med/High orders.")
+                "cost, measured against a ~5% random ship-normally control group of Medium/High orders.")
 
 
-# --- AI quality --------------------------------------------------------------------------------
+# --- Quality checks --------------------------------------------------------------------------------
 
 METRIC_LABEL = {
     "hallucinated_quotes_per_extraction": "Invented evidence quotes per extraction",
@@ -814,7 +815,7 @@ def eval_table(rep: dict) -> pd.DataFrame:
 
 
 def page_quality():
-    st.markdown("#### AI quality")
+    st.markdown("#### Quality checks")
     st.caption("How every LLM step is checked: golden-set eval gates in CI, live monitoring of drift, faithfulness "
                "and safety, and a trace of every LLM request (ids, versions, model, tokens; never customer text).")
     tabs = st.tabs(["Eval gate", "Monitor", "Traces", "Versions & rollback"])
@@ -923,7 +924,7 @@ def page_quality():
                    f"`{health['config']['classifier_version']}`")
 
 
-# --- Hidden failures ---------------------------------------------------------------------------
+# --- Silent failures ---------------------------------------------------------------------------
 
 FAILURE_LABEL = {"unsupported_success_claim": "Unsupported success claim", "wrong_customer_record": "Wrong customer record",
                  "incomplete_marked_done": "Incomplete request closed as done", "tool_error_ignored": "Tool error ignored",
@@ -941,7 +942,7 @@ def evidence_line(x: dict) -> str:
 
 
 def page_failures():
-    st.markdown("#### Hidden failures")
+    st.markdown("#### Silent failures")
     st.caption("Runs that end without a technical error can still fail the customer. The analyzer reads each "
                "session's messages and tool calls, finds recurring problems, groups them and ranks what to look "
                "at first, with the messages and tool results that support each finding.")
@@ -956,7 +957,7 @@ def page_failures():
     c = st.columns(5)
     c[0].metric("Sessions", r["n_sessions"])
     c[1].metric("Failures", bs.get("failure", 0))
-    c[2].metric("Needs review", bs.get("needs_review", 0))
+    c[2].metric("Needs your decision", bs.get("needs_review", 0))
     c[3].metric("Runtime", f"{r['runtime']['total_s'] * 1000:.0f} ms")
     c[4].metric("LLM cost (this view)", "0 calls", help="The live view runs the rules; the LLM run is recorded below.")
     acc, llm = r.get("accuracy"), r.get("llm_run")
@@ -1019,9 +1020,9 @@ def page_failures():
                     "× confidence.\n" + "\n".join(f"- {x}" for x in r["limitations"]))
 
 
-{"Risk Queue": page_queue, "Order Detail": page_detail, "Paste an order": page_paste,
- "WhatsApp inbox": page_inbox, "Activity": page_activity, "Impact (simulated)": page_impact,
- "AI quality": page_quality, "Hidden failures": page_failures}[page]()
+{"Orders to check": page_queue, "Order": page_detail, "Add an order": page_paste,
+ "WhatsApp messages": page_inbox, "Activity log": page_activity, "Money saved": page_impact,
+ "Quality checks": page_quality, "Silent failures": page_failures}[page]()
 
 st.divider()
 st.caption("Synthetic data only, no real customer data. The LLM extracts flags; the classifier scores and the "
