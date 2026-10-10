@@ -1,19 +1,19 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="380" viewBox="0 0 420 380" role="img" aria-labelledby="t"><title id="t">Commits per contributor</title>
 <rect width="420" height="380" rx="12" fill="#ffffff" stroke="#d0d7de"/>
-<text x="210" y="30" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#1f2328">Commits per contributor (229)</text>
-<path d="M210.0,135.0 L210.00,45.00 A90,90 0 1 1 154.93,63.82 Z" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<text x="210" y="30" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#1f2328">Commits per contributor (230)</text>
+<path d="M210.0,135.0 L210.00,45.00 A90,90 0 1 1 155.13,63.66 Z" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
 <rect x="40" y="246" width="14" height="14" rx="3" fill="#2563eb"/>
-<text x="64" y="258" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">omarbounawarapy <tspan fill="#59636e">89.5% · 205 commits</tspan></text>
-<path d="M210.0,135.0 L154.93,63.82 A90,90 0 0 1 180.90,49.83 Z" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
+<text x="64" y="258" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">omarbounawarapy <tspan fill="#59636e">89.6% · 206 commits</tspan></text>
+<path d="M210.0,135.0 L155.13,63.66 A90,90 0 0 1 181.02,49.79 Z" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
 <rect x="40" y="272" width="14" height="14" rx="3" fill="#16a34a"/>
 <text x="64" y="284" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">montaassarr <tspan fill="#59636e">5.2% · 12 commits</tspan></text>
-<path d="M210.0,135.0 L180.90,49.83 A90,90 0 0 1 197.69,45.85 Z" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+<path d="M210.0,135.0 L181.02,49.79 A90,90 0 0 1 197.75,45.84 Z" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
 <rect x="40" y="298" width="14" height="14" rx="3" fill="#d97706"/>
-<text x="64" y="310" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">azaizoz <tspan fill="#59636e">3.1% · 7 commits</tspan></text>
-<path d="M210.0,135.0 L197.69,45.85 A90,90 0 0 1 207.53,45.03 Z" fill="#9333ea" stroke="#ffffff" stroke-width="2"/>
+<text x="64" y="310" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">azaizoz <tspan fill="#59636e">3.0% · 7 commits</tspan></text>
+<path d="M210.0,135.0 L197.75,45.84 A90,90 0 0 1 207.54,45.03 Z" fill="#9333ea" stroke="#ffffff" stroke-width="2"/>
 <rect x="40" y="324" width="14" height="14" rx="3" fill="#9333ea"/>
 <text x="64" y="336" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">j6r-t <tspan fill="#59636e">1.7% · 4 commits</tspan></text>
-<path d="M210.0,135.0 L207.53,45.03 A90,90 0 0 1 210.00,45.00 Z" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
+<path d="M210.0,135.0 L207.54,45.03 A90,90 0 0 1 210.00,45.00 Z" fill="#dc2626" stroke="#ffffff" stroke-width="2"/>
 <rect x="40" y="350" width="14" height="14" rx="3" fill="#dc2626"/>
 <text x="64" y="362" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">fedi567 <tspan fill="#59636e">0.4% · 1 commit</tspan></text>
 </svg>
