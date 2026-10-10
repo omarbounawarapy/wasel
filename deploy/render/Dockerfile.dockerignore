@@ -4,8 +4,8 @@
 !models/
 !data/
 !web/
-!deploy/cloudflare/container/requirements.txt
-!deploy/cloudflare/container/requirements.lock
+!deploy/render/requirements.txt
+!deploy/render/requirements.lock
 data/synth_v1.csv
 data/eval/
 data/raw/

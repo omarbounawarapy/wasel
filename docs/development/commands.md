@@ -43,7 +43,6 @@ Conventions used below:
 
 | Target | What it does | Needs |
 |---|---|---|
-| `tunnel` | Runs `cloudflared tunnel run` with `CLOUDFLARE_TUNNEL_TOKEN` from `.env`; publishes `make serve` on your Cloudflare hostname | `cloudflared`, the token |
 | `deploy` | On the host: `git pull --ff-only`, then `make setup web`, and prints the restart and smoke-test commands. It does not restart anything. | git remote, network |
 | `wa-up` | `scripts/ops/wa_webhook_up.sh`: a quick tunnel and Meta callback registration for local WhatsApp testing ([WhatsApp](../subsystems/whatsapp.md#testing-locally)) | a running API with the webhook enabled, `cloudflared`, Meta credentials |
 | `llm-serve` | On a GPU host: installs and starts vLLM, waits for the model ([self-hosted LLM](../operations/self-hosted-llm.md)) | GPU host, docker or python |
@@ -101,7 +100,7 @@ These targets regenerate committed files. Use them deliberately and commit the r
 | Trying the app | `make up` |
 | Working on the API | `make run` |
 | Working on the web UI | `make run` and `make web-dev` |
-| Hosting | `make serve`, `make tunnel`, then `make smoke URL=...` |
+| Hosting | `make serve`, then `make smoke URL=...` |
 | After changing extraction or drafting logic | `make eval`, then `make eval-live` if you have a key |
 | After changing a prompt | [change a prompt](extending.md#change-a-prompt) |
 | After changing features or generator | [retraining](../machine-learning.md#retraining) |

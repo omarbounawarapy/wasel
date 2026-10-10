@@ -9,7 +9,7 @@ This page takes a fresh clone to a running system, checks it, and shows the firs
 | Python | 3.11 (`.python-version`; `pyproject.toml` requires `>=3.11`; CI runs 3.11) | backend, tests, dashboard |
 | GNU Make | any recent | every command below |
 | Node.js | 22 (CI uses 22) | only for the Next.js web UI (`make web`, `make web-dev`) |
-| `cloudflared` | current | only for hosting (`make tunnel`, `make wa-up`) |
+| `cloudflared` | current | only for local WhatsApp testing (`make wa-up`) |
 | A Groq API key | optional | live LLM extraction. Not needed to run, test or evaluate offline |
 
 Linux, macOS and Windows (Git Bash) are handled by the Makefile: it uses `.venv/bin/python` or `.venv/Scripts/python.exe` when a virtual environment exists, otherwise `python3` on the `PATH`.

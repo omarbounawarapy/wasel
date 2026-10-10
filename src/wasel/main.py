@@ -44,7 +44,6 @@ ORDER_TIMEOUT_S = 25.0       # hard limit for scoring one order (above the AI ch
 TICK_BUDGET_S = 3.0          # the worker takes no new order in a tick once this many seconds have passed
 # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
 # XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.
-# web/public/_headers repeats these for assets served at the edge on Cloudflare; a test keeps the two equal.
 SECURITY_HEADERS = {
     "Content-Security-Policy": ("default-src 'self'; script-src 'self' 'unsafe-inline'; img-src 'self' data:; "
                                 "style-src 'self' 'unsafe-inline'; connect-src 'self'; frame-ancestors 'none'; "

@@ -69,4 +69,4 @@ Some values protect the system. Loosening one is a security change and should be
 - `auto_send.*`, `outbound.judge.*` and the `prefilter` and injection lexicons in `scoring.yaml`.
 - The evaluation floors in `eval.yaml`.
 - `LIVE_LLM_DAILY_CAP` and the per-visitor caps.
-- `HOST`: the default `127.0.0.1` keeps the app reachable only from the machine (or its local tunnel).
+- `HOST`: the default `127.0.0.1` keeps the app reachable only from the machine (or a reverse proxy on it).

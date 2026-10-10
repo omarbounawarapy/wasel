@@ -1,4 +1,4 @@
-"""The SQLite snapshot boundary used on Cloudflare Containers: restore at boot, save while running and at shutdown,
+"""The SQLite snapshot boundary used on hosts with an ephemeral disk: restore at boot, save while running and at shutdown,
 and no silent fallback to an empty database when the store is unhealthy."""
 from __future__ import annotations
 

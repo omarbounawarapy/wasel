@@ -1,44 +1,31 @@
 # Deployment and operations
 
-Wasel runs as one Python process (`make serve`) on an always-on machine. A Cloudflare Tunnel can publish it on a stable HTTPS address without opening any port. This page covers the **self-hosted** target: a checkout on a host, started by `make serve` (directly or under systemd). For a free public demo see [Deploying on Render](render.md). To run on Cloudflare's own platform (Worker, Container and R2, no host to maintain, paid plan) see [Deploying on Cloudflare](cloudflare.md). The targets are independent and share no infrastructure.
+Wasel runs as one Python process (`make serve`) on an always-on machine. This page covers the **self-hosted** target: a checkout on a host, started by `make serve` (directly or under systemd). Put your own TLS-terminating reverse proxy in front of it. For a free public demo see [Deploying on Render](render.md).
 
 ```
- browser ─────HTTPS──▶ Cloudflare (your hostname, TLS)
- Meta webhook ─HTTPS──▶      │  Cloudflare Tunnel (outbound-only connection)
+ browser ─────HTTPS──▶ your reverse proxy (TLS)
+ Meta webhook ─HTTPS──▶      │
                              ▼
-        always-on host:  cloudflared ──▶ make serve = one Uvicorn process on 127.0.0.1:8000
+        always-on host:  make serve = one Uvicorn process on 127.0.0.1:8000
                                           /api/*, /webhook/whatsapp (when enabled), web UI at /,
                                           worker loop, SQLite in var/app.db
         optional:        GPU host running vLLM ◀── HTTPS ── the LLM layer (GROQ_BASE_URL)
 ```
 
-What `make serve` does: it loads `.env` (parsed, never run as shell code), prints `Wasel on http://HOST:PORT mode=<mode>`, and runs `uvicorn wasel.main:create_app --factory --host $HOST --port $PORT --workers 1`. The worker count must stay at one: the process owns the SQLite file and runs the in-process worker loop, so a second worker would duplicate the loop and the sandbox purge. `make tunnel` runs `cloudflared tunnel run` with the token from `.env`. `make deploy` updates the checkout. `deploy/wasel.service` is a systemd unit for Linux. The Streamlit dashboard (`make up`, `make ui`) is not part of this setup: it has no login and listens on `127.0.0.1` (`UI_HOST`), so publish it only behind an access-controlled tunnel or reverse proxy. Nothing else is provisioned.
+What `make serve` does: it loads `.env` (parsed, never run as shell code), prints `Wasel on http://HOST:PORT mode=<mode>`, and runs `uvicorn wasel.main:create_app --factory --host $HOST --port $PORT --workers 1`. The worker count must stay at one: the process owns the SQLite file and runs the in-process worker loop, so a second worker would duplicate the loop and the sandbox purge. `make deploy` updates the checkout. `deploy/wasel.service` is a systemd unit for Linux. The Streamlit dashboard (`make up`, `make ui`) is not part of this setup: it has no login and listens on `127.0.0.1` (`UI_HOST`), so publish it only behind an access-controlled reverse proxy. Nothing else is provisioned.
 
 ## Requirements
 
 | Item | Notes |
 |---|---|
-| A host | Linux VPS or PC that stays on, at least 1 GB RAM, Python 3.11, Node 22, git, make. `cloudflared` if you use the tunnel. |
+| A host | Linux VPS or PC that stays on, at least 1 GB RAM, Python 3.11, Node 22, git, make. |
 | Repository checkout | Wasel resolves `config/`, `data/`, `models/` and `web/dist` relative to the checkout. It cannot run from an installed package alone. |
 | Committed artifacts | `models/risk_xgb_v1.json` (without it scoring drops to the documented prior and says so in every reason), `data/seed/extraction_cache.jsonl`, `data/reports/impact.json` and `eval.json`. All are in the repository. |
 | Built web UI | `web/dist`, from `make web`. Without it `/` returns 404 and only `/api` is available. |
-| Cloudflare account and a domain on Cloudflare | Only if you publish through a tunnel. The free plan is enough. |
-| Secrets | A Groq API key (with a spending cap), an `ADMIN_TOKEN` of at least 24 random characters if you want the reset endpoint, the tunnel token, and WhatsApp secrets only in `event` mode. |
-| Outbound network | HTTPS to `api.groq.com` (and Gemini or your vLLM host if used), `graph.facebook.com` for WhatsApp, and to Cloudflare for the tunnel. |
+| Secrets | A Groq API key (with a spending cap), an `ADMIN_TOKEN` of at least 24 random characters if you want the reset endpoint and WhatsApp secrets only in `event` mode. |
+| Outbound network | HTTPS to `api.groq.com` (and Gemini or your vLLM host if used), `graph.facebook.com` for WhatsApp. |
 
-## 1. Cloudflare (once)
-
-The console layout changes; the intent of each step is what matters.
-
-1. Add your domain to Cloudflare (free plan) and change the registrar's nameservers until the domain is Active.
-2. Create a **named tunnel** of type Cloudflared, for example `wasel`. The page shows an install command containing a long token that starts with `eyJhIjoi`. Copy only the token. It is a secret and belongs only in the host's `.env` (`CLOUDFLARE_TUNNEL_TOKEN`).
-3. Add a public hostname route: subdomain `wasel`, your domain, service `http://localhost:8000`.
-4. Set SSL/TLS encryption to Full and turn on Always Use HTTPS.
-5. Do not put Cloudflare Access in front of the hostname if visitors should reach it without an account.
-
-The public URL shows Cloudflare error 1033 until the tunnel connects.
-
-## 2. Prepare the host (once)
+## 1. Prepare the host (once)
 
 ```bash
 git clone <repository-url> wasel && cd wasel
@@ -50,8 +37,6 @@ chmod 600 .env        # it will hold WA_TOKEN, WA_APP_SECRET and the provider ke
 install -d -m 700 var # the SQLite file and its -wal/-shm files live here
 ```
 
-Install `cloudflared` from Cloudflare's downloads (on Windows, save the executable as `~/.local/bin/cloudflared.exe`, where `make tunnel` looks for it).
-
 Host `.env` for **public mode**, the default and the safe choice for anonymous visitors:
 
 | Key | Value |
@@ -60,8 +45,7 @@ Host `.env` for **public mode**, the default and the safe choice for anonymous v
 | `GROQ_API_KEY` | a capped key. Optional: without it the app runs on recorded extractions and rules. |
 | `LIVE_LLM_DAILY_CAP` | optional; public mode defaults to 80 provider calls per day |
 | `ADMIN_TOKEN` | `python -c "import secrets; print(secrets.token_urlsafe(32))"` |
-| `CLOUDFLARE_TUNNEL_TOKEN` | the token from step 1.2 |
-| `HOST`, `PORT` | `127.0.0.1`, `8000`: only the tunnel on this machine reaches the app. `0.0.0.0` exposes the port to the network. |
+| `HOST`, `PORT` | `127.0.0.1`, `8000`: only this machine (your reverse proxy) reaches the app. `0.0.0.0` exposes the port to the network. |
 | `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN` | empty: a public host must not hold WhatsApp secrets |
 | `WA_AUTO_SEND`, `DRAFT_LLM` | `false` |
 
@@ -69,24 +53,21 @@ Host `.env` for **public mode**, the default and the safe choice for anonymous v
 
 The full variable reference is [configuration/environment.md](../configuration/environment.md).
 
-## 3. Run
+## 2. Run
 
-Quickly, in two terminals:
+Quickly:
 
 ```bash
 make serve     # the app on 127.0.0.1:8000, mode from .env
-make tunnel    # connects the tunnel; the public URL starts answering
 ```
 
 Always on, on Linux:
 
 1. Copy `deploy/wasel.service` to `/etc/systemd/system/wasel.service` and edit `User` (default `wasel`) and `WorkingDirectory` (default `/opt/wasel`). The unit runs `ExecStart=/usr/bin/make serve` with `Restart=always` and `RestartSec=3`, after `network-online.target`. Adjust the path if `make` is elsewhere (`command -v make`). The Makefile finds `.venv` under the working directory, so the virtual environment and `.env` must be there and readable by that user (keep `.env` at mode 600 and `var/` at 700). The unit sandboxes the process: `NoNewPrivileges`, `ProtectSystem=strict` with only `/opt/wasel/var` writable, `ProtectHome`, `PrivateTmp`, no capabilities, no raw sockets, `UMask=0077`, `MemoryMax=1G`, `TasksMax=256`. Keep the checkout under `/opt/wasel` (a path under `/home` is hidden by `ProtectHome`) and check the result with `systemd-analyze security wasel`. The app creates the database with mode 600 whatever the umask.
 2. `sudo systemctl daemon-reload && sudo systemctl enable --now wasel`.
-3. Install the tunnel as its own service: `sudo cloudflared service install <CLOUDFLARE_TUNNEL_TOKEN>`.
+3. Point your reverse proxy at `http://127.0.0.1:8000`.
 
-On Windows, run `cloudflared service install <token>` in an admin terminal and start `make serve` at logon with Task Scheduler.
-
-## 4. Verify (after every deploy and every mode change)
+## 3. Verify (after every deploy and every mode change)
 
 ```bash
 make smoke URL=https://wasel.<your-domain>
@@ -168,28 +149,27 @@ A capped API key at the provider is the outermost limit. Inside the app, `LIVE_L
 3. In the Meta console (your app, WhatsApp, Configuration) set the callback URL to `https://wasel.<your-domain>/webhook/whatsapp`, the verify token to `WA_VERIFY_TOKEN`, and subscribe to the `messages` field.
 4. Send a message from a registered phone and check that it appears under WhatsApp messages.
 
-To return to public mode: empty `APP_MODE`, remove the WhatsApp secrets, set `WEBHOOK_ENABLED=false` and `WA_AUTO_SEND=false`, restart (public mode reseeds, which removes the real rows), remove the callback in the Meta console, then run the verification in section 4. For testing without a permanent host, see [WhatsApp](../subsystems/whatsapp.md#testing-locally).
+To return to public mode: empty `APP_MODE`, remove the WhatsApp secrets, set `WEBHOOK_ENABLED=false` and `WA_AUTO_SEND=false`, restart (public mode reseeds, which removes the real rows), remove the callback in the Meta console, then run the verification in section 3. For testing without a permanent host, see [WhatsApp](../subsystems/whatsapp.md#testing-locally).
 
 ## Secrets
 
-- `.env` stays on the host and is git-ignored. `make hygiene` (part of `make check` and CI) fails on key-shaped strings, including tunnel tokens.
-- The secrets are the tunnel token, API keys, `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN` and `ADMIN_TOKEN`. The hostname is not secret.
-- When retiring a deployment, delete the tunnel or rotate its token, revoke `WA_TOKEN` and the API keys, and rotate `ADMIN_TOKEN`.
+- `.env` stays on the host and is git-ignored. `make hygiene` (part of `make check` and CI) fails on key-shaped strings,.
+- The secrets are the API keys, `WA_TOKEN`, `WA_APP_SECRET`, `WA_VERIFY_TOKEN` and `ADMIN_TOKEN`. The hostname is not secret.
+- When retiring a deployment, revoke `WA_TOKEN` and the API keys, and rotate `ADMIN_TOKEN`.
 
 ## Trying it without a domain
 
-`cloudflared tunnel --url http://localhost:8000` prints a random `https://....trycloudflare.com` address. It needs no account but changes on every restart, so it is not suitable for a link you share or for a permanent Meta callback.
+Use the quick tunnel from `make wa-up` ([WhatsApp](../subsystems/whatsapp.md#testing-locally)). Its address changes on every restart, so it is not suitable for a link you share or for a permanent Meta callback.
 
 ## Common operational failures
 
 | Symptom | Cause |
 |---|---|
-| Cloudflare error 1033 | The tunnel is not connected: `make tunnel` or the cloudflared service is not running |
-| 502 Bad Gateway | The tunnel is up but `make serve` is not running, or the route's service URL is not `http://localhost:8000` |
+| 502 Bad Gateway | The proxy is up but `make serve` is not running, or the proxy's upstream is not `http://127.0.0.1:8000` |
 | Health shows the wrong `mode` | `APP_MODE` in the host `.env`; empty means public |
 | `/` answers 404 or shows a blank page | `web/dist` is missing or stale: run `make web` after every pull |
 | The service restarts in a loop | `journalctl -u wasel`: a `PromptVersionMismatch`, an invalid `.env` value, or a missing `.venv` for `User` |
-| Data vanished after a restart | Public mode reseeds on start; see section 2 |
+| Data vanished after a restart | Public mode reseeds on start; see section 1 |
 | Every new order is `needs_review` with `path=rules` | No provider is configured or reachable. Check `llm.chain_extract` in `/api/health`, that `GROQ_API_KEY` is in the process environment or in the `.env` next to the working directory, and `llm.cap_reached` |
 
 More symptoms and how to diagnose them: [troubleshooting](troubleshooting.md).

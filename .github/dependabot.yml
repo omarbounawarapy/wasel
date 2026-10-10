@@ -9,9 +9,6 @@ updates:
   - package-ecosystem: npm
     directory: /web
     schedule: { interval: weekly }
-  - package-ecosystem: npm
-    directory: /deploy/cloudflare
-    schedule: { interval: weekly }
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
@@ -19,5 +16,5 @@ updates:
     directory: /deploy/render
     schedule: { interval: weekly }
   - package-ecosystem: pip
-    directory: /deploy/cloudflare/container
+    directory: /deploy/render
     schedule: { interval: weekly }

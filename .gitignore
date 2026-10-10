@@ -277,12 +277,6 @@ HANDOFF.md
 .idea/
 .vscode/
 
-# Cloudflare deployment
-deploy/cloudflare/node_modules/
-deploy/cloudflare/.wrangler/
-deploy/cloudflare/.dev.vars
-deploy/cloudflare/worker-configuration.d.ts
-
 # AI assistant context files
 CLAUDE.md
 AGENTS.md

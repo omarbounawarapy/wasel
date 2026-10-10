@@ -35,12 +35,9 @@ web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make
 web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make run` or `make up` first)
 	cd web && npm run dev
 
-# ---- hosting with make and Cloudflare Tunnel (docs/operations/deployment.md): the app runs with make, Cloudflare Tunnel publishes it
+# ---- self-hosting with make (docs/operations/deployment.md)
 serve: ## host run: API + web UI, no reload, settings from .env (unset APP_MODE = public), on HOST:PORT (127.0.0.1:8000)
 	@eval "$$($(PY) scripts/dev/loadenv.py)"; 	echo "Wasel on http://$${HOST:-127.0.0.1}:$${PORT:-$(API_PORT)}  mode=$${APP_MODE:-public}"; 	$(PY) -m uvicorn wasel.main:create_app --factory --host $${HOST:-127.0.0.1} --port $${PORT:-$(API_PORT)} --workers 1
-
-tunnel: ## publish `make serve` on your Cloudflare hostname (named tunnel; CLOUDFLARE_TUNNEL_TOKEN in .env)
-	@eval "$$($(PY) scripts/dev/loadenv.py)"; 	: "$${CLOUDFLARE_TUNNEL_TOKEN:?set CLOUDFLARE_TUNNEL_TOKEN in .env (Cloudflare Zero Trust > Networks > Tunnels)}"; 	cf=$$(command -v cloudflared || ls $$HOME/.local/bin/cloudflared* 2>/dev/null | head -1); 	[ -n "$$cf" ] || { echo "cloudflared not found: install it (docs/operations/deployment.md)" >&2; exit 1; }; 	TUNNEL_TOKEN="$$CLOUDFLARE_TUNNEL_TOKEN" "$$cf" tunnel --no-autoupdate run
 
 deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `make serve` and run `make smoke URL=<public url>`
 	git pull --ff-only
@@ -48,23 +45,9 @@ deploy: ## on the host: pull main, install deps, rebuild the UI; then restart `m
 	@echo "updated to $$(git rev-parse --short HEAD). Restart the server (systemctl restart wasel, or Ctrl-C + make serve),"
 	@echo "then check it from outside: make smoke URL=<your public URL>"
 
-# ---- Cloudflare (Worker + Container + R2; docs/operations/cloudflare.md). Needs no Cloudflare account except cf-deploy-*
-lock: ## regenerate the hashed locks: requirements.lock (dev + dashboard, any OS) and the container's (linux/amd64); needs uv
+lock: ## regenerate the hashed locks: requirements.lock (dev + dashboard, any OS) and the Render image's (linux/amd64); needs uv
 	uv pip compile requirements.txt requirements-dev.txt dashboard/requirements.txt --universal --generate-hashes --python-version 3.11 --no-strip-extras -o requirements.lock
-	uv pip compile deploy/cloudflare/container/requirements.txt --generate-hashes --python-version 3.11 --python-platform x86_64-manylinux_2_28 --no-strip-extras -o deploy/cloudflare/container/requirements.lock
-
-cf-install: ## npm ci for deploy/cloudflare (wrangler, @cloudflare/containers)
-	cd deploy/cloudflare && npm ci --no-audit --no-fund
-
-cf-check: ## offline: wrangler.jsonc/env/requirements consistency + Worker typecheck and tests (no account, no Docker)
-	$(PY) scripts/ops/cf_check.py
-	cd deploy/cloudflare && npm run --silent typecheck >/dev/null && npm test --silent
-
-cf-image: ## build the container image locally (what wrangler deploys), tag wasel-cf
-	docker build --platform linux/amd64 -t wasel-cf -f deploy/cloudflare/container/Dockerfile .
-
-cf-smoke: ## run the image locally (docker/podman): keyless boot, smoke test, state survives a wiped disk, corrupt snapshot refused
-	$(PY) scripts/ops/cf_local_smoke.py
+	uv pip compile deploy/render/requirements.txt --generate-hashes --python-version 3.11 --python-platform x86_64-manylinux_2_28 --no-strip-extras -o deploy/render/requirements.lock
 
 render-smoke: ## build the Render image, run it on :10000 and smoke-test it (docker/podman; CI runs this)
 	docker build -f deploy/render/Dockerfile -t wasel-render .
@@ -72,16 +55,6 @@ render-smoke: ## build the Render image, run it on :10000 and smoke-test it (doc
 	docker run -d --name wasel-render-smoke -p 10000:10000 -e PORT=10000 wasel-render >/dev/null
 	trap 'docker rm -f wasel-render-smoke >/dev/null 2>&1' EXIT; \
 	$(PY) scripts/dev/wait_health.py http://127.0.0.1:10000 && $(PY) scripts/ops/smoke.py http://127.0.0.1:10000
-
-cf-dev: web ## wrangler dev: the Worker + container locally on :8787 (needs Docker; secrets from deploy/cloudflare/.dev.vars)
-	cd deploy/cloudflare && npx wrangler dev --port 8787
-
-cf-dry-run: web ## validate a deploy without uploading anything (builds the image; ENV=preview|production)
-	cd deploy/cloudflare && npx wrangler deploy --dry-run --outdir .wrangler/dry-run --env $${ENV:-preview}
-
-cf-deploy: web ## ACCOUNT SIDE: deploy ENV=preview|production (wrangler login first; docs/operations/cloudflare.md)
-	@[ -n "$${ENV:-}" ] || { echo "set ENV=preview or ENV=production" >&2; exit 1; }
-	cd deploy/cloudflare && npx wrangler deploy --env $$ENV --var GIT_SHA:$$(git rev-parse --short HEAD)
 
 wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callback registration (docs/subsystems/whatsapp.md)
 	bash scripts/ops/wa_webhook_up.sh
@@ -92,7 +65,7 @@ llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_AR
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)
 	bash scripts/ops/vllm_serve.sh check
 
-.PHONY: help setup lock run up ui web web-dev serve tunnel deploy cf-install cf-check cf-image cf-smoke render-smoke cf-dev cf-dry-run cf-deploy wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
+.PHONY: help setup lock run up ui web web-dev serve deploy render-smoke wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

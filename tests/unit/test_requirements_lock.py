@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-CONTAINER = ROOT / "deploy" / "cloudflare" / "container"
+IMAGE = ROOT / "deploy" / "render"
 # lock file -> the requirement files it was compiled from
 LOCKS = {
     ROOT / "requirements.lock": [ROOT / "requirements.txt", ROOT / "requirements-dev.txt", ROOT / "dashboard" / "requirements.txt"],
-    CONTAINER / "requirements.lock": [CONTAINER / "requirements.txt"],
+    IMAGE / "requirements.lock": [IMAGE / "requirements.txt"],
 }
 
 

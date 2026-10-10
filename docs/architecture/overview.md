@@ -10,7 +10,6 @@ flowchart LR
     SELLER(("Seller"))
     META["Meta WhatsApp<br/>Cloud API"]
     LLMS["LLM providers<br/>Groq · Gemini ·<br/>self-hosted vLLM"]
-    CF["Cloudflare Tunnel<br/>(optional)"]
 
     subgraph HOST["Host running `make serve`"]
         APP["Wasel process<br/>FastAPI + worker loop"]
@@ -21,7 +20,7 @@ flowchart LR
     DASH["Streamlit dashboard<br/>(separate process)"]
 
     CUST -- "chat" --> META
-    META -- "signed webhook" --> CF --> APP
+    META -- "signed webhook" --> APP
     APP -- "send message" --> META
     APP <--> DB
     APP --> FILES
@@ -38,7 +37,6 @@ flowchart LR
 | Seller | Uses the web UI or the dashboard to read the queue, send drafted questions and move orders through their lifecycle. |
 | Meta WhatsApp Cloud API | Delivers inbound messages and delivery statuses to `POST /webhook/whatsapp` (HMAC-signed) and accepts outbound text messages from `WhatsAppSender`. Only used in `dev` or `event` mode with WhatsApp secrets configured. |
 | LLM providers | Receive the rendered conversation window for extraction, and template text for rewrite and judge. Called over HTTPS with `httpx`. All are optional. |
-| Cloudflare Tunnel | Optional publisher for a host without open ports. Wasel does not know about it. |
 | Filesystem | `config/`, `data/` and `models/` are read from the repository checkout; `data/reports/` files are read at runtime by the API. |
 
 ## Components

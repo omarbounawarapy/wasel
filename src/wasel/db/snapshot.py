@@ -1,12 +1,11 @@
-"""Durable copy of the SQLite database for hosts whose disk is ephemeral (Cloudflare Containers).
+"""Durable copy of the SQLite database for hosts whose disk is ephemeral (for example Render).
 
 The app keeps using one local SQLite file. When SNAPSHOT_URL is set, the file is restored from a snapshot store at boot
 and copied back to it while the app runs and once more on shutdown. Without SNAPSHOT_URL nothing here runs, so `make
 serve`, `make run` and the tests behave exactly as before.
 
 Stores: `file:///abs/dir/wasel.sqlite` (local emulation and tests) and `http(s)://host/path` (GET returns the bytes or
-404 when no snapshot exists yet; PUT stores them). On Cloudflare the URL is a host the Worker intercepts and backs with
-R2 (deploy/cloudflare/worker/src/index.ts), so the container holds no Cloudflare credentials.
+404 when no snapshot exists yet; PUT stores them).
 
 Failure rules: a missing snapshot is a first boot; any other restore error, or a snapshot that is not a healthy Wasel
 database, stops startup. Booting empty and then snapshotting would overwrite the last good copy. A failed save is

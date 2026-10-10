@@ -11,7 +11,7 @@ Values are read in two ways, and both see `.env`:
 | `wasel.settings.Settings` (pydantic-settings) | process environment, then the `.env` file in the current working directory | mode, safety, WhatsApp, caps, sandbox, runtime |
 | `wasel.envutil.env()`, used by the LLM layer, prompt registry, tracing and scoring config | process environment, then the same `.env` file | `GROQ_API_KEY`, `GEMINI_API_KEY`, `GEMINI_MODEL`, `GEMINI_ENABLED`, `EXTRACT_MODEL`, `FALLBACK_MODEL`, `GROQ_BASE_URL`, `GROQ_FALLBACK_ENABLED`, `LLM_DEADLINE_S`, `LLM_MODE` (when called without a mode), `LLM_REPLAY_DIR`, `PROBE_FILE`, `PROMPT_VERSION`, `LLM_REGISTRY`, `TRACE_FILE`, `SCORING_CONFIG` |
 
-In both, a real environment variable wins over the file, and an empty value counts as unset. So `make run`, `make demo`, a bare `uvicorn wasel.main:create_app --factory`, `make eval-live`, `make warm LIVE=1` and `make failures-llm` all see the provider keys in `.env`, run from the repository root. `make up`, `make serve`, `make tunnel` and `scripts/ops/wa_webhook_up.sh` additionally export the file into the shell through `scripts/dev/loadenv.py`, which makes every variable, including ones the app never reads, visible to child processes. The loader parses the file with python-dotenv, as the app does, and quotes every value, so a shell never evaluates it. `make llm-check` and `scripts/ops/vllm_serve.sh` load it the same way, under a `DOTENV_` prefix. The test suite disables the file (`Settings.model_config["env_file"] = None`), which also disables the fallback in `env()`.
+In both, a real environment variable wins over the file, and an empty value counts as unset. So `make run`, `make demo`, a bare `uvicorn wasel.main:create_app --factory`, `make eval-live`, `make warm LIVE=1` and `make failures-llm` all see the provider keys in `.env`, run from the repository root. `make up`, `make serve` and `scripts/ops/wa_webhook_up.sh` additionally export the file into the shell through `scripts/dev/loadenv.py`, which makes every variable, including ones the app never reads, visible to child processes. The loader parses the file with python-dotenv, as the app does, and quotes every value, so a shell never evaluates it. `make llm-check` and `scripts/ops/vllm_serve.sh` load it the same way, under a `DOTENV_` prefix. The test suite disables the file (`Settings.model_config["env_file"] = None`), which also disables the fallback in `env()`.
 
 Quoting follows python-dotenv: a value with spaces needs quotes (`VLLM_ARGS="--gpu-memory-utilization 0.92 --max-model-len 16384"`), single quotes keep everything literal, and `$`, backticks and `$(...)` are plain characters (a `${NAME}` inside an unquoted or double-quoted value is expanded by python-dotenv, not by a shell). No shell ever runs the file.
 
@@ -51,7 +51,6 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `WA_APP_SECRET` | Meta app secret: webhook signature check. At least 16 characters to mount the webhook. |
 | `WA_VERIFY_TOKEN` | Webhook verification handshake. At least 24 characters to mount the webhook. |
 | `ADMIN_TOKEN` | Admin reset endpoint |
-| `CLOUDFLARE_TUNNEL_TOKEN` | `make tunnel` |
 
 ## LLM
 
@@ -82,7 +81,7 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `VISITOR_LLM_CAP_DAY` | `20` | Provider calls per visitor per UTC day (public mode) |
 | `SANDBOX_TTL_S` | `7200` | Age after which a visitor's conversations are purged |
 | `SANDBOX_MAX_ORDERS` | `15` | Orders per visitor (429 `SANDBOX_LIMIT`) |
-| `CLIENT_IP_HEADER` | empty | Public mode: a header your proxy overwrites on every request (`CF-Connecting-IP` on Cloudflare and Render). Per-address limits count under it. Empty uses the socket address; a loopback or private peer means an unknown proxy, so only the per-visitor limits apply. Never name a header a client can set freely, such as `X-Forwarded-For` |
+| `CLIENT_IP_HEADER` | empty | Public mode: a header your proxy overwrites on every request (for example `CF-Connecting-IP` when Cloudflare is in front). Per-address limits count under it. Empty uses the socket address; a loopback or private peer means an unknown proxy, so only the per-visitor limits apply. Never name a header a client can set freely, such as `X-Forwarded-For` |
 | `ADDR_WRITES_10MIN` | `30` | Public mode: write requests per client address per 10 minutes (429 `RATE_LIMITED` with `Retry-After`). A new visitor id does not reset it |
 | `ADDR_SANDBOX_ORDERS` | `30` | Public mode: sandbox orders one address may create per `SANDBOX_TTL_S` (429 `RATE_LIMITED`) |
 | `ADDR_LLM_SHARE` | `0.25` | Public mode: share of `LIVE_LLM_DAILY_CAP` that all the visitor ids seen from one address may use together; over it, scoring uses the rules path |
@@ -107,7 +106,7 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 |---|---|---|
 | `HOST` | `127.0.0.1` | Bind address for `make serve`. `0.0.0.0` exposes the port on the network. |
 | `PORT` | `8000` | Port for `make serve` |
-| `SNAPSHOT_URL` | empty (off) | `file:///abs/path` or `http(s)://…` store the SQLite file is restored from at boot and saved to while running; for hosts with an ephemeral disk ([Cloudflare](../operations/cloudflare.md)). Ignored when `SEED_ON_BOOT` resolves to `always`. A store that errors (other than "no snapshot yet") stops startup |
+| `SNAPSHOT_URL` | empty (off) | `file:///abs/path` or `http(s)://…` store the SQLite file is restored from at boot and saved to while running; for hosts with an ephemeral disk. Ignored when `SEED_ON_BOOT` resolves to `always`. A store that errors (other than "no snapshot yet") stops startup |
 | `SNAPSHOT_INTERVAL_S` | `60` | Minimum seconds between snapshot saves (a save happens only if the DB changed, and once at shutdown) |
 | `GIT_SHA` | `dev` | Shown in `/api/health` `build.git_sha` |
 | `FRONTEND_ORIGIN` | `http://localhost:5173` | CORS origin allowed in `dev` mode, and the one other origin that may send a state-changing request outside `public` mode |

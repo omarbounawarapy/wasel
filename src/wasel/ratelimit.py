@@ -16,9 +16,9 @@ MAX_ADDRESSES = 20_000              # a flood of distinct addresses cannot grow 
 def client_address(peer: str | None, headers, header_name: str) -> str | None:
     """The address to rate-limit, or None when it cannot be told.
 
-    `header_name` is a header that a trusted proxy overwrites on every request (CF-Connecting-IP on Cloudflare and
-    on Render); with none configured the socket peer is used. A loopback or private peer means a proxy sits in
-    front and the real address is unknown, so there is nothing to limit by.
+    `header_name` is a header that a trusted proxy overwrites on every request (for example CF-Connecting-IP
+    when Cloudflare is in front); with none configured the socket peer is used. A loopback or private peer means a
+    proxy sits in front and the real address is unknown, so there is nothing to limit by.
     """
     candidate = (headers.get(header_name) or "").strip() if header_name else ""
     for value in (candidate, "" if header_name else (peer or "")):

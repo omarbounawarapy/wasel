@@ -17,7 +17,7 @@ ENV PYTHONUNBUFFERED=1 \
     DB_PATH=/data/app.db
 WORKDIR /app
 # Hashed lock (make lock): every transitive package is pinned and verified, not just the direct ones.
-COPY deploy/cloudflare/container/requirements.lock /tmp/requirements.lock
+COPY deploy/render/requirements.lock /tmp/requirements.lock
 RUN pip install --require-hashes -r /tmp/requirements.lock && rm /tmp/requirements.lock
 COPY src ./src
 COPY config ./config
