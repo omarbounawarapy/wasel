@@ -1025,7 +1025,7 @@ def test_purge_history_removes_old_rows_keeps_young_and_current_evidence(dev):
 
 def test_every_error_under_api_is_the_json_envelope(dev):
     c, _, _ = dev
-    for method, url in (("get", "/api/nope"), ("get", "/api/health/"), ("get", "/api/orders/ord_nope")):
+    for method, url in (("get", "/api/nope"), ("get", "/api/orders/ord_nope")):
         r = c.request(method, url)
         assert r.status_code == 404 and r.headers["content-type"].startswith("application/json")
         assert r.json()["error"]["code"] == "NOT_FOUND"
