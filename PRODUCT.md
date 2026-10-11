@@ -18,7 +18,7 @@ Wasel scores the refusal risk of a COD order placed in chat (0 to 100) and helps
 
 ## Positioning
 
-The score is explained with quotes from the customer's own message, and the reasons are shown as a diff when the customer answers (v1 87 to v2 16). The LLM extracts facts and code verifies every quote; the score is computed in code, never by the LLM. A person sends the drafts. A neighbouring address-validation or fraud tool does not read the conversation and does not show its reasoning in the customer's words.
+The score is explained with quotes from the customer's own message, and the reasons are shown as a diff when the customer answers (v1 87 to v2 16). The LLM extracts facts and code verifies every quote; the score is computed in code, never by the LLM. A person sends the drafts by default. A seller can switch on automatic sending for the drafts the guard clears with high confidence, but never in the public demo. A neighbouring address-validation or fraud tool does not read the conversation and does not show its reasoning in the customer's words.
 
 ## Constraints and facts to preserve
 

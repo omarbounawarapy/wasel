@@ -6,7 +6,7 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 
 ### Added
 - Render free-plan hosting for the public demo (`render.yaml`, `deploy/render/Dockerfile`, [guide](docs/operations/render.md)), now linked from the README, the docs index and the deployment page, with a "Which target?" note: Render free for a public demo, `make serve` for a host you control, Cloudflare only with a paid plan.
-- Cloudflare hosting ([guide](docs/operations/cloudflare.md)): a Worker serves the static UI and routes `/api` and the webhook to one FastAPI Container; the SQLite file is restored from and saved to an R2 bucket (`SNAPSHOT_URL`, `wasel.db.snapshot`) because container disks are ephemeral. `deploy/cloudflare/` holds the wrangler config (dev, preview, production), Worker, Dockerfile (no pandas, CPU-only xgboost) and the variable allow-list. `make cf-check`, `cf-smoke`, `cf-dev`, `cf-dry-run`, `cf-deploy`; a `cloudflare` CI job. Self-hosting is unchanged.
+- Cloudflare hosting (guide removed with the deployment, see Removed): a Worker serves the static UI and routes `/api` and the webhook to one FastAPI Container; the SQLite file is restored from and saved to an R2 bucket (`SNAPSHOT_URL`, `wasel.db.snapshot`) because container disks are ephemeral. `deploy/cloudflare/` holds the wrangler config (dev, preview, production), Worker, Dockerfile (no pandas, CPU-only xgboost) and the variable allow-list. `make cf-check`, `cf-smoke`, `cf-dev`, `cf-dry-run`, `cf-deploy`; a `cloudflare` CI job. Self-hosting is unchanged.
 - Evaluation gate: golden cases in three generated sets (extraction, outbound drafts, injection) built deterministically from synthetic data (`make golden`). `make eval` gates them on `config/eval.yaml` and is part of `make check`, so CI blocks a change that drops under a floor. `make eval-live` runs the same sets through the live LLM extractor and judge.
 - LLM registry `config/llm.yaml` with one-step rollback (`scripts/ops/rollback.py`), per-request input caps and trace records; a monitor endpoint (`GET /api/monitor`, `GET /api/traces`) reporting drift and safety rates.
 - Outbound rewrite and judge (flag `DRAFT_LLM`): the LLM rewrites the template, then a prefilter, a local guard classifier (char n-gram TF-IDF with logistic regression, `data/draft_guard.yaml`) and an LLM judge check it. One retry with feedback, then the static template. If the judge is down the draft goes to a person, unless the `classifier` auto-send gate is configured and the classifier clears it.
@@ -28,6 +28,9 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 ### Changed
 - Repository layout: the Python code is now the installable `wasel` package under `src/wasel/` (formerly `app/`, `ml/`, `eval/`, `failures/`; `eval` is `wasel.evaluation`); prompts, schemas and `scoring.yaml` live in `config/`; golden sets in `data/eval/`; committed reports in `data/reports/`; frozen API responses in `tests/fixtures/api/`; scripts are grouped in `scripts/{data,ops,dev}/`; `make setup` installs the package editable. Commands: `python -m wasel.ml.train`, `uvicorn wasel.main:create_app`, `python scripts/ops/smoke.py URL`.
 - WhatsApp ingestion uses the Meta Cloud API webhook instead of chat exports.
+
+### Removed
+- Cloudflare deployment (Worker, container, wrangler config, `make cf-*` targets and the `cloudflare` CI job). The public demo runs on Render; `make serve` with a systemd unit remains for a host you control.
 
 ### Fixed
 - Numeric libraries run single-threaded (`src/wasel/__init__.py`, guard classifier training); the default one-thread-per-core pools used about 7× the CPU for the same result.
