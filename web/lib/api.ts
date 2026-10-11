@@ -46,7 +46,7 @@ class ApiClient {
 
                 // Enhance error object with more details
                 if (error.response) {
-                    error.message = error.response.data?.detail || error.response.data?.message || error.message;
+                    error.message = error.response.data?.error?.message || error.response.data?.detail || error.response.data?.message || error.message;
                 }
 
                 return Promise.reject(error);
@@ -101,13 +101,15 @@ class ApiClient {
 
     private handleError(error: any) {
         // Extract meaningful error message
-        const message = error.response?.data?.detail
+        const message = error.response?.data?.error?.message
+            || error.response?.data?.detail
             || error.response?.data?.message
             || error.message
             || 'An unexpected error occurred';
 
         return {
             message,
+            code: error.response?.data?.error?.code,
             status: error.response?.status,
             data: error.response?.data,
         };
