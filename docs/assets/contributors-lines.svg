@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="420" height="354" viewBox="0 0 420 354" role="img" aria-labelledby="t"><title id="t">Lines of code added</title>
 <rect width="420" height="354" rx="12" fill="#ffffff" stroke="#d0d7de"/>
-<text x="210" y="30" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#1f2328">Lines of code added (68,256)</text>
-<path d="M210.0,135.0 L210.00,45.00 A90,90 0 1 1 130.45,177.09 Z" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<text x="210" y="30" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-size="16" font-weight="700" fill="#1f2328">Lines of code added (68,261)</text>
+<path d="M210.0,135.0 L210.00,45.00 A90,90 0 1 1 130.44,177.08 Z" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
 <rect x="40" y="246" width="14" height="14" rx="3" fill="#2563eb"/>
-<text x="64" y="258" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">omarbounawarapy <tspan fill="#59636e">67.3% · 45,905 lines</tspan></text>
-<path d="M210.0,135.0 L130.45,177.09 A90,90 0 0 1 208.13,45.02 Z" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
+<text x="64" y="258" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">omarbounawarapy <tspan fill="#59636e">67.3% · 45,910 lines</tspan></text>
+<path d="M210.0,135.0 L130.44,177.08 A90,90 0 0 1 208.13,45.02 Z" fill="#16a34a" stroke="#ffffff" stroke-width="2"/>
 <rect x="40" y="272" width="14" height="14" rx="3" fill="#16a34a"/>
 <text x="64" y="284" font-family="Arial,Helvetica,sans-serif" font-size="14" fill="#1f2328">montaassarr <tspan fill="#59636e">32.4% · 22,125 lines</tspan></text>
 <path d="M210.0,135.0 L208.13,45.02 A90,90 0 0 1 209.10,45.00 Z" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
