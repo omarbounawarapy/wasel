@@ -226,7 +226,7 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
                     <textarea
                         dir="auto"
                         rows={3}
-                        maxLength={1000}
+                        maxLength={600}
                         value={replyText}
                         onChange={e => setReplyText(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSend(); }}
@@ -236,7 +236,7 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
                     />
                 </label>
                 <div className="flex items-center justify-between">
-                    <span className={`text-xs ${error ? "text-red-700" : "text-gray-600"}`}>{error ?? `${replyText.length} / 1,000`}</span>
+                    <span className={`text-xs ${error ? "text-red-700" : "text-gray-600"}`}>{error ?? `${replyText.length} / 600`}</span>
                     <Button size="sm" variant="outline" disabled={sending || !replyText.trim()} onClick={handleSend}>
                         {sending ? "Sending…" : "Send simulated reply"}
                     </Button>
