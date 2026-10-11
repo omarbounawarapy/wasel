@@ -16,6 +16,14 @@ One free Render web service runs the API and the built web UI from a single imag
 4. Verify: `make smoke URL=https://<name>.onrender.com`, expect `SMOKE PASS ... public v1=87 v2=16`.
 5. Deploys follow `render.yaml`'s `autoDeployTrigger: checksPass`: a commit goes live only after its CI checks pass. `/api/health` shows `build.git_sha`, the commit the service runs (`RENDER_GIT_COMMIT`, unless `GIT_SHA` is set).
 
+## Keep the demo awake (submission day)
+
+`.github/workflows/keep-alive.yml` pings `/api/health` every 10 minutes so the service never sleeps. It ships **disabled**: only the manual trigger is on. To use it:
+
+1. Uncomment the `schedule:` block in the workflow and push to `main` (or run it once by hand from the Actions tab to test).
+2. Optional: set the repository variable `DEMO_URL` if the demo is not at `https://wasel.runs-on.dev`.
+3. After judging, comment the block out again so the free-plan hours are not spent for nothing.
+
 ## Custom domain (runs-on.dev)
 
 The demo is also served at `https://wasel.runs-on.dev`, a free subdomain from [runs-on.dev](https://runs-on.dev). No code or `render.yaml` change is involved; the app has no hard-coded host.
