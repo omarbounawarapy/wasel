@@ -46,7 +46,13 @@ class ApiClient {
 
                 // Enhance error object with more details
                 if (error.response) {
-                    error.message = error.response.data?.error?.message || error.response.data?.detail || error.response.data?.message || error.message;
+                    // First try data.error.message (API error envelope), then fallbacks
+                    error.message = error.response.data?.error?.message
+                        || error.response.data?.detail
+                        || error.response.data?.message
+                        || error.message;
+                    // Expose error.code on the error object
+                    error.code = error.response.data?.error?.code;
                 }
 
                 return Promise.reject(error);

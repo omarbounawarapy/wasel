@@ -14,6 +14,12 @@ services:
         value: public
       - key: CLIENT_IP_HEADER          # Cloudflare in front of Render overwrites this; per-address limits key on it
         value: CF-Connecting-IP
+      - key: LIVE_LLM_DAILY_CAP        # Increased for judging day (was default 80 in public mode)
+        value: "500"
+      - key: ADDR_LLM_SHARE            # Increased share of daily cap per address (was 0.25)
+        value: "0.8"
+      - key: VISITOR_LLM_CAP_DAY       # Increased per-visitor daily cap (was 20)
+        value: "100"
       - key: GROQ_API_KEY
         sync: false
       - key: ADMIN_TOKEN
