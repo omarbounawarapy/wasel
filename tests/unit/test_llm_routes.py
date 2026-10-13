@@ -89,3 +89,65 @@ def test_bad_config_fails_with_the_field_named(endpoints, route, needle):
     with pytest.raises(LLMConfigError, match=needle):
         eps = parse_endpoints(endpoints)
         parse_route("extract", route, eps)
+
+
+def _client_with_routes(monkeypatch, routes):
+    """build_client('live') over the committed endpoints and the given routes, with fake adapters."""
+    from wasel.llm import prompts
+    from wasel.llm.client import build_client
+    reg = dict(registry())
+    reg["routes"] = routes
+    monkeypatch.setattr(prompts, "registry", lambda: reg)
+    monkeypatch.setitem(ADAPTERS, "openai-compatible", lambda ep, cfg: Fake(ep))
+    return build_client("live", replay_dirs=[])
+
+
+def test_a_role_without_a_route_walks_the_extract_route(clean):
+    clean.setenv("GROQ_API_KEY", "k")
+    from wasel.llm.client import build_client
+    c = build_client("live", replay_dirs=[])
+    assert c.steps_for("judge") is c.steps and c.chain_names_for("rewrite") == c.chain_names
+
+
+def test_a_role_route_can_point_at_another_endpoint_in_config_only(clean):
+    clean.setenv("GROQ_API_KEY", "k")
+    clean.setenv("GROQ_BASE_URL", "http://10.0.0.5:8000/v1")
+    clean.setenv("SELF_HOSTED_API_KEY", "t")
+    reg_routes = registry()["routes"]
+    c = _client_with_routes(clean, {
+        **reg_routes,
+        "judge": [{"endpoint": "groq", "kind": "primary", "model": "openai/gpt-oss-20b", "timeout_s": 7}]})
+    assert c.chain_names_for("judge") == ["groq:openai/gpt-oss-20b"]
+    assert c.chain_names[0].startswith("self-hosted:")          # extract is unchanged
+    assert c.chain_names_for("rewrite") == c.chain_names        # no rewrite route: inherits extract
+
+
+def test_an_unknown_route_role_is_a_config_error(clean):
+    with pytest.raises(LLMConfigError, match="unknown role"):
+        _client_with_routes(clean, {"judje": []})
+
+
+def test_the_judge_route_is_the_one_that_runs(clean):
+    """ChainClient._run walks the role's own steps, with the shared breaker keyed by endpoint."""
+    from datetime import UTC, datetime
+
+    from wasel.llm.base import TaskSpec
+    from wasel.llm.client import ChainClient, ChainStep
+    seen = []
+
+    class Rec:
+        def __init__(self, name):
+            self.name = name
+
+        def complete_json(self, task, model, user, timeout_s):
+            seen.append(self.name)
+            return "{}", CallMeta(provider="groq", model=model, latency_ms=1)
+
+    c = ChainClient([ChainStep("primary", "groq", "m", Rec("extract"), 5, endpoint="a")],
+                    role_steps={"judge": [ChainStep("primary", "groq", "m", Rec("judge"), 5, endpoint="b")]})
+    task = TaskSpec(name="judge", schema_name="s", schema={}, system_prompt="", few_shot=(), prompt_version="v",
+                    max_output_tokens=10, temperature=0.0, max_input_chars=100, cache=False)
+    now = datetime(2026, 1, 1, tzinfo=UTC)
+    for role in ("extract", "judge"):
+        c.extract(task, "x", parse=lambda r: r, meter=None, sandbox_id=None, now=now, role=role)
+    assert seen == ["extract", "judge"]

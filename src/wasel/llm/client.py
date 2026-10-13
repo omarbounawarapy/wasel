@@ -42,7 +42,7 @@ from wasel.llm.base import (
     Timeout,
     Truncated,
 )
-from wasel.llm.settings import LLMSettings
+from wasel.llm.settings import LLMConfigError, LLMSettings
 
 MAX_BREAKER_S = 300.0
 StepKind = Literal["primary", "fallback_model", "fallback_provider"]
@@ -106,8 +106,10 @@ class ChainClient:
     """
 
     def __init__(self, steps: list[ChainStep], *, deadline_s: float = 20.0, breaker_s: float = 60.0,
-                 breaker_after: int = 3, monotonic: Callable[[], float] = time.monotonic, cache_size: int = 512):
-        self.steps = steps
+                 breaker_after: int = 3, monotonic: Callable[[], float] = time.monotonic, cache_size: int = 512,
+                 role_steps: dict[str, list[ChainStep]] | None = None):
+        self.steps = steps                # the extract route
+        self.role_steps = role_steps or {}      # roles with their own route in config/llm.yaml
         self._cache: OrderedDict[str, ChainResult] = OrderedDict()
         self.cache_size = cache_size
         self.deadline_s, self.breaker_s = deadline_s, breaker_s
@@ -129,8 +131,15 @@ class ChainClient:
 
     @property
     def chain_names(self) -> list[str]:
-        """The `provider:model` name of every step, in order."""
-        return [f"{s.endpoint}:{s.model}" for s in self.steps]
+        """The `provider:model` name of every step of the extract route, in order."""
+        return self.chain_names_for("extract")
+
+    def steps_for(self, role: str) -> list[ChainStep]:
+        """The steps a role walks: its own route if config/llm.yaml has one, else the extract route."""
+        return self.role_steps.get(role, self.steps)
+
+    def chain_names_for(self, role: str) -> list[str]:
+        return [f"{s.endpoint}:{s.model}" for s in self.steps_for(role)]
 
     def extract(self, task: TaskSpec, user: str, *, parse: Callable[[str], object],
                 meter: UsageMeter | None, sandbox_id: str | None, now: datetime,
@@ -181,7 +190,7 @@ class ChainClient:
         t0 = self._mono()
         res = ChainResult(None, None, "rules", None, None)
         skip_same_provider_fallback = False
-        for step in self.steps:
+        for step in self.steps_for(role):
             if step.kind == "fallback_model" and skip_same_provider_fallback:
                 continue
             with self._lock:
@@ -348,8 +357,13 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
                            deadline_s=deadline_s)
     if mode != "live":
         raise ValueError(f"unknown LLM_MODE {mode!r}")
-    from wasel.llm.routes import build_steps, parse_endpoints, parse_route
+    from wasel.llm.routes import ROLE_ROUTES, build_steps, parse_endpoints, parse_route
     reg = registry()
     endpoints = parse_endpoints(reg.get("endpoints"))
-    route = parse_route("extract", (reg.get("routes") or {}).get("extract"), endpoints)
-    return ChainClient(build_steps(cfg, endpoints, route), deadline_s=deadline_s, cache_size=cfg.cache_size)
+    routes = reg.get("routes") or {}
+    unknown = sorted(set(routes) - set(ROLE_ROUTES))
+    if unknown:
+        raise LLMConfigError(f"config/llm.yaml routes: unknown role(s) {unknown}; expected {list(ROLE_ROUTES)}")
+    built = {role: build_steps(cfg, endpoints, parse_route(role, routes[role], endpoints))
+             for role in ROLE_ROUTES if role in routes}
+    return ChainClient(built.pop("extract", []), deadline_s=deadline_s, cache_size=cfg.cache_size, role_steps=built)

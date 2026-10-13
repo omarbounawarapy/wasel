@@ -141,7 +141,11 @@ class AppState:
     @property
     def draft_llm(self):
         """rewrite + judge runs only with DRAFT_LLM=true and a provider configured; else static templates."""
-        return self.llm if self.settings.draft_llm and getattr(self.llm, "steps", None) else None
+        if not self.settings.draft_llm:
+            return None
+        steps_for = getattr(self.llm, "steps_for", None)
+        has = steps_for("rewrite") or steps_for("judge") if steps_for else getattr(self.llm, "steps", None)
+        return self.llm if has else None
 
     def drafter(self, req):
         """Draft a message with make_draft. LLM rewrite and judge are used only when draft_llm is enabled; otherwise
@@ -371,7 +375,7 @@ class AppState:
                                   classifier_version=lm.classifier_version if lm else "none",
                                   seed_version=load_seed()["version"]),
             llm=M.HealthLLM(llm_mode=s.llm_mode, chain_extract=getattr(self.llm, "chain_names", []),
-                            chain_judge=getattr(self.draft_llm, "chain_names", []),
+                            chain_judge=self.draft_llm.chain_names_for("judge") if self.draft_llm else [],
                             primary=getattr(self.llm, "primary", "rules"), fallback_active=fb is not None,
                             fallback_reason=f"recent path {fb['path']}" if fb else None,
                             last_path=last_path, last_host=last_host,

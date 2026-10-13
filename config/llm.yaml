@@ -67,6 +67,8 @@ endpoints:
     model_env: GEMINI_MODEL
     enabled_env: GEMINI_ENABLED
     enabled_default: false
+# A role with no entry under `routes` walks the extract route. `rewrite` and `judge` may each get their own list of the
+# same step fields (Phase 4); breakers stay per endpoint, so a host that is down is skipped by every role.
 routes:
   extract:
     - { endpoint: self-hosted, kind: primary, model: primary, timeout_s: 6 }

@@ -14,6 +14,7 @@ from wasel.llm.settings import LLMConfigError, LLMSettings
 
 PROTOCOLS = {"openai-compatible": "groq", "gemini": "gemini"}   # protocol -> the stored `provider` value
 REASONING = {"hosted_groq", "self_hosted"}
+ROLE_ROUTES = ("extract", "rewrite", "judge")   # a role without a route walks the extract route
 KINDS = ("primary", "fallback_model", "fallback_provider")
 _ENDPOINT_KEYS = {"protocol", "provider", "base_url", "base_url_env", "key_env", "reasoning", "model_env",
                   "enabled_env", "enabled_default"}
