@@ -60,6 +60,7 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `EXTRACT_MODEL` | `routing.primary` in `llm.yaml` (`openai/gpt-oss-120b`) | Model of the primary step |
 | `FALLBACK_MODEL` | `routing.fallback_model` (`openai/gpt-oss-20b`) | Model of the second Groq step |
 | `GROQ_BASE_URL` | empty (= Groq) | Point the Groq steps at any OpenAI-compatible server. `GROQ_API_KEY` must still be set. |
+| `LLM_SERVING_LABEL` | empty | Hardware and server shown in `/api/health` (`llm.serving_label`) and the header tooltip, for example `AMD Instinct MI300X, ROCm, vLLM`. Only reported when `GROQ_BASE_URL` is set; `llm.serving_host` carries the host name of that URL. Set it to what the endpoint really runs. |
 | `GROQ_FALLBACK_ENABLED` | `true` | `false` removes the second Groq step |
 | `GEMINI_ENABLED` | `false` | Gemini needs this set to `true` **and** `GEMINI_API_KEY` **and** `GEMINI_MODEL` |
 | `GEMINI_MODEL` | empty | A Flash-class model id from your Gemini account |

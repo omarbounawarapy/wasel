@@ -9,6 +9,7 @@ import threading
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from pathlib import Path
+from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
@@ -28,6 +29,7 @@ from wasel.db.purge import purge_history, purge_sandboxes, reset_all
 from wasel.db.seed import load_seed, seed_all, seed_cache, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
 from wasel.db.usage import SqliteUsageMeter
+from wasel.envutil import env
 from wasel.ids import IdGen, UlidIds
 from wasel.llm.client import ChainClient, build_client
 from wasel.llm.prompts import PROMPT_VERSION
@@ -314,6 +316,11 @@ class AppState:
                           " ('fallback_model','fallback_provider','rules') ORDER BY a.created_at DESC LIMIT 1",
                           (five,)).fetchone()
         pending = conn.execute("SELECT COUNT(*) FROM orders WHERE pending_rescore_at IS NOT NULL").fetchone()[0]
+        # where the Groq steps run: only a self-hosted GROQ_BASE_URL can carry a serving label, so the label is never
+        # shown for the hosted Groq API
+        base_url = env("GROQ_BASE_URL")
+        serving_host = urlparse(base_url).hostname if base_url else None
+        serving_label = env("LLM_SERVING_LABEL") if serving_host else None
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))
         cap = s.daily_cap
         worker_stale = s.worker_enabled and (self.last_tick_at is None or (now - self.last_tick_at).total_seconds() > 10)
@@ -345,7 +352,8 @@ class AppState:
                             last_call_at=None, remaining_tokens=None, live_calls_today=calls, live_call_cap=cap,
                             cap_reached=cap is not None and calls >= cap,
                             visitor_cap={"per_10min": s.visitor_llm_cap_10min, "per_day": s.visitor_llm_cap_day}
-                            if s.is_public else None),
+                            if s.is_public else None,
+                            serving_label=serving_label, serving_host=serving_host),
             whatsapp=M.HealthWhatsApp(
                 last_webhook_at=utc_iso(self.last_webhook_at) if self.last_webhook_at else None),
             worker=M.HealthWorker(last_tick_at=utc_iso(self.last_tick_at) if self.last_tick_at else None,

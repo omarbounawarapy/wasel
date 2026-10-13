@@ -43,6 +43,7 @@ export function HealthBar() {
     const mode = { public: "Public demo", event: "Live event", dev: "Development" }[health.mode as string] ?? health.mode;
     const tooltip = [
         `Mode: ${health.mode}`, `AI chain: ${(llm.chain_extract || []).join(" → ") || "rules"}`,
+        ...(llm.serving_label ? [`AI hosted on: ${llm.serving_label} (${llm.serving_host})`] : []),
         `AI calls today: ${llm.live_calls_today ?? 0}${llm.live_call_cap ? ` / ${llm.live_call_cap}` : ""}`,
         `Scoring queue: ${health.worker?.pending ?? 0}`, `Config ${health.config?.config_hash ?? "–"}`,
     ].join("\n");

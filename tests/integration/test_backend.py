@@ -47,6 +47,21 @@ def test_health_and_safe_defaults(tmp_path):
         assert h["llm"]["live_calls_today"] == 0
 
 
+def test_health_serving_label_only_for_self_hosted_endpoint(tmp_path, monkeypatch):
+    monkeypatch.setenv("LLM_SERVING_LABEL", "AMD Instinct MI300X, ROCm, vLLM")
+    monkeypatch.delenv("GROQ_BASE_URL", raising=False)
+    c, _, _ = make_client(tmp_path, mode="garbage")
+    with c:
+        llm = c.get("/api/health").json()["llm"]
+        assert llm["serving_label"] is None and llm["serving_host"] is None      # hosted Groq: no claim
+    monkeypatch.setenv("GROQ_BASE_URL", "https://llm.example.test:8443/v1")
+    c, _, _ = make_client(tmp_path / "b", mode="garbage")
+    with c:
+        llm = c.get("/api/health").json()["llm"]
+        assert llm["serving_label"] == "AMD Instinct MI300X, ROCm, vLLM"
+        assert llm["serving_host"] == "llm.example.test"
+
+
 def test_public_forces_sends_off_even_with_token(tmp_path):
     c, core, _ = make_client(tmp_path, "public", wa_send_enabled=True, wa_token="t", webhook_enabled=True,
                              wa_app_secret="s" * 16, wa_verify_token="v" * 24)
