@@ -25,12 +25,17 @@ export default function MonitorPage() {
     const [data, setData] = useState<any>(null);
     const [error, setError] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
+    const [health, setHealth] = useState<any>(null);
 
     const load = () => {
         setRefreshing(true);
+        ordersApi.health().then(setHealth).catch(() => setHealth(null));
         ordersApi.getMonitor().then(d => { setData(d); setError(false); }).catch(() => setError(true)).finally(() => setRefreshing(false));
     };
     useEffect(() => { load(); }, []);
+
+    const llm = health?.llm || {};
+    const chain: string[] = Array.isArray(llm.chain_extract) ? llm.chain_extract : [];
 
     const drift: any[] = Array.isArray(data?.drift) ? data.drift : [];
     const alerts: any[] = Array.isArray(data?.alerts) ? data.alerts : [];
@@ -76,6 +81,15 @@ export default function MonitorPage() {
                             <p className="text-sm text-gray-600 mt-0.5">{noLive ? `Nothing to judge yet. ${recorded} recorded readings are not counted.` : `Based on ${live} recent live AI readings.`}</p>
                         </div>
                     </section>
+
+                    <Section title="Where the AI runs" hint="The host label comes from the server configuration.">
+                        {llm.serving_label
+                            ? <p className="text-sm text-gray-900 font-medium">{llm.serving_label} <span className="font-normal text-gray-600">· host {llm.serving_host}</span></p>
+                            : <p className="text-sm text-gray-600">No self-hosted AI host is configured.</p>}
+                        {llm.serving_label && <p className="text-sm text-gray-700 mt-1">{!llm.last_path ? "No assessment recorded yet." : llm.last_host ? `The last AI answer came from ${llm.serving_label}.` : "The last assessment did not come from the self-hosted host (backup or rules)."}</p>}
+                        <p className="text-sm text-gray-700 mt-1">Model chain: {chain.join(" → ") || "rules only"}</p>
+                        {llm.fallback_active && <p className="text-sm text-amber-900 mt-1">The primary host did not answer in the last 5 minutes; the backup is in use.</p>}
+                    </Section>
 
                     <Section title="Are customers writing differently?" hint="Compared with the test conversations. “Changed” means Wasel is seeing something new.">
                         {drift.length === 0 ? (

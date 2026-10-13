@@ -321,6 +321,10 @@ class AppState:
         base_url = env("GROQ_BASE_URL")
         serving_host = urlparse(base_url).hostname if base_url else None
         serving_label = env("LLM_SERVING_LABEL") if serving_host else None
+        # the last live answer came from the self-hosted host when its assessment took the primary or the same-host
+        # fallback step; hosted, backup-provider and rules answers are not attributed to it
+        last_path = recent["path"] if recent else None
+        last_host = serving_host if last_path in ("llm", "fallback_model") else None
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))
         cap = s.daily_cap
         worker_stale = s.worker_enabled and (self.last_tick_at is None or (now - self.last_tick_at).total_seconds() > 10)
@@ -348,7 +352,7 @@ class AppState:
                             chain_judge=getattr(self.draft_llm, "chain_names", []),
                             primary=getattr(self.llm, "primary", "rules"), fallback_active=fb is not None,
                             fallback_reason=f"recent path {fb['path']}" if fb else None,
-                            last_path=recent["path"] if recent else None,
+                            last_path=last_path, last_host=last_host,
                             last_call_at=None, remaining_tokens=None, live_calls_today=calls, live_call_cap=cap,
                             cap_reached=cap is not None and calls >= cap,
                             visitor_cap={"per_10min": s.visitor_llm_cap_10min, "per_day": s.visitor_llm_cap_day}

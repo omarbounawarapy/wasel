@@ -62,6 +62,22 @@ def test_health_serving_label_only_for_self_hosted_endpoint(tmp_path, monkeypatc
         assert llm["serving_host"] == "llm.example.test"
 
 
+def test_health_says_last_host_only_when_the_self_hosted_step_answered(tmp_path, monkeypatch):
+    monkeypatch.setenv("LLM_SERVING_LABEL", "AMD Instinct MI300X, ROCm, vLLM")
+    monkeypatch.setenv("GROQ_BASE_URL", "https://llm.example.test:8443/v1")
+    c, core, _ = make_client(tmp_path, mode="garbage")
+    with c:
+        conn = core.conn()
+        latest = "SELECT assessment_id FROM risk_assessments ORDER BY created_at DESC LIMIT 1"
+        for path, expected in (("llm", "llm.example.test"), ("fallback_model", "llm.example.test"),
+                               ("fallback_provider", None), ("rules", None)):
+            with tx(conn):
+                conn.execute(f"UPDATE risk_assessments SET path=?, created_at='2099-01-01T00:00:00Z'"
+                             f" WHERE assessment_id=({latest})", (path,))
+            llm = c.get("/api/health").json()["llm"]
+            assert llm["last_path"] == path and llm["last_host"] == expected, path
+
+
 def test_public_forces_sends_off_even_with_token(tmp_path):
     c, core, _ = make_client(tmp_path, "public", wa_send_enabled=True, wa_token="t", webhook_enabled=True,
                              wa_app_secret="s" * 16, wa_verify_token="v" * 24)

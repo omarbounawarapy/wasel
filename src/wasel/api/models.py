@@ -484,6 +484,7 @@ class HealthLLM(BaseModel):
     visitor_cap: dict | None = None              # per-visitor LLM caps (public mode only)
     serving_label: str | None = None             # LLM_SERVING_LABEL, only when GROQ_BASE_URL points at a self-hosted server
     serving_host: str | None = None              # host name of GROQ_BASE_URL (no path, no credentials)
+    last_host: str | None = None                 # serving_host when the last assessment came from the self-hosted host
 
 
 class HealthWhatsApp(BaseModel):
