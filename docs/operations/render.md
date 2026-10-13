@@ -44,6 +44,6 @@ docker run --rm -p 10000:10000 -e PORT=10000 wasel-render
 make smoke URL=http://127.0.0.1:10000
 ```
 
-The image starts uvicorn with `--proxy-headers --forwarded-allow-ips '*'`, so the `X-Forwarded-Proto` from Render sets the scheme of redirects. Per-address limits read `CF-Connecting-IP` (`CLIENT_IP_HEADER` in `render.yaml`), not the socket address.
+The image starts uvicorn with `--proxy-headers --forwarded-allow-ips '*'`, so the `X-Forwarded-Proto` from Render sets the scheme of redirects. Per-address limits read `CF-Connecting-IP` (`CLIENT_IP_HEADER` in `render.yaml`), not the socket address. Render's edge is expected to set that header; this has not been confirmed on the live service, and if it is missing no per-address limit applies.
 
 `deploy/render/Dockerfile.dockerignore` is a Dockerfile-specific ignore file. If Render's builder does not honour it, the build fails on missing files or is slow; there is no root `.dockerignore`.
