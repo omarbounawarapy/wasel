@@ -9,7 +9,7 @@ Wasel is a private demo built by Z-Team. Only team members work in this reposito
 | [@omarbounawarapy](https://github.com/omarbounawarapy) | Owner and maintainer: sets scope, reviews and merges changes, owns deployment and secrets | Admin |
 | [@azaizoz](https://github.com/azaizoz) | Frontend | Write |
 | [@j6r-t](https://github.com/j6r-t) | Backend | Write |
-| [@montaassarr](https://github.com/montaassarr) | Frontend and deployment | Write |
+| [@montaassarr](https://github.com/montaassarr) | Frontend (web UI and dashboard) | Write |
 | [@fedi567](https://github.com/fedi567) | Logo, product name and synthetic data | Write |
 
 ## Decisions
