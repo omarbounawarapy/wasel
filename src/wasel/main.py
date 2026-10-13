@@ -9,7 +9,6 @@ import threading
 from contextlib import asynccontextmanager
 from datetime import timedelta
 from pathlib import Path
-from urllib.parse import urlparse
 
 from fastapi import FastAPI, Request
 from fastapi.exception_handlers import http_exception_handler
@@ -29,10 +28,10 @@ from wasel.db.purge import purge_history, purge_sandboxes, reset_all
 from wasel.db.seed import load_seed, seed_all, seed_cache, sync_catalog
 from wasel.db.snapshot import Snapshotter, restore, store_from_url
 from wasel.db.usage import SqliteUsageMeter
-from wasel.envutil import env
 from wasel.ids import IdGen, UlidIds
 from wasel.llm.client import ChainClient, build_client
 from wasel.llm.prompts import PROMPT_VERSION
+from wasel.llm.settings import LLMSettings
 from wasel.outbound.make_draft import make_draft
 from wasel.paths import ROOT
 from wasel.ratelimit import AddressLimiter
@@ -318,9 +317,8 @@ class AppState:
         pending = conn.execute("SELECT COUNT(*) FROM orders WHERE pending_rescore_at IS NOT NULL").fetchone()[0]
         # where the Groq steps run: only a self-hosted GROQ_BASE_URL can carry a serving label, so the label is never
         # shown for the hosted Groq API
-        base_url = env("GROQ_BASE_URL")
-        serving_host = urlparse(base_url).hostname if base_url else None
-        serving_label = env("LLM_SERVING_LABEL") if serving_host else None
+        llm_cfg = LLMSettings.from_env(s.llm_mode)
+        serving_host, serving_label = llm_cfg.serving_host, llm_cfg.label
         # the last live answer came from the self-hosted host when its assessment took the primary or the same-host
         # fallback step; hosted, backup-provider and rules answers are not attributed to it
         last_path = recent["path"] if recent else None
