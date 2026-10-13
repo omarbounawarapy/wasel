@@ -91,6 +91,23 @@ class LLMSettings:
             replay_dir=Path(env("LLM_REPLAY_DIR", str(ROOT / "data" / "llm_replay"))),
         )
 
+    def lookup(self, name: str) -> str | None:
+        """The value of an environment name that config/llm.yaml refers to.
+
+        The names this class already read at startup answer from the parsed fields, so a settings object built by
+        hand (as the tests do) is honoured. Any other name, such as the key variable of a new endpoint, is read from
+        the environment when asked.
+        """
+        known = {"GROQ_API_KEY": self.groq_key, "SELF_HOSTED_API_KEY": self.self_hosted_key,
+                 "GROQ_BASE_URL": self.base_url, "GEMINI_API_KEY": self.gemini_key, "GEMINI_MODEL": self.gemini_model,
+                 "EXTRACT_MODEL": self.primary_model, "FALLBACK_MODEL": self.fallback_model}
+        return known[name] if name in known else env(name)
+
+    def flag(self, name: str, default: bool) -> bool:
+        """A true/false variable that config/llm.yaml refers to; same spellings and errors as the startup flags."""
+        known = {"GROQ_FALLBACK_ENABLED": self.fallback_enabled, "GEMINI_ENABLED": self.gemini_enabled}
+        return known[name] if name in known else _flag(name, "true" if default else "false")
+
     @property
     def self_hosted(self) -> bool:
         return bool(self.base_url)

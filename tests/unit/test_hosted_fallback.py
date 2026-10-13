@@ -37,7 +37,7 @@ def backends(monkeypatch, tmp_path):
     made = {}
     behave = {}
 
-    def factory(api_key, models=(), transport=None, base_url=None):
+    def factory(api_key, models=(), transport=None, base_url=None, reasoning=None):
         url = (base_url or SELF).rstrip("/")
         b = _Backend(url, behave.get(url))
         made.setdefault(url, []).append(b)

@@ -306,9 +306,9 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
     """Build the ChainClient for `mode` (default: LLM_MODE, else 'live'), from `settings` (default: the environment).
 
     'replay', 'fail_primary', 'fail_groq' and 'fail_all' are offline modes over ReplayBackend/FailingBackend and need
-    no keys. 'live' adds a step only for each provider that is configured through the environment (GROQ_API_KEY;
-    GEMINI_API_KEY plus GEMINI_MODEL with GEMINI_ENABLED=true), so with no keys the chain is empty and every extraction
-    falls back to rules. Raises ValueError for an unknown mode, LLMConfigError (a ValueError) for a bad setting.
+    no keys. 'live' builds the `extract` route of config/llm.yaml (wasel.llm.routes): a step for each endpoint that is
+    active in this environment, so with no keys the chain is empty and every extraction falls back to rules.
+    Raises ValueError for an unknown mode, LLMConfigError (a ValueError) for a bad setting.
     """
     from wasel.llm.prompts import registry
     cfg = settings or LLMSettings.from_env(mode, registry().get("routing", {}), deadline_s)
@@ -342,23 +342,8 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
                            deadline_s=deadline_s)
     if mode != "live":
         raise ValueError(f"unknown LLM_MODE {mode!r}")
-    from wasel.llm.gemini_backend import gemini_backend, load_probe
-    from wasel.llm.groq_backend import GROQ_BASE_URL as HOSTED_URL
-    from wasel.llm.groq_backend import groq_backend
-    steps: list[ChainStep] = []
-    # GROQ_BASE_URL points the Groq client at a self-hosted host (e.g. AMD). Its token is SELF_HOSTED_API_KEY when that is
-    # set; then GROQ_API_KEY is the hosted Groq key and becomes the backup behind the self-hosted host. Without
-    # SELF_HOSTED_API_KEY, GROQ_API_KEY is the token of the self-hosted host, as before, and there is no backup.
-    if cfg.primary_key:
-        g = groq_backend(cfg.primary_key)
-        steps.append(ChainStep("primary", "groq", cfg.primary_model, g, 6, endpoint=cfg.endpoint))
-        if cfg.fallback_enabled:
-            steps.append(ChainStep("fallback_model", "groq", cfg.fallback_model, g, 5, endpoint=cfg.endpoint))
-    if cfg.backup_key:
-        # The hosted API is a separate endpoint with its own breaker: a dead self-hosted host does not block it.
-        hosted = groq_backend(cfg.backup_key, base_url=HOSTED_URL)
-        steps.append(ChainStep("fallback_provider", "groq", cfg.primary_model, hosted, 8, endpoint="groq"))
-    if cfg.gemini_active:
-        gb = gemini_backend(cfg.gemini_key, cfg.gemini_model, load_probe(cfg.probe_file))
-        steps.append(ChainStep("fallback_provider", "gemini", cfg.gemini_model, gb, 8))
-    return ChainClient(steps, deadline_s=deadline_s, cache_size=cfg.cache_size)
+    from wasel.llm.routes import build_steps, parse_endpoints, parse_route
+    reg = registry()
+    endpoints = parse_endpoints(reg.get("endpoints"))
+    route = parse_route("extract", (reg.get("routes") or {}).get("extract"), endpoints)
+    return ChainClient(build_steps(cfg, endpoints, route), deadline_s=deadline_s, cache_size=cfg.cache_size)

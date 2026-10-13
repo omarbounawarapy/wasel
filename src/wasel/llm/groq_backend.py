@@ -142,12 +142,15 @@ class OpenAICompatBackend:
 
 def groq_backend(api_key: str, models: tuple[str, ...] = ("openai/gpt-oss-120b", "openai/gpt-oss-20b"),
                  transport: httpx.BaseTransport | None = None,
-                 base_url: str | None = None) -> OpenAICompatBackend:
+                 base_url: str | None = None, reasoning: str | None = None) -> OpenAICompatBackend:
     """base_url: explicit arg wins, then GROQ_BASE_URL env (self-hosted vLLM), then Groq.
+
+    reasoning: 'hosted_groq' or 'self_hosted', the request profile (config/llm.yaml). None infers it from the URL.
 
     Env read at call time (not import) so tests and the demo can flip providers in-process.
     """
     url = (base_url or env("GROQ_BASE_URL") or GROQ_BASE_URL).rstrip("/")
-    kwargs = GROQ_REASONING_KWARGS if url == GROQ_BASE_URL else SELFHOST_REASONING_KWARGS
+    hosted = url == GROQ_BASE_URL if reasoning is None else reasoning == "hosted_groq"
+    kwargs = GROQ_REASONING_KWARGS if hosted else SELFHOST_REASONING_KWARGS
     return OpenAICompatBackend("groq", url, api_key,
                                extra={m: kwargs for m in models}, transport=transport)

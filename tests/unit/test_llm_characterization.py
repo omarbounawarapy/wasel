@@ -44,7 +44,7 @@ def groq_factory(monkeypatch):
         def complete_json(self, task, model, user, timeout_s):
             return "{}", CallMeta(provider="groq", model=model, latency_ms=1)
 
-    def factory(api_key, models=(), transport=None, base_url=None):
+    def factory(api_key, models=(), transport=None, base_url=None, reasoning=None):
         # mirrors groq_backend(): explicit arg, then GROQ_BASE_URL, then the hosted Groq URL
         url = base_url or os.environ.get("GROQ_BASE_URL") or "https://api.groq.com/openai/v1"
         f = Fake(url.rstrip("/"), api_key)

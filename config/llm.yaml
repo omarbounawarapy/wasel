@@ -38,3 +38,42 @@ routing:                          # env EXTRACT_MODEL / FALLBACK_MODEL / GEMINI_
   fallback_model: openai/gpt-oss-20b
   deadline_s: 20
   cache_size: 512                 # in-process LRU for rewrite/judge responses
+
+# Where requests go. An endpoint is one deployment; a route is the
+# ordered steps a role tries. Secrets and per-deployment addresses are never written here: `key_env`, `base_url_env`
+# and `model_env` name the environment variable that holds them. An endpoint with no resolvable key (or, for
+# `base_url_env`, no address) is inactive and contributes no step, so an unused endpoint never blocks startup.
+#
+# endpoint fields: protocol (openai-compatible | gemini), provider (the stored value; defaults by protocol),
+#   base_url | base_url_env, key_env (a name, or a list: the first one set wins), reasoning (hosted_groq | self_hosted),
+#   model_env, enabled_env + enabled_default (a flag that must be true for the endpoint to be active).
+# step fields: endpoint, kind (primary | fallback_model | fallback_provider), model (primary | fallback | endpoint, or
+#   a literal model name), timeout_s, flag_env (a true/false variable; the step is skipped when it is false),
+#   unless_active (skip when that endpoint is active), requires_env (skip when that variable is unset).
+endpoints:
+  groq:
+    protocol: openai-compatible
+    base_url: https://api.groq.com/openai/v1
+    key_env: GROQ_API_KEY
+    reasoning: hosted_groq
+  self-hosted:                    # GROQ_BASE_URL: any OpenAI-compatible host (vLLM on the AMD instance)
+    protocol: openai-compatible
+    base_url_env: GROQ_BASE_URL
+    key_env: [SELF_HOSTED_API_KEY, GROQ_API_KEY]
+    reasoning: self_hosted
+  gemini:
+    protocol: gemini
+    key_env: GEMINI_API_KEY
+    model_env: GEMINI_MODEL
+    enabled_env: GEMINI_ENABLED
+    enabled_default: false
+routes:
+  extract:
+    - { endpoint: self-hosted, kind: primary, model: primary, timeout_s: 6 }
+    - { endpoint: self-hosted, kind: fallback_model, model: fallback, timeout_s: 5, flag_env: GROQ_FALLBACK_ENABLED }
+    - { endpoint: groq, kind: primary, model: primary, timeout_s: 6, unless_active: self-hosted }
+    - { endpoint: groq, kind: fallback_model, model: fallback, timeout_s: 5, unless_active: self-hosted,
+        flag_env: GROQ_FALLBACK_ENABLED }
+    # behind a self-hosted host that has its own token, GROQ_API_KEY is the hosted backup
+    - { endpoint: groq, kind: fallback_provider, model: primary, timeout_s: 8, requires_env: SELF_HOSTED_API_KEY }
+    - { endpoint: gemini, kind: fallback_provider, model: endpoint, timeout_s: 8 }
