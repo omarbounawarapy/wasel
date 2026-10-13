@@ -2,7 +2,7 @@
 
 [![ci](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml/badge.svg)](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)
-![license](https://img.shields.io/badge/license-team%20only-lightgrey)
+![license](https://img.shields.io/badge/license-Z--Team%20private%20demo-lightgrey)
 ![data](https://img.shields.io/badge/data-synthetic%20only-orange)
 
 Wasel scores the refusal risk of cash-on-delivery (COD) orders that customers place in chat, and helps a seller resolve the risky ones before a courier is sent.
@@ -127,4 +127,4 @@ docs/           documentation
 
 ## License
 
-Copyright © 2026 Z-Team. All rights reserved. This is a private demo: the code is not open source, and use is limited to Z-Team members and anyone the owner has given access to. See [LICENSE](LICENSE) and [TEAM.md](TEAM.md).
+Copyright © 2026 Z-Team. All rights reserved. This is a private demo: the code is not open source. Z-Team members may use and modify it; anyone may view it on GitHub and fork it there; any other use needs Z-Team's written permission. See [LICENSE](LICENSE) and [TEAM.md](TEAM.md).

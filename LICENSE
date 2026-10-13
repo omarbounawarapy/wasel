@@ -3,10 +3,13 @@ Copyright (c) 2026 Z-Team. All rights reserved.
 This repository and everything in it (source code, models, data, prompts,
 documentation and images) is the property of Z-Team. It is a private demo.
 
-Use is limited to members of Z-Team (see TEAM.md) and to anyone the owner has
-given access to in writing. No one else may view, copy, modify, merge, publish,
-distribute, sublicense, sell, deploy or otherwise use any part of it, in whole
-or in part, without the prior written permission of Z-Team.
+- Members of Z-Team (see TEAM.md) may use, copy, modify and run the code for
+  the demo and related work.
+- Anyone may view the code on GitHub, and fork it within GitHub as allowed by
+  the GitHub Terms of Service.
+- Any other copying, modification, merging, publication, distribution,
+  sublicensing, sale or deployment of any part of it, in whole or in part,
+  needs the prior written permission of Z-Team.
 
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
