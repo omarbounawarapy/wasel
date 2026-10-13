@@ -2,14 +2,14 @@
 
 [![ci](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml/badge.svg)](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)
-![license](https://img.shields.io/badge/license-all%20rights%20reserved-lightgrey)
+![license](https://img.shields.io/badge/license-team%20only-lightgrey)
 ![data](https://img.shields.io/badge/data-synthetic%20only-orange)
 
 Wasel scores the refusal risk of cash-on-delivery (COD) orders that customers place in chat, and helps a seller resolve the risky ones before a courier is sent.
 
 In Tunisian e-commerce a large share of COD parcels are refused at the door, and every refused parcel costs the seller a wasted trip. Customers order in Tunisian Darija (Arabic script or Arabizi), French or a mix, often with an address like "near the mosque". Wasel reads the conversation, scores the order from 0 to 100, explains the score with the customer's own words, and drafts the one question that would reduce the risk (confirm, complete the address, or pay first). When the customer answers, the order is rescored and the app shows what changed.
 
-**[Live demo →](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake)
+**Private demo: [wasel.runs-on.dev](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake). Wasel is built by Z-Team for team use and is not open source; see [TEAM.md](TEAM.md) and [LICENSE](LICENSE).
 
 All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
 
@@ -102,7 +102,7 @@ make check      # hygiene + ruff + offline tests + evaluation gate; needs no key
 | [Data directory](docs/data.md) | every file under `data/`, what produces it, whether to edit it |
 | [Commands](docs/development/commands.md), [testing](docs/development/testing.md), [extending](docs/development/extending.md) | day-to-day development |
 | [Deployment](docs/operations/deployment.md), [Render](docs/operations/render.md), [self-hosted LLM](docs/operations/self-hosted-llm.md), [troubleshooting](docs/operations/troubleshooting.md) | running it for other people |
-| [Security](SECURITY.md), [Contributing](CONTRIBUTING.md), [Changelog](CHANGELOG.md) | policy and process |
+| [Team](TEAM.md), [Team workflow](docs/development/workflow.md), [Security](SECURITY.md), [Changelog](CHANGELOG.md) | roles, working rules, policy and history |
 
 The full index with reading order is in [docs/README.md](docs/README.md).
 
@@ -125,17 +125,6 @@ deploy/         systemd unit; render/ = Dockerfile and hashed lock for the Rende
 docs/           documentation
 ```
 
-## Contributors
-
-<table>
-<tr>
-<td><img src="docs/assets/contributors.svg" alt="Commits per contributor on main" width="420"></td>
-<td><img src="docs/assets/contributors-lines.svg" alt="Lines of code added per contributor" width="420"></td>
-</tr>
-</table>
-
-Both charts are regenerated from `git log` by `scripts/dev/contributors_chart.py` after every push to `main` (the `contributors-chart` workflow). Lines are the added lines of source and documentation files, without lockfiles, generated reports, data, fixtures, images and the design exploration pages. Identities of one person are merged by GitHub handle; bots are not counted. Neither chart measures review, design or work done outside git.
-
 ## License
 
-Copyright © 2026 Z-Team. All rights reserved. The demo is public; the code is in a private repository, shared with reviewers on request, and is not open source. See [LICENSE](LICENSE).
+Copyright © 2026 Z-Team. All rights reserved. This is a private demo: the code is not open source, and use is limited to Z-Team members and anyone the owner has given access to. See [LICENSE](LICENSE) and [TEAM.md](TEAM.md).

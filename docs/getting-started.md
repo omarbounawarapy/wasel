@@ -137,5 +137,5 @@ More symptoms and diagnostics are in [operations/troubleshooting.md](operations/
 
 - Understand the system: [architecture overview](architecture/overview.md), then the [order pipeline](architecture/order-pipeline.md).
 - Change behaviour: [configuration](configuration/README.md).
-- Change code: [development/extending.md](development/extending.md) and [CONTRIBUTING.md](../CONTRIBUTING.md).
+- Change code: [development/extending.md](development/extending.md) and the [team workflow](development/workflow.md).
 - Run it for other people: [operations/deployment.md](operations/deployment.md).
