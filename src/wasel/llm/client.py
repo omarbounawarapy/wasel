@@ -68,6 +68,14 @@ class ChainStep:
     model: str
     backend: object                   # .complete_json(task, model, user, timeout_s) -> (str, CallMeta)
     timeout_s: float
+    # Where the call goes, named for people: 'self-hosted' (GROQ_BASE_URL, e.g. the AMD host) or 'groq' (hosted).
+    # It labels the chain and keys the breaker, so a down self-hosted host does not block the hosted backup. The
+    # stored `provider` stays a DB value ('groq' for any OpenAI-compatible endpoint).
+    endpoint: str | None = None
+
+    def __post_init__(self):
+        if self.endpoint is None:
+            self.endpoint = self.provider
 
 
 @dataclass
@@ -83,6 +91,7 @@ class ChainResult:
     path: str                         # llm | fallback_model | fallback_provider | rules
     provider: str | None
     model: str | None
+    endpoint: str | None = None       # the step's endpoint label, e.g. 'self-hosted' or 'groq'
     attempts: list[Attempt] = field(default_factory=list)
     usage: list[UsageRecord] = field(default_factory=list)
     meta: CallMeta | None = None
@@ -112,12 +121,12 @@ class ChainClient:
     @property
     def primary(self) -> str:
         """The `provider:model` name of the first step, or `rules` when the chain has no steps."""
-        return f"{self.steps[0].provider}:{self.steps[0].model}" if self.steps else "rules"
+        return f"{self.steps[0].endpoint}:{self.steps[0].model}" if self.steps else "rules"
 
     @property
     def chain_names(self) -> list[str]:
         """The `provider:model` name of every step, in order."""
-        return [f"{s.provider}:{s.model}" for s in self.steps]
+        return [f"{s.endpoint}:{s.model}" for s in self.steps]
 
     def extract(self, task: TaskSpec, user: str, *, parse: Callable[[str], object],
                 meter: UsageMeter | None, sandbox_id: str | None, now: datetime,
@@ -144,7 +153,7 @@ class ChainClient:
         res = self._run(task, user, parse=parse, meter=meter, sandbox_id=sandbox_id, now=now, role=role)
         ok = res.parsed is not None
         trace.emit({**base, "outcome": "ok" if ok else ("cap" if res.cap else "failed"), "cache_hit": False,
-                    "path": res.path, "provider": res.provider, "model": res.model,
+                    "path": res.path, "provider": res.provider, "model": res.model, "endpoint": res.endpoint,
                     "attempts": [f"{a.provider}:{a.model}:{a.outcome}" for a in res.attempts],
                     "latency_ms": sum(u.latency_ms or 0 for u in res.usage),
                     "tokens_in": sum(u.tokens_in or 0 for u in res.usage),
@@ -172,9 +181,9 @@ class ChainClient:
             if step.kind == "fallback_model" and skip_same_provider_fallback:
                 continue
             with self._lock:
-                breaker_open = self._breaker_until.get(step.provider, 0) > self._mono()
+                breaker_open = self._breaker_until.get(step.endpoint, 0) > self._mono()
             if breaker_open:
-                res.errors.append(f"{step.provider}:breaker_open")
+                res.errors.append(f"{step.endpoint}:breaker_open")
                 continue
             if step.timeout_s > self.deadline_s - (self._mono() - t0):
                 res.errors.append(f"{step.model}:skipped_deadline")
@@ -195,27 +204,28 @@ class ChainClient:
                 res.errors.append(f"{step.model}:{type(e).__name__}:{str(e)[:120]}")
                 with self._lock:
                     if isinstance(e, ProviderDown):
-                        self._breaker_until[step.provider] = self._mono() + self.breaker_s
+                        self._breaker_until[step.endpoint] = self._mono() + self.breaker_s
                     elif isinstance(e, (Timeout, RateLimited)):
-                        n = self._soft_fails.get(step.provider, 0) + 1
+                        n = self._soft_fails.get(step.endpoint, 0) + 1
                         if n >= self.breaker_after:
                             wait = self.breaker_s
                             if isinstance(e, RateLimited) and e.retry_after_s:
                                 wait = min(max(wait, e.retry_after_s), MAX_BREAKER_S)
-                            self._breaker_until[step.provider] = self._mono() + wait
+                            self._breaker_until[step.endpoint] = self._mono() + wait
                             n = 0
-                        self._soft_fails[step.provider] = n
+                        self._soft_fails[step.endpoint] = n
                 if step.kind == "primary" and not isinstance(e, _NEXT_MODEL_ERRORS):
                     skip_same_provider_fallback = True        # Timeout / ProviderDown skip the sibling
                 continue
             with self._lock:
-                self._soft_fails[step.provider] = 0
+                self._soft_fails[step.endpoint] = 0
             latency = meta.latency_ms or int((self._mono() - t_call) * 1000)
             res.attempts.append(Attempt(step.provider, step.model, "ok", latency))
             res.usage.append(UsageRecord(now, role, step.provider, step.model, "ok",
                                          meta.tokens_in, meta.tokens_out, latency))
             res.parsed, res.raw, res.meta = parsed, raw, meta
             res.path, res.provider, res.model = _PATH[step.kind], step.provider, step.model
+            res.endpoint = step.endpoint
             return res
         return res
 
@@ -333,14 +343,23 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
     if mode != "live":
         raise ValueError(f"unknown LLM_MODE {mode!r}")
     from wasel.llm.gemini_backend import gemini_backend, load_probe
+    from wasel.llm.groq_backend import GROQ_BASE_URL as HOSTED_URL
     from wasel.llm.groq_backend import groq_backend
     steps: list[ChainStep] = []
+    self_hosted = bool(env("GROQ_BASE_URL"))            # e.g. the AMD host; the Groq client then speaks to it
+    endpoint = "self-hosted" if self_hosted else "groq"
     if env("GROQ_API_KEY"):
         g = groq_backend(env("GROQ_API_KEY"))
-        steps.append(ChainStep("primary", "groq", env("EXTRACT_MODEL", primary), g, 6))
+        steps.append(ChainStep("primary", "groq", env("EXTRACT_MODEL", primary), g, 6, endpoint=endpoint))
         if env("GROQ_FALLBACK_ENABLED", "true").lower() == "true":   # false if buckets are per org
             steps.append(ChainStep("fallback_model", "groq",
-                                   env("FALLBACK_MODEL", fallback), g, 5))
+                                   env("FALLBACK_MODEL", fallback), g, 5, endpoint=endpoint))
+    if self_hosted and env("HOSTED_FALLBACK_API_KEY"):
+        # Behind a self-hosted primary, the hosted Groq API is the backup. It is a separate endpoint with its own
+        # breaker, so a dead self-hosted host does not stop the backup from answering.
+        hosted = groq_backend(env("HOSTED_FALLBACK_API_KEY"), base_url=HOSTED_URL)
+        steps.append(ChainStep("fallback_provider", "groq", env("HOSTED_FALLBACK_MODEL", "openai/gpt-oss-20b"),
+                               hosted, 8, endpoint="groq"))
     if env("GEMINI_API_KEY") and env("GEMINI_MODEL") and env("GEMINI_ENABLED", "false").lower() == "true":
         gb = gemini_backend(env("GEMINI_API_KEY"), env("GEMINI_MODEL"),
                             load_probe(env("PROBE_FILE", "config/probe.json")))
