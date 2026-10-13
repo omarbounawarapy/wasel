@@ -1,6 +1,6 @@
 # Team workflow
 
-Wasel is a private demo. Only the team works in this repository (see [TEAM.md](../../TEAM.md)), and the code is not open source (see [LICENSE](../../LICENSE)). Report security problems privately, as described in [SECURITY.md](../../SECURITY.md).
+The repository is public for reading and review, but only the team changes it (see [TEAM.md](../../TEAM.md)), and the code is not open source (see [LICENSE](../../LICENSE)). These rules are for team members; outside readers who find a problem should open an issue. Report security problems privately, as described in [SECURITY.md](../../SECURITY.md).
 
 ## Orientation
 

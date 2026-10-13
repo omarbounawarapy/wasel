@@ -16,6 +16,7 @@ Wasel scores the refusal risk of cash-on-delivery orders written in chat, explai
 | I want to... | Read |
 |---|---|
 | Run it and see something | [Getting started](getting-started.md) |
+| Review the project quickly | [Submission overview](submission.md) |
 | Understand how a score is produced | [Order pipeline](architecture/order-pipeline.md), [scoring](subsystems/scoring.md), [extraction](subsystems/extraction.md) |
 | Understand the LLM's role and what happens when it fails | [LLM layer](subsystems/llm.md) |
 | Understand what gets sent to a customer, and who approves it | [Outbound drafts](subsystems/outbound.md) |

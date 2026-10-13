@@ -2,7 +2,7 @@
 
 ## Reporting a problem
 
-Do not open a public issue for a security problem. Use GitHub's private report instead: **Security → Report a vulnerability** on this repository. Include what you found, how to reproduce it, and what it exposes.
+Do not open a public issue for a security problem. Contact the maintainer, [@omarbounawarapy](https://github.com/omarbounawarapy), through the contact details on the GitHub profile, and send only a short message at first: say that you have a security finding and what area it touches, without exploit steps. Include, once contact is made, what you found, how to reproduce it, and what it exposes.
 
 Reports we especially want:
 

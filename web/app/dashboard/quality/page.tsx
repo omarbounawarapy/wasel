@@ -124,7 +124,7 @@ export default function QualityPage() {
         <Page>
             <PageHeader
                 title="Quality checks"
-                subtitle="Before every release, Wasel is tested on hundreds of example conversations. A release only ships when all checks pass." />
+                subtitle="Before every release, Wasel is tested on hundreds of example conversations. The offline checks must pass in CI before a change is deployed; the live AI run below is measured separately and can show checks below target." />
 
             <Guide id="quality" steps={[
                 "Each card is one family of tests, named after what it protects.",

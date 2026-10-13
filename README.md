@@ -2,16 +2,31 @@
 
 [![ci](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml/badge.svg)](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)
-![license](https://img.shields.io/badge/license-Z--Team%20private%20demo-lightgrey)
+![license](https://img.shields.io/badge/license-source%20available-lightgrey)
 ![data](https://img.shields.io/badge/data-synthetic%20only-orange)
 
 Wasel scores the refusal risk of cash-on-delivery (COD) orders that customers place in chat, and helps a seller resolve the risky ones before a courier is sent.
 
 In Tunisian e-commerce a large share of COD parcels are refused at the door, and every refused parcel costs the seller a wasted trip. Customers order in Tunisian Darija (Arabic script or Arabizi), French or a mix, often with an address like "near the mosque". Wasel reads the conversation, scores the order from 0 to 100, explains the score with the customer's own words, and drafts the one question that would reduce the risk (confirm, complete the address, or pay first). When the customer answers, the order is rescored and the app shows what changed.
 
-**Private demo: [wasel.runs-on.dev](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake). Wasel is built by Z-Team for team use and is not open source; see [TEAM.md](TEAM.md) and [LICENSE](LICENSE).
+**Live demo: [wasel.runs-on.dev](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake). Wasel is built by Z-Team. The source is public so that it can be read and reviewed; it is not open source, see [LICENSE](LICENSE) for what is allowed and [TEAM.md](TEAM.md) for who works on it.
 
 All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
+
+## Try it in 30 seconds
+
+1. Open the [live demo](https://wasel.runs-on.dev) (the free tier may take about a minute to wake) or run `make demo` locally; no key is needed.
+2. Open order **#2601**. It scores **HIGH 87**: the address is vague and the customer's own words are highlighted as the reasons.
+3. Click **Try this order** to copy it into your own sandbox (samples are read-only).
+4. Reply as the customer with a full address. The order is rescored to **LOW 16** and the page shows which reasons changed.
+
+Prefer to watch? The [48-second reel](video/renders/wasel-reel.mp4) shows the same flow (GitHub plays it on its own page).
+
+**How the problem is sourced.** Refused cash-on-delivery parcels are the seller's cost. The only refusal range found for Tunisia is a vendor guide's 15 to 25 % for fashion ([Kolonell, 2026](https://kolonell.com/en/blog/tunisia-online-payment-gateway-comparison-2026)); there is no independent national figure, so treat it as indicative.
+
+**How it differs from order-confirmation tools** (UpConfirm, Replyk, Confirmi and similar), which are built around confirming orders. Wasel reads the chat first, scores it with reasons quoted from the customer's own words, and asks one targeted question only where the risk is. A person approves what is sent, and every number comes from code, not from the model.
+
+**Limits.** The data is synthetic and the model measures how well it recovers a hand-written prior, not real refusal behaviour. Darija wording and the French and Arabic interface text have not been checked by a native reader. See [limitations](docs/architecture/overview.md#limitations) and [evaluation](docs/evaluation.md).
 
 ![Order detail: a HIGH 87 order with the risky phrases highlighted in the customer's message, the reason for the score and the drafted confirmation message](docs/assets/screenshots/order-detail.png)
 
@@ -127,4 +142,4 @@ docs/           documentation
 
 ## License
 
-Copyright © 2026 Z-Team. All rights reserved. This is a private demo: the code is not open source. Z-Team members may use and modify it; anyone may view it on GitHub and fork it there; any other use needs Z-Team's written permission. See [LICENSE](LICENSE) and [TEAM.md](TEAM.md).
+Copyright © 2026 Z-Team. All rights reserved. The source is public for viewing but is not open source. Z-Team members may use and modify it; anyone may view it on GitHub and fork it there; any other use needs Z-Team's written permission. See [LICENSE](LICENSE) and [TEAM.md](TEAM.md).

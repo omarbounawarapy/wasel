@@ -1,6 +1,6 @@
 # Team
 
-Wasel is a private demo built by Z-Team. Only team members work in this repository, and the code is not open source (see [LICENSE](LICENSE)).
+Wasel is built by Z-Team. The repository is public so the source can be read and reviewed, but only team members change it, and the code is not open source (see [LICENSE](LICENSE)).
 
 ## Members
 

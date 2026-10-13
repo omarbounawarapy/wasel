@@ -1,1 +1,0 @@
-{"simulated":true,"dataset":"data/synth_v1.csv holdout","n_orders":2001,"baseline_refusal_rate":0.2999,"projected_refusal_rate":0.2358,"trips_avoided":128.1,"tnd_saved":928.1,"assumptions":["c_fail_tnd: 8.0","prevent_rate: {'ship': 0.0, 'confirm': 0.3, 'prepay': 0.6}","prepay_conversion_loss: 0.1","gross_margin: 0.25","msg_cost_tnd: 0.0","sensitivity_confirm: [0.15, 0.3, 0.45]"]}

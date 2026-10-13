@@ -21,7 +21,7 @@ Background: [self-hosted LLM](self-hosted-llm.md) (the general setup) and issue 
 ## 1. Get the code and check the host
 
 ```bash
-git clone <this repository> wasel && cd wasel     # private repo: use a deploy token or gh auth
+git clone https://github.com/omarbounawarapy/wasel.git wasel && cd wasel
 ACCEL=rocm make llm-preflight                    # GPU name, VRAM, disk, docker, port 8001, token
 ```
 
