@@ -315,6 +315,33 @@ EXTRACT_MODEL = "openai/gpt-oss-120b"            # defaults; config/llm.yaml rou
 FALLBACK_MODEL = "openai/gpt-oss-20b"
 
 
+# Offline profiles: (endpoint, step kind) -> what answers. "replay" serves recorded fixtures; anything else is a
+# FailingBackend kind. Provider and timeout come from the matching step in config/llm.yaml's extract route, so these
+# chains cannot drift from the live route.
+FAULT_PROFILES: dict[str, dict[tuple[str, str], str]] = {
+    "replay": {("groq", "primary"): "replay"},
+    "fail_primary": {("groq", "primary"): "429", ("groq", "fallback_model"): "replay"},
+    "fail_groq": {("groq", "primary"): "5xx", ("groq", "fallback_model"): "5xx", ("gemini", "fallback_provider"): "replay"},
+    "fail_all": {("groq", "primary"): "5xx", ("groq", "fallback_model"): "429", ("gemini", "fallback_provider"): "5xx"},
+}
+
+
+def _profile_steps(mode: str, gem_model: str, replay) -> list[ChainStep]:
+    from wasel.llm.prompts import registry
+    from wasel.llm.routes import parse_endpoints, parse_route
+    reg = registry()
+    endpoints = parse_endpoints(reg.get("endpoints"))
+    route = parse_route("extract", (reg.get("routes") or {}).get("extract"), endpoints)
+    models = {"primary": EXTRACT_MODEL, "fallback_model": FALLBACK_MODEL, "fallback_provider": gem_model}
+    steps = []
+    for (endpoint, kind), behaviour in FAULT_PROFILES[mode].items():
+        spec = next(s for s in route if s.endpoint == endpoint and s.kind == kind)
+        provider = endpoints[endpoint].provider
+        backend = replay(provider) if behaviour == "replay" else FailingBackend(behaviour)
+        steps.append(ChainStep(kind, provider, models[kind], backend, spec.timeout_s))
+    return steps
+
+
 def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = None,
                  allow_hand_crafted: bool = False, deadline_s: float = 20.0,
                  settings: LLMSettings | None = None) -> ChainClient:
@@ -339,22 +366,8 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
     if mode == "replay" and not any(Path(d).is_dir() and any(Path(d).rglob("*.json")) for d in replay_dirs):
         raise ValueError(f"LLM_MODE=replay needs recorded fixtures (*.json) in {[str(d) for d in replay_dirs]}; "
                          "set LLM_REPLAY_DIR to a directory that has them")
-    if mode == "replay":
-        return ChainClient([ChainStep("primary", "groq", EXTRACT_MODEL, replay(), 6)], deadline_s=deadline_s)
-    if mode == "fail_primary":
-        return ChainClient([ChainStep("primary", "groq", EXTRACT_MODEL, FailingBackend("429"), 6),
-                            ChainStep("fallback_model", "groq", FALLBACK_MODEL, replay(), 5)],
-                           deadline_s=deadline_s)
-    if mode == "fail_groq":
-        return ChainClient([ChainStep("primary", "groq", EXTRACT_MODEL, FailingBackend("5xx"), 6),
-                            ChainStep("fallback_model", "groq", FALLBACK_MODEL, FailingBackend("5xx"), 5),
-                            ChainStep("fallback_provider", "gemini", gem_model, replay("gemini"), 8)],
-                           deadline_s=deadline_s)
-    if mode == "fail_all":
-        return ChainClient([ChainStep("primary", "groq", EXTRACT_MODEL, FailingBackend("5xx"), 6),
-                            ChainStep("fallback_model", "groq", FALLBACK_MODEL, FailingBackend("429"), 5),
-                            ChainStep("fallback_provider", "gemini", gem_model, FailingBackend("5xx"), 8)],
-                           deadline_s=deadline_s)
+    if mode in FAULT_PROFILES:
+        return ChainClient(_profile_steps(mode, gem_model, replay), deadline_s=deadline_s)
     if mode != "live":
         raise ValueError(f"unknown LLM_MODE {mode!r}")
     from wasel.llm.routes import ROLE_ROUTES, build_steps, parse_endpoints, parse_route
