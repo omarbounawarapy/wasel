@@ -4,6 +4,8 @@ The LLM layer speaks the OpenAI-compatible chat-completions protocol (`src/wasel
 
 `scripts/ops/vllm_serve.sh` (`make llm-serve`, `make llm-check`) sets up the GPU host and verifies the client side.
 
+For AMD Instinct GPUs (ROCm), follow [the AMD instance runbook](amd-instance.md): `ACCEL=rocm` selects the ROCm image and device flags, and `make llm-preflight` checks the host before serving. The steps below apply to both; the NVIDIA notes are for CUDA hosts.
+
 ## Prerequisites
 
 - A GPU host reachable over the network:

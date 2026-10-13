@@ -62,10 +62,13 @@ wa-up: ## live WhatsApp test: ephemeral public URL for the webhook + Meta callba
 llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_ARGS; docs/operations/self-hosted-llm.md)
 	bash scripts/ops/vllm_serve.sh serve
 
+llm-preflight: ## run ON the GPU host before serving: GPU, VRAM, disk, docker, port (ACCEL=rocm|cuda|auto); changes nothing
+	bash scripts/ops/vllm_serve.sh preflight
+
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)
 	bash scripts/ops/vllm_serve.sh check
 
-.PHONY: help setup lock run up ui web web-dev serve deploy render-smoke wa-up llm-serve llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
+.PHONY: help setup lock run up ui web web-dev serve deploy render-smoke wa-up llm-serve llm-preflight llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'
