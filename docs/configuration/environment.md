@@ -45,7 +45,8 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 
 | Variable | Used for |
 |---|---|
-| `GROQ_API_KEY` | Groq API, or the token of a self-hosted server when `GROQ_BASE_URL` is set |
+| `GROQ_API_KEY` | Groq API key (the hosted backup when `SELF_HOSTED_API_KEY` is set). Without `SELF_HOSTED_API_KEY`, it is also the token of the server at `GROQ_BASE_URL`, as before. |
+| `SELF_HOSTED_API_KEY` | empty | Token of the self-hosted server at `GROQ_BASE_URL` (the AMD host). Read only when `GROQ_BASE_URL` is set. When set, `GROQ_API_KEY` becomes the hosted backup behind it. |
 | `GEMINI_API_KEY` | Gemini fallback |
 | `WA_TOKEN` | WhatsApp Cloud API bearer token (sending) |
 | `WA_APP_SECRET` | Meta app secret: webhook signature check. At least 16 characters to mount the webhook. |
@@ -59,9 +60,7 @@ Never commit these. `.env` is git-ignored and `make hygiene` fails on key-shaped
 | `LLM_MODE` | `live` | `live`, `replay`, `fail_primary`, `fail_groq`, `fail_all`. See [LLM layer](../subsystems/llm.md#test-and-drill-modes). |
 | `EXTRACT_MODEL` | `routing.primary` in `llm.yaml` (`openai/gpt-oss-120b`) | Model of the primary step |
 | `FALLBACK_MODEL` | `routing.fallback_model` (`openai/gpt-oss-20b`) | Model of the second Groq step |
-| `GROQ_BASE_URL` | empty (= Groq) | Point the Groq steps at any OpenAI-compatible server. `GROQ_API_KEY` must still be set. |
-| `HOSTED_FALLBACK_API_KEY` | empty | Hosted Groq key for a backup step, used only when `GROQ_BASE_URL` (the self-hosted host) is set. The backup has its own breaker, so a down host does not block it. Empty = no backup (AMD outage means rules). |
-| `HOSTED_FALLBACK_MODEL` | `openai/gpt-oss-20b` | Model name on the hosted Groq API for that backup step. |
+| `GROQ_BASE_URL` | empty (= Groq) | Point the primary Groq step at any OpenAI-compatible server (the AMD host). Needs `SELF_HOSTED_API_KEY`, or `GROQ_API_KEY` as its token. |
 | `LLM_SERVING_LABEL` | empty | Hardware and server shown in `/api/health` (`llm.serving_label`) and the header tooltip, for example `AMD Instinct MI300X, ROCm, vLLM`. Only reported when `GROQ_BASE_URL` is set; `llm.serving_host` carries the host name of that URL. Set it to what the endpoint really runs. |
 | `GROQ_FALLBACK_ENABLED` | `true` | `false` removes the second Groq step |
 | `GEMINI_ENABLED` | `false` | Gemini needs this set to `true` **and** `GEMINI_API_KEY` **and** `GEMINI_MODEL` |

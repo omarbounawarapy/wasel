@@ -65,7 +65,7 @@ llm-serve: ## run ON a GPU host: install + serve vLLM (MODEL, VLLM_PORT, VLLM_AR
 llm-preflight: ## run ON the GPU host before serving: GPU, VRAM, disk, docker, port (ACCEL=rocm|cuda|auto); changes nothing
 	bash scripts/ops/vllm_serve.sh preflight
 
-llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + GROQ_API_KEY in .env)
+llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + SELF_HOSTED_API_KEY in .env)
 	bash scripts/ops/vllm_serve.sh check
 
 .PHONY: help setup lock run up ui web web-dev serve deploy render-smoke wa-up llm-serve llm-preflight llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean

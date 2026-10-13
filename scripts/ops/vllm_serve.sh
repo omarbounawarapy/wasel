@@ -30,7 +30,8 @@ MODEL="$(cfg MODEL openai/gpt-oss-20b)"  # 120b needs an 80GB card: MODEL=openai
 VLLM_PORT="$(cfg VLLM_PORT 8001)"        # own name on purpose: PORT=8000 in .env is uvicorn's
 WAIT_MINS="$(cfg WAIT_MINS 25)"          # first boot pulls weights (~13GB for 20b)
 BASE="$(cfg GROQ_BASE_URL)"              # check: e.g. http://<instance-ip>:8001/v1
-TOKEN="$(cfg GROQ_API_KEY)"              # the vLLM --api-key value (must exist even for vLLM)
+# The vLLM --api-key value. SELF_HOSTED_API_KEY wins; GROQ_API_KEY is the fallback for older setups, where it is the token.
+TOKEN="$(cfg SELF_HOSTED_API_KEY "$(cfg GROQ_API_KEY)")"
 CONTAINER="$(cfg CONTAINER vllm)"
 ACCEL="$(cfg ACCEL auto)"                # auto | rocm | cuda
 VLLM_ARGS="$(cfg VLLM_ARGS)"             # only from caller env or .env; unquoted on purpose
@@ -98,7 +99,7 @@ case "${1:-check}" in
     fi
     if ss -ltn 2>/dev/null | grep -q ":$VLLM_PORT "; then echo "  FAIL: port $VLLM_PORT already in use"; fail=1
     else echo "  OK: port $VLLM_PORT free"; fi
-    if [ -n "$TOKEN" ]; then echo "  OK: GROQ_API_KEY set (used as the vLLM token)"
+    if [ -n "$TOKEN" ]; then echo "  OK: vLLM token set (SELF_HOSTED_API_KEY, or GROQ_API_KEY on older setups)"
     else echo "  note: no GROQ_API_KEY; serve will generate one and print it once"; fi
     [ "$fail" = 0 ] && echo "preflight passed" || { echo "preflight FAILED"; exit 1; }
     ;;
@@ -158,9 +159,10 @@ case "${1:-check}" in
     echo
     echo "paste into the client .env:"
     echo "  GROQ_BASE_URL=http://<gpu-host-address>:$VLLM_PORT/v1"
-    if [ -n "${GROQ_API_KEY:-}" ]; then echo "  GROQ_API_KEY=<the token you set>"; else echo "  GROQ_API_KEY=$TOKEN"; fi
+    echo "  SELF_HOSTED_API_KEY=<the token you set>   # keep GROQ_API_KEY as your hosted Groq key"
     echo "  EXTRACT_MODEL=$MODEL"
     echo "  FALLBACK_MODEL=$MODEL   # or GROQ_FALLBACK_ENABLED=false: single-model backend"
+    echo "  GROQ_FALLBACK_ENABLED=false   # one model is served here; the hosted backup uses GROQ_API_KEY"
     ;;
 
   check)

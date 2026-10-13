@@ -15,7 +15,7 @@ For AMD Instinct GPUs (ROCm), follow [the AMD instance runbook](amd-instance.md)
 - In the client's `.env`:
   ```
   GROQ_BASE_URL=http://<gpu-host>:8001/v1   # empty = Groq (the default chain)
-  GROQ_API_KEY=<the vLLM --api-key token>    # still required when self-hosted
+  SELF_HOSTED_API_KEY=<the vLLM --api-key token>   # your hosted Groq key stays in GROQ_API_KEY
   EXTRACT_MODEL=openai/gpt-oss-20b
   FALLBACK_MODEL=openai/gpt-oss-20b          # or GROQ_FALLBACK_ENABLED=false for a single-model backend
   ```
@@ -28,7 +28,7 @@ On the **GPU host** (clone the repository, or copy `scripts/ops/vllm_serve.sh`):
 make llm-serve                                   # MODEL=openai/gpt-oss-20b by default
 ```
 
-It installs vLLM (docker if present, otherwise a virtualenv in `~/vllm-venv`), starts the server on `VLLM_PORT` (8001) behind an API token (generated and shown once if `GROQ_API_KEY` is not set), waits for the weights to load, and prints the `.env` lines to use on the client. The first boot downloads weights: allow 15 to 25 minutes for 20b and 30 to 40 for 120b (`WAIT_MINS`, default 25). Re-running is safe; it exits 0 if the model is already being served.
+It installs vLLM (docker if present, otherwise a virtualenv in `~/vllm-venv`), starts the server on `VLLM_PORT` (8001) behind an API token (generated and shown once if `SELF_HOSTED_API_KEY` is not set), waits for the weights to load, and prints the `.env` lines to use on the client. The first boot downloads weights: allow 15 to 25 minutes for 20b and 30 to 40 for 120b (`WAIT_MINS`, default 25). Re-running is safe; it exits 0 if the model is already being served.
 
 On the **client**:
 
@@ -43,7 +43,7 @@ If the GPU host has no reachable public address, tunnel it: run `cloudflared tun
 
 ## Switching providers
 
-The LLM chain is built once, when the API process starts, from the environment at that moment. To switch, set `GROQ_BASE_URL`, `GROQ_API_KEY` and `EXTRACT_MODEL`, then restart the API . The next message is extracted by the self-hosted model. Empty the values and restart to return to Groq. `GET /api/health` shows the models in `llm.chain_extract`.
+The LLM chain is built once, when the API process starts, from the environment at that moment. To switch, set `GROQ_BASE_URL`, `SELF_HOSTED_API_KEY` and `EXTRACT_MODEL`, then restart the API. The next message is extracted by the self-hosted model. Empty the values and restart to return to Groq. `GET /api/health` shows the models in `llm.chain_extract`.
 
 When `GROQ_BASE_URL` is set, the Groq-only `reasoning_format` field is dropped from requests automatically, because vLLM rejects unknown fields; `reasoning_effort=low` is kept. `tests/unit/test_groq_backend_routing.py` pins which fields each path sends.
 

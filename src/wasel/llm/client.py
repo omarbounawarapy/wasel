@@ -346,20 +346,25 @@ def build_client(mode: str | None = None, *, replay_dirs: list[Path] | None = No
     from wasel.llm.groq_backend import GROQ_BASE_URL as HOSTED_URL
     from wasel.llm.groq_backend import groq_backend
     steps: list[ChainStep] = []
-    self_hosted = bool(env("GROQ_BASE_URL"))            # e.g. the AMD host; the Groq client then speaks to it
+    # GROQ_BASE_URL points the Groq client at a self-hosted host (e.g. AMD). Its token is SELF_HOSTED_API_KEY when that is
+    # set; then GROQ_API_KEY is the hosted Groq key and becomes the backup behind the self-hosted host. Without
+    # SELF_HOSTED_API_KEY, GROQ_API_KEY is the token of the self-hosted host, as before, and there is no backup.
+    self_hosted = bool(env("GROQ_BASE_URL"))
     endpoint = "self-hosted" if self_hosted else "groq"
-    if env("GROQ_API_KEY"):
-        g = groq_backend(env("GROQ_API_KEY"))
-        steps.append(ChainStep("primary", "groq", env("EXTRACT_MODEL", primary), g, 6, endpoint=endpoint))
+    primary_key, backup_key = env("GROQ_API_KEY"), None
+    if self_hosted and env("SELF_HOSTED_API_KEY"):
+        primary_key, backup_key = env("SELF_HOSTED_API_KEY"), env("GROQ_API_KEY")
+    model = env("EXTRACT_MODEL", primary)
+    if primary_key:
+        g = groq_backend(primary_key)
+        steps.append(ChainStep("primary", "groq", model, g, 6, endpoint=endpoint))
         if env("GROQ_FALLBACK_ENABLED", "true").lower() == "true":   # false if buckets are per org
             steps.append(ChainStep("fallback_model", "groq",
                                    env("FALLBACK_MODEL", fallback), g, 5, endpoint=endpoint))
-    if self_hosted and env("HOSTED_FALLBACK_API_KEY"):
-        # Behind a self-hosted primary, the hosted Groq API is the backup. It is a separate endpoint with its own
-        # breaker, so a dead self-hosted host does not stop the backup from answering.
-        hosted = groq_backend(env("HOSTED_FALLBACK_API_KEY"), base_url=HOSTED_URL)
-        steps.append(ChainStep("fallback_provider", "groq", env("HOSTED_FALLBACK_MODEL", "openai/gpt-oss-20b"),
-                               hosted, 8, endpoint="groq"))
+    if backup_key:
+        # The hosted API is a separate endpoint with its own breaker: a dead self-hosted host does not block it.
+        hosted = groq_backend(backup_key, base_url=HOSTED_URL)
+        steps.append(ChainStep("fallback_provider", "groq", model, hosted, 8, endpoint="groq"))
     if env("GEMINI_API_KEY") and env("GEMINI_MODEL") and env("GEMINI_ENABLED", "false").lower() == "true":
         gb = gemini_backend(env("GEMINI_API_KEY"), env("GEMINI_MODEL"),
                             load_probe(env("PROBE_FILE", "config/probe.json")))

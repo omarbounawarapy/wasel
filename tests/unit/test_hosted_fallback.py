@@ -1,4 +1,4 @@
-"""Self-hosted primary (GROQ_BASE_URL, e.g. the AMD host) with the hosted Groq API as backup (HOSTED_FALLBACK_API_KEY).
+"""Self-hosted primary (GROQ_BASE_URL, e.g. the AMD host) with the hosted Groq API as backup (SELF_HOSTED_API_KEY holds its token; GROQ_API_KEY is the backup).
 
 The network is replaced: the Groq backend factory returns fakes keyed by the URL they were built for, so each test
 decides what the self-hosted host and the hosted API do.
@@ -45,8 +45,8 @@ def backends(monkeypatch, tmp_path):
 
     monkeypatch.setattr("wasel.llm.groq_backend.groq_backend", factory)
     monkeypatch.setenv("GROQ_BASE_URL", SELF)
-    monkeypatch.setenv("GROQ_API_KEY", "amd-token")
-    monkeypatch.setenv("HOSTED_FALLBACK_API_KEY", "hosted-key")
+    monkeypatch.setenv("SELF_HOSTED_API_KEY", "amd-token")
+    monkeypatch.setenv("GROQ_API_KEY", "hosted-key")         # the key Render already has; now the backup
     monkeypatch.setenv("EXTRACT_MODEL", "openai/gpt-oss-20b")
     monkeypatch.setenv("GROQ_FALLBACK_ENABLED", "false")
     monkeypatch.delenv("GEMINI_API_KEY", raising=False)
@@ -93,14 +93,27 @@ def test_both_down_falls_back_to_rules(backends):
     assert res.parsed is None and res.path == "rules"
 
 
-def test_no_hosted_key_means_no_backup_step(backends, monkeypatch):
-    monkeypatch.delenv("HOSTED_FALLBACK_API_KEY")
+def test_no_self_hosted_token_keeps_the_old_meaning_of_groq_api_key(backends, monkeypatch):
+    made, _ = backends
+    monkeypatch.delenv("SELF_HOSTED_API_KEY")
     client = build_client("live", replay_dirs=[])
-    assert client.chain_names == ["self-hosted:openai/gpt-oss-20b"]
+    assert client.chain_names == ["self-hosted:openai/gpt-oss-20b"]     # GROQ_API_KEY is the vLLM token, no backup
 
 
 def test_without_a_self_hosted_host_the_chain_is_unchanged(backends, monkeypatch):
     monkeypatch.delenv("GROQ_BASE_URL")
+    monkeypatch.delenv("SELF_HOSTED_API_KEY")
     client = build_client("live", replay_dirs=[])
-    assert client.chain_names == ["groq:openai/gpt-oss-20b"]     # hosted only, no duplicate backup
+    assert client.chain_names == ["groq:openai/gpt-oss-20b"]     # the Render setup: hosted only
     assert client_mod.ChainStep("primary", "groq", "m", None, 1).endpoint == "groq"
+
+
+def test_render_style_setup_has_no_self_hosted_step(backends, monkeypatch):
+    """Render sets GROQ_API_KEY only. Nothing about its chain changes."""
+    monkeypatch.delenv("GROQ_BASE_URL")
+    monkeypatch.delenv("SELF_HOSTED_API_KEY")
+    monkeypatch.setenv("GROQ_API_KEY", "hosted-key")
+    monkeypatch.delenv("EXTRACT_MODEL")
+    monkeypatch.setenv("GROQ_FALLBACK_ENABLED", "true")
+    client = build_client("live", replay_dirs=[])
+    assert client.chain_names == ["groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"]

@@ -30,7 +30,7 @@ Every line must say `OK` before serving. `FAIL` lines say what is missing (VRAM,
 ## 2. Serve the model
 
 ```bash
-export GROQ_API_KEY="$(openssl rand -hex 24)"    # the vLLM --api-key; save it in your password manager now
+export SELF_HOSTED_API_KEY="$(openssl rand -hex 24)"    # the vLLM --api-key; save it in your password manager now
 ACCEL=rocm MODEL=openai/gpt-oss-20b make llm-serve
 ```
 
@@ -42,7 +42,7 @@ Preview the exact `docker run` command without starting anything: `DRY_RUN=1 ACC
 
 ## 3. Check from the laptop
 
-Copy `config/amd.env.example` to `.env` and fill the two placeholders (`GROQ_BASE_URL`, `GROQ_API_KEY`). Then:
+Copy `config/amd.env.example` to `.env` and fill the placeholders (`GROQ_BASE_URL`, `SELF_HOSTED_API_KEY`). Your hosted `GROQ_API_KEY` stays as it is. Then:
 
 ```bash
 make llm-check        # lists the model in /v1/models, runs one JSON completion, prints the round trip
@@ -75,11 +75,11 @@ Commit the new `data/reports/eval_live.json` only after the report names the mod
 ACCEL=rocm bash scripts/ops/vllm_serve.sh stop
 ```
 
-Then stop or delete the instance in the AMD console; `stop` only removes the container. Empty `GROQ_BASE_URL` and `GROQ_API_KEY` in `.env` and restart the API so requests do not fail while it is off.
+Then stop or delete the instance in the AMD console; `stop` only removes the container. Empty `GROQ_BASE_URL` and `SELF_HOSTED_API_KEY` in `.env` and restart the API so requests do not fail while it is off.
 
 ## How the fallback works
 
-With `GROQ_BASE_URL` (the AMD host) and `HOSTED_FALLBACK_API_KEY` both set, the chain is:
+With `GROQ_BASE_URL` (the AMD host) and `SELF_HOSTED_API_KEY` set, and `GROQ_API_KEY` holding the hosted key, the chain is:
 
 1. `self-hosted:<model>` (primary, 6 s per call)
 2. `groq:<model>` (hosted backup, 8 s per call)

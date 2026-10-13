@@ -71,7 +71,7 @@ Backends raise subclasses of `LLMError` (`llm/base.py`). The recorded `outcome` 
 | Provider | Base URL | Notes |
 |---|---|---|
 | Groq | `https://api.groq.com/openai/v1` | Also sends the Groq-only `reasoning_format: "hidden"`. |
-| Self-hosted (vLLM or any compatible server) | `GROQ_BASE_URL` | Chosen when the variable is set; the Groq-only field is dropped automatically because vLLM rejects unknown fields. `GROQ_API_KEY` still carries the server's token. See [self-hosted LLM](../operations/self-hosted-llm.md). |
+| Self-hosted (vLLM or any compatible server) | `GROQ_BASE_URL` | Chosen when the variable is set; the Groq-only field is dropped automatically because vLLM rejects unknown fields. `SELF_HOSTED_API_KEY` carries the server's token; without it, `GROQ_API_KEY` does. When `SELF_HOSTED_API_KEY` is set, `GROQ_API_KEY` is the hosted backup behind the server. See [self-hosted LLM](../operations/self-hosted-llm.md). |
 | Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | `schema_gemini.py` rewrites the strict schema into the subset the endpoint accepts. `config/probe.json` (`PROBE_FILE`) can describe the account's preferences (nullable style, token-limit field name, whether a seed is accepted); without it, built-in defaults apply. |
 
 Which steps exist depends on the environment at start (`build_client`):
