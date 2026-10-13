@@ -31,7 +31,7 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 - Positioned as a private demo for the Z-Team: the licence lets team members use and modify the code, lets anyone view it on GitHub, and needs written permission for other use, the README and [TEAM.md](TEAM.md) say so, and the working rules moved from `CONTRIBUTING.md` to [docs/development/workflow.md](docs/development/workflow.md).
 
 ### Removed
-- Contributor material for outside contributors: `CONTRIBUTING.md` (moved to the team workflow page), `CODE_OF_CONDUCT.md`, the contributors charts in the README and their `contributors-chart` workflow and generator script.
+- Contributor material for outside contributors: `CONTRIBUTING.md` (moved to the team workflow page), the contributors charts in the README and their `contributors-chart` workflow and generator script. `CODE_OF_CONDUCT.md` is kept.
 - Cloudflare deployment (Worker, container, wrangler config, `make cf-*` targets and the `cloudflare` CI job). The public demo runs on Render; `make serve` with a systemd unit remains for a host you control.
 
 ### Fixed
