@@ -7,10 +7,13 @@ import sqlite3
 from pathlib import Path
 
 SCHEMA = Path(__file__).with_name("schema.sql")
-# Bump this with every change to schema.sql. It is stored in the file header (PRAGMA user_version). A database with
-# another non-zero version is refused at boot and in snapshot restore; version 0 is an unversioned database made before
-# this check existed, accepted once and stamped (see main.AppState.boot).
-SCHEMA_VERSION = 1
+# Bump this with every change to schema.sql. It is stored in the file header (PRAGMA user_version). A database with a
+# version newer than this build's is refused at boot and in snapshot restore; version 0 is an unversioned database made
+# before this check existed, accepted once and stamped (see main.AppState.boot). An older version is accepted and brought
+# up to date by the migrate_* steps in boot, which add columns only.
+#   1: first stamped schema
+#   2: llm_usage.endpoint and extraction_runs.endpoint (which deployment answered)
+SCHEMA_VERSION = 2
 
 
 def connect(path: str | Path) -> sqlite3.Connection:
@@ -51,10 +54,10 @@ def stamp_schema(conn: sqlite3.Connection) -> None:
 
 def schema_problem(version: int) -> str | None:
     """None if a database with this user_version can be used by this build; otherwise the reason it cannot."""
-    if version in (0, SCHEMA_VERSION):
+    if 0 <= version <= SCHEMA_VERSION:
         return None
-    return (f"database schema version {version}, this build expects {SCHEMA_VERSION}. Either delete the database file "
-            f"(its data is lost) or restore a snapshot made by a compatible build")
+    return (f"database schema version {version}, this build expects {SCHEMA_VERSION} or older. "
+            f"Either delete the database file (its data is lost) or restore a snapshot made by a compatible build")
 
 
 def fresh_db(path: str | Path) -> sqlite3.Connection:

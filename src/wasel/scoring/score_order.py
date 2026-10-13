@@ -62,6 +62,7 @@ class _Extracted:
     tokens_out: int | None
     cap: str | None
     warnings: list[str]
+    endpoint: str | None = None
 
 
 def _from_cache(c: CachedExtraction) -> OrderExtraction:
@@ -90,7 +91,7 @@ def _extract(inp: ScoreInput, w: Window, input_hash: str, *, cache, llm, meter, 
             return _Extracted(ext, res.path, res.provider, res.model, res.path, False, res.attempts, res.usage,
                               res.raw, "; ".join(res.errors) or None, m.latency_ms if m else None,
                               m.tokens_in if m else None, m.tokens_out if m else None, None,
-                              [f"warn:{x}" for x in warns])
+                              [f"warn:{x}" for x in warns], res.endpoint)
     ext = rules_extract(w, banks=config.banks, catalog=config.catalog, zones=config.zones,
                         lexicons=config["lexicons"])
     return _Extracted(ext, "rules", "rules", "rules_v1", "rules", False,
@@ -233,7 +234,7 @@ def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: U
         validated=proc.validated(), spans=_record_spans(proc), valid=valid, dropped_flags=proc.dropped_flags,
         dropped_quotes=proc.dropped_quotes, injection_suspected=proc.injection_suspected,
         error="; ".join(filter(None, [x.error, *x.warnings])) or None, latency_ms=x.latency_ms,
-        tokens_in=x.tokens_in, tokens_out=x.tokens_out)
+        tokens_in=x.tokens_in, tokens_out=x.tokens_out, endpoint=x.endpoint)
     cache_put = None
     if x.path == "llm" and not x.cache_hit:            # fallbacks are never cached
         cache_put = CacheEntry(input_hash, PROMPT_VERSION, x.provider, x.model, "llm", proc.cache_extraction())

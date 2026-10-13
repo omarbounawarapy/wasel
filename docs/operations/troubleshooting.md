@@ -27,7 +27,7 @@ curl -s 'localhost:8000/api/events?limit=30'                  # recent events: e
 
 | Symptom | Cause and diagnostic |
 |---|---|
-| Refuses to start with `database schema version N, this build expects M` | The database file (or the snapshot it was restored from) was written by another build of the schema. Either delete the database file (its data is lost) or restore a snapshot from a compatible build. Version 0 is accepted once and stamped, so older unversioned databases with the current tables still start. |
+| Refuses to start with `database schema version N, this build expects M` | The database file (or the snapshot it was restored from) was written by another build of the schema. Either delete the database file (its data is lost) or restore a snapshot from a compatible build. Only a newer version is refused: an older one is migrated at boot. Version 0 is accepted once and stamped, so older unversioned databases with the current tables still start. |
 | Orders and edits vanish after a restart | Public mode (`APP_MODE` unset or `public`) sets `SEED_ON_BOOT` to `always`, which deletes and rebuilds the database. `make up` also defaults to `always`. Use `APP_MODE=dev`/`event` with `make run` or `make serve` and leave `SEED_ON_BOOT` unset (`if_empty`). |
 | `make failures` fails with `no such table: orders` | `var/app.db` does not exist or is empty. Run `make seed` (or start the app once) first. |
 | A sample order scores differently from the README | Its extraction was not found in the cache (a changed message, template text, window rule or prompt version), so it fell to the rules extractor. Look for `path=rules` on the assessment and run `make warm`. `test_seed_all_cache_hits_under_fail_all` guards this. |

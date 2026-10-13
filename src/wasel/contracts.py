@@ -179,6 +179,7 @@ class ExtractionRecord:           # -> one extraction_runs row
     latency_ms: int | None
     tokens_in: int | None
     tokens_out: int | None
+    endpoint: str | None = None   # deployment that answered; None for cache, cascade and rules
 
 
 @dataclass(frozen=True)
@@ -280,6 +281,7 @@ class UsageRecord:                # -> one llm_usage row per provider attempt
     tokens_in: int | None
     tokens_out: int | None
     latency_ms: int
+    endpoint: str | None = None   # deployment that was called; `provider` stays the protocol family
 
 
 @dataclass(frozen=True)

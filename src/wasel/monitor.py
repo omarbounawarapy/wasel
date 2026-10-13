@@ -137,7 +137,7 @@ def llm_ops(conn: sqlite3.Connection, window: int) -> dict:
     """Provider-call health from the latest `window` llm_usage rows: error and refusal rates, and per role attempts,
     tokens, latency percentiles and models, plus the in-process trace summary.
     """
-    rows = conn.execute("SELECT role, provider, model, outcome, latency_ms, tokens_in, tokens_out FROM llm_usage "
+    rows = conn.execute("SELECT role, provider, model, endpoint, outcome, latency_ms, tokens_in, tokens_out FROM llm_usage "
                         "ORDER BY usage_id DESC LIMIT ?", (window,)).fetchall()
     roles: dict[str, dict] = {}
     for r in rows:
@@ -158,6 +158,7 @@ def llm_ops(conn: sqlite3.Connection, window: int) -> dict:
     return {"attempts": n, "llm_error_rate": _rate(sum(1 for r in rows if r["outcome"] != "ok"), n),
             "refusal_rate": _rate(sum(1 for r in rows if r["outcome"] in ("schema_rejected", "parse_error",
                                                                            "truncated")), n),
+            "by_endpoint": dict(Counter(r["endpoint"] or "not recorded" for r in rows)),
             "by_role": roles, "traces": trace.summary()}
 
 

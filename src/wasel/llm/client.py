@@ -122,6 +122,11 @@ class ChainClient:
         """The `provider:model` name of the first step, or `rules` when the chain has no steps."""
         return f"{self.steps[0].endpoint}:{self.steps[0].model}" if self.steps else "rules"
 
+    def breaker_open(self, endpoint: str) -> bool:
+        """True while the breaker for this endpoint is skipping its steps."""
+        with self._lock:
+            return self._breaker_until.get(endpoint, 0) > self._mono()
+
     @property
     def chain_names(self) -> list[str]:
         """The `provider:model` name of every step, in order."""
@@ -199,7 +204,8 @@ class ChainClient:
             except LLMError as e:
                 latency = int((self._mono() - t_call) * 1000)
                 res.attempts.append(Attempt(step.provider, step.model, e.outcome, latency))
-                res.usage.append(UsageRecord(now, role, step.provider, step.model, e.outcome, None, None, latency))
+                res.usage.append(UsageRecord(now, role, step.provider, step.model, e.outcome, None, None, latency,
+                                             step.endpoint))
                 res.errors.append(f"{step.model}:{type(e).__name__}:{str(e)[:120]}")
                 with self._lock:
                     if isinstance(e, ProviderDown):
@@ -221,7 +227,7 @@ class ChainClient:
             latency = meta.latency_ms or int((self._mono() - t_call) * 1000)
             res.attempts.append(Attempt(step.provider, step.model, "ok", latency))
             res.usage.append(UsageRecord(now, role, step.provider, step.model, "ok",
-                                         meta.tokens_in, meta.tokens_out, latency))
+                                         meta.tokens_in, meta.tokens_out, latency, step.endpoint))
             res.parsed, res.raw, res.meta = parsed, raw, meta
             res.path, res.provider, res.model = _PATH[step.kind], step.provider, step.model
             res.endpoint = step.endpoint

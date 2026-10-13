@@ -225,13 +225,13 @@ def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger:
         conn.execute(
             "INSERT INTO extraction_runs (extraction_id, order_id, input_message_ids, input_hash, provider, model,"
             " prompt_version, cache_hit, attempts_json, output_json, validated_json, spans_json, valid, dropped_flags,"
-            " dropped_quotes, injection_suspected, error, latency_ms, tokens_in, tokens_out, created_at)"
-            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+            " dropped_quotes, injection_suspected, error, latency_ms, tokens_in, tokens_out, created_at, endpoint)"
+            " VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
             (ext_id, oid, _j(x.input_message_ids), x.input_hash, x.provider, x.model, x.prompt_version,
              int(x.cache_hit), _j(x.attempts), _cap_text(x.output_json),
              _j(x.validated) if x.validated is not None else None,
              _j(x.spans), int(x.valid), x.dropped_flags, x.dropped_quotes, int(x.injection_suspected), x.error,
-             x.latency_ms, x.tokens_in, x.tokens_out, utc_iso(now)))
+             x.latency_ms, x.tokens_in, x.tokens_out, utc_iso(now), x.endpoint))
     elif prior is not None:
         ext_id = prior.extraction_id                      # no_reply_timeout reuses the prior extraction
     if result.cache_put is not None:
@@ -292,9 +292,9 @@ def persist_result(conn, ids: IdGen, now: datetime, order: sqlite3.Row, trigger:
 def insert_usage(conn, u, *, sandbox_id, order_id) -> None:
     """Record one LLM provider attempt in llm_usage. `day` is the UTC date of `u.ts`."""
     conn.execute("INSERT INTO llm_usage (ts, day, sandbox_id, order_id, role, provider, model, outcome, tokens_in,"
-                 " tokens_out, latency_ms) VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+                 " tokens_out, latency_ms, endpoint) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
                  (utc_iso(u.ts), u.ts.strftime("%Y-%m-%d"), sandbox_id, order_id, u.role, u.provider, u.model,
-                  u.outcome, u.tokens_in, u.tokens_out, u.latency_ms))
+                  u.outcome, u.tokens_in, u.tokens_out, u.latency_ms, u.endpoint))
 
 
 # ---------------------------------------------------------------- drafts

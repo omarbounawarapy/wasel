@@ -167,7 +167,7 @@ def test_boot_refuses_a_database_from_another_schema_version(tmp_path):
         pass
     _set_user_version(tmp_path / "app.db", 99)
     c2, _, _ = make_client(tmp_path, "dev", seed_on_boot="if_empty")
-    with pytest.raises(RuntimeError, match="schema version 99, this build expects 1"), c2:
+    with pytest.raises(RuntimeError, match="schema version 99, this build expects 2 or older"), c2:
         pass
     assert _user_version(tmp_path / "app.db") == 99                 # refused, not migrated or stamped
 

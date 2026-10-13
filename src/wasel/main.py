@@ -216,6 +216,7 @@ class AppState:
         self.check_schema(conn)
         self.migrate_cache_owner(conn)
         self.migrate_send_claim(conn)
+        self.migrate_endpoint(conn)
         stamp_schema(conn)                              # adopts an unversioned database once; no-op when current
         self.rearm_interrupted(conn)
         conn.execute("UPDATE orders SET rescore_state = CASE WHEN pending_rescore_at IS NOT NULL THEN 'debouncing'"
@@ -264,6 +265,14 @@ class AppState:
         with tx(conn):
             conn.execute("ALTER TABLE outbound_drafts ADD COLUMN sending_at TEXT")
 
+    def migrate_endpoint(self, conn) -> None:
+        """Add `endpoint` to llm_usage and extraction_runs on a database made before it existed (schema version 1).
+        Old rows keep NULL, which is shown as "not recorded". No data is copied and the CHECK constraints stay."""
+        for table in ("llm_usage", "extraction_runs"):
+            if not any(r["name"] == "endpoint" for r in conn.execute(f"PRAGMA table_info({table})")):
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN endpoint TEXT")
+                log.info("%s had no endpoint column: added, old rows read as not recorded", table)
+
     def rearm_interrupted(self, conn) -> int:
         """Queue a rescore for every open order whose last scoring did not finish, and return how many.
 
@@ -301,6 +310,20 @@ class AppState:
         n = seed_all(conn, self.ids, self.clock.now(), self.seed_scorer(conn), self.drafter, self.config.catalog)
         return purged, n
 
+    def observed_endpoints(self, conn, now) -> list[M.HealthEndpointObserved]:
+        """Per endpoint, the last recorded call, its outcome and the last success, from llm_usage rows of the last two
+        UTC days (rows from before the endpoint column read as no endpoint and are left out)."""
+        since = (now - timedelta(days=2)).strftime("%Y-%m-%d")
+        rows = conn.execute(
+            "SELECT endpoint, MAX(ts) AS last_call, MAX(CASE WHEN outcome='ok' THEN ts END) AS last_ok,"
+            " (SELECT u2.outcome FROM llm_usage u2 WHERE u2.endpoint = u.endpoint ORDER BY u2.usage_id DESC LIMIT 1)"
+            " AS last_outcome FROM llm_usage u WHERE endpoint IS NOT NULL AND day >= ? GROUP BY endpoint ORDER BY endpoint",
+            (since,)).fetchall()
+        is_open = getattr(self.llm, "breaker_open", lambda _e: False)
+        return [M.HealthEndpointObserved(endpoint=r["endpoint"], last_call_at=r["last_call"],
+                                         last_outcome=r["last_outcome"], last_ok_at=r["last_ok"],
+                                         breaker_open=bool(is_open(r["endpoint"]))) for r in rows]
+
     def health(self, conn) -> M.HealthResponse:
         """Build the /api/health payload from settings, this DB and the worker state."""
         s, now = self.settings, self.clock.now()
@@ -315,6 +338,7 @@ class AppState:
                           " ('fallback_model','fallback_provider','rules') ORDER BY a.created_at DESC LIMIT 1",
                           (five,)).fetchone()
         pending = conn.execute("SELECT COUNT(*) FROM orders WHERE pending_rescore_at IS NOT NULL").fetchone()[0]
+        observed = self.observed_endpoints(conn, now)
         # where the Groq steps run: only a self-hosted GROQ_BASE_URL can carry a serving label, so the label is never
         # shown for the hosted Groq API
         llm_cfg = LLMSettings.from_env(s.llm_mode)
@@ -351,7 +375,8 @@ class AppState:
                             primary=getattr(self.llm, "primary", "rules"), fallback_active=fb is not None,
                             fallback_reason=f"recent path {fb['path']}" if fb else None,
                             last_path=last_path, last_host=last_host,
-                            last_call_at=None, remaining_tokens=None, live_calls_today=calls, live_call_cap=cap,
+                            last_call_at=max((o.last_call_at for o in observed), default=None),
+                            observed=observed, remaining_tokens=None, live_calls_today=calls, live_call_cap=cap,
                             cap_reached=cap is not None and calls >= cap,
                             visitor_cap={"per_10min": s.visitor_llm_cap_10min, "per_day": s.visitor_llm_cap_day}
                             if s.is_public else None,

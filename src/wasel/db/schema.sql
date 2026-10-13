@@ -143,7 +143,8 @@ CREATE TABLE extraction_runs (                 -- append-only; one row per scori
   latency_ms          INTEGER,
   tokens_in           INTEGER,
   tokens_out          INTEGER,
-  created_at          TEXT NOT NULL
+  created_at          TEXT NOT NULL,
+  endpoint            TEXT                     -- deployment that answered ('groq', 'self-hosted', ...); open set, NULL = not recorded
 );
 CREATE INDEX ix_extraction_runs_order ON extraction_runs (order_id, created_at);
 
@@ -159,7 +160,8 @@ CREATE TABLE llm_usage (                       -- one row per provider attempt; 
   outcome    TEXT NOT NULL CHECK (outcome IN ('ok','rate_limited','down','timeout','schema_rejected','truncated','parse_error')),
   tokens_in  INTEGER,
   tokens_out INTEGER,
-  latency_ms INTEGER NOT NULL
+  latency_ms INTEGER NOT NULL,
+  endpoint   TEXT                              -- deployment attempted ('groq', 'self-hosted', ...); open set, NULL = not recorded
 );
 CREATE INDEX ix_llm_usage_day     ON llm_usage (day);
 CREATE INDEX ix_llm_usage_sandbox ON llm_usage (sandbox_id, ts);

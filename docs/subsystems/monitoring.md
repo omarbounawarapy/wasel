@@ -13,7 +13,7 @@ The report looks at the most recent `window` (200) assessments, drafts and LLM a
 | `drift` | Population stability index (PSI) of `language`, `address_level` and `tier` against the reference mix | `risk_assessments` joined to `extraction_runs`; `data/monitor_reference.json` |
 | `faithfulness` | `hallucinated_quotes_per_extraction` (evidence quotes the model wrote that are not in the chat, dropped by code), `dropped_flags_per_extraction`, `invalid_extraction_rate`, `injection_rate`, `fallback_rate` (share of assessments whose path is not `llm`, `cascade_ack` or `cascade_cache`) | `extraction_runs`, `risk_assessments` |
 | `safety` | Draft `routes` and `sources`, `judge_reject_rate`, `judge_ungrounded_rate`, `judge_tone_fail_rate`, `judge_unavailable_rate`, `classifier_veto_rate`, `overreach` breakdown | `outbound_drafts.judge_json` |
-| `ops` | `llm_error_rate`, `refusal_rate` (the provider answered but not in schema: `schema_rejected`, `parse_error`, `truncated`), per-role attempts, tokens, p50 and p95 latency and models, plus the in-process trace summary | `llm_usage`, trace ring buffer |
+| `ops` | `llm_error_rate`, `refusal_rate` (the provider answered but not in schema: `schema_rejected`, `parse_error`, `truncated`), per-role attempts, tokens, p50 and p95 latency and models, `by_endpoint` attempt counts (`not recorded` for old rows), plus the in-process trace summary | `llm_usage`, trace ring buffer |
 | `alerts` | Drift and ceiling violations | derived |
 
 PSI is `Σ (q − p) · ln(q / p)` over the union of categories with an epsilon floor of 0.0001. A common reading is that below 0.1 the mix is stable and above 0.2 it has moved noticeably; `drift_psi` sets the alert line at 0.2.

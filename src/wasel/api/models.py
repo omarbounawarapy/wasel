@@ -465,9 +465,21 @@ class HealthConfig(BaseModel):
     seed_captured_at: str | None = None
 
 
+class HealthEndpointObserved(BaseModel):
+    """What the last two days of llm_usage rows say about one endpoint. This is a record of calls that were made, not
+    a probe: an endpoint with no row is unknown, not down. `breaker_open` is this process's circuit breaker."""
+    endpoint: str
+    last_call_at: str
+    last_outcome: str
+    last_ok_at: str | None
+    breaker_open: bool
+
+
 class HealthLLM(BaseModel):
-    """LLM chain status. `live_calls_today` counts provider calls on the current UTC day; `live_call_cap` is None
-    when unlimited. `fallback_active` is true when an assessment in the last five minutes took a fallback or rules path.
+    """LLM chain status. `chain_extract`, `chain_judge`, `primary` and `serving_*` are what is configured: the chain
+    was built that way, which does not mean the host answers. `observed` and `last_call_at` come from recorded calls.
+    `live_calls_today` counts provider calls on the current UTC day; `live_call_cap` is None when unlimited.
+    `fallback_active` is true when an assessment in the last five minutes took a fallback or rules path.
     """
     llm_mode: Literal["live", "replay", "fail_primary", "fail_all", "fail_groq"]
     chain_extract: list[str]
@@ -485,6 +497,7 @@ class HealthLLM(BaseModel):
     serving_label: str | None = None             # LLM_SERVING_LABEL, only when GROQ_BASE_URL points at a self-hosted server
     serving_host: str | None = None              # host name of GROQ_BASE_URL (no path, no credentials)
     last_host: str | None = None                 # serving_host when the last assessment came from the self-hosted host
+    observed: list[HealthEndpointObserved] = []  # per endpoint, from llm_usage; empty when no call was recorded
 
 
 class HealthWhatsApp(BaseModel):
