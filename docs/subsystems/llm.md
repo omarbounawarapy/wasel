@@ -74,11 +74,55 @@ Backends raise subclasses of `LLMError` (`llm/base.py`). The recorded `outcome` 
 | Self-hosted (vLLM or any compatible server) | `GROQ_BASE_URL` | Chosen when the variable is set; the Groq-only field is dropped automatically because vLLM rejects unknown fields. `SELF_HOSTED_API_KEY` carries the server's token; without it, `GROQ_API_KEY` does. When `SELF_HOSTED_API_KEY` is set, `GROQ_API_KEY` is the hosted backup behind the server. See [self-hosted LLM](../operations/self-hosted-llm.md). |
 | Gemini | `https://generativelanguage.googleapis.com/v1beta/openai/` | `schema_gemini.py` rewrites the strict schema into the subset the endpoint accepts. `config/probe.json` (`PROBE_FILE`) can describe the account's preferences (nullable style, token-limit field name, whether a seed is accepted); without it, built-in defaults apply. |
 
-Which steps exist depends on the environment at start (`build_client`):
+Which steps exist is decided by `config/llm.yaml` and the environment at start (`wasel.llm.routes.build_steps`). An endpoint with no key, or with no address where it takes one from a variable, is inactive and adds no step, so an unused endpoint never blocks startup. A role with no route of its own walks the `extract` route.
 
-- **Groq steps** exist only if `GROQ_API_KEY` is set. The primary uses `EXTRACT_MODEL`, else `routing.primary` in `llm.yaml`; the second step uses `FALLBACK_MODEL`, else `routing.fallback_model`, unless `GROQ_FALLBACK_ENABLED=false`.
-- **Gemini step** exists only with `GEMINI_API_KEY`, `GEMINI_MODEL` and `GEMINI_ENABLED=true`.
+<!-- BEGIN GENERATED: llm-endpoints -->
+| Endpoint | Protocol | Address | Key variable | Reasoning | Active when |
+|---|---|---|---|---|---|
+| `groq` | openai-compatible | `https://api.groq.com/openai/v1` | `GROQ_API_KEY` | hosted_groq | its key is set |
+| `self-hosted` | openai-compatible | `GROQ_BASE_URL` | `SELF_HOSTED_API_KEY`, `GROQ_API_KEY` | self_hosted | its key is set, `GROQ_BASE_URL` is set |
+| `gemini` | gemini | built in | `GEMINI_API_KEY` | none | its key is set, `GEMINI_MODEL` is set, `GEMINI_ENABLED` is true (off by default) |
+
+| Route | Step | Endpoint | Kind | Model | Timeout | Skipped when |
+|---|---|---|---|---|---|---|
+| `extract` | 1 | `self-hosted` | `primary` | `primary` | 6s | never |
+| `extract` | 2 | `self-hosted` | `fallback_model` | `fallback` | 5s | `GROQ_FALLBACK_ENABLED` is false |
+| `extract` | 3 | `groq` | `primary` | `primary` | 6s | `self-hosted` is active |
+| `extract` | 4 | `groq` | `fallback_model` | `fallback` | 5s | `GROQ_FALLBACK_ENABLED` is false, `self-hosted` is active |
+| `extract` | 5 | `groq` | `fallback_provider` | `primary` | 8s | `SELF_HOSTED_API_KEY` is unset |
+| `extract` | 6 | `gemini` | `fallback_provider` | `endpoint` | 8s | never |
+<!-- END GENERATED: llm-endpoints -->
+
+The tables above are generated: run `python scripts/dev/gen_llm_docs.py` after editing `endpoints` or `routes`. A test fails when they drift from the config.
+
+- **Model names** come from `EXTRACT_MODEL` (else `routing.primary` in `llm.yaml`) for `primary`, and `FALLBACK_MODEL` (else `routing.fallback_model`) for `fallback`. `endpoint` means the model named by the endpoint's own `model_env` (Gemini).
 - **No key at all** yields an empty chain: every extraction goes straight to the rules extractor. That is the intended offline behaviour, not a misconfiguration.
+
+### Add an endpoint
+
+A second host is configuration only: no change to `client.py`, `contracts.py`, `api/models.py` or `db/schema.sql`. The stored `provider` stays `groq` for any OpenAI-compatible server, and the new `endpoint` column in `llm_usage` and `extraction_runs` records which deployment answered.
+
+1. Add the endpoint under `endpoints:` in `config/llm.yaml`. Name the variables that hold the address and key. Never write a key or a host address in the file.
+
+   ```yaml
+   amd-b:
+     protocol: openai-compatible
+     base_url_env: AMD_B_URL
+     key_env: AMD_B_KEY
+     reasoning: self_hosted
+   ```
+
+2. Add a step to a route under `routes:` (usually `extract`, before the step it should come ahead of).
+
+   ```yaml
+   - { endpoint: amd-b, kind: primary, model: primary, timeout_s: 6 }
+   ```
+
+3. Set the variables in `.env` or the host's environment, then restart: `AMD_B_URL=http://10.0.0.5:8000/v1` and `AMD_B_KEY=<token>`.
+4. Run `python scripts/dev/gen_llm_docs.py` to refresh the tables above, then `make check`.
+5. Confirm with `GET /api/health`: `llm.chain_extract` lists the new step and `llm.observed` gains an `amd-b` row after its first recorded call.
+
+A new wire protocol (not OpenAI-compatible) is a code change: one adapter in `ADAPTERS` and one entry in `PROTOCOLS` in `llm/routes.py`.
 
 The provider variables are read when the app starts, from the process environment and then from `.env` ([environment](../configuration/environment.md#how-values-are-loaded)). The chain is built once, so changes need a restart.
 
@@ -156,4 +200,4 @@ Calls approved during a scoring run but not yet written to `llm_usage` are held 
 ## Extending
 
 - **New role.** Add a prompt and a schema file, a `roles:` entry with limits in `llm.yaml`, a line in `VERSIONS`, and a `parse` function; call `llm.extract(task("role"), ...)`. Add the role to the `Role` type in `contracts.py` and to the check constraint on `llm_usage.role` if it goes through the meter.
-- **New provider.** Any OpenAI-compatible endpoint works with `OpenAICompatBackend`; add a `ChainStep` in `build_client`. A provider with a different wire protocol needs a backend with `complete_json(task, model, user, timeout_s) -> (raw_text, CallMeta)` that raises `LLMError` subclasses.
+- **New provider.** Any OpenAI-compatible endpoint is a [config entry](#add-an-endpoint). A provider with a different wire protocol needs a backend with `complete_json(task, model, user, timeout_s) -> (raw_text, CallMeta)` that raises `LLMError` subclasses.

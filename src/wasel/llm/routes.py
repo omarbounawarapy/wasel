@@ -165,3 +165,36 @@ def build_steps(cfg: LLMSettings, endpoints: dict[str, EndpointSpec], route: lis
         steps.append(ChainStep(s.kind, ep.spec.provider, model, backends[s.endpoint], s.timeout_s,
                                endpoint=s.endpoint))
     return steps
+
+
+# ---------------------------------------------------------------- docs generated from the config
+def docs_tables(endpoints: dict[str, EndpointSpec], routes: dict[str, list[StepSpec]]) -> str:
+    """Markdown for the endpoint and route tables in docs/subsystems/llm.md (a test fails if the page drifts)."""
+    def names(*vals: str | None) -> str:
+        return ", ".join(f"`{v}`" for v in vals if v) or "none"
+
+    lines = ["| Endpoint | Protocol | Address | Key variable | Reasoning | Active when |", "|---|---|---|---|---|---|"]
+    for e in endpoints.values():
+        addr = f"`{e.base_url}`" if e.base_url else (f"`{e.base_url_env}`" if e.base_url_env else "built in")
+        when = ["its key is set"]
+        if e.base_url_env:
+            when.append(f"`{e.base_url_env}` is set")
+        if e.model_env:
+            when.append(f"`{e.model_env}` is set")
+        if e.enabled_env:
+            when.append(f"`{e.enabled_env}` is true" + ("" if e.enabled_default else " (off by default)"))
+        lines.append(f"| `{e.id}` | {e.protocol} | {addr} | {names(*e.key_envs)} | {e.reasoning or 'none'} | "
+                     f"{', '.join(when)} |")
+    lines += ["", "| Route | Step | Endpoint | Kind | Model | Timeout | Skipped when |", "|---|---|---|---|---|---|---|"]
+    for role, steps in routes.items():
+        for i, s in enumerate(steps, 1):
+            skip = []
+            if s.flag_env:
+                skip.append(f"`{s.flag_env}` is false")
+            if s.unless_active:
+                skip.append(f"`{s.unless_active}` is active")
+            if s.requires_env:
+                skip.append(f"`{s.requires_env}` is unset")
+            lines.append(f"| `{role}` | {i} | `{s.endpoint}` | `{s.kind}` | `{s.model}` | {s.timeout_s:g}s | "
+                         f"{', '.join(skip) or 'never'} |")
+    return "\n".join(lines)
