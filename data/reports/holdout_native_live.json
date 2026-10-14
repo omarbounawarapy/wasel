@@ -1,0 +1,87 @@
+{
+  "mode": "live",
+  "set": "data/eval/native/holdout_native.jsonl",
+  "provenance": "native_speaker_holdout: scenarios by a context-free model, translated and labelled by a native speaker who had seen the word lists; never used to tune the system",
+  "n": 36,
+  "paths": {
+    "openai/gpt-oss-120b": 34,
+    "openai/gpt-oss-20b": 2
+  },
+  "is_order_acc": 0.7142857142857143,
+  "is_order_n": 35,
+  "address_exact_acc": 0.2222222222222222,
+  "address_within1_acc": 0.4444444444444444,
+  "address_n": 18,
+  "language_acc": 0.6111111111111112,
+  "language_n": 36,
+  "refusal_tier_agreement": 0.17647058823529413,
+  "refusal_n": 17,
+  "mean_score_by_labelled_risk": {
+    "high": 47.0,
+    "low": 34.8,
+    "medium": 40.2
+  },
+  "misses": [
+    {
+      "id": "nh-08",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-10",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-12",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-16",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-17",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-23",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-24",
+      "kind": "is_order",
+      "expected": false,
+      "got": true
+    },
+    {
+      "id": "nh-32",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-34",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-36",
+      "kind": "is_order",
+      "expected": false,
+      "got": true
+    }
+  ],
+  "runtime_s": 774.9
+}

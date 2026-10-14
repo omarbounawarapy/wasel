@@ -193,5 +193,9 @@ Rules path, first run: orders recognised 66% (23 of 35), address level 17% exact
 compared at the labeller's four levels), language 58%, refusal tier agreement 24% (17 orders). Mean score by labelled
 risk: low 11, medium 61, high 82, so the ordering is right while the tier boundaries are not.
 
+LLM path (`gpt-oss-120b`, 34 cases; `gpt-oss-20b` answered 2), `data/reports/holdout_native_live.json`: orders recognised
+71% (25 of 35), address level 22% exact and 44% within one step, language 61%, refusal tier agreement 18%. Mean score by
+labelled risk: low 35, medium 40, high 47, so the model separates the groups far less than the rules do.
+
 Limits: 36 cases, one labeller, who had seen the word lists; the scenarios lean toward hard cases, so these numbers
-are not a production accuracy. The LLM path has not been run on this set.
+are not a production accuracy.
