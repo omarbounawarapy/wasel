@@ -18,8 +18,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from wasel.evaluation.run import T0  # noqa: E402
 from wasel.contracts import CustomerHistory, ScoreInput, StructuredFields, WindowMessage  # noqa: E402
+from wasel.evaluation.run import T0  # noqa: E402
 from wasel.scoring.score_order import score_order  # noqa: E402
 
 SET = ROOT / "data" / "eval" / "native" / "holdout_native.jsonl"
