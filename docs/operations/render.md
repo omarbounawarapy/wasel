@@ -76,3 +76,53 @@ make smoke URL=http://127.0.0.1:10000
 The image starts uvicorn with `--proxy-headers --forwarded-allow-ips '*'`, so the `X-Forwarded-Proto` from Render sets the scheme of redirects. Per-address limits read `CF-Connecting-IP` (`CLIENT_IP_HEADER` in `render.yaml`), not the socket address. Cloudflare's edge sets that header and refuses a request that brings its own (error 1000). Checked on the live service on 2026-10-14: after 29 writes from one address the next ones got `429`, also with a fresh visitor id. If the header were missing, no per-address limit would apply.
 
 `deploy/render/Dockerfile.dockerignore` is a Dockerfile-specific ignore file. If Render's builder does not honour it, the build fails on missing files or is slow; there is no root `.dockerignore`.
+
+## Website checks (launch checklist, #160 to #190)
+
+What the site does for visitors, search engines and scanners, and how each is checked. `make check` does not need a browser; the rows marked CI run in `.github/workflows/ci.yml` or `links.yml`.
+
+### Public origin, indexing and share cards
+
+- `NEXT_PUBLIC_SITE_URL` is the public origin (`https://wasel.runs-on.dev`). It is baked in at build time into canonical URLs, the Open Graph card and the sitemap. A production `npm run build` **fails** when it is unset. `make web` defaults it to `http://localhost:8000`; `deploy/render/Dockerfile` defaults it to the demo host and `render.yaml` sets it.
+- **The demo is not indexed.** It shows synthetic data under the product name, so `robots.txt` says `Disallow: /` and every page has `noindex`. To allow indexing, set `NEXT_PUBLIC_INDEXABLE=1` at build time: `robots.txt` then allows the pages and links `/sitemap.xml`. The sitemap file is always generated and lists the real routes only (not `/dashboard/order`).
+- Every page has its own title (`Page · Wasel`), a description of at most 160 characters and a canonical URL, all from one table in `web/lib/site.ts`. `npm run check:pages` (CI) fails if a page of the export has only the root title, a missing or long description, or a missing canonical.
+- Share card: `web/public/og-image.png` (1200 x 630, from `docs/assets/social-preview.png`), with Open Graph and Twitter `summary_large_image` tags. The same card is used on every route; the product page carries `SoftwareApplication` JSON-LD, added to `dist/index.html` by `web/scripts/inject-jsonld.mjs` after the build (React would escape a JSON script, and `dangerouslySetInnerHTML` is banned by `make hygiene`).
+- There is one host in this repository. The Cloudflare worker mentioned in the earlier issue is not part of it (`deploy/cloudflare` holds only local tooling), so no hreflang and no second set of headers exist.
+
+### Security headers
+
+`SECURITY_HEADERS` in `src/wasel/main.py` is sent on every response: CSP, `X-Content-Type-Options`, `Referrer-Policy: no-referrer`, `Permissions-Policy` (camera, microphone, geolocation, payment, usb and sensors off), `Cross-Origin-Opener-Policy: same-origin` and `Cross-Origin-Resource-Policy: same-origin`. `Strict-Transport-Security: max-age=31536000` is added only when the request arrived over https (behind Render's proxy through `X-Forwarded-Proto`), without `includeSubDomains` or `preload`. A test pins the set (`test_security_headers_are_complete_and_hsts_is_https_only`). **Scanner grade: not yet recorded.** After the next deploy run securityheaders.com or Mozilla Observatory against `https://wasel.runs-on.dev` and write the grade here.
+
+### Contact, privacy, cookies, analytics
+
+- Contact is `contact@wasel.runs-on.dev`, in the footer of every page, the 404, the privacy page, `SECURITY.md`, the README and `/.well-known/security.txt` (Expires 2027-09-30; renew it before then).
+- `/privacy/` states what is stored and for how long, from `SANDBOX_TTL_S` (2 h) and the `RETENTION_*` settings. Keep it in step with those values.
+- **No cookie banner, decided.** On a clean profile the demo sets no cookie. Local storage holds `cod_visitor_id` (the sandbox scope), `wasel_lang` (language) and `wasel_guide_*` (closed how-to strips), all strictly necessary or a user preference. Event and dev modes with `API_TOKEN` set one HttpOnly session cookie; those modes are not the public demo.
+- **No analytics, decided.** No visit counting or tracking script is loaded, so there is nothing to consent to and the CSP stays `connect-src 'self'`. If counting is added later, use a cookieless tool, allow its origin in the CSP, say so on the privacy page and revisit the banner decision.
+
+### Load budget
+
+Lighthouse CI (`web/lighthouserc.json`, the `lighthouse` job) builds the export and runs Lighthouse's mobile profile three times on `/`, `/dashboard/` and `/dashboard/order/`. It fails on a performance score under 0.7, accessibility under 0.95, best-practices under 0.9, simulated LCP over 4 s or a page over 600 kB. These are the shell pages without an API, so the numbers are a floor for regressions, not what a visitor with data sees.
+
+Baseline on 14 Oct 2026 (median of 3, simulated slow 4G, 4x CPU slowdown, local machine):
+
+| Page | Performance | LCP (simulated) | Transfer |
+| --- | --- | --- | --- |
+| `/` | 0.97 | 2.5 s | 268 kB |
+| `/dashboard/` | 0.74 | 3.4 s | 292 kB |
+| `/dashboard/order/` | 0.82 | 3.6 s | 338 kB |
+
+Before this pass the same pages transferred 424 to 495 kB: the logo was a 105 kB PNG (now 7 kB) and the unused monospace font (58 kB) was loaded on every page. Measured directly in Chrome with the same network and CPU throttling (not Lighthouse's simulation), the landing page's largest paint is at 1.8 s and the dashboard shell's at 0.6 s. The 2 s goal holds in that measurement and not in Lighthouse's simulated one; the CI budget follows the simulated number so a regression is visible. **Render cold start: not measured.** The keep-alive workflow pings every 10 minutes, so the service never slept while this was written; Render's documentation says about a minute.
+
+### Offline and install
+
+The app is installable (`display: standalone`) with a service worker (`web/public/sw.js`) that caches only the app shell and static build files and serves `/offline.html` when a page request fails offline. It never stores or answers `/api` requests, because they carry customer text. Remove `sw.js`, `offline.html` and `components/ServiceWorker.tsx` and `display` from the manifest to drop install.
+
+### Uptime alert and waking state
+
+- In the app, `HealthBar` shows "Wasel is starting up" when the first `/api/health` answer takes longer than 3 s, and "Can't reach the Wasel server" when it fails. While the free instance sleeps the browser gets Render's own page instead (the app shell is served by the same process), which Wasel cannot change.
+- **External uptime monitor: not set up, needs an account.** To get an alert, create a free monitor (UptimeRobot, Better Stack or similar) with an HTTPS check on `https://wasel.runs-on.dev/api/health` every 5 minutes, keyword `"status":"ok"`, and an email alert to the owner. A pinging monitor also keeps the instance awake. The `keep-alive` workflow pings the same URL; a failing run emails the person who last edited it.
+
+### Accessibility and keyboard
+
+`npm run a11y` (`make a11y`; runs in CI after the smoke test) loads every route in light and dark, at 390 and 1440 px, injects axe-core with the WCAG 2.2 AA rules, and checks that the first Tab stop is the skip link and that it focuses the main region. It reported no violations on 14 Oct 2026 after the dark tokens were corrected. Reduced motion is honoured (`prefers-reduced-motion` stops animation and transitions). The dark theme follows the system setting. Interface text is available in English, French and Arabic for the navigation, landing, 404 and waking messages; the pages' own content is English.

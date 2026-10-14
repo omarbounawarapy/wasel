@@ -149,7 +149,7 @@ export default function FailuresPage() {
 
                     {data.limitations?.length > 0 && (
                         <Details label="Limits of this analysis">
-                            <ul className="list-disc pl-5 space-y-1">{data.limitations.map((l: string) => <li key={l}>{l}</li>)}</ul>
+                            <ul className="list-disc ps-5 space-y-1">{data.limitations.map((l: string) => <li key={l}>{l}</li>)}</ul>
                         </Details>
                     )}
                 </>

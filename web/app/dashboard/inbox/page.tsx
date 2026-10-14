@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { ordersApi } from "@/lib/api/orders";
 import type { HealthResponse, OrderListResponse, OrderSummary } from "@/lib/api/types";
 import { Page, PageHeader, Guide, Section, StatCard, ReadBy, RiskBadge, Empty, LoadError, STATUS, whenLabel } from "@/components/wasel/kit";
+import { messageLang } from "@/lib/utils";
 
 export default function InboxPage() {
     const router = useRouter();
@@ -79,12 +80,12 @@ export default function InboxPage() {
                         {rows.map((o: OrderSummary) => (
                             <li key={o.order_id}>
                                 <button type="button" onClick={() => router.push(`/dashboard/order?id=${o.order_id}`)}
-                                        className="w-full text-left flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-3.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+                                        className="w-full text-start flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 px-5 py-3.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
                                     <span className="sm:w-[190px] shrink-0 min-w-0">
                                         <bdi className="block font-semibold text-brand-ink truncate">{o.customer.display_name || o.customer.phone_masked || "Unknown"}</bdi>
                                         <span className="block text-xs text-gray-600 tabular-nums">{o.order_ref} · {whenLabel(o.updated_at)}</span>
                                     </span>
-                                    <bdi dir="auto" className="flex-1 min-w-0 text-sm text-gray-700 truncate">{o.last_message_preview || ""}</bdi>
+                                    <bdi dir="auto" lang={messageLang(o.last_message_preview)} className="flex-1 min-w-0 text-sm text-gray-700 truncate">{o.last_message_preview || ""}</bdi>
                                     <span className="flex items-center gap-3 shrink-0">
                                         {o.score ? <><ReadBy value={o.score.read_by} /><RiskBadge tier={o.score.tier} score={o.score.final_score} /></>
                                             : o.rescore_state !== "idle" ? <RiskBadge tier={null} score={null} />

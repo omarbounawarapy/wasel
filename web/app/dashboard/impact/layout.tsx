@@ -1,10 +1,8 @@
-import type { Metadata } from "next"
+import { pageMeta } from "@/lib/meta"
 
-export const metadata: Metadata = {
-    title: "Money saved · Wasel",
-}
+export const metadata = pageMeta("/dashboard/impact")
 
-// Server layout only: gives this route its own browser-tab title in the static export.
+// Server layout only: gives this route its own browser-tab title, description and canonical URL in the static export.
 export default function Layout({ children }: { children: React.ReactNode }) {
     return children
 }

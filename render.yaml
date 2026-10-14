@@ -19,6 +19,8 @@ services:
         value: "0.8"
       - key: VISITOR_LLM_CAP_DAY       # Increased per-visitor daily cap (was 20)
         value: "100"
+      - key: NEXT_PUBLIC_SITE_URL      # build time: canonical URLs, share card and sitemap use this origin (docs/operations/render.md)
+        value: https://wasel.runs-on.dev
       - key: GROQ_API_KEY
         sync: false
       - key: ADMIN_TOKEN

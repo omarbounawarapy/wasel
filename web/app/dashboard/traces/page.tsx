@@ -66,14 +66,14 @@ export default function TracesPage() {
                                 <li key={t.trace_id ?? t.ts}>
                                     <button type="button" disabled={!t.order_id}
                                             onClick={() => t.order_id && router.push(`/dashboard/order?id=${t.order_id}`)}
-                                            className="w-full text-left flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 hover:bg-gray-50 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+                                            className="w-full text-start flex flex-wrap items-center gap-x-4 gap-y-1 px-5 py-3 hover:bg-gray-50 disabled:hover:bg-transparent focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
                                         <span className="w-28 shrink-0 text-xs text-gray-600 tabular-nums">{whenLabel(t.ts)}</span>
                                         <span className="w-40 text-sm font-medium text-gray-900">{ROLE[t.role] ?? t.role}</span>
                                         <span className="flex-1 min-w-0 text-xs text-gray-600 truncate">
                                             {t.cache_hit ? "Recorded answer reused" : `${t.provider ?? ""} ${t.model ?? ""}`}
                                             {(t.attempts || []).length > 1 && ` · tried ${t.attempts.length} models`}
                                         </span>
-                                        <span className="text-xs text-gray-600 tabular-nums w-16 text-right">{t.latency_ms ? `${(t.latency_ms / 1000).toFixed(1)} s` : "–"}</span>
+                                        <span className="text-xs text-gray-600 tabular-nums w-16 text-end">{t.latency_ms ? `${(t.latency_ms / 1000).toFixed(1)} s` : "–"}</span>
                                         <Chip tone={t.outcome === "ok" ? "green" : t.cache_hit ? "blue" : "amber"}>{t.outcome === "ok" ? "OK" : t.cache_hit ? "From memory" : t.outcome}</Chip>
                                     </button>
                                 </li>

@@ -137,7 +137,7 @@ export function StatCard({ label, value, hint, tone = "default", onClick }: {
     const Tag = onClick ? "button" : "div";
     return (
         <Tag type={onClick ? "button" : undefined} onClick={onClick}
-             className={`text-left bg-white rounded-2xl border border-gray-200/70 shadow-sm p-3 sm:p-5 min-w-0 ${onClick ? "hover:border-brand/40 hover:shadow focus-visible:outline-2 focus-visible:outline-brand transition" : ""}`}>
+             className={`text-start bg-white rounded-2xl border border-gray-200/70 shadow-sm p-3 sm:p-5 min-w-0 ${onClick ? "hover:border-brand/40 hover:shadow focus-visible:outline-2 focus-visible:outline-brand transition" : ""}`}>
             <p className="text-xs sm:text-sm font-medium text-gray-600 leading-snug">{label}</p>
             <p className={`text-2xl sm:text-3xl font-bold tabular-nums mt-1 ${toneCls}`}>{value}</p>
             {hint && <p className="hidden sm:block text-xs text-gray-600 mt-1">{hint}</p>}
@@ -213,16 +213,20 @@ export function Empty({ title, children }: { title: string, children?: ReactNode
     );
 }
 
+/** The message under a field. Pair it with `aria-invalid` and `aria-describedby={id}` on the input so it is read out with it. */
+export function FieldError({ id, children }: { id: string, children: ReactNode }) {
+    return <p id={id} role="alert" className="mt-1.5 text-sm font-medium text-red-700">{children}</p>;
+}
+
 export function LoadError({ what, onRetry }: { what: string, onRetry?: () => void }) {
     return (
         <div role="alert" className="rounded-2xl border border-red-200 bg-red-50 text-red-800 text-sm p-4 flex flex-wrap items-center justify-between gap-3">
-            <span>Could not load {what}. Check that the Wasel server is running, then {onRetry ? "try again." : "refresh the page."}</span>
-            {onRetry && (
-                <button type="button" onClick={onRetry}
-                        className="min-h-[44px] px-4 rounded-xl bg-white border border-red-300 font-medium text-red-900 hover:bg-red-100">
-                    Retry
-                </button>
-            )}
+            <span>Could not load {what}. Check that the Wasel server is running, then try again.</span>
+            {/* Without a page-specific retry, reloading repeats every request the page made */}
+            <button type="button" onClick={onRetry ?? (() => window.location.reload())}
+                    className="min-h-[44px] px-4 rounded-xl bg-white border border-red-300 font-medium text-red-900 hover:bg-red-100">
+                Retry
+            </button>
         </div>
     );
 }

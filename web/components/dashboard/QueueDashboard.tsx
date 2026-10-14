@@ -117,7 +117,7 @@ export default function QueueDashboard() {
                         {rows.map((o: OrderSummary) => (
                             <li key={o.order_id}>
                                 <button type="button" onClick={() => open(o.order_id)}
-                                        className="w-full text-left grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_auto_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.6fr)] gap-x-4 gap-y-1.5 items-center px-5 py-3.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
+                                        className="w-full text-start grid grid-cols-1 md:grid-cols-[minmax(0,1.3fr)_auto_minmax(0,1fr)_minmax(0,0.9fr)_minmax(0,1.6fr)] gap-x-4 gap-y-1.5 items-center px-5 py-3.5 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-brand">
                                     <span className="min-w-0">
                                         <span className="flex items-center gap-2 min-w-0">
                                             <span className="font-semibold text-brand-ink tabular-nums">{o.order_ref}</span>

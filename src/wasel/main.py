@@ -55,7 +55,15 @@ SECURITY_HEADERS = {
                                 "base-uri 'none'"),
     "X-Content-Type-Options": "nosniff",
     "Referrer-Policy": "no-referrer",
+    # The UI needs no device API, so each is switched off; a page that tried to use one would be refused.
+    "Permissions-Policy": ("camera=(), microphone=(), geolocation=(), payment=(), usb=(), "
+                           "accelerometer=(), gyroscope=(), magnetometer=(), interest-cohort=()"),
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
 }
+# Sent only on an https response, never on plain http (a browser ignores it there, and a local http run stays clean).
+# No includeSubDomains or preload: the demo host is a shared parent domain.
+HSTS = ("Strict-Transport-Security", "max-age=31536000")
 
 
 def _setup_logging(log_level: str) -> None:
@@ -613,6 +621,8 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         resp = await call_next(request)
         for k, v in SECURITY_HEADERS.items():
             resp.headers[k] = v
+        if request.url.scheme == "https":
+            resp.headers[HSTS[0]] = HSTS[1]
         return resp
 
     if settings.app_mode == "dev":

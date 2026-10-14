@@ -55,7 +55,7 @@ function Report({ report, title, subtitle, offline = false }: { report: any, tit
                         {title}: {ok ? "all checks passed" : `${failures.length} check${failures.length > 1 ? "s" : ""} below target`}
                     </p>
                     <p className={`text-sm mt-0.5 ${ok ? "text-emerald-800" : "text-red-800"}`}>{subtitle}</p>
-                    {!ok && <ul className="list-disc pl-5 mt-2 text-sm text-red-800">{failures.map(f => <li key={f}>{f}</li>)}</ul>}
+                    {!ok && <ul className="list-disc ps-5 mt-2 text-sm text-red-800">{failures.map(f => <li key={f}>{f}</li>)}</ul>}
                 </div>
             </section>
 
@@ -100,8 +100,8 @@ function Report({ report, title, subtitle, offline = false }: { report: any, tit
                                     <tbody>
                                         {Object.entries(metrics).filter(([k]) => !HIDDEN.includes(k)).map(([k, v]) => (
                                             <tr key={k} className="border-b border-gray-100 last:border-0">
-                                                <td className="py-1 pr-3">{k.replace(/_/g, " ")}</td>
-                                                <td className="py-1 text-right tabular-nums font-medium text-gray-900">{fmt(v, k)}</td>
+                                                <td className="py-1 pe-3">{k.replace(/_/g, " ")}</td>
+                                                <td className="py-1 text-end tabular-nums font-medium text-gray-900">{fmt(v, k)}</td>
                                             </tr>
                                         ))}
                                     </tbody>

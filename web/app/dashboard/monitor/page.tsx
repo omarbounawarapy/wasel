@@ -94,7 +94,7 @@ export default function MonitorPage() {
                                 {alerts.length ? `${alerts.length} thing${alerts.length > 1 ? "s" : ""} to look at` : noLive ? "No live AI calls yet" : "Everything looks normal"}
                             </p>
                             {alerts.length > 0 && (
-                                <ul className="list-disc pl-5 mt-1 text-sm text-amber-900">
+                                <ul className="list-disc ps-5 mt-1 text-sm text-amber-900">
                                     {alerts.map((a, i) => <li key={i}>{typeof a === "string" ? a : a.message ?? JSON.stringify(a)}</li>)}
                                 </ul>
                             )}

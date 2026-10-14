@@ -30,7 +30,14 @@ ui: ## analyst view (Streamlit operator tools) on :8501, against API_BASE_URL (d
 	cd dashboard && API_BASE_URL=$${API_BASE_URL:-$(URL)} $(PY) -m streamlit run app.py --server.address $(UI_HOST) --server.port $(UI_PORT)
 
 web: ## build the web/ UI (Next.js static export -> web/dist); `make up` / `make demo` then serve it at :8000/
-	cd web && npm ci --no-audit --no-fund && npm run build
+	# NEXT_PUBLIC_SITE_URL: canonical URLs and share cards; a production build fails without it. Local default below.
+	cd web && npm ci --no-audit --no-fund && NEXT_PUBLIC_SITE_URL=$${NEXT_PUBLIC_SITE_URL:-http://localhost:8000} npm run build
+
+a11y: ## axe (WCAG 2.2 AA) over every route of the app running on URL (default :8000), light and dark, phone and desktop
+	cd web && BASE_URL=$(URL) npm run a11y
+
+links: ## check links in the markdown docs (needs lychee: cargo install lychee); CI also checks the built site weekly
+	lychee --config lychee.toml --no-progress './**/*.md'
 
 web-dev: ## web/ UI with hot reload on :5173 against the API on :8000 (run `make run` or `make up` first)
 	cd web && npm run dev
@@ -68,7 +75,7 @@ llm-preflight: ## run ON the GPU host before serving: GPU, VRAM, disk, docker, p
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + SELF_HOSTED_API_KEY in .env)
 	bash scripts/ops/vllm_serve.sh check
 
-.PHONY: help setup lock run up ui web web-dev serve deploy render-smoke wa-up llm-serve llm-preflight llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
+.PHONY: help setup lock run up ui web a11y links web-dev serve deploy render-smoke wa-up llm-serve llm-preflight llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

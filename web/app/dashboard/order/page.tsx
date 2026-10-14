@@ -11,8 +11,9 @@ import type {
 } from '@/lib/api/types';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { messageLang } from '@/lib/utils';
 import {
-    Page, Section, Details, Chip, ReadBy, RiskBadge, Delta, Empty, TIER, NEXT_STEP, STATUS, whenLabel, tnd,
+    Page, Section, Details, Chip, ReadBy, RiskBadge, Delta, Empty, LoadError, TIER, NEXT_STEP, STATUS, whenLabel, tnd,
 } from '@/components/wasel/kit';
 
 // Server-built strings (reasons, flag labels) are shown verbatim.
@@ -142,7 +143,7 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: AssessmentVi
                     {a.flags?.length > 0 && (
                         <p className="text-sm text-gray-700 mt-2">
                             Warning signs: {a.flags.map((f: FlagView, i: number) => (
-                                <span key={i}>{i > 0 && ", "}{FLAG[f.code] ?? f.label} (“<bdi dir="auto">{f.quote}</bdi>”)</span>
+                                <span key={i}>{i > 0 && ", "}{FLAG[f.code] ?? f.label} (“<bdi dir="auto" lang={messageLang(f.quote)}>{f.quote}</bdi>”)</span>
                             ))}
                         </p>
                     )}
@@ -178,6 +179,8 @@ function ScoreHistory({ assessments, rescoreState }: { assessments: AssessmentVi
     );
 }
 
+const REPLY_MAX = 600;
+
 function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }: {
     conversationId: string; scripted: string[]; hasUnsentDraft: boolean; onSent: () => void
 }) {
@@ -185,8 +188,9 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
     const [sending, setSending] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    const tooLong = replyText.length > REPLY_MAX;
     const handleSend = async () => {
-        if (!replyText.trim()) return;
+        if (!replyText.trim() || tooLong) return;
         setSending(true);
         setError(null);
         try {
@@ -203,7 +207,7 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
         <details className="group bg-white rounded-2xl border-2 border-dashed border-gray-300 p-5" open={scripted.length > 0}>
             <summary className="cursor-pointer list-none select-none">
                 <span className="text-sm font-bold text-brand-ink">
-                    <span className="text-xs font-bold bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded mr-2">TRY IT</span>
+                    <span className="text-xs font-bold bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded me-2">TRY IT</span>
                     Play the customer
                 </span>
                 <span className="block text-xs text-gray-600 mt-1">
@@ -231,18 +235,22 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
                     <textarea
                         dir="auto"
                         rows={3}
-                        maxLength={600}
+                        aria-invalid={tooLong || Boolean(error) || undefined}
+                        aria-describedby="reply-status"
                         value={replyText}
                         onChange={e => setReplyText(e.target.value)}
                         onKeyDown={e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) handleSend(); }}
                         placeholder="Type what the customer would reply…"
-                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand"
+                        className="w-full px-3 py-2 rounded-xl border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand aria-[invalid=true]:border-red-600"
                         disabled={sending}
                     />
                 </label>
                 <div className="flex items-center justify-between">
-                    <span className={`text-xs ${error ? "text-red-700" : "text-gray-600"}`}>{error ?? `${replyText.length} / 600`}</span>
-                    <Button size="sm" variant="outline" disabled={sending || !replyText.trim()} onClick={handleSend}>
+                    <span id="reply-status" role={tooLong || error ? "alert" : undefined}
+                          className={`text-xs ${tooLong || error ? "text-red-700 font-semibold" : "text-gray-600"}`}>
+                        {tooLong ? `The reply is ${replyText.length - REPLY_MAX} characters too long. The limit is ${REPLY_MAX}.` : error ?? `${replyText.length} / ${REPLY_MAX}`}
+                    </span>
+                    <Button size="sm" variant="outline" disabled={sending || tooLong || !replyText.trim()} onClick={handleSend}>
                         {sending ? "Sending…" : "Send simulated reply"}
                     </Button>
                 </div>
@@ -311,7 +319,7 @@ function DraftChecks({ draft, autoSend }: { draft: DraftView, autoSend: boolean 
                         : j.decided_by === "llm" ? `${j.approved ? "approved" : "rejected"}${j.judge_model ? ` by ${j.judge_model}` : ""}; the decision is re-checked in code.`
                         : "not reached (the safety model decided)."}</p>
                     {(j.unsupported_claims ?? []).length > 0 && <p>Claims the order doesn't support: {(j.unsupported_claims ?? []).join("; ")}</p>}
-                    {draft.canonical_text && <p>Adapted from the approved message: <bdi dir="auto">{draft.canonical_text}</bdi></p>}
+                    {draft.canonical_text && <p>Adapted from the approved message: <bdi dir="auto" lang={messageLang(draft.canonical_text)}>{draft.canonical_text}</bdi></p>}
                 </Details>
             )}
         </div>
@@ -322,14 +330,22 @@ function OrderDetailContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const [orderId, setOrderId] = useState<string | null>(searchParams.get('id'));
+    // Arriving from Add an order (?new=1): this page is the confirmation that the message was received and scored.
+    const [justAdded, setJustAdded] = useState(searchParams.get('new') === '1');
     const [orderData, setOrderData] = useState<OrderDetailResponse | null>(null);
     const [allOrders, setAllOrders] = useState<OrderSummary[]>([]);
     const [health, setHealth] = useState<HealthResponse | null>(null);
     const [loading, setLoading] = useState(true);
     const [notFound, setNotFound] = useState(false);
+    const [loadFailed, setLoadFailed] = useState(false);
     const [busy, setBusy] = useState<string | null>(null);
     const [actionError, setActionError] = useState<string | null>(null);
     const fastUntil = useRef(0);
+    // Drop ?new=1 from the address so a reload or a shared link does not claim the order was just added.
+    useEffect(() => {
+        const id = new URLSearchParams(window.location.search).get('id');
+        if (searchParams.get('new') === '1' && id) window.history.replaceState(null, '', `/dashboard/order/?id=${id}`);
+    }, [searchParams]);
     // The id the page opened with: decides, once on mount, whether to select the newest order.
     const openedWithId = useRef(orderId);
 
@@ -343,8 +359,10 @@ function OrderDetailContent() {
             const res = await ordersApi.getOrder(id);
             setOrderData(res);
             setNotFound(false);
+            setLoadFailed(false);
         } catch (err: any) {
             if (err?.status === 404) setNotFound(true);
+            else setLoadFailed(true);
         } finally {
             setLoading(false);
         }
@@ -358,7 +376,7 @@ function OrderDetailContent() {
                 setOrderId(firstId);
                 router.replace(`/dashboard/order?id=${firstId}`);
             }
-        }).catch(() => setLoading(false));
+        }).catch(() => { setLoadFailed(true); setLoading(false); });
     }, [loadList, router]);
 
     // Poll the selected order: 1 s while it is rescoring (or right after a reply/Try), else 3 s.
@@ -383,6 +401,7 @@ function OrderDetailContent() {
     }, [rescoreState, orderData]);
 
     const selectOrder = (id: string) => {
+        setJustAdded(false);
         setOrderId(id);
         setOrderData(null);
         router.push(`/dashboard/order?id=${id}`);
@@ -413,6 +432,7 @@ function OrderDetailContent() {
             </Empty>
         </Page>
     );
+    if (!orderData && loadFailed) return <Page><LoadError what="the order" onRetry={() => { setLoadFailed(false); setLoading(true); if (orderId) loadOrder(orderId); else loadList().then(() => setLoading(false)).catch(() => { setLoadFailed(true); setLoading(false); }); }} /></Page>;
     if (!orderData) return <Page><Empty title="No order selected">Pick an order from “Orders to check”.</Empty></Page>;
 
     const { order: o, assessments, customer, drafts, scripted_replies, capabilities, conversation } = orderData;
@@ -461,6 +481,30 @@ function OrderDetailContent() {
                     </SelectContent>
                 </Select>
             </div>
+
+            {justAdded && (
+                <section role="status" aria-label="Order received"
+                         className="rounded-2xl border border-emerald-300 bg-emerald-50 p-4 flex flex-col sm:flex-row sm:items-center gap-3 sm:justify-between">
+                    <div className="min-w-0">
+                        <p className="text-sm font-bold text-emerald-900 flex items-center gap-1.5"><Check className="w-4 h-4" aria-hidden="true" /> Received: order {o.order_ref} is in your queue</p>
+                        <p className="text-sm text-emerald-900 mt-0.5">
+                            {o.score
+                                ? `Wasel read the message and scored it. Next step: ${(NEXT_STEP[o.score.action] ?? o.score.action).toLowerCase()}.`
+                                : "Wasel is reading the message. The score appears here in a few seconds."}
+                        </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 shrink-0">
+                        <Link prefetch={false} href="/dashboard/paste"
+                              className="inline-flex items-center justify-center px-4 min-h-[44px] rounded-xl bg-white border border-emerald-300 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
+                            Add another
+                        </Link>
+                        <Link prefetch={false} href="/dashboard"
+                              className="inline-flex items-center justify-center px-4 min-h-[44px] rounded-xl bg-white border border-emerald-300 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
+                            Back to the queue
+                        </Link>
+                    </div>
+                </section>
+            )}
 
             {/* Verdict: the one thing to do now */}
             <section aria-label="Verdict" className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 flex flex-col xl:flex-row xl:items-center gap-5">
@@ -544,8 +588,8 @@ function OrderDetailContent() {
                                         const sentDraft = (drafts || []).find((d: DraftView) => d.sent_message_id === m.message_id);
                                         return (
                                             <div key={m.message_id} className={`flex flex-col max-w-[85%] ${isCustomer ? 'self-start' : 'self-end'}`}>
-                                                <div className={`p-3 rounded-2xl ${isCustomer ? 'bg-white rounded-bl-sm' : 'bg-wa-out rounded-br-sm'} text-gray-900 shadow-sm`}>
-                                                    <p dir="auto" className="whitespace-pre-wrap break-words leading-relaxed text-start">
+                                                <div className={`p-3 rounded-2xl ${isCustomer ? 'bg-white rounded-es-sm' : 'bg-wa-out rounded-ee-sm'} text-gray-900 shadow-sm`}>
+                                                    <p dir="auto" lang={messageLang(m.text)} className="whitespace-pre-wrap break-words leading-relaxed text-start">
                                                         {m.segments ? <Segments segments={m.segments} />
                                                             : m.text ?? (m.location
                                                                 ? <span className="inline-flex items-center gap-1"><MapPin className="w-4 h-4" /> Location pin {m.location.lat.toFixed(4)}, {m.location.lng.toFixed(4)}</span>
@@ -581,7 +625,7 @@ function OrderDetailContent() {
                         <div id="message-to-customer">
                             <Section step={2} title="Message to the customer"
                                      hint={`Written in ${LANGUAGE[currentDraft.language] ?? currentDraft.language}, the customer's own language.`}>
-                                <p dir="auto" className="text-sm text-gray-900 whitespace-pre-wrap break-words bg-gray-50 rounded-xl p-4 border border-gray-200">
+                                <p dir="auto" lang={messageLang(currentDraft.text)} className="text-sm text-gray-900 whitespace-pre-wrap break-words bg-gray-50 rounded-xl p-4 border border-gray-200">
                                     {currentDraft.text}
                                 </p>
                                 <DraftChecks draft={currentDraft} autoSend={health?.wa_auto_send === true} />

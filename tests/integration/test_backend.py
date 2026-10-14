@@ -1148,3 +1148,20 @@ def test_openapi_declares_the_error_envelope(dev):
     op = doc["paths"]["/api/orders/{order_id}/actions"]["post"]["responses"]
     for status in ("404", "409", "422"):
         assert op[status]["content"]["application/json"]["schema"]["$ref"].endswith("/ErrorEnvelope")
+
+
+def test_security_headers_are_complete_and_hsts_is_https_only(tmp_path):
+    """#183: the full header set is on every response; HSTS only when the request arrived over https."""
+    c, _, _ = make_client(tmp_path, mode="garbage")
+    with c:
+        plain = c.get("/api/health")
+        for name in ("content-security-policy", "x-content-type-options", "referrer-policy", "permissions-policy",
+                     "cross-origin-opener-policy", "cross-origin-resource-policy"):
+            assert plain.headers.get(name), name
+        assert "geolocation=()" in plain.headers["permissions-policy"]
+        assert "strict-transport-security" not in plain.headers
+        secure = c.get("/api/health", headers={"X-Forwarded-Proto": "https"})
+        secure_https = c.get("https://testserver/api/health")
+        assert secure_https.headers["strict-transport-security"].startswith("max-age=")
+        assert "includesubdomains" not in secure_https.headers["strict-transport-security"].lower()
+        assert secure.status_code == 200

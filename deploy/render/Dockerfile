@@ -6,6 +6,10 @@ WORKDIR /web
 COPY web/package.json web/package-lock.json ./
 RUN npm ci --no-audit --no-fund
 COPY web ./
+# The public origin is baked into canonical URLs, share cards and the sitemap; the build fails without it.
+# render.yaml sets NEXT_PUBLIC_SITE_URL (Render passes it as a build arg); the default is the demo host.
+ARG NEXT_PUBLIC_SITE_URL=https://wasel.runs-on.dev
+ENV NEXT_PUBLIC_SITE_URL=$NEXT_PUBLIC_SITE_URL
 RUN npm run build
 
 FROM python:3.11-slim-bookworm@sha256:0a310eeecf4e1f5a0743f9a6520c90c88d089c903ca5fd283f501e3a805f5f89

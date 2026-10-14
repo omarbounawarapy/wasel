@@ -1,0 +1,31 @@
+# Broken-link check over the markdown docs and the built site. On pull requests and weekly (a dead external link
+# appears without any commit). Allow-list and retries live in lychee.toml.
+name: links
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 5 * * 1"
+permissions: { contents: read }
+concurrency: { group: "links-${{ github.ref }}", cancel-in-progress: true }
+jobs:
+  links:
+    name: links in markdown and in the built site
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - name: build the site
+        run: cd web && npm ci --no-audit --no-fund && NEXT_PUBLIC_SITE_URL=https://wasel.runs-on.dev npm run build
+      - name: markdown (internal and external links)
+        uses: lycheeverse/lychee-action@82202e5e9c2f4ef1a55a3d02563e1cb6041e5332 # v2.4.1
+        with:
+          args: --config lychee.toml --no-progress './**/*.md'
+          fail: true
+      - name: built site (internal links and assets only)
+        uses: lycheeverse/lychee-action@82202e5e9c2f4ef1a55a3d02563e1cb6041e5332 # v2.4.1
+        with:
+          args: --config lychee.toml --no-progress --offline --root-dir "$GITHUB_WORKSPACE/web/dist" 'web/dist/**/*.html'
+          fail: true

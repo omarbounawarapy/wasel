@@ -1,9 +1,7 @@
-import type { Metadata } from "next"
+import { pageMeta } from "@/lib/meta"
 import QueueDashboard from "@/components/dashboard/QueueDashboard"
 
-export const metadata: Metadata = {
-    title: "Orders to check · Wasel",
-}
+export const metadata = pageMeta("/dashboard")
 
 export default function Page() {
     return <QueueDashboard />

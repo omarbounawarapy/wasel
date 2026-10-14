@@ -1,29 +1,45 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ordersApi } from "@/lib/api/orders";
-import { CheckCircle2, AlertTriangle, WifiOff } from "lucide-react";
+import { CheckCircle2, AlertTriangle, WifiOff, Loader2 } from "lucide-react";
+import { useT } from "@/lib/i18n";
+
+// A first answer later than this means the free host is waking up: say so instead of showing nothing.
+const WAKING_AFTER_MS = 3000;
 
 // One plain-language status line; the technical detail sits in the tooltip.
 export function HealthBar() {
     const [health, setHealth] = useState<any>(null);
     const [down, setDown] = useState(false);
+    const [waking, setWaking] = useState(false);
+    const seenUp = useRef(false);
+    const { t } = useT();
 
     useEffect(() => {
-        const load = () => ordersApi.health().then(h => { setHealth(h); setDown(false); }).catch(() => setDown(true));
+        const load = () => ordersApi.health().then(h => { seenUp.current = true; setHealth(h); setDown(false); }).catch(() => setDown(true));
         load();
         const iv = setInterval(load, 10000);
-        return () => clearInterval(iv);
+        const slow = setTimeout(() => setWaking(true), WAKING_AFTER_MS);
+        return () => { clearInterval(iv); clearTimeout(slow); };
     }, []);
 
     if (down) {
         return (
             <div role="status" className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-medium border bg-red-50 border-red-200 text-red-800">
-                <WifiOff className="w-4 h-4" /> Can't reach the Wasel server. Showing the last data received.
+                <WifiOff className="w-4 h-4" /> Can't reach the Wasel server. {seenUp.current ? "Showing the last data received." : "It may be starting up; this page keeps trying."}
             </div>
         );
     }
-    if (!health) return null;
+    if (!health) {
+        if (!waking) return null;
+        return (
+            <div role="status" className="flex items-start gap-2 px-4 py-3 rounded-xl text-sm border bg-amber-50 border-amber-200 text-amber-900">
+                <Loader2 className="w-4 h-4 mt-0.5 shrink-0 animate-spin motion-reduce:animate-none" aria-hidden="true" />
+                <span><strong className="font-semibold">{t("waking.title")}.</strong> {t("waking.body")}</span>
+            </div>
+        );
+    }
 
     const llm = health.llm || {};
     const callsLeft = llm.live_call_cap ? Math.max(0, llm.live_call_cap - (llm.live_calls_today ?? 0)) : null;

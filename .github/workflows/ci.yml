@@ -64,6 +64,8 @@ jobs:
       - run: make setup
       - run: make web
       - run: cd web && npm run lint -- --max-warnings 0
+      - name: every exported page has its own title, description and canonical URL
+        run: cd web && npm run check:pages
       - run: |
           make serve > serve.log 2>&1 &
           python3 scripts/dev/wait_health.py http://localhost:8000
@@ -72,8 +74,21 @@ jobs:
           test "$(curl -s -o /dev/null -w '%{http_code}' localhost:8000/dashboard/inbox/)" = 200 && echo "inbox page 200"
           ! grep -rq "localhost:5173" web/dist && echo "bundle has no dev origin"
           make smoke
+      - name: accessibility (axe, WCAG 2.2 AA) over every route, light and dark, phone and desktop; skip link
+        run: cd web && BASE_URL=http://localhost:8000 npm run a11y
       - if: failure()
         run: cat serve.log || true
+  lighthouse:
+    name: lighthouse budget (performance, accessibility, LCP, page weight)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with: { node-version: 22, cache: npm, cache-dependency-path: web/package-lock.json }
+      - run: cd web && npm ci --no-audit --no-fund && NEXT_PUBLIC_SITE_URL=https://wasel.runs-on.dev npm run build
+      # Budgets are in web/lighthouserc.json (baseline: docs/operations/render.md, "Load budget").
+      - run: cd web && npx --yes @lhci/cli@0.14.0 autorun --config=lighthouserc.json
   render:
     name: render image (docker build, boot, smoke test)
     needs: [backend]

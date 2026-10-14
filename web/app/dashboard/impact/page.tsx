@@ -74,7 +74,7 @@ export default function ImpactPage() {
                             Real savings = refusals avoided × cost of a trip − sales lost to extra questions, measured against a small group of orders shipped without Wasel.
                         </p>
                         <Details label={`Assumptions (${data.assumptions?.length ?? 0})`}>
-                            <ul className="list-disc pl-5 space-y-1">
+                            <ul className="list-disc ps-5 space-y-1">
                                 {data.assumptions?.map((x: string, i: number) => <li key={i}>{x}</li>)}
                             </ul>
                             <p className="pt-1">Dataset: {data.dataset}</p>

@@ -142,6 +142,10 @@ deploy/         systemd unit; render/ = Dockerfile and hashed lock for the Rende
 docs/           documentation
 ```
 
+## Contact
+
+Questions, feedback or a data request about the demo: **contact@wasel.runs-on.dev**. A security problem: the same address, see [SECURITY.md](SECURITY.md). The site's [privacy page](https://wasel.runs-on.dev/privacy/) says what the demo stores.
+
 ## License
 
 Copyright © 2026 Z-Team. All rights reserved. The source is public for viewing but is not open source. Z-Team members may use and modify it; anyone may view it on GitHub and fork it there; any other use needs Z-Team's written permission. See [LICENSE](LICENSE) and [TEAM.md](TEAM.md).

@@ -71,3 +71,17 @@ function chunkSubscriber(digits: string, hasCountryCode: boolean): string {
 
   return cc ? `${cc} ${subscriberFormatted}` : subscriberFormatted;
 }
+
+const ARABIC_SCRIPT = /[؀-ۿݐ-ݿ]/
+const FRENCH_WORDS = /\b(je|vous|nous|merci|bonjour|bonsoir|livraison|adresse|commande|pouvez|veuillez|rue|avec|pour|est|une|des|les|le|la|du|de|et|que|pas)\b|[éèêàçùû]/i
+
+/**
+ * The language of a quoted customer message, for the `lang` attribute: "ar" for Arabic script, "fr" for French,
+ * undefined otherwise. Arabizi and Darija in Latin letters have no code worth announcing, so they inherit the page's.
+ */
+export function messageLang(text?: string | null): string | undefined {
+  if (!text) return undefined
+  if (ARABIC_SCRIPT.test(text)) return "ar"
+  const hits = text.match(new RegExp(FRENCH_WORDS.source, "gi"))
+  return hits && hits.length >= 2 ? "fr" : undefined
+}

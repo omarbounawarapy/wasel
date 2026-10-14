@@ -2,7 +2,7 @@
 
 ## Reporting a problem
 
-Do not open a public issue for a security problem. Contact the maintainer, [@omarbounawarapy](https://github.com/omarbounawarapy), through the contact details on the GitHub profile, and send only a short message at first: say that you have a security finding and what area it touches, without exploit steps. Include, once contact is made, what you found, how to reproduce it, and what it exposes.
+Do not open a public issue for a security problem. Write to **contact@wasel.runs-on.dev** (the same address is in [`/.well-known/security.txt`](https://wasel.runs-on.dev/.well-known/security.txt)). Send only a short message at first: say that you have a security finding and what area it touches, without exploit steps. Include, once contact is made, what you found, how to reproduce it, and what it exposes. You can also message the maintainer, [@omarbounawarapy](https://github.com/omarbounawarapy), on GitHub.
 
 Reports we especially want:
 

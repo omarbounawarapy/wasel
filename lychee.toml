@@ -1,0 +1,17 @@
+# Link checker (lychee): `make links`, and the "links" workflow on pull requests and weekly.
+# Allow-list: addresses that cannot answer a bot, or that rate-limit (429 is accepted, not a broken link).
+accept = ["200..=299", "403", "429"]
+max_retries = 3
+retry_wait_time = 10
+timeout = 30
+max_concurrency = 8
+user_agent = "Mozilla/5.0 (compatible; wasel-link-check)"
+exclude = [
+  '^https?://localhost',
+  '^https?://127\.0\.0\.1',
+  '^https?://0\.0\.0\.0',
+  '^https?://(www\.)?linkedin\.com',        # refuses bots
+  '^https://wasel\.runs-on\.dev',            # the free Render demo sleeps; the keep-alive and smoke tests cover it
+  '^https://github\.com/.*/(issues|pull)/new',
+]
+exclude_path = ["node_modules", "web/dist", "video/node_modules", "deploy/cloudflare/node_modules", "docs/design-explorations", "web/node_modules"]
