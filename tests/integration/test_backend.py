@@ -15,6 +15,7 @@ from wasel.db import repo
 from wasel.db.conn import fresh_db, tx
 from wasel.db.purge import purge_sandboxes
 from wasel.ids import SeqIds
+from wasel.main import ROOT
 from wasel.scoring import stub
 from wasel.state import ACTIONS, next_status
 
@@ -1078,6 +1079,16 @@ def test_every_error_under_api_is_the_json_envelope(dev):
         assert r.json()["error"]["code"] == "NOT_FOUND"
     r = c.delete("/api/orders")
     assert r.status_code == 405 and r.json()["error"]["code"] == "METHOD_NOT_ALLOWED" and "GET" in r.headers["allow"]
+
+
+@pytest.mark.skipif(not (ROOT / "web" / "dist" / "404.html").exists(), reason="web bundle not built")
+def test_unknown_page_paths_get_the_branded_404_with_status_404(dev):
+    c, _, _ = dev
+    for url in ("/nope", "/dashboard/nope"):
+        r = c.get(url)
+        assert r.status_code == 404 and r.headers["content-type"].startswith("text/html")
+        assert "This page doesn't exist" in r.text.replace("&#x27;", "'")
+    assert c.get("/api/nope").headers["content-type"].startswith("application/json")
 
 
 def test_bad_filters_and_unknown_fields_are_422_with_field_names(dev):
