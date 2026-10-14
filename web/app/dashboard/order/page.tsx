@@ -463,7 +463,7 @@ function OrderDetailContent() {
             </div>
 
             {/* Verdict: the one thing to do now */}
-            <section aria-label="Verdict" className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 flex flex-col lg:flex-row lg:items-center gap-5">
+            <section aria-label="Verdict" className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 flex flex-col xl:flex-row xl:items-center gap-5">
                 <div className="flex items-center gap-4 shrink-0">
                     <RiskBadge tier={o.score?.tier} score={o.score?.final_score} size="lg" />
                     <Delta delta={o.score?.delta} />
@@ -487,7 +487,7 @@ function OrderDetailContent() {
                     )}
                     {actionError && <p role="alert" className="text-sm text-red-700 mt-2">{actionError}</p>}
                 </div>
-                <div className="flex flex-wrap gap-2 lg:justify-end lg:max-w-[420px]">
+                <div className="flex flex-wrap gap-2 xl:justify-end xl:max-w-[420px]">
                     {capabilities?.can_try && (
                         <Button className="bg-brand hover:bg-brand-hover text-white min-h-[44px]" disabled={busy !== null}
                                 onClick={async () => {
@@ -573,6 +573,7 @@ function OrderDetailContent() {
                         <p className="mt-3 text-xs text-gray-600 flex flex-wrap gap-x-4 gap-y-1">
                             <span><mark className="bg-amber-200 text-amber-950 px-1 rounded-sm underline decoration-dotted decoration-2 underline-offset-2 decoration-amber-600">amber</mark> raised the risk</span>
                             <span><span className="border-b-2 border-emerald-600">green underline</span> address detail found</span>
+                            <span><span className="border-b-2 border-dashed border-gray-500">grey dashed</span> address not exact enough</span>
                         </p>
                     </Section>
 
