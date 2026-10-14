@@ -3,7 +3,8 @@
 `LLMSettings.from_env()` is the only place that reads the LLM environment names (GROQ_*, SELF_HOSTED_API_KEY,
 EXTRACT_MODEL, FALLBACK_MODEL, GEMINI_*, LLM_MODE, LLM_DEADLINE_S, LLM_SERVING_LABEL, LLM_REPLAY_DIR). `build_client`
 and the health payload use the object instead of calling `env()` themselves. It changes no behaviour: the names, the
-defaults and the meaning of each value are the ones the code had before. Bad values raise `LLMConfigError` at startup with the name of the setting.
+defaults and the meaning of each value are the ones the code had before. Bad values raise `LLMConfigError` at startup with the name of the
+setting.
 """
 from __future__ import annotations
 

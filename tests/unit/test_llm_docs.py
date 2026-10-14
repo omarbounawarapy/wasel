@@ -64,7 +64,6 @@ def test_the_guide_steps_4_and_5_show_the_new_endpoint(gen, monkeypatch, tmp_pat
     lists it in /api/health.llm.chain_extract, and llm.observed gains its row once a call is recorded."""
     from tests.conftest import T0
     from tests.integration.conftest import make_client
-    from wasel.contracts import UsageRecord
     from wasel.db import repo
     from wasel.db.conn import tx
     from wasel.llm.base import TaskSpec

@@ -496,7 +496,7 @@ class HealthLLM(BaseModel):
     visitor_cap: dict | None = None              # per-visitor LLM caps (public mode only)
     serving_label: str | None = None             # LLM_SERVING_LABEL, only when GROQ_BASE_URL points at a self-hosted server
     serving_host: str | None = None              # host name of GROQ_BASE_URL (no path, no credentials)
-    last_host: str | None = None                 # serving_host when the last real-traffic answer came from the self-hosted host
+    last_host: str | None = None                 # serving_host when the last real-traffic answer was self-hosted
     last_endpoint: str | None = None             # deployment that answered the last real-traffic AI call ('self-hosted',
                                                  # 'groq', 'gemini'); None for rules, cascade or no traffic yet
     observed: list[HealthEndpointObserved] = []  # per endpoint, from llm_usage; empty when no call was recorded

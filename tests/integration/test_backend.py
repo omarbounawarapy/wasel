@@ -81,7 +81,7 @@ def test_health_says_last_host_only_when_the_self_hosted_endpoint_answered(tmp_p
         settle(core, clock)
         assert c.get("/api/health").json()["llm"]["last_path"] == "rules"
         latest = ("SELECT assessment_id FROM risk_assessments WHERE order_id=? ORDER BY version DESC LIMIT 1")
-        run = ("SELECT extraction_id FROM risk_assessments WHERE assessment_id=({})".format(latest))
+        run = f"SELECT extraction_id FROM risk_assessments WHERE assessment_id=({latest})"
         for path, endpoint, host, ep in (("llm", "self-hosted", "llm.example.test", "self-hosted"),
                                          ("fallback_model", "self-hosted", "llm.example.test", "self-hosted"),
                                          ("fallback_provider", "groq", None, "groq"),
