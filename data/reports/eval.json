@@ -7,7 +7,7 @@
     "failure_label": "failure-label-v1"
   },
   "config_hash": "0d226295",
-  "runtime_s": 1.1,
+  "runtime_s": 1.0,
   "results": {
     "extraction": {
       "n": 279,
@@ -82,6 +82,10 @@
       "tone_acc": 0.9130434782608695,
       "confirmation_acc": 0.9782608695652174,
       "near_misses": 1,
+      "labelers": {
+        "engineering": 22,
+        "native_speaker": 24
+      },
       "example": {
         "id": "g1-fr-13",
         "input": "Je voudrais un casque bluetooth. / Je suis à Nabeul.",

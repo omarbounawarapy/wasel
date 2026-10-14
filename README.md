@@ -40,7 +40,7 @@ Prefer to watch? The [48-second reel](video/renders/wasel-reel.mp4) shows the sa
 - **Explains and rescores.** Each score carries a reason such as `vague address ("9rib el jemaa") +17`. A customer reply creates a new assessment version with a reason diff (`v1 87 → v2 16 · full address given −32 · …`).
 - **Drafts and checks outgoing messages.** Questions come from approved templates in the customer's language. With `DRAFT_LLM=true` an LLM may reword them, and the rewrite must pass a deterministic prefilter, a local text classifier and an LLM judge. A person sends drafts unless automatic sending is explicitly enabled.
 - **Runs safely by default.** With no configuration the app starts in `public` mode: no WhatsApp webhook, no sending, read-only sample orders, per-visitor sandboxes that are purged after two hours, and a daily cap on LLM calls.
-- **Measures itself.** An offline evaluation gate (`make eval`) runs on every change, a monitor endpoint reports drift and safety rates, and a failure analyzer looks for silent failures in agent conversations.
+- **Measures itself.** An offline evaluation gate (`make eval`) runs on every change, and a monitor endpoint reports drift and safety rates.
 - **Runs offline.** With no API keys the app uses recorded extractions for the sample orders and the rules extractor for new text. The whole test suite runs without keys or network.
 
 ## How it works

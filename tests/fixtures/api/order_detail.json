@@ -1,11 +1,11 @@
 {
   "order": {
-    "order_id": "ord_0010",
-    "order_ref": "#2610",
-    "conversation_id": "cnv_0010",
+    "order_id": "ord_0012",
+    "order_ref": "#2612",
+    "conversation_id": "cnv_0012",
     "customer": {
-      "customer_id": "cus_0010",
-      "display_name": "Customer #2610",
+      "customer_id": "cus_0012",
+      "display_name": "Customer #2612",
       "phone_masked": null
     },
     "channel": "simulated",
@@ -43,18 +43,18 @@
     "opened_at": "2026-09-27T10:00:00.000000Z"
   },
   "customer": {
-    "customer_id": "cus_0010",
-    "display_name": "Customer #2610",
+    "customer_id": "cus_0012",
+    "display_name": "Customer #2612",
     "phone_masked": null,
     "completed_orders": 0,
     "refusals_total": 0
   },
   "conversation": {
-    "conversation_id": "cnv_0010",
+    "conversation_id": "cnv_0012",
     "channel": "simulated",
     "messages": [
       {
-        "message_id": "msg_0014",
+        "message_id": "msg_0020",
         "direction": "inbound",
         "author": "customer",
         "origin": "seed",
@@ -76,12 +76,12 @@
         "delivery_status": null
       },
       {
-        "message_id": "msg_0015",
+        "message_id": "msg_0021",
         "direction": "inbound",
         "author": "customer",
         "origin": "seed",
         "kind": "text",
-        "provider_ts": "2026-09-27T09:50:10.000000Z",
+        "provider_ts": "2026-09-27T09:51:14.000000Z",
         "text": "Douar Ouled Ali, 9rib el jemaa",
         "segments": [
           {
@@ -98,12 +98,12 @@
         "delivery_status": null
       },
       {
-        "message_id": "msg_0016",
+        "message_id": "msg_0022",
         "direction": "inbound",
         "author": "customer",
         "origin": "seed",
         "kind": "text",
-        "provider_ts": "2026-09-27T09:50:20.000000Z",
+        "provider_ts": "2026-09-27T09:52:31.000000Z",
         "text": "ama ghali chwaya. mouch dima fi dar, 3ayetli 9bal. mazelt manich met2aked",
         "segments": [
           {
@@ -120,7 +120,7 @@
         "delivery_status": null
       },
       {
-        "message_id": "msg_0017",
+        "message_id": "msg_0023",
         "direction": "outbound",
         "author": "ai",
         "origin": "simulated",
@@ -135,7 +135,7 @@
         "delivery_status": null
       },
       {
-        "message_id": "msg_0018",
+        "message_id": "msg_0024",
         "direction": "inbound",
         "author": "customer",
         "origin": "simulated",
@@ -184,7 +184,7 @@
   },
   "assessments": [
     {
-      "assessment_id": "asm_0010",
+      "assessment_id": "asm_0014",
       "version": 1,
       "trigger": "initial",
       "created_at": "2026-09-27T10:00:00.000000Z",
@@ -194,7 +194,7 @@
         "tier": "high",
         "final_score": 82,
         "reason_short": "HIGH 82 · 3 warning signs: \"⁨9rib el jemaa⁩\" +18",
-        "top_factor": "3 warning signs: \"⁨9rib el jemaa⁩\""
+        "top_factor": "3 warning signs: \"⁨9rib el jemaa⁩\", \"⁨mouch dima fi dar⁩\", \"⁨ghali chwaya⁩\""
       },
       "model_score": 87.1,
       "final_score": 87,
@@ -204,7 +204,7 @@
       "confidence": "high",
       "confidence_reasons": [],
       "confirmation": "none",
-      "reason": "HIGH 87 · base 30 · 3 warning signs: \"⁨9rib el jemaa⁩\" +17 · rural delivery zone +13 · vague address (\"⁨Douar Ouled Ali⁩\") +12",
+      "reason": "HIGH 87 · base 30 · 3 warning signs: \"⁨9rib el jemaa⁩\", \"⁨mouch dima fi dar⁩\", \"⁨ghali chwaya⁩\" +17 · rural delivery zone +13 · vague address (\"⁨Douar Ouled Ali⁩\") +12",
       "reason_diff": null,
       "adjustments": [],
       "resolved_flags": [],
@@ -213,25 +213,25 @@
           "code": "vague_location",
           "label": "Vague location",
           "quote": "9rib el jemaa",
-          "message_id": "msg_0015"
+          "message_id": "msg_0021"
         },
         {
           "code": "availability_uncertain",
           "label": "May not be home",
           "quote": "mouch dima fi dar",
-          "message_id": "msg_0016"
+          "message_id": "msg_0022"
         },
         {
           "code": "price_hesitation",
           "label": "Price hesitation",
           "quote": "ghali chwaya",
-          "message_id": "msg_0016"
+          "message_id": "msg_0022"
         }
       ],
       "top_factors": [
         {
           "feature": "red_flag_count",
-          "label": "3 warning signs: \"⁨9rib el jemaa⁩\"",
+          "label": "3 warning signs: \"⁨9rib el jemaa⁩\", \"⁨mouch dima fi dar⁩\", \"⁨ghali chwaya⁩\"",
           "value": 3.0,
           "contribution": 16.6
         },
@@ -261,7 +261,7 @@
       "prompt_version": "extract-v1"
     },
     {
-      "assessment_id": "asm_0011",
+      "assessment_id": "asm_0015",
       "version": 2,
       "trigger": "customer_reply",
       "created_at": "2026-09-27T10:00:05.000000Z",
@@ -329,7 +329,7 @@
   ],
   "drafts": [
     {
-      "draft_id": "drf_0006",
+      "draft_id": "drf_0008",
       "assessment_version": 1,
       "template_id": "T_ADDRESS",
       "language": "arabizi",
@@ -342,7 +342,7 @@
         "failures": []
       },
       "judge": null,
-      "sent_message_id": "msg_0017",
+      "sent_message_id": "msg_0023",
       "sent_at": "2026-09-27T10:00:00.000000Z",
       "delivery": "recorded_only",
       "created_at": "2026-09-27T10:00:00.000000Z",

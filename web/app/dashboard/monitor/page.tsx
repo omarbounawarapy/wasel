@@ -109,7 +109,7 @@ export default function MonitorPage() {
                         <p className="text-sm text-gray-700 mt-1">{lastAnswer(llm)}</p>
                         <p className="text-sm text-gray-700 mt-1">Model chain: {chain.join(" → ") || "rules only"}</p>
                         {llm.fallback_active && <p className="text-sm text-amber-900 mt-1">The primary host did not answer in the last 5 minutes; the backup is in use.</p>}
-                        <Details label="Recorded calls per host (last 2 days)">
+                        <Details label={`Recorded calls per host (last ${health?.observed_window_days ?? 2} days)`}>
                             {observed.length === 0
                                 ? <p>No AI call has been recorded yet. A host with no row is unknown, not down.</p>
                                 : observed.map(o => (

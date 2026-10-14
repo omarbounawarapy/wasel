@@ -28,9 +28,15 @@ export const NAV_GROUPS = [
         title: "AI health",
         items: [
             { icon: ShieldCheck, label: "Quality checks", path: "/dashboard/quality" },
-            { icon: SearchCheck, label: "Silent failures", path: "/dashboard/failures" },
             { icon: Gauge, label: "Live monitor", path: "/dashboard/monitor" },
             { icon: ScrollText, label: "AI call log", path: "/dashboard/traces" },
+        ],
+    },
+    {
+        // Analyst tool, not part of the seller's daily path or the demo walkthrough.
+        title: "Advanced",
+        items: [
+            { icon: SearchCheck, label: "Silent failures", path: "/dashboard/failures" },
         ],
     },
 ];

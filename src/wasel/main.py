@@ -44,6 +44,7 @@ from wasel.worker import drain, process_due, run_loop
 log = logging.getLogger("cod.main")
 MAX_BODY = 64 * 1024
 ORDER_TIMEOUT_S = 25.0       # hard limit for scoring one order (above the AI chain's 20 s); past it: needs_review
+OBSERVED_WINDOW_DAYS = 2     # llm.observed in /api/health covers the recorded calls of this many UTC days
 TICK_BUDGET_S = 3.0          # the worker takes no new order in a tick once this many seconds have passed
 # script-src 'unsafe-inline': the Next.js static export (web/dist) boots from inline <script> tags.
 # XSS stays covered by React text nodes + the no-dangerouslySetInnerHTML rule.
@@ -317,7 +318,7 @@ class AppState:
     def observed_endpoints(self, conn, now) -> list[M.HealthEndpointObserved]:
         """Per endpoint, the last recorded call, its outcome and the last success, from llm_usage rows of the last two
         UTC days (rows from before the endpoint column read as no endpoint and are left out)."""
-        since = (now - timedelta(days=2)).strftime("%Y-%m-%d")
+        since = (now - timedelta(days=OBSERVED_WINDOW_DAYS)).strftime("%Y-%m-%d")
         rows = conn.execute(
             "SELECT endpoint, MAX(ts) AS last_call, MAX(CASE WHEN outcome='ok' THEN ts END) AS last_ok,"
             " (SELECT u2.outcome FROM llm_usage u2 WHERE u2.endpoint = u.endpoint ORDER BY u2.usage_id DESC LIMIT 1)"
@@ -372,6 +373,7 @@ class AppState:
         self._degraded_logged = bool(reasons)
         return M.HealthResponse(
             status="degraded" if reasons else "ok",
+            sandbox_ttl_s=s.sandbox_ttl_s, observed_window_days=OBSERVED_WINDOW_DAYS,
             degraded_reasons=reasons,
             snapshot=M.HealthSnapshot(
                 enabled=sn is not None, last_saved_at=utc_iso(sn.last_saved_at) if sn and sn.last_saved_at else None,

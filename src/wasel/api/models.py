@@ -117,7 +117,7 @@ class Segment(BaseModel):
     covering the slice.
     """
     text: str
-    kind: Literal["risk", "address"] | None
+    kind: Literal["risk", "address", "partial"] | None
     codes: list[FlagCode]
     label: str | None
 
@@ -544,12 +544,26 @@ class HealthResponse(BaseModel):
     wa_token_present: bool = False
     real_rows: int = 0                            # conversations that arrived over WhatsApp
     sandbox_orders: int = 0
+    sandbox_ttl_s: int = 7200                     # how long a visitor's copy of an order is kept
+    observed_window_days: int = 2                 # window of llm.observed (recorded calls per host)
     wa_auto_send: bool = False                    # auto_send drafts go out without a click (never public)
     degraded_reason: Literal["seed_unscored", "model_missing", "model_mismatch"] | None = None   # why status is degraded
     degraded_reasons: list[Literal["llm_fallback", "worker_stale", "snapshot_failing", "seed_unscored",
                                    "model_missing", "model_mismatch"]] = []
     snapshot: HealthSnapshot = HealthSnapshot(enabled=False)
     degraded_detail: str | None = None            # human-readable detail for the model reasons
+
+
+class ServerImpact(BaseModel):
+    """Expected effect on the orders this server holds, from their own scores and the roi assumptions. An expectation:
+    each order's refusal probability is its final score / 100."""
+    n_orders: int
+    expected_refusals: float
+    expected_trips_avoided: float
+    expected_tnd_saved: float
+    ship: int
+    confirm: int
+    prepay: int
 
 
 class ImpactResponse(BaseModel):
@@ -566,6 +580,7 @@ class ImpactResponse(BaseModel):
     tnd_saved_per_1000_orders: float = 0.0
     tnd_saved_per_1000_by_confirm_rate: dict[str, float] = {}
     assumptions: list[str]
+    this_server: ServerImpact | None = None
 
 
 class ResetResponse(BaseModel):

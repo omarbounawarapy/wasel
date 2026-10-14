@@ -79,13 +79,18 @@ const RESCORE: Record<string, string> = {
     drafting: "Drafting the reply…",
 };
 
+// 7200 -> "2 hours", 5400 -> "90 minutes"
+const spanWords = (s: number) => s % 3600 === 0 ? `${s / 3600} hour${s === 3600 ? "" : "s"}` : `${Math.round(s / 60)} minutes`;
+
 // Server segments: text nodes only, no HTML; the join of segment texts equals the message text.
 function Segments({ segments }: { segments: Segment[] }) {
     return <>{segments.map((s, i) => s.kind
         ? <mark key={i} tabIndex={0} title={s.label ?? ""}
                 className={s.kind === "risk"
                     ? "bg-amber-200 text-amber-950 underline decoration-dotted decoration-2 underline-offset-2 decoration-amber-600 rounded-sm"
-                    : "bg-transparent text-gray-900 border-b-2 border-emerald-600"}>
+                    : s.kind === "partial"
+                        ? "bg-transparent text-gray-900 border-b-2 border-dashed border-gray-500"
+                        : "bg-transparent text-gray-900 border-b-2 border-emerald-600"}>
             {s.text}<span className="sr-only"> ({s.label})</span>
         </mark>
         : <Fragment key={i}>{s.text}</Fragment>)}</>;
@@ -298,7 +303,9 @@ function DraftChecks({ draft, autoSend }: { draft: DraftView, autoSend: boolean 
                     <p>1. Rules: numbers, links, phone numbers, payment or discount words, one question only.</p>
                     <p>2. Safety model (runs locally, no AI service): risk {typeof clf.p_unsafe === "number" ? `${Math.round(clf.p_unsafe * 100)}%` : "n/a"}
                         {clf.label && clf.label !== "ok" ? `, looks like: ${String(clf.label).replace(/_/g, " ")}` : ""}.
-                        Below 10% it's cleared, 10–50% goes to you for approval, above 50% it's blocked and the standard message is used.</p>
+                        {typeof clf.hold_at === "number" && typeof clf.block_at === "number"
+                            ? ` Below ${Math.round(clf.hold_at * 100)}% it's cleared, ${Math.round(clf.hold_at * 100)}–${Math.round(clf.block_at * 100)}% goes to you for approval, above ${Math.round(clf.block_at * 100)}% it's blocked and the standard message is used.`
+                            : ""}</p>
                     <p>3. AI judge: {j.unavailable
                         ? `unavailable (${j.reason ?? "no answer"}), ${clf.decision === "send" ? "sent on the safety model's clear" : "a person must check it"}.`
                         : j.decided_by === "llm" ? `${j.approved ? "approved" : "rejected"}${j.judge_model ? ` by ${j.judge_model}` : ""}; the decision is re-checked in code.`
@@ -401,7 +408,7 @@ function OrderDetailContent() {
     if (notFound) return (
         <Page>
             <Empty title="This order is no longer available">
-                Copies you made with “Try this order” are deleted after 2 hours.
+                Copies you made with “Try this order” are deleted after {health?.sandbox_ttl_s ? spanWords(health.sandbox_ttl_s) : "a while"}.
                 <div className="mt-4"><Button variant="outline" onClick={() => router.push('/dashboard')}>Back to orders</Button></div>
             </Empty>
         </Page>

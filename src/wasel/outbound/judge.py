@@ -17,7 +17,7 @@ from wasel.contracts import UsageMeter, UsageRecord
 from wasel.extraction.normalize import DEFUSE
 from wasel.llm.base import ParseError
 from wasel.llm.prompts import judge_task, rewrite_task
-from wasel.outbound.guard_clf import decide
+from wasel.outbound.guard_clf import decide, thresholds
 
 JUDGE_KEYS = {"unsupported_claims", "grounded", "language_ok", "tone_ok", "overreach", "question_count", "verdict"}
 OVERREACH = {"none", "discount_or_price_change", "payment_request", "delivery_commitment", "instructions_in_draft",
@@ -107,7 +107,10 @@ def judge(draft: str, facts: dict, *, llm, meter: UsageMeter | None, sandbox_id:
     text that would be sent, which the local classifier scores and turns into the send/review/block decision.
     block_at/hold_at default to config/scoring.yaml; pass 1.01/1.01 to measure the judge layer alone."""
     d = decide(final_text or draft, block_at=block_at, hold_at=hold_at)
-    clf = {"p_unsafe": d.p_unsafe, "label": d.label, "top": d.top, "decision": d.decision}
+    b, h = thresholds()
+    # the lines the decision was made with, so the UI states the real numbers
+    clf = {"p_unsafe": d.p_unsafe, "label": d.label, "top": d.top, "decision": d.decision,
+           "block_at": b if block_at is None else block_at, "hold_at": h if hold_at is None else hold_at}
     if d.decision == "block":                             # the veto: don't spend a judge call on it
         return Verdict(False, False, False, {"decided_by": "classifier", "classifier": clf},
                        {"overreach": d.label, "unsupported_claims": []})

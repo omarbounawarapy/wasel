@@ -212,15 +212,19 @@ def set_input(row: dict) -> ScoreInput:
 
 
 def run_g1(rows, llm) -> dict:
-    """data/eval/sets/g1.jsonl: 24 handwritten conversations. Flag metrics compare orders only
-    (the three non-orders carry no flag labels)."""
+    """data/eval/sets/g1.jsonl: handwritten conversations. `labelers` counts the cases by who labelled them (the
+    native-speaker cases and the regression cases added by engineering). Flag metrics compare orders only
+    (the non-orders carry no flag labels)."""
     n = order_ok = exact = near = lang_ok = conf_ok = tone_ok = 0
+    labelers: dict[str, int] = {}
     flag_tp = flag_fp = flag_fn = 0
     example = None
     for r in rows:
         res = score_order(set_input(r), cache=None, llm=llm, meter=None)
         e, v = r["labels"], (res.extraction.validated if res.extraction else {}) or {}
         n += 1
+        who = "native_speaker" if r.get("labeler") == "native_speaker" else "engineering"
+        labelers[who] = labelers.get(who, 0) + 1
         example = _pick(example, {"id": r["id"], "input": _text(r["messages"]),
                                   "expected": f"order={e['is_order']}, address={e['address_level']}",
                                   "got": f"order={res.is_order}, address={v.get('address_level', 'none')}"},
@@ -244,7 +248,7 @@ def run_g1(rows, llm) -> dict:
             "address_within1_acc": near / n, "language_acc": lang_ok / n, "flag_precision": p,
             "flag_recall": rc, "flag_f1": 2 * p * rc / (p + rc) if p + rc else 0.0,
             "tone_acc": tone_ok / n, "confirmation_acc": conf_ok / n,
-            "near_misses": near - exact, "example": example}
+            "near_misses": near - exact, "labelers": dict(sorted(labelers.items())), "example": example}
 
 
 def run_g3(rows, llm) -> dict:

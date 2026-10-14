@@ -81,14 +81,14 @@
         "author": "customer",
         "origin": "seed",
         "kind": "text",
-        "provider_ts": "2026-09-27T09:50:20.000000Z",
+        "provider_ts": "2026-09-27T09:56:52.000000Z",
         "text": "حي النصر، قريب من الجامع. أختي هي اللي باش تستلم",
         "segments": [
           {
             "text": "حي النصر",
-            "kind": "address",
+            "kind": "partial",
             "codes": [],
-            "label": "Address detail"
+            "label": "Address, not exact enough"
           },
           {
             "text": "، ",
@@ -151,7 +151,7 @@
         "near_tier_boundary"
       ],
       "confirmation": "none",
-      "reason": "MEDIUM 42 · base 30 · vague address (\"⁨حي النصر⁩\") +14 · 2 warning signs: \"⁨قريب من الجامع⁩\" +11",
+      "reason": "MEDIUM 42 · base 30 · vague address (\"⁨حي النصر⁩\") +14 · 2 warning signs: \"⁨قريب من الجامع⁩\", \"⁨أختي هي اللي باش تستلم⁩\" +11",
       "reason_diff": null,
       "adjustments": [],
       "resolved_flags": [],
@@ -178,7 +178,7 @@
         },
         {
           "feature": "red_flag_count",
-          "label": "2 warning signs: \"⁨قريب من الجامع⁩\"",
+          "label": "2 warning signs: \"⁨قريب من الجامع⁩\", \"⁨أختي هي اللي باش تستلم⁩\"",
           "value": 2.0,
           "contribution": 10.7
         },

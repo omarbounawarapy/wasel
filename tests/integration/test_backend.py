@@ -162,6 +162,43 @@ def test_script_tag_in_customer_text_stays_text(dev):
     assert [s.text for s in segs if s.kind == "risk"] == ["9rib el jemaa"]
 
 
+def test_hero_v1_vague_address_is_not_marked_as_address_detail_and_names_all_warning_signs(dev):
+    c, core, clock = dev
+    d = c.get(f"/api/orders/{hero_id(c)['order_id']}").json()
+    segs = [s for m in d["conversation"]["messages"] for s in (m["segments"] or [])]
+    area = [s for s in segs if s["text"] == "Douar Ouled Ali"]
+    assert [s["kind"] for s in area] == ["partial"] and area[0]["label"] != "Address detail"
+    assert not [s for s in segs if s["kind"] == "address"]            # no green mark while the address is vague
+    reason = d["assessments"][0]["reason"]
+    assert "3 warning signs" in reason
+    for phrase in ("9rib el jemaa", "ghali chwaya", "mouch dima fi dar"):
+        assert phrase in reason
+
+
+def test_impact_reports_the_expectation_on_this_servers_own_orders(dev):
+    c, core, clock = dev
+    d = c.get("/api/metrics/impact").json()["this_server"]
+    rows = core.conn().execute("SELECT a.final_score FROM orders o JOIN risk_assessments a"
+                               " ON a.assessment_id = o.current_assessment_id").fetchall()
+    assert d["n_orders"] == len(rows) > 0
+    assert d["expected_refusals"] == round(sum(r["final_score"] for r in rows) / 100, 2)
+    assert d["ship"] + d["confirm"] + d["prepay"] <= d["n_orders"]
+    assert 0 < d["expected_trips_avoided"] <= d["expected_refusals"]
+
+
+def test_health_states_the_retention_values_the_ui_shows(dev):
+    c, core, clock = dev
+    h = c.get("/api/health").json()
+    assert h["sandbox_ttl_s"] == core.settings.sandbox_ttl_s and h["observed_window_days"] == 2
+
+
+def test_exact_address_keeps_the_address_detail_mark():
+    from wasel.api.projections import build_segments
+    spans = [{"start": 0, "end": 5, "kind": "address", "code": None}]
+    assert build_segments("Dar 14", spans, 1.0)[0].kind == "address"
+    assert build_segments("Dar 14", spans, 0.5)[0].kind == "partial"
+
+
 # ---------------------------------------------------------------- hero loop through the API
 def test_hero_loop_in_dev(dev):
     c, core, clock = dev

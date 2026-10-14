@@ -24,8 +24,17 @@ def strip_bidi(s: str | None) -> str | None:
     return None if s is None else "".join(ch for ch in s if ch not in BIDI_CONTROLS)
 
 
-def build_segments(text: str, spans: list[dict]) -> list[M.Segment]:
-    """Invariant (tested): "".join(s.text) == strip_bidi(text). risk wins over address; overlaps split."""
+# Below this address_specificity the address quotes are only an area or landmark, not enough to deliver to.
+EXACT_ADDRESS_MIN = 0.75
+
+
+def build_segments(text: str, spans: list[dict], specificity: float | None = None) -> list[M.Segment]:
+    """Invariant (tested): "".join(s.text) == strip_bidi(text). risk wins over address; overlaps split.
+
+    Address spans are "address" (detail found) only when the assessment's address_specificity reaches
+    EXACT_ADDRESS_MIN; below it they are "partial", so a vague-address reason never sits next to a green mark.
+    """
+    partial = specificity is not None and specificity < EXACT_ADDRESS_MIN
     edges = sorted({0, len(text), *[s["start"] for s in spans], *[s["end"] for s in spans]})
     out: list[M.Segment] = []
     for a, b in zip(edges, edges[1:], strict=False):
@@ -33,8 +42,10 @@ def build_segments(text: str, spans: list[dict]) -> list[M.Segment]:
             continue
         cover = [s for s in spans if s["start"] <= a and b <= s["end"]]
         codes = sorted({s["code"] for s in cover if s["kind"] == "red_flag" and s["code"]})
-        kind = "risk" if codes else "address" if any(s["kind"] == "address" for s in cover) else None
-        label = " · ".join(FLAG_LABELS[c] for c in codes) if codes else ("Address detail" if kind else None)
+        addr = any(s["kind"] == "address" for s in cover)
+        kind = "risk" if codes else ("partial" if partial else "address") if addr else None
+        label = " · ".join(FLAG_LABELS[c] for c in codes) if codes else \
+            ("Address, not exact enough" if kind == "partial" else "Address detail" if kind else None)
         piece = strip_bidi(text[a:b])
         if out and out[-1].kind == kind and out[-1].codes == codes:
             out[-1] = M.Segment(text=out[-1].text + piece, kind=kind, codes=codes, label=label)
@@ -149,6 +160,7 @@ def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailRespo
     conv = repo.row(conn, "SELECT * FROM conversations WHERE conversation_id=?", o["conversation_id"])
     asm = repo.assessments(conn, o["order_id"])
     cur_spans: dict[str, list[dict]] = {}
+    specificity = json.loads(asm[-1]["features_json"]).get("address_specificity") if asm else None
     if asm and asm[-1]["extraction_id"]:
         run = repo.row(conn, "SELECT spans_json FROM extraction_runs WHERE extraction_id=?", asm[-1]["extraction_id"])
         for sp in json.loads(run["spans_json"]):
@@ -157,7 +169,7 @@ def order_detail(conn, settings: Settings, o: sqlite3.Row) -> M.OrderDetailRespo
     order_msgs = repo.order_messages(conn, o["order_id"])
     by_id = {m["message_id"]: m for m in order_msgs}
     for m in order_msgs:
-        segs = build_segments(m["text"], cur_spans.get(m["message_id"], [])) \
+        segs = build_segments(m["text"], cur_spans.get(m["message_id"], []), specificity) \
             if m["author"] == "customer" and m["text"] else None
         msgs.append(M.MessageView(
             message_id=m["message_id"], direction=m["direction"], author=m["author"], origin=m["origin"],
@@ -241,3 +253,31 @@ def list_events(conn, settings: Settings, vid: str | None, *, after: int = 0, or
                                order_ref=f"#{r['order_no']}" if r["order_no"] else None, title=title, detail=detail,
                                sample=bool(r["sample"])))
     return M.EventsResponse(events=evs, last_seq=evs[-1].seq if evs else after)
+
+
+def server_impact(conn, settings: Settings, vid: str | None, roi: dict) -> M.ServerImpact:
+    """Expected effect of Wasel's advice on the orders this server holds (the visitor's own plus the samples in public
+    mode), with the same assumptions as the simulation (config/scoring.yaml roi). An order's refusal probability is its
+    final score / 100; this is an expectation, not an observed outcome. Orders without a score are skipped."""
+    where, args = "", []
+    if settings.is_public:
+        where, args = " WHERE (o.sandbox_id IS NULL OR o.sandbox_id = ?)", [vid]
+    rows = conn.execute("SELECT o.price_tnd, a.final_score, a.action FROM orders o JOIN risk_assessments a"
+                        " ON a.assessment_id = o.current_assessment_id" + where, args).fetchall()
+    prevent = roi["prevent_rate"]
+    n = len(rows)
+    refusals = avoided = lost = 0.0
+    counts = {"ship": 0, "confirm": 0, "prepay": 0}
+    for r in rows:
+        p = r["final_score"] / 100.0
+        refusals += p
+        act = r["action"] if r["action"] in prevent else None
+        if act:
+            counts[act] += 1
+            avoided += p * prevent[act]
+            if act == "prepay" and r["price_tnd"]:
+                lost += (1 - p) * roi["prepay_conversion_loss"] * roi["gross_margin"] * r["price_tnd"]
+    msgs = (counts["confirm"] + counts["prepay"]) * roi["msg_cost_tnd"]
+    return M.ServerImpact(n_orders=n, expected_refusals=round(refusals, 2), expected_trips_avoided=round(avoided, 2),
+                          expected_tnd_saved=round(avoided * roi["c_fail_tnd"] - lost - msgs, 1),
+                          ship=counts["ship"], confirm=counts["confirm"], prepay=counts["prepay"])

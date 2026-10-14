@@ -55,6 +55,20 @@ export default function ImpactPage() {
                                   hint={`${((data.baseline_refusal_rate - data.projected_refusal_rate) * 100).toFixed(1)} points fewer refusals`} />
                     </div>
 
+                    {data.this_server?.n_orders > 0 && (
+                        <Section title="On the orders on this server"
+                                 hint="The same assumptions applied to the orders you can see here. Each order's chance of refusal is its score; this is an expectation, not an outcome.">
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                                <StatCard label="Orders scored" value={num(data.this_server.n_orders)}
+                                          hint={`${data.this_server.ship} ship · ${data.this_server.confirm} confirm · ${data.this_server.prepay} prepay`} />
+                                <StatCard label="Refusals expected" value={data.this_server.expected_refusals.toFixed(1)}
+                                          hint="Sum of the orders' refusal chances" />
+                                <StatCard label="Cost avoided if advice is followed" value={`${data.this_server.expected_tnd_saved.toFixed(0)} TND`} tone="good"
+                                          hint={`${data.this_server.expected_trips_avoided.toFixed(1)} refused deliveries avoided`} />
+                            </div>
+                        </Section>
+                    )}
+
                     <Section title="How this was estimated" hint="The numbers above rest on these assumptions. A real pilot would measure them.">
                         <p className="text-sm text-gray-700 max-w-prose">
                             Real savings = refusals avoided × cost of a trip − sales lost to extra questions, measured against a small group of orders shipped without Wasel.

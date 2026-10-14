@@ -282,7 +282,8 @@ def score_order(inp: ScoreInput, *, cache: ExtractionCache | None, llm, meter: U
                                            cap=x.cap, cfg=cfg)
     first_flag = proc.flags[0].quote if proc.flags else None
     ctx = {"address_quote": proc.address_quotes[0][0] if proc.address_quotes else None,
-           "n_flags": len(proc.flags), "flag_evidence": first_flag, "tone_evidence": proc.tone_evidence,
+           "n_flags": len(proc.flags), "flag_evidence": first_flag,
+           "flag_quotes": [f.quote for f in proc.flags if f.quote], "tone_evidence": proc.tone_evidence,
            "price_tnd": feats["price_tnd"], "zone": zone_name,
            "completed": inp.customer.completed_orders, "refusals": inp.customer.refusals_total}
     if pts:

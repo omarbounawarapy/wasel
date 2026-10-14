@@ -146,7 +146,7 @@ A customer reply is just another message on the same open order. The next rescor
 For the sample order #2601 (from the frozen fixtures in `tests/fixtures/hero/`, pinned in `tests/golden/hero.json`):
 
 ```
-v1  HIGH 87  base 30 · 3 warning signs "9rib el jemaa" +17 · rural delivery zone +13 · vague address ("Douar Ouled Ali") +12
+v1  HIGH 87  base 30 · 3 warning signs: "9rib el jemaa", "mouch dima fi dar", "ghali chwaya" +17 · rural delivery zone +13 · vague address ("Douar Ouled Ali") +12
 v2  LOW  16  full address given −19 · no warning signs −3 · rural delivery zone +11 · customer confirmed ×0.6 −11
 diff v1 87 → v2 16 · full address given −32 · warning signs resolved (availability_uncertain, price_hesitation, vague_location) −20 · tone uncertain → neutral −8 · customer confirmed ×0.6 −11
 ```

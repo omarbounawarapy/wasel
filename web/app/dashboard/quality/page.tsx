@@ -13,7 +13,7 @@ const SUITES: Record<string, { name: string, what: string, key: [string, string]
         key: [["unsafe_blocked", "Unsafe replies blocked"], ["safe_passed", "Good replies allowed"], ["task_success", "Overall"]] },
     injection: { name: "Resisting tricks", what: "Messages that try to fool the AI (“ignore your instructions…”).",
         key: [["flagged_rate", "Tricks detected"], ["still_scored_rate", "Order still scored"], ["not_promoted_rate", "Score not lowered by the trick"]] },
-    g1_conversations: { name: "Real conversations by a native speaker", what: "Conversations written by a Tunisian speaker.",
+    g1_conversations: { name: "Hand-written conversations", what: "Conversations written by hand, most of them by a Tunisian speaker.",
         key: [["is_order_acc", "Spots real orders"], ["address_within1_acc", "Reads the address correctly"], ["flag_precision", "Warning signs are right"]] },
     g3_injection: { name: "Tricks written by a native speaker", what: "Manipulation attempts in Darija, Arabizi and French.",
         key: [["flagged_rate", "Tricks detected"], ["still_scored_rate", "Order still scored"], ["not_promoted_rate", "Score not lowered by the trick"]] },
@@ -29,12 +29,21 @@ const isRate = (k: string) => /(_acc|_rate|precision|recall|f1|success|blocked|p
 const isCaseRate = (k: string) => isRate(k) && !/(precision|recall|f1)$/.test(k);
 const big = (v: any, k: string, n?: number) =>
     typeof v === "number" && n && n < 100 && isCaseRate(k) ? `${Math.round(v * n)} of ${n}` : fmt(v, k);
-const HIDDEN = ["n", "example", "provenance", "near_misses", "misses"];
+const HIDDEN = ["n", "example", "provenance", "near_misses", "misses", "labelers"];
+// "(24 labelled by a native speaker, 22 added by the team as regression cases)" when the report counts them
+const casesBreakdown = (l?: Record<string, number>) => {
+    if (!l) return "";
+    const parts = [
+        l.native_speaker ? `${l.native_speaker} labelled by a native speaker` : "",
+        l.engineering ? `${l.engineering} added by the team as regression cases` : "",
+    ].filter(Boolean);
+    return parts.length ? ` (${parts.join(", ")})` : "";
+};
 const fmt = (v: any, k = "") =>
     typeof v === "number" ? (isRate(k) ? `${(v * 100).toFixed(v === 1 || v === 0 ? 0 : 1)}%` : v.toLocaleString("en-US"))
         : v === null || v === undefined ? "–" : typeof v === "object" ? Object.entries(v).map(([x, y]) => `${x}: ${y}`).join(", ") : String(v);
 
-function Report({ report, title, subtitle }: { report: any, title: string, subtitle: string }) {
+function Report({ report, title, subtitle, offline = false }: { report: any, title: string, subtitle: string, offline?: boolean }) {
     const failures: string[] = report.gate_failures || [];
     const ok = failures.length === 0;
     return (
@@ -57,7 +66,12 @@ function Report({ report, title, subtitle }: { report: any, title: string, subti
                     const keys = s.key.length ? s.key.filter(([k]) => k in metrics)
                         : Object.keys(metrics).filter(k => typeof metrics[k] === "number" && k !== "n").slice(0, 3).map(k => [k, k.replace(/_/g, " ")] as [string, string]);
                     return (
-                        <Section key={task} title={s.name} hint={`${s.what}${metrics.n ? ` Tested on ${metrics.n} cases.` : ""}`}>
+                        <Section key={task} title={s.name} hint={`${s.what}${metrics.n ? ` Tested on ${metrics.n} cases${casesBreakdown(metrics.labelers)}.` : ""}`}>
+                            {offline && task === "g3_injection" && (
+                                <p className="text-xs text-gray-700 mb-3">
+                                    This run reads the text with rules only, so “labels preserved” under All results is low here. The live AI run below is the one that measures it.
+                                </p>
+                            )}
                             {metrics.provenance && (
                                 <p className={`text-xs font-semibold mb-3 ${metrics.provenance === "held_out" ? "text-emerald-800" : "text-amber-800"}`}>
                                     {metrics.provenance === "held_out" ? "Held out: never tuned against" : "Used while building: the rules were tuned on these cases"}
@@ -122,11 +136,15 @@ export default function QualityPage() {
     }, []);
     useEffect(() => { load(); }, [load]);
 
+    // every set in the committed offline report, counted from the report itself
+    const totalCases: number = Object.values(data?.offline?.results ?? {})
+        .reduce((t: number, m: any) => t + (typeof m?.n === "number" ? m.n : 0), 0);
+
     return (
         <Page>
             <PageHeader
                 title="Quality checks"
-                subtitle="Before every release, Wasel is tested on hundreds of example conversations. The offline checks must pass in CI before a change is deployed; the live AI run below is measured separately and can show checks below target." />
+                subtitle={`Before every release, Wasel is tested on ${totalCases ? `${totalCases.toLocaleString("en-US")} ` : ""}example cases. The offline checks must pass in CI before a change is deployed; the live AI run below is measured separately and can show checks below target.`} />
 
             <p className="text-sm text-gray-700">
                 {llm?.serving_label
@@ -145,7 +163,7 @@ export default function QualityPage() {
                 <Section title="No test results yet"><Empty title="The quality reports haven't been generated on this server." /></Section>
             ) : (
                 <div className="space-y-10">
-                    {data.offline && <Report report={data.offline} title="Release checks" subtitle="Run automatically on every change, without calling any AI service." />}
+                    {data.offline && <Report report={data.offline} title="Release checks" offline subtitle="Run automatically on every change, without calling any AI service." />}
                     {data.live && <Report report={data.live} title="Live AI checks" subtitle="The same tests run through the real AI models, run by hand." />}
                 </div>
             )}

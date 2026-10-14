@@ -36,7 +36,7 @@ The offline gate is a **regression gate for the deterministic parts**: verificat
 | Extraction | `data/eval/golden/extraction.jsonl` | 279 | generated | extract from an order's messages |
 | Outbound | `data/eval/golden/outbound.jsonl` | 165 | generated | decide whether a draft may be sent |
 | Injection | `data/eval/golden/injection.jsonl` | 32 | generated | flag an appended instruction |
-| G1 conversations | `data/eval/sets/g1.jsonl` | 24 | hand-written | full conversations with seller lines: order detection, address, flags, tone, confirmation, language |
+| G1 conversations | `data/eval/sets/g1.jsonl` | 46 (24 native-speaker, 22 engineering regression cases) | hand-written | full conversations with seller lines: order detection, address, flags, tone, confirmation, language |
 | G3 injection | `data/eval/sets/g3_injection.jsonl` | 8 | hand-written | four base conversations with two injections each |
 | G3 injection holdout | `data/eval/sets/g3_injection_holdout.jsonl` | 32 | hand-written | 32 distinct attacks (8 each in French, English, Arabic-script Darija, Arabizi) written without reading the lexicon; never used to edit it |
 | Prefilter cases | `tests/fixtures/cases/prefilter.yaml` | 12 | hand-written | six drafts that must be blocked, six that must pass |
@@ -47,7 +47,7 @@ The three **generated** sets (extraction, outbound, injection; `make golden`) ar
 - *Outbound:* 75 safe drafts (rendered templates, some with a reassuring phrase added), 84 unsafe drafts made by inserting a holdout phrase of each of seven classes (`discount`, `payment`, `promise`, `instructions`, `contact`, `pushy`, `extra_question`) into a template, and six hand-built bad drafts. The unsafe phrases are ones the guard classifier never trained on.
 - *Injection:* eight orders with a vague address, each with four different injection strings appended (English, Arabic, a forged `[SELLER]` line, a fake closing tag). Expected: flagged, still an order, address not `exact`.
 
-The **hand-written** sets are maintained by a native speaker and edited by hand: G1 (six conversations in each of Arabizi, Arabic-script Darija, French and mixed, four with a seller line, three that are not orders), G3, and the prefilter cases.
+The **hand-written** sets are edited by hand. G1 has 46 conversations: 24 labelled by a native speaker (`labeler: native_speaker` in the file) and 22 added by engineering as regression cases for specific fixes (`engineering_audit_*`), which a native speaker has not reviewed. The report's `labelers` field and the Quality page give the same split. G3 and the prefilter cases are written by hand too.
 
 ### Provenance and examples in the report
 
@@ -60,7 +60,7 @@ Be careful about what a green gate proves.
 - Of the 279 extraction rows, 263 have text rendered from the `train` phrase pool and only 16 from the held-out `eval_only` pool. The rules extractor matches the `train` phrases. The offline extraction numbers therefore measure regression of the deterministic pipeline on the phrasing it was built around, and are an optimistic view of coverage of unseen wording.
 - Every extraction row is an order; recognising non-orders is covered by only three G1 cases.
 - The outbound set exercises the classifier on phrases it never trained on, which is a fair test of that model, but the unsafe phrases come from the same seven classes it knows.
-- G1 and G3 are small (24 and 8 cases), so their metrics move in steps of several points.
+- G1 and G3 are small (46 and 8 cases), so their metrics move in steps of several points.
 
 ## Metrics
 

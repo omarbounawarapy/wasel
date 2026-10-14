@@ -186,7 +186,7 @@ def events(request: Request, after: int = 0, order_id: str | None = None, limit:
 
 
 @router.get("/metrics/impact")
-def impact(request: Request):
+def impact(request: Request, vid: str | None = Depends(visitor_id)):
     """Simulated impact on the synthetic holdout, read from data/reports/impact.json. Not a field result."""
     st = _s(request)
     p = st.config.root / "data" / "reports" / "impact.json"
@@ -197,7 +197,9 @@ def impact(request: Request):
                                      trips_avoided=d.get("trips_avoided", 0.0), tnd_saved=d.get("tnd_saved", 0.0),
                                      tnd_saved_per_1000_orders=d.get("tnd_saved_per_1000_orders", 0.0),
                                      tnd_saved_per_1000_by_confirm_rate=d.get("tnd_saved_per_1000_by_confirm_rate", {}),
-                                     assumptions=d.get("assumptions", [])))
+                                     assumptions=d.get("assumptions", []),
+                                     this_server=P.server_impact(st.conn(), st.settings, vid,
+                                                                 st.config.raw["roi"])))
 
 
 @router.get("/monitor")

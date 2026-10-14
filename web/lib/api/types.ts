@@ -70,7 +70,7 @@ export interface OrderListResponse {
 
 export interface Segment {
     text: string;
-    kind: 'risk' | 'address' | null;
+    kind: 'risk' | 'address' | 'partial' | null;
     codes: FlagCode[];
     label: string | null;
 }
@@ -166,7 +166,7 @@ export interface DraftJudge {
     approved?: boolean;
     judge_model?: string;
     unsupported_claims?: string[];
-    classifier?: { decision?: 'send' | 'review' | 'block' | string; label?: string; p_unsafe?: number };
+    classifier?: { decision?: 'send' | 'review' | 'block' | string; label?: string; p_unsafe?: number; hold_at?: number; block_at?: number };
 }
 
 export interface DraftView {
@@ -278,6 +278,8 @@ export interface HealthResponse {
     wa_send: boolean;
     webhook: 'enabled' | 'disabled';
     db: boolean;
+    sandbox_ttl_s?: number;
+    observed_window_days?: number;
     demo_mode: boolean;
     real_rows: number;
     sandbox_orders: number;

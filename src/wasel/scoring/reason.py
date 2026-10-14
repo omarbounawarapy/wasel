@@ -46,7 +46,8 @@ def driver_label(feature: str, pts: float, ctx: dict) -> str:
     if feature == "red_flag_count":
         n = ctx.get("n_flags", 0)
         if up and n:
-            return f"{n} warning sign{'s' if n != 1 else ''}: {q(ctx.get('flag_evidence'))}"
+            quotes = ctx.get("flag_quotes") or [ctx.get("flag_evidence")]
+            return f"{n} warning sign{'s' if n != 1 else ''}: {', '.join(q(x) for x in quotes if x)}"
         return "no warning signs"
     if feature == "tone_score":
         return f"hesitant tone ({q(ctx.get('tone_evidence'))})" if up and ctx.get("tone_evidence") \
@@ -96,7 +97,11 @@ def build_reason(*, tier: str, final: int, p0: float, pts: dict[str, float], ctx
     short form keeps as many leading parts as fit. Deterministic; no LLM writes it.
     """
     parts = [f"{TIER_WORD[tier]} {final}", f"base {round(100 * p0)}"]
-    drivers = [f"{driver_label(k, pts[k], ctx)} {_pts(pts[k])}" for k in select_drivers(pts, tier, cfg)]
+    chosen = select_drivers(pts, tier, cfg)
+    drivers = [f"{driver_label(k, pts[k], ctx)} {_pts(pts[k])}" for k in chosen]
+    # the short line names only the first warning sign so it keeps fitting; the full reason lists them all
+    short_ctx = {**ctx, "flag_quotes": None}
+    short_drivers = [f"{driver_label(k, pts[k], short_ctx)} {_pts(pts[k])}" for k in chosen]
     adj = [adjustment_text(a) for a in adjustments if a.after != a.before or a.rule in ("declined",)]
     reason = " · ".join(parts + drivers + adj)
     short = f"{TIER_WORD[tier]} {final}"
@@ -104,7 +109,7 @@ def build_reason(*, tier: str, final: int, p0: float, pts: dict[str, float], ctx
     declined = [adjustment_text(a) for a in adjustments if a.rule == "declined"]
     if declined:
         short = f"{short} · {declined[0]}"
-    for d in drivers + [a for a in adj if a not in declined]:
+    for d in short_drivers + [a for a in adj if a not in declined]:
         cand = f"{short} · {d}"
         if len(cand) > 90:
             break
