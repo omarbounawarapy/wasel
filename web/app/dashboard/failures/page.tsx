@@ -104,7 +104,17 @@ export default function FailuresPage() {
                     </div>
 
                     {groups.length === 0 ? (
-                        <Section title="Problems found"><Empty title={own ? "No silent failures found in this server's orders." : "No silent failures found in this run."} /></Section>
+                        <Section title="Problems found">
+                            <Empty title={own ? "No silent failures found in this server's orders." : "No silent failures found in this run."} />
+                            {own && (
+                                <p className="mt-3 text-sm text-gray-700">
+                                    A clean report is the expected result on a small server.{" "}
+                                    <button type="button" onClick={() => setSource("synthetic")} className="min-h-[44px] font-medium text-brand underline">
+                                        See what the analyzer finds on test conversations
+                                    </button>
+                                </p>
+                            )}
+                        </Section>
                     ) : (
                         <ol className="space-y-4">
                             {groups.map((g, idx) => {
