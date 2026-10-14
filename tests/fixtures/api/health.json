@@ -6,11 +6,11 @@
   "db": true,
   "demo_mode": true,
   "build": {
-    "git_sha": "06ec0fdc222e",
+    "git_sha": "c31763687ca9",
     "started_at": "2026-09-27T10:00:00.000000Z"
   },
   "config": {
-    "config_hash": "0d226295",
+    "config_hash": "fd8791bb",
     "prompt_version": "extract-v1",
     "classifier_version": "xgb_v1-90d41187",
     "seed_version": 1,

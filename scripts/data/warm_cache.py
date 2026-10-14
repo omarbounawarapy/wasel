@@ -90,14 +90,17 @@ def main(argv=None) -> int:
 
         for fx in load_seed()["conversations"]:
             oid = seed_conversation(conn, ids, NOW, fx, None)
-            expect(oid, hand[fx["key"]]["v1"])
+            rec = hand.get(fx["key"])          # answered samples have no hand extraction: they score on the rules path
+            if rec:
+                expect(oid, rec["v1"])
             drain(conn, NOW, scorer, drafter, ids=ids)
             for i, reply in enumerate(fx.get("scripted_replies", [])):
                 conv = repo.get_order(conn, oid)["conversation_id"]
                 r = simulate_reply(conn, ids, NOW, settings, cfg.raw, None, conv, text=reply)
                 conn.execute("UPDATE orders SET pending_rescore_at=? WHERE order_id=?",
                              (repo.utc_iso(NOW), r["order_id"]))
-                expect(r["order_id"], hand[fx["key"]]["replies"][i])
+                if rec:
+                    expect(r["order_id"], rec["replies"][i])
                 drain(conn, NOW, scorer, drafter, ids=ids)
         rows_ = conn.execute("SELECT * FROM extraction_cache ORDER BY input_hash").fetchall()
         paths = conn.execute("SELECT o.order_no, a.version, a.path, a.tier, a.final_score FROM risk_assessments a"

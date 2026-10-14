@@ -160,7 +160,7 @@
       "has_pending_draft": false,
       "is_seeded": true,
       "read_only": true,
-      "last_message_preview": "la, mouch nheb",
+      "last_message_preview": "le manhbch",
       "updated_at": "2026-09-27T10:00:00.000000Z",
       "seed_key": "answered_declined",
       "injection_suspected": false
@@ -292,7 +292,7 @@
       "has_pending_draft": false,
       "is_seeded": true,
       "read_only": true,
-      "last_message_preview": "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, ba3d el 18h",
+      "last_message_preview": "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, nkon f dar ba3d el 18h",
       "updated_at": "2026-09-27T10:00:00.000000Z",
       "seed_key": "answered_address",
       "injection_suspected": false
@@ -405,6 +405,6 @@
     "awaiting_reply": 5,
     "ready_to_ship": 6
   },
-  "server_time": "2026-10-14T02:26:13.638910Z",
+  "server_time": "2026-10-14T16:17:01.847864Z",
   "mode": "public"
 }

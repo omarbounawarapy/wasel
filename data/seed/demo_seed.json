@@ -223,10 +223,10 @@
         }
       ],
       "answer": {
-        "text": "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, ba3d el 18h"
+        "text": "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, nkon f dar ba3d el 18h"
       },
       "scripted_replies": [
-        "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, ba3d el 18h"
+        "Mornag, rue Habib Bourguiba, dar 7, 9odem el mosque, nkon f dar ba3d el 18h"
       ]
     },
     {
@@ -248,10 +248,10 @@
         }
       ],
       "answer": {
-        "text": "la, mouch nheb"
+        "text": "le manhbch"
       },
       "scripted_replies": [
-        "la, mouch nheb"
+        "le manhbch"
       ]
     }
   ]

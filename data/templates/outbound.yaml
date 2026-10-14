@@ -15,13 +15,13 @@ expected_questions: {T_CONFIRM: one, T_ADDRESS: one, T_PREPAY: one, T_ACK: none}
 templates:
   T_CONFIRM:                  # medium risk · product + price · one yes/no question
     arabizi:
-      text: "Marhba {first_name}, 3andek commande {product} b {price_tnd} TND. T2akkedli elli bech tekhouha?"
-      no_name: "Marhba, 3andek commande {product} b {price_tnd} TND. T2akkedli elli bech tekhouha?"
-      generic: "Marhba {first_name}, wselatna commandtek. T2akkedli elli bech tekhouha?"
-      generic_no_name: "Marhba, wselatna commandtek. T2akkedli elli bech tekhouha?"
+      text: "Marhba {first_name}, 3adit m3ana commande {product} b {price_tnd} TND, tnajm tconfirmi m3aya enk bch ta5oha?"
+      no_name: "Marhba, 3adit m3ana commande {product} b {price_tnd} TND, tnajm tconfirmi m3aya enk bch ta5oha?"
+      generic: "Marhba {first_name}, wsltnta el commande, tnjm tconfirmi maaya enk bech ta5oha?"
+      generic_no_name: "Marhba, wsltnta el commande, tnjm tconfirmi maaya enk bech ta5oha?"
     fr:
-      text: "Bonjour {first_name}, votre commande de {product} est à {price_tnd} TND. Confirmez-vous que vous souhaitez la recevoir ?"
-      no_name: "Bonjour, votre commande de {product} est à {price_tnd} TND. Confirmez-vous que vous souhaitez la recevoir ?"
+      text: "Bonjour {first_name}, votre commande de {product} est à {price_tnd} TND. Pouvez-vous confirmer que vous souhaitez la recevoir ?"
+      no_name: "Bonjour, votre commande de {product} est à {price_tnd} TND. Pouvez-vous confirmer que vous souhaitez la recevoir ?"
       generic: "Bonjour {first_name}, nous avons bien reçu votre commande. Confirmez-vous que vous souhaitez la recevoir ?"
       generic_no_name: "Bonjour, nous avons bien reçu votre commande. Confirmez-vous que vous souhaitez la recevoir ?"
     darija_arabic_script:
@@ -31,10 +31,10 @@ templates:
       generic_no_name: "مرحبا، وصلتنا الكوموند متاعك. تأكّدلي إلي باش تاخذها؟"
   T_ADDRESS:                  # address incomplete · ask street + house number · one yes/no question
     arabizi:
-      text: "Bech n7adroulk livraison mta3 {product}, {first_name}, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
-      no_name: "Bech n7adroulk livraison mta3 {product}, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
-      generic: "Bech n7adroulk livraison mta3 commandtek, {first_name}, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
-      generic_no_name: "Bech n7adroulk livraison mta3 commandtek, ib3athli el 3onwen el kamel: esm el chera3 w numéro el dar. Tnajjem teb3athhom?"
+      text: "Bech n7adroulk livraison mta3 {product}, {first_name}, tnajjem tb3athli el 3onwen el kamel: esm el chera3 w numéro el dar?"
+      no_name: "Bech n7adroulk livraison mta3 {product}, tnajjem tb3athli el 3onwen el kamel: esm el chera3 w numéro el dar?"
+      generic: "Bech n7adroulk livraison mta3 commandtek, {first_name}, tnajjem tb3athli el 3onwen el kamel: esm el chera3 w numéro el dar?"
+      generic_no_name: "Bech n7adroulk livraison mta3 commandtek, tnajjem tb3athli el 3onwen el kamel: esm el chera3 w numéro el dar?"
     fr:
       text: "Pour préparer la livraison de {product}, {first_name}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
       no_name: "Pour préparer la livraison de {product}, pourriez-vous envoyer l'adresse complète, avec le nom de la rue et le numéro de la maison ?"
@@ -63,10 +63,10 @@ templates:
       generic_no_name: "الكوموند متاعك: الخلاص يكون قبل التوصيل. توافق على الخلاص قبل ما نبعثوها؟"
   T_ACK:                      # acknowledgement only · no question
     arabizi:
-      text: "Merci {first_name}, commande {product} confirmée. Na3tiwk mise à jour ki tet7added livraison."
-      no_name: "Merci, commande {product} confirmée. Na3tiwk mise à jour ki tet7added livraison."
-      generic: "Merci {first_name}, commandtek confirmée. Na3tiwk mise à jour ki tet7added livraison."
-      generic_no_name: "Merci, commandtek confirmée. Na3tiwk mise à jour ki tet7added livraison."
+      text: "Merci {first_name}, commande {product} confirmée."
+      no_name: "Merci, commande {product} confirmée."
+      generic: "Merci {first_name}, commandtek confirmée."
+      generic_no_name: "Merci, commandtek confirmée."
     fr:
       text: "Merci {first_name}, votre commande de {product} est confirmée. Nous vous informerons lorsque la livraison sera planifiée."
       no_name: "Merci, votre commande de {product} est confirmée. Nous vous informerons lorsque la livraison sera planifiée."

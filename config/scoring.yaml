@@ -51,7 +51,7 @@ lexicons:
   # Whole-reply reading used by the rules extractor (rules_v1). A leading ack/decline word alone is not enough.
   # decline_explicit: a reply containing one is a decline unless it also starts with an ack or positive words.
   decline_explicit: [annule, annulez, annuler, "ne confirme pas", "confirme pas", "ne veux plus", "veux plus",
-                     "ma nhebech", "ma n7ebech", "ألغي"]
+                     "ma nhebech", "ma n7ebech", "manhbch", "manhebch", "ألغي"]
   # contradiction: after a leading ack word these make the reply ambiguous ("oui mais ...", "ok finalement ...").
   contradiction: [mais, finalement, enfin, réfléchir, reflechir, pas, jamais, non, "لا", "ما", "مش", mouch, ma,
                   "7atta", "mafhemtech"]
@@ -68,7 +68,7 @@ lexicons:
     affirm: [ok, okay, oui, "yes", ey, eyh, aya, behi, bahi, wakha, "d'accord", confirme, "je confirme", confirmé,
              "ya3tik saha", "نعم", "ايه", "إيه", "باهي", "اوكي", "موافق"]
     negate: [non, la, nn, annule, annuler, annulez, "ne veux pas", "veux pas", "ne veux plus", "veux plus", pas, jamais,
-             "ma nhebech", "ma n7ebech", "mouch", "مش", "لا", "ما نحبش", "ما نيش", "ألغي", "الغي"]
+             "ma nhebech", "ma n7ebech", "manhbch", "manhebch", "mouch", "مش", "لا", "ما نحبش", "ما نيش", "ألغي", "الغي"]
   # The ONLY injection lexicon. Phrase-level. `normalized` patterns run on
   # normalize(text) with Cf characters removed (casefolded, أ→ا, ة→ه); `defused` patterns run on the
   # length-preserving defused LLM view.

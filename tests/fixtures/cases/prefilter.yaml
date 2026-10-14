@@ -36,7 +36,7 @@ should_pass:
   - id: P01
     reason: grounded_confirmation
     template: {id: T_CONFIRM, lang: fr}
-    text: "Bonjour, votre commande de casque bluetooth est a 250 TND. Confirmez-vous que vous souhaitez la recevoir ?"
+    text: "Bonjour, votre commande de casque bluetooth est a 250 TND. Pouvez-vous confirmer que vous souhaitez la recevoir ?"
   - id: P02
     reason: address_request
     template: {id: T_ADDRESS, lang: fr}
@@ -56,4 +56,4 @@ should_pass:
   - id: P06
     reason: simple_confirmation
     template: {id: T_CONFIRM, lang: arabizi}
-    text: "Marhba, 3andek commande casque bluetooth b 250 TND. T2akkedli elli bech tekhouha ?"
+    text: "Marhba, 3adit m3ana commande casque bluetooth b 250 TND, tnajm tconfirmi m3aya enk bch ta5oha ?"

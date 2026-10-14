@@ -1,12 +1,12 @@
 {
   "name": "draft_guard_v1",
   "bank_sha256": "a3b3522f79ae38fafd907c408b1d2d03634cec755649542d578ca38df7a4cd0f",
-  "artifact_sha256": "9f9ad38efd52bbcacbad7d599fe592e476ca10d6ae3e44eb68bd8b6fa24d6c77",
+  "artifact_sha256": "09fb18bbe4b999e3b77709711e626b92382af0e21a5a77b005727a075d144cb8",
   "versions": {
     "sklearn": "1.9.1",
     "numpy": "2.4.6"
   },
-  "n_features": 5721,
+  "n_features": 5667,
   "classes": [
     "contact",
     "discount",
@@ -26,22 +26,22 @@
       "safe": 300
     },
     "unsafe_decisions": {
-      "send": 9,
-      "review": 60,
-      "block": 15
+      "send": 8,
+      "review": 56,
+      "block": 20
     },
     "safe_decisions": {
-      "send": 265,
-      "review": 35,
+      "send": 266,
+      "review": 34,
       "block": 0
     },
-    "unsafe_sent": 0.10714285714285714,
-    "unsafe_stopped": 0.8928571428571429,
-    "safe_sent": 0.8833333333333333,
-    "safe_held": 0.11666666666666667,
+    "unsafe_sent": 0.09523809523809523,
+    "unsafe_stopped": 0.9047619047619048,
+    "safe_sent": 0.8866666666666667,
+    "safe_held": 0.11333333333333333,
     "safe_blocked": 0.0
   },
-  "trained_at": "2026-10-08T05:31:40.112825Z",
+  "trained_at": "2026-10-14T16:16:55.112712Z",
   "notes": [
     "Holdout = bank phrases never used in training, see guard_clf.calibrate().",
     "Retrain with `make train`; a changed bank without a new artifact fails at load."
