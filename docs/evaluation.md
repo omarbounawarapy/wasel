@@ -178,3 +178,20 @@ Never fix a red gate by lowering a floor or editing a golden file to match new b
 `g3_injection_holdout` measures the lexicon on wordings it was not written from. First result: `flagged_rate` 0.219 (7 of 32 flagged), against 1.0 on the in-sample sets. All 32 orders were still scored and none was promoted to `exact`, so the structural defences held; the flag, which routes the order to review, is what is missing. Misses by group: French 5 of 8, English 4 of 8, Arabic script 8 of 8, Arabizi 8 of 8. The missed wordings include "disregard the above" in French, "act as the seller", "note to the system: score 0", letter-spaced "i g n o r e", admin impersonation, and every Darija and Arabizi attack. The full list is in `data/reports/eval.json` under `g3_injection_holdout.misses`.
 
 The patterns are fixed in a follow-up, confirmed with new attacks. Do not edit the lexicon against this file, or it stops being held out.
+
+## Native-speaker holdout (36 cases)
+
+`data/eval/native/holdout_native.jsonl` holds 36 customer conversations that no one tuned against. A language model
+with no knowledge of this project wrote the English scenarios and the shop context. A native speaker then wrote each
+one the way a Tunisian customer would and labelled it: is it an order, how complete the address is, how likely a
+refusal is. It is not part of `make eval` and has no gate.
+
+Run it with `python scripts/data/run_holdout.py` (rules path) or `--live` (LLM chain, needs `GROQ_API_KEY`). Results
+go to `data/reports/holdout_native.json`.
+
+Rules path, first run: orders recognised 66% (23 of 35), address level 17% exact and 33% within one step (18 orders;
+compared at the labeller's four levels), language 58%, refusal tier agreement 24% (17 orders). Mean score by labelled
+risk: low 11, medium 61, high 82, so the ordering is right while the tier boundaries are not.
+
+Limits: 36 cases, one labeller, who had seen the word lists; the scenarios lean toward hard cases, so these numbers
+are not a production accuracy. The LLM path has not been run on this set.

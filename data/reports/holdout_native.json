@@ -1,0 +1,98 @@
+{
+  "mode": "rules",
+  "set": "data/eval/native/holdout_native.jsonl",
+  "provenance": "native_speaker_holdout: scenarios by a context-free model, translated and labelled by a native speaker who had seen the word lists; never used to tune the system",
+  "n": 36,
+  "paths": {
+    "rules_v1": 36
+  },
+  "is_order_acc": 0.6571428571428571,
+  "is_order_n": 35,
+  "address_exact_acc": 0.16666666666666666,
+  "address_within1_acc": 0.3333333333333333,
+  "address_n": 18,
+  "language_acc": 0.5833333333333334,
+  "language_n": 36,
+  "refusal_tier_agreement": 0.23529411764705882,
+  "refusal_n": 17,
+  "mean_score_by_labelled_risk": {
+    "high": 82.0,
+    "low": 11.0,
+    "medium": 60.7
+  },
+  "misses": [
+    {
+      "id": "nh-01",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-03",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-10",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-12",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-13",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-15",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-16",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-17",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-23",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-27",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-29",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    },
+    {
+      "id": "nh-32",
+      "kind": "is_order",
+      "expected": true,
+      "got": false
+    }
+  ],
+  "runtime_s": 0.4
+}
