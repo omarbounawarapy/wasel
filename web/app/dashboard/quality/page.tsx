@@ -113,9 +113,11 @@ export default function QualityPage() {
     const [data, setData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [llm, setLlm] = useState<any>(null);
 
     const load = useCallback(() => {
         setLoading(true);
+        ordersApi.health().then(h => setLlm(h.llm)).catch(() => setLlm(null));
         ordersApi.getEvalReports().then(d => { setData(d); setError(false); }).catch(() => setError(true)).finally(() => setLoading(false));
     }, []);
     useEffect(() => { load(); }, [load]);
@@ -125,6 +127,12 @@ export default function QualityPage() {
             <PageHeader
                 title="Quality checks"
                 subtitle="Before every release, Wasel is tested on hundreds of example conversations. The offline checks must pass in CI before a change is deployed; the live AI run below is measured separately and can show checks below target." />
+
+            <p className="text-sm text-gray-700">
+                {llm?.serving_label
+                    ? <>AI on this server runs on <span className="font-medium text-gray-900">{llm.serving_label}</span> (host {llm.serving_host}). The reports below do not record where they were run.</>
+                    : "AI on this server uses the hosted model API; no self-hosted host is configured."}
+            </p>
 
             <Guide id="quality" steps={[
                 "Each card is one family of tests, named after what it protects.",

@@ -244,8 +244,36 @@ export interface EventsResponse {
     last_seq: number;
 }
 
+// What recorded calls say about one endpoint (llm_usage, last two days). No row means unknown, not down.
+export interface HealthEndpointObserved {
+    endpoint: string;
+    last_call_at: string;
+    last_outcome: string;
+    last_ok_at: string | null;
+    breaker_open: boolean;
+}
+
+export interface HealthLLM {
+    chain_extract: string[];
+    chain_judge: string[];
+    primary: string;
+    fallback_active: boolean;
+    fallback_reason: string | null;
+    last_path: string | null;
+    last_endpoint: string | null;
+    last_host: string | null;
+    last_call_at: string | null;
+    live_calls_today: number;
+    live_call_cap: number | null;
+    cap_reached: boolean;
+    serving_label: string | null;
+    serving_host: string | null;
+    observed: HealthEndpointObserved[];
+}
+
 export interface HealthResponse {
     status: 'ok' | 'degraded';
+    llm: HealthLLM;
     mode: AppMode;
     wa_send: boolean;
     webhook: 'enabled' | 'disabled';

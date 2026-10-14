@@ -16,8 +16,8 @@ PAGE = Path(__file__).resolve().parents[2] / "docs" / "subsystems" / "llm.md"
 BEGIN, END = "<!-- BEGIN GENERATED: llm-endpoints -->", "<!-- END GENERATED: llm-endpoints -->"
 
 
-def generated() -> str:
-    reg = registry()
+def generated(reg: dict | None = None) -> str:
+    reg = reg or registry()
     eps = parse_endpoints(reg.get("endpoints"))
     routes = {role: parse_route(role, reg["routes"][role], eps) for role in ROLE_ROUTES
               if role in (reg.get("routes") or {})}

@@ -333,7 +333,13 @@ class AppState:
         s, now = self.settings, self.clock.now()
         day = now.strftime("%Y-%m-%d")
         calls = conn.execute("SELECT COUNT(*) FROM llm_usage WHERE day=?", (day,)).fetchone()[0]
-        recent = conn.execute("SELECT path, created_at FROM risk_assessments ORDER BY created_at DESC LIMIT 1").fetchone()
+        # the most recent assessment of real traffic: sample conversations (seed_key) are scored at boot and are not
+        # evidence of which host answers. Its extraction run names the deployment that answered.
+        recent = conn.execute(
+            "SELECT a.path, e.endpoint FROM risk_assessments a JOIN orders o ON o.order_id = a.order_id"
+            " JOIN conversations c ON c.conversation_id = o.conversation_id"
+            " LEFT JOIN extraction_runs e ON e.extraction_id = a.extraction_id"
+            " WHERE c.seed_key IS NULL ORDER BY a.created_at DESC LIMIT 1").fetchone()
         five = utc_iso(now - timedelta(minutes=5))
         # sample conversations (seed_key) are not traffic: their rules scores at boot do not mean the AI is down
         fb = conn.execute("SELECT a.path FROM risk_assessments a JOIN orders o ON o.order_id = a.order_id"
@@ -347,10 +353,12 @@ class AppState:
         # shown for the hosted Groq API
         llm_cfg = LLMSettings.from_env(s.llm_mode)
         serving_host, serving_label = llm_cfg.serving_host, llm_cfg.label
-        # the last live answer came from the self-hosted host when its assessment took the primary or the same-host
-        # fallback step; hosted, backup-provider and rules answers are not attributed to it
+        # attribution comes from the recorded endpoint of that run, not from the path name: the backup provider's
+        # answer has path fallback_provider and rules answers have no endpoint
         last_path = recent["path"] if recent else None
-        last_host = serving_host if last_path in ("llm", "fallback_model") else None
+        last_endpoint = recent["endpoint"] if recent and last_path in ("llm", "fallback_model", "fallback_provider") \
+            else None
+        last_host = serving_host if last_endpoint == "self-hosted" else None
         lm = load_model(str(self.config.root / self.config.raw["model"]["file"]))
         cap = s.daily_cap
         worker_stale = s.worker_enabled and (self.last_tick_at is None or (now - self.last_tick_at).total_seconds() > 10)
@@ -378,7 +386,7 @@ class AppState:
                             chain_judge=self.draft_llm.chain_names_for("judge") if self.draft_llm else [],
                             primary=getattr(self.llm, "primary", "rules"), fallback_active=fb is not None,
                             fallback_reason=f"recent path {fb['path']}" if fb else None,
-                            last_path=last_path, last_host=last_host,
+                            last_path=last_path, last_endpoint=last_endpoint, last_host=last_host,
                             last_call_at=max((o.last_call_at for o in observed), default=None),
                             observed=observed, remaining_tokens=None, live_calls_today=calls, live_call_cap=cap,
                             cap_reached=cap is not None and calls >= cap,

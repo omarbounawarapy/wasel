@@ -46,6 +46,8 @@ export function HealthBar() {
         ...(llm.serving_label && !llm.fallback_active ? [`AI hosted on: ${llm.serving_label} (${llm.serving_host})`] : []),
         ...(llm.serving_label && llm.fallback_active
             ? [`Primary AI host (${llm.serving_label}) did not answer in the last 5 min; the backup is in use`] : []),
+        ...(llm.observed || []).map((o: any) =>
+            `${o.endpoint}: last call ${o.last_call_at}, ${o.last_outcome}${o.breaker_open ? " (paused)" : ""}`),
         `AI calls today: ${llm.live_calls_today ?? 0}${llm.live_call_cap ? ` / ${llm.live_call_cap}` : ""}`,
         `Scoring queue: ${health.worker?.pending ?? 0}`, `Config ${health.config?.config_hash ?? "–"}`,
     ].join("\n");

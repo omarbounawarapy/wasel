@@ -62,20 +62,36 @@ def test_health_serving_label_only_for_self_hosted_endpoint(tmp_path, monkeypatc
         assert llm["serving_host"] == "llm.example.test"
 
 
-def test_health_says_last_host_only_when_the_self_hosted_step_answered(tmp_path, monkeypatch):
+def test_health_says_last_host_only_when_the_self_hosted_endpoint_answered(tmp_path, monkeypatch):
+    """Attribution reads the recorded endpoint of the newest real-traffic assessment; sample orders do not count."""
     monkeypatch.setenv("LLM_SERVING_LABEL", "AMD Instinct MI300X, ROCm, vLLM")
     monkeypatch.setenv("GROQ_BASE_URL", "https://llm.example.test:8443/v1")
-    c, core, _ = make_client(tmp_path, mode="garbage")
+    c, core, clock = make_client(tmp_path, mode="dev")
     with c:
         conn = core.conn()
-        latest = "SELECT assessment_id FROM risk_assessments ORDER BY created_at DESC LIMIT 1"
-        for path, expected in (("llm", "llm.example.test"), ("fallback_model", "llm.example.test"),
-                               ("fallback_provider", None), ("rules", None)):
+        llm = c.get("/api/health").json()["llm"]
+        assert llm["last_path"] is None and llm["last_host"] is None       # only seeded samples so far
+        # a seeded assessment dated far in the future must not be read as the last answer
+        with tx(conn):
+            conn.execute("UPDATE risk_assessments SET path='llm', created_at='2099-01-01T00:00:00Z'")
+        llm = c.get("/api/health").json()["llm"]
+        assert llm["last_path"] is None and llm["last_host"] is None and llm["last_endpoint"] is None
+        oid = c.post("/api/orders/ingest", json={"kind": "paste", "text": "nheb el casque bluetooth, Sfax"}
+                     ).json()["created"][0]["order_id"]
+        settle(core, clock)
+        assert c.get("/api/health").json()["llm"]["last_path"] == "rules"
+        latest = ("SELECT assessment_id FROM risk_assessments WHERE order_id=? ORDER BY version DESC LIMIT 1")
+        run = ("SELECT extraction_id FROM risk_assessments WHERE assessment_id=({})".format(latest))
+        for path, endpoint, host, ep in (("llm", "self-hosted", "llm.example.test", "self-hosted"),
+                                         ("fallback_model", "self-hosted", "llm.example.test", "self-hosted"),
+                                         ("fallback_provider", "groq", None, "groq"),
+                                         ("llm", "groq", None, "groq"),
+                                         ("rules", None, None, None)):
             with tx(conn):
-                conn.execute(f"UPDATE risk_assessments SET path=?, created_at='2099-01-01T00:00:00Z'"
-                             f" WHERE assessment_id=({latest})", (path,))
+                conn.execute(f"UPDATE extraction_runs SET endpoint=? WHERE extraction_id=({run})", (endpoint, oid))
+                conn.execute(f"UPDATE risk_assessments SET path=? WHERE assessment_id=({latest})", (path, oid))
             llm = c.get("/api/health").json()["llm"]
-            assert llm["last_path"] == path and llm["last_host"] == expected, path
+            assert (llm["last_path"], llm["last_host"], llm["last_endpoint"]) == (path, host, ep), (path, endpoint)
 
 
 def test_public_forces_sends_off_even_with_token(tmp_path):

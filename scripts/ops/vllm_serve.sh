@@ -76,6 +76,17 @@ gpu_vram_gb() { # largest single GPU, GB (0 when unknown)
   fi
 }
 
+serving_label() { # "<GPU name>, ROCm|CUDA, vLLM" from the hardware this host reports; empty when it reports none
+  local name=""
+  if [ "$ACCEL" = rocm ] && command -v rocm-smi >/dev/null 2>&1; then
+    name=$(rocm-smi --showproductname 2>/dev/null | grep -iE "Card (series|model)" | head -1 | sed -E 's/^.*[Cc]ard [Ss](eries|model)[[:space:]]*:[[:space:]]*//; s/[[:space:]]+$//')
+  elif command -v nvidia-smi >/dev/null 2>&1; then
+    name=$(nvidia-smi --query-gpu=name --format=csv,noheader 2>/dev/null | head -1)
+  fi
+  [ -n "$name" ] || return 0
+  [ "$ACCEL" = rocm ] && echo "$name, ROCm, vLLM" || echo "$name, CUDA, vLLM"
+}
+
 case "${1:-check}" in
   preflight)
     fail=0
@@ -163,6 +174,12 @@ case "${1:-check}" in
     echo "  EXTRACT_MODEL=$MODEL"
     echo "  FALLBACK_MODEL=$MODEL   # or GROQ_FALLBACK_ENABLED=false: single-model backend"
     echo "  GROQ_FALLBACK_ENABLED=false   # one model is served here; the hosted backup uses GROQ_API_KEY"
+    LABEL="$(serving_label)"
+    if [ -n "$LABEL" ]; then
+      echo "  LLM_SERVING_LABEL=\"$LABEL\"   # read from this host's own GPU report"
+    else
+      echo "  # LLM_SERVING_LABEL: this host reported no GPU name; write what you rented, never a guess"
+    fi
     ;;
 
   check)

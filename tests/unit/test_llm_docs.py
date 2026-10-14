@@ -57,3 +57,46 @@ def test_the_add_an_endpoint_guide_runs_as_written(monkeypatch):
     steps = build_steps(LLMSettings.from_env("live"), eps, route)
     assert [(s.endpoint, s.kind) for s in steps] == [(eid, "primary")]
     assert built[0].base_url == "http://10.0.0.5:8000/v1"
+
+
+def test_the_guide_steps_4_and_5_show_the_new_endpoint(gen, monkeypatch, tmp_path):
+    """Step 4: the generated tables gain the endpoint and its route step. Step 5: the app built from that chain
+    lists it in /api/health.llm.chain_extract, and llm.observed gains its row once a call is recorded."""
+    from tests.conftest import T0
+    from tests.integration.conftest import make_client
+    from wasel.contracts import UsageRecord
+    from wasel.db import repo
+    from wasel.db.conn import tx
+    from wasel.llm.base import TaskSpec
+    from wasel.llm.client import ChainClient
+
+    guide = PAGE.split("### Add an endpoint", 1)[1].split("\n### ", 1)[0]
+    endpoint, step = (yaml.safe_load(b) for b in re.findall(r"```yaml\n(.*?)```", guide, re.S))
+    (eid, spec), = endpoint.items()
+    reg = dict(registry())
+    reg["endpoints"] = {**reg["endpoints"], eid: spec}
+    reg["routes"] = {**reg["routes"], "extract": [*step, *reg["routes"]["extract"]]}
+
+    tables = gen.generated(reg)
+    assert eid in tables and eid not in gen.generated()                      # step 4
+
+    for k in ("GROQ_BASE_URL", "GROQ_API_KEY", "SELF_HOSTED_API_KEY", "GEMINI_API_KEY"):
+        monkeypatch.delenv(k, raising=False)
+    for name, value in re.findall(r"`(AMD_B_\w+)=([^`]+)`", guide):
+        monkeypatch.setenv(name, value.replace("<token>", "t"))
+    monkeypatch.setitem(ADAPTERS, "openai-compatible", lambda ep, cfg: Fake())
+    eps = parse_endpoints(reg["endpoints"])
+    steps = build_steps(LLMSettings.from_env("live"), eps, parse_route("extract", reg["routes"]["extract"], eps))
+
+    c, core, _ = make_client(tmp_path)                                         # step 5
+    with c:
+        core.llm = ChainClient(steps, deadline_s=20.0)
+        assert c.get("/api/health").json()["llm"]["chain_extract"][0].startswith(f"{eid}:")
+        task = TaskSpec("extract", "s", {}, "sys", (), "v1", 10, 0.0, None, False)
+        res = core.llm.extract(task, "hi", parse=lambda s: s, meter=None, sandbox_id=None, now=T0)
+        conn = core.conn()
+        with tx(conn):
+            for u in res.usage:
+                repo.insert_usage(conn, u, sandbox_id=None, order_id=None)
+        observed = c.get("/api/health").json()["llm"]["observed"]
+        assert [o["endpoint"] for o in observed] == [eid] and observed[0]["last_outcome"] == "ok"

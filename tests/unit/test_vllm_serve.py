@@ -59,3 +59,31 @@ def test_dry_run_prints_no_generated_token():
 def test_check_fails_clearly_without_a_matching_server(bad):
     r = run("check", GROQ_BASE_URL="http://127.0.0.1:9/v1", GROQ_API_KEY=bad or "tok")
     assert r.returncode != 0
+
+
+def _stub_bin(tmp_path, name, body):
+    bindir = tmp_path / "bin"
+    bindir.mkdir(exist_ok=True)
+    f = bindir / name
+    f.write_text("#!/bin/sh\n" + body + "\n")
+    f.chmod(0o755)
+    return bindir
+
+
+def _label(tmp_path, accel, smi, output):
+    """The label function alone, sourced with a stub GPU tool first on PATH."""
+    bindir = _stub_bin(tmp_path, smi, f"cat <<'EOF'\n{output}\nEOF")
+    src = SCRIPT.read_text().split('case "${1:-check}" in', 1)[0]
+    r = subprocess.run(["bash", "-c", src + "\nserving_label"], capture_output=True, text=True, timeout=60,
+                       env={"PATH": f"{bindir}:/usr/bin:/bin", "ACCEL": accel, "HOME": str(tmp_path)})
+    return r.stdout.strip()
+
+
+def test_serving_label_comes_from_the_rocm_report(tmp_path):
+    out = "GPU[0]\t\t: Card Series:\t\tAMD Instinct MI300X OAM\nGPU[0]\t\t: Card Model:\t\t0x74a1"
+    # real rocm-smi prints "Card Series:" with the value after the colon
+    assert _label(tmp_path, "rocm", "rocm-smi", out) == "AMD Instinct MI300X OAM, ROCm, vLLM"
+
+
+def test_serving_label_is_empty_when_the_host_reports_no_gpu(tmp_path):
+    assert _label(tmp_path, "rocm", "rocm-smi", "no devices") == ""

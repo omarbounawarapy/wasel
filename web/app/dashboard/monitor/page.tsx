@@ -19,6 +19,25 @@ const RATES: Record<string, [string, string]> = {
     dropped_flags_per_extraction: ["Warnings dropped", "Warning signs removed because the quote wasn't real"],
 };
 
+const OUTCOME: Record<string, string> = {
+    ok: "answered", rate_limited: "rate limited", down: "did not answer", timeout: "timed out",
+    schema_rejected: "answer rejected", truncated: "answer cut off", parse_error: "unreadable answer",
+};
+const outcomeWord = (o: string) => OUTCOME[o] ?? o;
+
+// One sentence about the last answer to real traffic (sample orders are not counted by the server).
+const lastAnswer = (llm: any): string => {
+    if (!llm.last_path) return "No assessment from real traffic yet.";
+    const host = llm.serving_label || "the self-hosted host";
+    if (llm.last_host) return `The last AI answer came from ${host}.`;
+    if (llm.last_endpoint === "groq") return llm.serving_label
+        ? `The last AI answer came from the hosted backup (Groq), not from ${host}.` : "The last AI answer came from the hosted Groq API.";
+    if (llm.last_endpoint === "gemini") return "The last AI answer came from the Gemini backup.";
+    if (llm.last_endpoint) return `The last AI answer came from ${llm.last_endpoint}.`;
+    if (llm.last_path === "rules") return "The last assessment used rules only (no AI answer).";
+    return "The last assessment reused an earlier AI answer (no new call).";
+};
+
 const pct = (v: any) => typeof v === "number" ? `${(v * 100).toFixed(v === 0 ? 0 : 1)}%` : "–";
 
 export default function MonitorPage() {
@@ -36,6 +55,7 @@ export default function MonitorPage() {
 
     const llm = health?.llm || {};
     const chain: string[] = Array.isArray(llm.chain_extract) ? llm.chain_extract : [];
+    const observed: any[] = Array.isArray(llm.observed) ? llm.observed : [];
 
     const drift: any[] = Array.isArray(data?.drift) ? data.drift : [];
     const alerts: any[] = Array.isArray(data?.alerts) ? data.alerts : [];
@@ -86,9 +106,20 @@ export default function MonitorPage() {
                         {llm.serving_label
                             ? <p className="text-sm text-gray-900 font-medium">{llm.serving_label} <span className="font-normal text-gray-600">· host {llm.serving_host}</span></p>
                             : <p className="text-sm text-gray-600">No self-hosted AI host is configured.</p>}
-                        {llm.serving_label && <p className="text-sm text-gray-700 mt-1">{!llm.last_path ? "No assessment recorded yet." : llm.last_host ? `The last AI answer came from ${llm.serving_label}.` : "The last assessment did not come from the self-hosted host (backup or rules)."}</p>}
+                        <p className="text-sm text-gray-700 mt-1">{lastAnswer(llm)}</p>
                         <p className="text-sm text-gray-700 mt-1">Model chain: {chain.join(" → ") || "rules only"}</p>
                         {llm.fallback_active && <p className="text-sm text-amber-900 mt-1">The primary host did not answer in the last 5 minutes; the backup is in use.</p>}
+                        <Details label="Recorded calls per host (last 2 days)">
+                            {observed.length === 0
+                                ? <p>No AI call has been recorded yet. A host with no row is unknown, not down.</p>
+                                : observed.map(o => (
+                                    <p key={o.endpoint}>
+                                        <span className="font-medium">{o.endpoint}</span>: last call {o.last_call_at}, {outcomeWord(o.last_outcome)}
+                                        {o.last_ok_at ? `, last success ${o.last_ok_at}` : ", no success recorded"}
+                                        {o.breaker_open ? " · paused for now after repeated failures" : ""}
+                                    </p>
+                                ))}
+                        </Details>
                     </Section>
 
                     <Section title="Are customers writing differently?" hint="Compared with the test conversations. “Changed” means Wasel is seeing something new.">
