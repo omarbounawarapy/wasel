@@ -583,6 +583,12 @@ class ImpactResponse(BaseModel):
     this_server: ServerImpact | None = None
 
 
+class SessionLogin(BaseModel):
+    """Request body: the access token (API_TOKEN)."""
+    model_config = ConfigDict(extra="forbid")
+    token: str = Field(min_length=1, max_length=256)
+
+
 class ResetResponse(BaseModel):
     """Result of the admin reset: `purged_rows` orders deleted and `reseeded_orders` orders recreated from the seed."""
     reseeded_orders: int

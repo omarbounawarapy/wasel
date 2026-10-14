@@ -37,7 +37,7 @@ Limits: `hygiene` recognises known prefixes and assignment shapes only; a secret
 
 ### API exposure
 
-There is **no authentication or authorization on `/api`**. In `public` mode, visitor isolation rests on an `X-Visitor-Id` UUID that is a scoping token, not an identity: a visitor can only see the samples and rows created under the id they send, and another visitor's rows return `404` so their existence is not confirmed, but anyone who learns an id can use it. In `dev` and `event` mode every caller sees every row.
+In `public` mode there is **no authentication on `/api`**; in `dev` and `event` mode set `API_TOKEN` (see below), without it there is none. In `public` mode, visitor isolation rests on an `X-Visitor-Id` UUID that is a scoping token, not an identity: a visitor can only see the samples and rows created under the id they send, and another visitor's rows return `404` so their existence is not confirmed, but anyone who learns an id can use it. In `dev` and `event` mode every caller who passes the access check sees every row.
 
 Therefore:
 
@@ -48,6 +48,10 @@ Therefore:
 Responses carry `Content-Security-Policy` (default-src 'self', `frame-ancestors 'none'`, and `script-src 'unsafe-inline'` because the static web export needs inline bootstrap scripts), `X-Content-Type-Options: nosniff` and `Referrer-Policy: no-referrer`. Requests declaring a body over 64 KB are refused. CORS is enabled only in `dev` mode for one configured origin. The default bind address of `make serve` is `127.0.0.1`. Outside `public` mode the API also refuses a `Host` that is not in `ALLOWED_HOSTS` (DNS rebinding) and a state-changing request whose `Origin` is neither its own host nor `FRONTEND_ORIGIN` (cross-site posts); the bind address alone is not a boundary.
 
 ### Administrative endpoint
+
+### Access token (`dev` and `event` mode)
+
+With `API_TOKEN` set to at least 24 characters, every `/api` request and `/docs` needs the token, as `Authorization: Bearer <token>`, `X-Api-Token`, or the `wasel_api` cookie. The web UI asks for it once and trades it for an HttpOnly, SameSite=Strict cookie through `POST /api/session`. Left open: `GET /api/health`, `/api/session`, and `/api/admin/*` (its own token). The WhatsApp webhook is outside `/api` and is signed by Meta. Public mode ignores the token. `APP_MODE=event` without it logs a warning at boot. There is no lockout on guesses, so use a long random token and put TLS in front (the cookie is `Secure` over https). The Streamlit dashboard sends `API_TOKEN` from its own environment.
 
 `POST /api/admin/reset` deletes every order and reseeds. It exists only when `ADMIN_TOKEN` is at least 24 characters and requires it in `X-Admin-Token` (constant-time comparison). It is the only administrative endpoint. There is no lockout or rate limit on token guesses; use a long random token and do not set one on hosts that do not need the endpoint.
 

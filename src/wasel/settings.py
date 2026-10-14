@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     wa_app_secret: str = ""
     wa_verify_token: str = ""
     admin_token: str = ""
+    api_token: str = ""                   # outside public mode, /api needs this token when it is 24+ characters
     # mode and safety
     wa_send_enabled: bool = False
     wa_auto_send: bool = False           # auto_send drafts go out without a click (never in public mode)
@@ -134,6 +135,11 @@ class Settings(BaseSettings):
         """
         return (self.app_mode != "public" and self.webhook_enabled and len(self.wa_app_secret) >= 16
                 and len(self.wa_verify_token) >= 24)
+
+    @property
+    def api_auth_active(self) -> bool:
+        """Whether /api requires the access token: not public mode, and API_TOKEN is at least 24 characters."""
+        return not self.is_public and len(self.api_token) >= 24
 
     @property
     def admin_mounted(self) -> bool:

@@ -34,7 +34,7 @@ _ERROR_TEXT = {
     502: "WHATSAPP_SEND_FAILED",
 }
 # what the middleware and guards can answer on any operation
-router = APIRouter(prefix="/api", responses=_errors(400, 403, 413, 429))
+router = APIRouter(prefix="/api", responses=_errors(400, 401, 403, 413, 429))
 
 
 def _address_guard(request: Request, st, vid: str | None, *, orders: int = 0) -> str | None:
@@ -284,6 +284,39 @@ def failure_session(session_id: str, request: Request, source: str = "synthetic"
 
 def _nocache_json(d: dict) -> JSONResponse:
     return JSONResponse(d, headers={"Cache-Control": "no-store"})
+
+
+@router.get("/session")
+def session_state(request: Request):
+    """Whether /api needs the access token here, and whether this browser already holds it."""
+    from wasel.main import ApiTokenGuard
+    st = _s(request)
+    on = st.settings.api_auth_active
+    headers = {k.lower(): v for k, v in request.headers.items()}
+    ok = on and hmac.compare_digest(ApiTokenGuard.presented(headers).encode(), st.settings.api_token.encode())
+    return _nocache_json({"required": on, "authenticated": (not on) or ok})
+
+
+@router.post("/session", responses=_errors(401))
+def session_login(request: Request, body: M.SessionLogin):
+    """Trade the access token for an HttpOnly cookie, so the web UI never keeps the token in script-readable storage."""
+    from wasel.main import ApiTokenGuard
+    st = _s(request)
+    if not st.settings.api_auth_active:
+        return _nocache_json({"required": False, "authenticated": True})
+    if not hmac.compare_digest(body.token.encode(), st.settings.api_token.encode()):
+        raise ApiError(401, "UNAUTHORIZED", "access token not accepted")
+    r = _nocache_json({"required": True, "authenticated": True})
+    r.set_cookie(ApiTokenGuard.COOKIE, body.token, httponly=True, samesite="strict", path="/",
+                 secure=request.url.scheme == "https", max_age=12 * 3600)
+    return r
+
+
+@router.delete("/session")
+def session_logout():
+    r = _nocache_json({"required": True, "authenticated": False})
+    r.delete_cookie("wasel_api", path="/")
+    return r
 
 
 admin = APIRouter(prefix="/api/admin", responses=_errors(401, 400, 403, 413))

@@ -31,6 +31,8 @@ class Api:
     def __init__(self, visitor_id: str, base_url: str | None = None):
         self.base_url = (base_url or API_BASE_URL).rstrip("/")
         self.headers = {"X-Visitor-Id": visitor_id}  # public mode: sandbox owner; ignored in event/dev
+        if os.environ.get("API_TOKEN"):                # event/dev with API_TOKEN set: /api needs it
+            self.headers["Authorization"] = "Bearer " + os.environ["API_TOKEN"]
 
     def _call(self, method: str, path: str, **kw) -> Any:
         try:

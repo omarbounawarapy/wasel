@@ -73,6 +73,6 @@ docker run --rm -p 10000:10000 -e PORT=10000 wasel-render
 make smoke URL=http://127.0.0.1:10000
 ```
 
-The image starts uvicorn with `--proxy-headers --forwarded-allow-ips '*'`, so the `X-Forwarded-Proto` from Render sets the scheme of redirects. Per-address limits read `CF-Connecting-IP` (`CLIENT_IP_HEADER` in `render.yaml`), not the socket address. Render's edge is expected to set that header; this has not been confirmed on the live service, and if it is missing no per-address limit applies.
+The image starts uvicorn with `--proxy-headers --forwarded-allow-ips '*'`, so the `X-Forwarded-Proto` from Render sets the scheme of redirects. Per-address limits read `CF-Connecting-IP` (`CLIENT_IP_HEADER` in `render.yaml`), not the socket address. Cloudflare's edge sets that header and refuses a request that brings its own (error 1000). Checked on the live service on 2026-10-14: after 29 writes from one address the next ones got `429`, also with a fresh visitor id. If the header were missing, no per-address limit would apply.
 
 `deploy/render/Dockerfile.dockerignore` is a Dockerfile-specific ignore file. If Render's builder does not honour it, the build fails on missing files or is slow; there is no root `.dockerignore`.

@@ -37,6 +37,7 @@ Run the API from the repository root and these all coincide. Invalid values (a b
 | `DB_PATH` | `var/app.db` | path | The SQLite file. Its parent directory is created if needed. |
 | `DEMO_MODE` | `true` | bool | Selects the short timings: debounce 4 s and no-reply timeout 60 s instead of 15 s and 6 h. Set `false` for a real deployment. |
 | `WORKER_ENABLED` | `true` | bool | `false` starts no worker loop. Tests and `make seed` use this. |
+| `API_TOKEN` | empty | at least 24 characters | Outside public mode, `/api` and `/docs` need it (`Authorization: Bearer`, `X-Api-Token` or the session cookie). Empty or short: no check. `/api/health`, `/api/session` and `/api/admin/*` stay open. |
 | `ADMIN_TOKEN` | empty | at least 24 characters | Mounts `POST /api/admin/reset`, checked in the `X-Admin-Token` header. Empty or short: the admin router does not exist. |
 
 ## Secrets

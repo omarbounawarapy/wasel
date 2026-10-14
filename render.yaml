@@ -11,7 +11,7 @@ services:
     envVars:
       - key: APP_MODE
         value: public
-      - key: CLIENT_IP_HEADER          # per-address limits key on this header; Render's edge is expected to set it (not confirmed). If it is absent, no address is found and no per-address limit applies
+      - key: CLIENT_IP_HEADER          # per-address limits key on this header; Cloudflare's edge sets it and refuses a client-supplied one (confirmed 2026-10-14: the 30th write from one address got 429). If it is absent, no address is found and no per-address limit applies
         value: CF-Connecting-IP
       - key: LIVE_LLM_DAILY_CAP        # Increased for judging day (was default 80 in public mode)
         value: "500"

@@ -3,6 +3,7 @@ One container, one process: /api/*, the worker loop, and the static bundle at / 
 from __future__ import annotations
 
 import asyncio
+import hmac
 import json
 import logging
 import threading
@@ -499,6 +500,43 @@ class HostOriginGuard:
         await send({"type": "http.response.body", "body": body})
 
 
+class ApiTokenGuard:
+    """Outside public mode, with API_TOKEN set, every /api request (and /docs) needs the token: `Authorization: Bearer`,
+    `X-Api-Token`, or the `wasel_api` cookie that POST /api/session sets. Left open: /api/health (monitors),
+    /api/session (it is the login) and /api/admin (has its own token). The webhook lives outside /api and is
+    signed by Meta.
+    """
+    OPEN = ("/api/health", "/api/session", "/api/admin/")
+    COOKIE = "wasel_api"
+
+    def __init__(self, app, token: str):
+        self.app = app
+        self.token = token.encode()
+
+    @classmethod
+    def presented(cls, headers: dict[str, str]) -> str:
+        auth = headers.get("authorization", "")
+        if auth.lower().startswith("bearer "):
+            return auth[7:].strip()
+        if headers.get("x-api-token"):
+            return headers["x-api-token"].strip()
+        for part in headers.get("cookie", "").split(";"):
+            k, _, v = part.strip().partition("=")
+            if k == cls.COOKIE:
+                return v
+        return ""
+
+    async def __call__(self, scope, receive, send):
+        path = scope.get("path", "")
+        guarded = path.startswith("/api/") or path in ("/api", "/docs", "/openapi.json")
+        if scope["type"] != "http" or not guarded or any(path == o.rstrip("/") or path.startswith(o) for o in self.OPEN):
+            return await self.app(scope, receive, send)
+        headers = {k.decode("latin-1").lower(): v.decode("latin-1") for k, v in scope["headers"]}
+        if not hmac.compare_digest(self.presented(headers).encode(), self.token):
+            return await HostOriginGuard._reply(send, 401, "UNAUTHORIZED", "access token required")
+        await self.app(scope, receive, send)
+
+
 def create_app(settings: Settings | None = None, *, clock: Clock | None = None, llm=None,
                ids: IdGen | None = None, worker_enabled: bool | None = None) -> FastAPI:
     """Build the FastAPI app. `create_app()` with no arguments works as a uvicorn factory.
@@ -564,7 +602,11 @@ def create_app(settings: Settings | None = None, *, clock: Clock | None = None, 
         app.add_middleware(HostOriginGuard, allowed_hosts=settings.allowed_hosts.split(","),
                            frontend_origin=settings.frontend_origin)
 
+    if settings.api_auth_active:
+        app.add_middleware(ApiTokenGuard, token=settings.api_token)
     _setup_logging(settings.log_level)
+    if settings.app_mode == "event" and not settings.api_auth_active:
+        log.warning("APP_MODE=event without API_TOKEN: /api is open to anyone who can reach this port")
 
     @app.middleware("http")
     async def _security_headers(request: Request, call_next):
