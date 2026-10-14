@@ -33,7 +33,7 @@
     "axe-core": "^4.11.0",
     "baseline-browser-mapping": "^2.8.32",
     "eslint": "^8.57.1",
-    "eslint-config-next": "^15.1.6",
+    "eslint-config-next": "^16.4.0",
     "postcss": "^8.5.28",
     "puppeteer-core": "^25.14.0",
     "tailwindcss": "^4.1.9",
