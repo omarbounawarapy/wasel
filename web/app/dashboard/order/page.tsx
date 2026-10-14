@@ -203,8 +203,8 @@ function SimulateReplyPanel({ conversationId, scripted, hasUnsentDraft, onSent }
         <details className="group bg-white rounded-2xl border-2 border-dashed border-gray-300 p-5" open={scripted.length > 0}>
             <summary className="cursor-pointer list-none select-none">
                 <span className="text-sm font-bold text-brand-ink">
-                    <span className="text-xs font-bold bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded mr-2">DEMO</span>
-                    Pretend to be the customer
+                    <span className="text-xs font-bold bg-gray-200 text-gray-700 px-1.5 py-0.5 rounded mr-2">TRY IT</span>
+                    Play the customer
                 </span>
                 <span className="block text-xs text-gray-600 mt-1">
                     Type the customer's reply to see Wasel rescore the order. It goes through the same steps as a real WhatsApp message and is marked “Simulated”.
@@ -438,7 +438,7 @@ function OrderDetailContent() {
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
                         <h1 className="text-2xl font-bold text-brand-ink tabular-nums">{o.order_ref}</h1>
                         <bdi className="text-lg text-gray-800 truncate">{customer.display_name || "Unnamed customer"}</bdi>
-                        {capabilities?.read_only && <Chip><Lock className="w-3 h-3" /> Sample, read-only</Chip>}
+                        {capabilities?.read_only && <Chip><Lock className="w-3 h-3" /> Example order</Chip>}
                         {!o.is_seeded && o.seed_key && <Chip tone="blue">Your copy</Chip>}
                     </div>
                     <p className="text-sm text-gray-600">
@@ -476,7 +476,7 @@ function OrderDetailContent() {
                     </p>
                     <p className="text-sm text-gray-600 mt-0.5 max-w-prose">
                         {capabilities?.read_only
-                            ? "This is a shared sample. Make your own copy to reply to it and send messages."
+                            ? "Make your own copy to reply to this order and send messages."
                             : GUIDANCE[o.status] ?? tier?.meaning}
                     </p>
                     {o.injection_suspected && (
@@ -590,7 +590,7 @@ function OrderDetailContent() {
                                         <div className="mt-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 border-t border-gray-100 pt-4">
                                             <p className="text-xs text-gray-600 max-w-prose">
                                                 {waSend ? "Sends this message to the customer on WhatsApp."
-                                                    : "Demo: sending records it in the conversation. WhatsApp sending is off on this server."}
+                                                    : "Sending adds the message to the conversation."}
                                             </p>
                                             <Button disabled={busy !== null} className="bg-brand hover:bg-brand-hover text-white min-h-[44px] shrink-0"
                                                     onClick={() => run("send", () => ordersApi.sendDraft(unsentDraft.draft_id))}>
@@ -598,7 +598,7 @@ function OrderDetailContent() {
                                             </Button>
                                         </div>
                                     ) : (
-                                        <p className="mt-4 text-xs text-gray-600">Samples are read-only: use “Try this order” to send from your own copy.</p>
+                                        <p className="mt-4 text-xs text-gray-600">Use “Try this order” to work on your own copy.</p>
                                     )
                                 ) : (
                                     <p className="mt-4 text-sm text-emerald-800 flex items-center gap-1.5">

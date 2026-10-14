@@ -183,7 +183,7 @@ export function RiskBadge({ tier, score, size = "sm" }: { tier?: string | null, 
 const READ_BY: Record<string, { label: string, tone: "blue" | "gray" | "amber" }> = {
     ai: { label: "Read by AI", tone: "blue" },
     rules: { label: "Read by rules", tone: "amber" },
-    recorded: { label: "Recorded sample", tone: "gray" },
+    recorded: { label: "Saved AI read", tone: "gray" },
 };
 
 /** Says how a score was produced: a live AI read, the rules alone, or a stored (recorded) AI result. */

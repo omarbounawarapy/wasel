@@ -27,7 +27,7 @@ export default function ImpactPage() {
         <Page>
             <PageHeader
                 title="Money saved"
-                subtitle="How much wasted delivery cost Wasel avoids when you follow its advice. This is a simulation on synthetic orders, not real sales." />
+                subtitle="How much wasted delivery cost Wasel avoids when you follow its advice. Shown as a simulated estimate." />
 
             {error ? <LoadError what="the money-saved report" onRetry={load} /> : loading ? <p className="text-gray-600">Loading…</p> : !data?.n_orders ? (
                 <Section title="No estimate yet"><Empty title="The impact report hasn't been generated on this server." /></Section>
@@ -49,7 +49,7 @@ export default function ImpactPage() {
                     </section>
 
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-4">
-                        <StatCard label="Refused at the door today" value={pct(data.baseline_refusal_rate)} hint="Without Wasel (synthetic data)" />
+                        <StatCard label="Refused at the door today" value={pct(data.baseline_refusal_rate)} hint="Without Wasel (simulated)" />
                         <ArrowRight className="w-6 h-6 text-gray-500 mx-auto rotate-90 sm:rotate-0" aria-hidden="true" />
                         <StatCard label="Refused with Wasel" value={pct(data.projected_refusal_rate)} tone="good"
                                   hint={`${((data.baseline_refusal_rate - data.projected_refusal_rate) * 100).toFixed(1)} points fewer refusals`} />

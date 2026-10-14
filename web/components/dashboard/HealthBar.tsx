@@ -30,16 +30,16 @@ export function HealthBar() {
     const lowBudget = callsLeft !== null && !llm.cap_reached && callsLeft <= Math.max(5, Math.ceil(llm.live_call_cap * 0.1));
     const aiBase = llm.cap_reached ? "AI budget used up: new messages are scored by rules only"
         : llm.fallback_active ? "AI running on its backup model"
-        : llm.primary === "rules" ? "AI offline: scoring with rules only"
+        : llm.primary === "rules" ? "Scoring with rules"
         : "AI scoring live";
     const ai = callsLeft !== null && !llm.cap_reached && llm.primary !== "rules"
         ? `${aiBase} · ${callsLeft} of ${llm.live_call_cap} AI calls left today` : aiBase;
-    const warn = lowBudget || llm.cap_reached || llm.fallback_active || llm.primary === "rules" || health.status !== "ok";
+    const warn = lowBudget || llm.cap_reached || llm.fallback_active || (llm.primary === "rules" && health.mode !== "public") || health.status !== "ok";
     const whatsapp = health.webhook === "enabled"
         ? (health.wa_send
             ? "WhatsApp connected, replies are sent"
             : "WhatsApp connected, replies are recorded only")
-        : "WhatsApp off (demo mode)";
+        : "WhatsApp: demo mode";
     const mode = { public: "Public demo", event: "Live event", dev: "Development" }[health.mode as string] ?? health.mode;
     const tooltip = [
         `Mode: ${health.mode}`, `AI chain: ${(llm.chain_extract || []).join(" → ") || "rules"}`,

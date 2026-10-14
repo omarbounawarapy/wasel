@@ -123,7 +123,7 @@ export default function QueueDashboard() {
                                             <span className="font-semibold text-brand-ink tabular-nums">{o.order_ref}</span>
                                             <bdi className="truncate text-gray-700">{o.customer?.display_name || "Unnamed"}</bdi>
                                             {o.channel === "whatsapp" && <MessageCircle className="w-3.5 h-3.5 text-emerald-600 shrink-0" aria-label="WhatsApp" />}
-                                            {o.is_seeded && o.seed_key && <Chip>Sample</Chip>}
+                                            {o.is_seeded && o.seed_key && <Chip>Example</Chip>}
                                         </span>
                                         <span className="block text-xs text-gray-600 truncate">
                                             {[o.product_name, o.price_tnd != null ? tnd(o.price_tnd) : null].filter(Boolean).join(" · ") || "Details not given yet"}

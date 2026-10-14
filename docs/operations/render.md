@@ -39,7 +39,7 @@ Do this 15 minutes before judges arrive. Replace `$URL` with `https://<name>.onr
 
 | State | Health bar | Scoring |
 | --- | --- | --- |
-| No `GROQ_API_KEY`, or `LIVE_LLM_DAILY_CAP=0` | "AI offline: scoring with rules only" | Recorded extractions for the sample orders, rules for new text |
+| No `GROQ_API_KEY`, or `LIVE_LLM_DAILY_CAP=0` | "Scoring with rules" | Recorded extractions for the sample orders, rules for new text |
 | Daily cap reached | "AI budget used up: new messages are scored by rules only" | Rules only; the sample orders still use their recorded extractions |
 | Backup model answering | "AI running on its backup model" | Normal |
 
