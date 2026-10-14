@@ -177,12 +177,13 @@ def test_a_schema_error_on_the_primary_moves_to_the_same_endpoints_next_model():
 
 
 def test_a_provider_down_on_the_primary_skips_the_same_endpoints_next_model():
-    """Current behaviour: ProviderDown opens the endpoint's breaker, so its fallback_model step is skipped."""
+    """ProviderDown opens the endpoint's breaker, so its fallback_model step is skipped and the skip is recorded."""
     steps = [ChainStep("primary", "groq", "m1", FailingBackend("5xx"), 6),
              ChainStep("fallback_model", "groq", "m2", _Ok(), 5)]
     res = ChainClient(steps).extract(_task(), "u", parse=lambda r: r, meter=None, sandbox_id=None, now=NOW)
     assert res.path == "rules" and res.parsed is None
-    assert [a.model for a in res.attempts] == ["m1"]          # m2 was never attempted, and no error is recorded for it
+    assert [a.model for a in res.attempts] == ["m1"]          # m2 was never attempted
+    assert "m2:skipped_after_ProviderDown" in res.errors
 
 
 def test_a_provider_down_on_the_primary_reaches_a_different_endpoint():

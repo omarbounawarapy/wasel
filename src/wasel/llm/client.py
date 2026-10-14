@@ -189,9 +189,10 @@ class ChainClient:
         """
         t0 = self._mono()
         res = ChainResult(None, None, "rules", None, None)
-        skip_same_provider_fallback = False
+        skip_same_provider_fallback = ""
         for step in self.steps_for(role):
             if step.kind == "fallback_model" and skip_same_provider_fallback:
+                res.errors.append(f"{step.model}:skipped_after_{skip_same_provider_fallback}")
                 continue
             with self._lock:
                 breaker_open = self._breaker_until.get(step.endpoint, 0) > self._mono()
@@ -229,7 +230,7 @@ class ChainClient:
                             n = 0
                         self._soft_fails[step.endpoint] = n
                 if step.kind == "primary" and not isinstance(e, _NEXT_MODEL_ERRORS):
-                    skip_same_provider_fallback = True        # Timeout / ProviderDown skip the sibling
+                    skip_same_provider_fallback = type(e).__name__    # Timeout / ProviderDown skip the sibling
                 continue
             with self._lock:
                 self._soft_fails[step.endpoint] = 0
