@@ -29,6 +29,21 @@ Wasel reads a cash-on-delivery order written in chat (Tunisian Darija, Arabizi, 
 
 The extraction model can be served from an AMD GPU with vLLM on ROCm, and the app has a fallback chain (self-hosted first, hosted second, rules last). **No AMD credits were received, so no AMD GPU serves the live demo today and the AMD path has only been tested against a stand-in endpoint.** Status and runbook: [AMD instance](operations/amd-instance.md).
 
+## AMD Developer Hackathon ACT III: alignment
+
+Source: the event page (online build 12 to 18 October 2026, track Reinvent Commerce). The full Hackathon Rule Book (lablab.ai/hackathon-rules) has not been read yet (#196), so this list covers only what the event page states.
+
+| Requirement or criterion | Where Wasel stands | Issue |
+|---|---|---|
+| A meaningful part of the workload runs on AMD infrastructure and is in the product shown to judges | **Not met.** No AMD credits were received. The serving path, runbook and fallback chain exist; nothing has run on AMD hardware | #191, #194 |
+| The serving host is visible to judges | Built: the UI and `/api/health` show the observed host and serving label | #192 |
+| Results measured on the AMD endpoint | Not done; blocked on the endpoint. The offline numbers come from the Groq and rules paths | #193, #195 |
+| Predictions do not rely on a language model alone | Met in design: the XGBoost model and `config/scoring.yaml` set the score, the language model only extracts facts and rewords drafts | #197 |
+| Team enrolled, 1 to 6 members, Discord, AMD AI Developer Program | Owner action, not recorded in the repo | #196 |
+| Submission form: title, short and long description, challenge, tags, repository, application URL, cover image, demo video, slides | Repository, URL, video and cover image exist (`docs/assets/wide-cover.png`). Slides and final descriptions are pending | #197, #198 |
+| Judging: Application of Technology, Business Value, Originality, Presentation | Business value is stated with its synthetic-data limit. Originality and presentation: README opening, 30-second path, score-drop GIF | #129, #197 |
+| Source access and licence acceptable to judges | Unknown; the repository is public with a source-available licence | #125 to #127 |
+
 ## Licence
 
 The source is public for viewing and the code is not open source; see [LICENSE](../LICENSE).

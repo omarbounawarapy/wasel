@@ -7,11 +7,13 @@
 
 Wasel scores the refusal risk of cash-on-delivery (COD) orders that customers place in chat, and helps a seller resolve the risky ones before a courier is sent.
 
-In Tunisian e-commerce a large share of COD parcels are refused at the door, and every refused parcel costs the seller a wasted trip. Customers order in Tunisian Darija (Arabic script or Arabizi), French or a mix, often with an address like "near the mosque". Wasel reads the conversation, scores the order from 0 to 100, explains the score with the customer's own words, and drafts the one question that would reduce the risk (confirm, complete the address, or pay first). When the customer answers, the order is rescored and the app shows what changed.
+A refused cash-on-delivery parcel costs the seller a wasted trip; one vendor guide puts refusals at 15 to 25 % for Tunisian fashion orders (industry-reported, see [how the problem is sourced](#try-it-in-30-seconds)). Customers order in Tunisian Darija (Arabic script or Arabizi), French or a mix, often with an address like "near the mosque". Wasel reads the conversation, scores the order from 0 to 100, explains the score with the customer's own words, and drafts the one question that would reduce the risk (confirm, complete the address, or pay first). When the customer answers, the order is rescored and the app shows what changed.
 
 **Live demo: [wasel.runs-on.dev](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake). Wasel is built by Z-Team. The source is public so that it can be read and reviewed; it is not open source, see [LICENSE](LICENSE) for what is allowed and [TEAM.md](TEAM.md) for who works on it.
 
 All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
+
+![Order #2601 scores High 87 with the risky phrases highlighted, the customer replies with a full address, and the order drops to Low 16](docs/assets/score-drop.gif)
 
 ## Try it in 30 seconds
 
@@ -22,7 +24,7 @@ All data in this repository is synthetic. Wasel is a working prototype, not a pr
 
 Prefer to watch? The [48-second reel](video/renders/wasel-reel.mp4) shows the same flow (GitHub plays it on its own page).
 
-**How the problem is sourced.** Refused cash-on-delivery parcels are the seller's cost. The only refusal range found for Tunisia is a vendor guide's 15 to 25 % for fashion ([Kolonell, 2026](https://kolonell.com/en/blog/tunisia-online-payment-gateway-comparison-2026)); there is no independent national figure, so treat it as indicative.
+**How the problem is sourced.** Refused cash-on-delivery parcels are the seller's cost. The only refusal range found for Tunisia is an industry-reported figure, a vendor guide's 15 to 25 % for fashion ([Kolonell, 2026](https://kolonell.com/en/blog/tunisia-online-payment-gateway-comparison-2026)); there is no independent national figure, so treat it as indicative.
 
 **How it differs from order-confirmation tools** (UpConfirm, Replyk, Confirmi and similar), which are built around confirming orders. Wasel reads the chat first, scores it with reasons quoted from the customer's own words, and asks one targeted question only where the risk is. A person approves what is sent, and every number comes from code, not from the model.
 
