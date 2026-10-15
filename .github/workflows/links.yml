@@ -20,12 +20,12 @@ jobs:
       - name: build the site
         run: cd web && npm ci --no-audit --no-fund && NEXT_PUBLIC_SITE_URL=https://wasel.runs-on.dev npm run build
       - name: markdown (internal and external links)
-        uses: lycheeverse/lychee-action@82202e5e9c2f4ef1a55a3d02563e1cb6041e5332 # v2.4.1
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           args: --config lychee.toml --no-progress './**/*.md'
           fail: true
       - name: built site (internal links and assets only)
-        uses: lycheeverse/lychee-action@82202e5e9c2f4ef1a55a3d02563e1cb6041e5332 # v2.4.1
+        uses: lycheeverse/lychee-action@e7477775783ea5526144ba13e8db5eec57747ce8 # v2.9.0
         with:
           args: --config lychee.toml --no-progress --offline --root-dir "$GITHUB_WORKSPACE/web/dist" 'web/dist/**/*.html'
           fail: true
