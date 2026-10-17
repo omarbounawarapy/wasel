@@ -42,7 +42,7 @@ export default function PrivacyPage() {
 
           <section className="space-y-2">
             <h2 className="text-base font-bold text-brand-ink">Who receives the text</h2>
-            <p>To read a message, the server sends its text to a language model provider: <strong>Groq</strong>. A Google Gemini backup exists in the code and is used only if the operator enables it. Wasel does not sell or share your text with anyone else, and does not use it for advertising.</p>
+            <p>To read a message, the server sends its text to a language model provider: <strong>Groq</strong>. If the operator turns on <strong>AMD Token Factory</strong> (AMD's hosted model API), the text goes there first and Groq becomes its backup. A Google Gemini backup exists in the code and is used only if the operator enables it. Wasel does not sell or share your text with anyone else, and does not use it for advertising.</p>
             <p>The site is served through Render and Cloudflare, which see your IP address and the pages you request, as any web host does.</p>
           </section>
 

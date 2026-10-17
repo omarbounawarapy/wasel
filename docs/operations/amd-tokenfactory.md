@@ -53,4 +53,4 @@ make eval-live
 
 ## 5. The demo
 
-To serve the Render demo from Token Factory, add the three variables in the Render dashboard (not in `render.yaml`) and redeploy. The Monitor page then names AMD Token Factory as the source of the last AI answer. The privacy page lists Groq as the model provider; add AMD as a recipient of message text before switching the public demo.
+To serve the Render demo from Token Factory, add the three variables in the Render dashboard (not in `render.yaml`) and redeploy. The Monitor page then names AMD Token Factory as the source of the last AI answer. The privacy page already names AMD Token Factory as a recipient of message text when it is switched on.
