@@ -75,7 +75,10 @@ llm-preflight: ## run ON the GPU host before serving: GPU, VRAM, disk, docker, p
 llm-check: ## verify the self-hosted LLM endpoint from the client (GROQ_BASE_URL + SELF_HOSTED_API_KEY in .env)
 	bash scripts/ops/vllm_serve.sh check
 
-.PHONY: help setup lock run up ui web a11y links web-dev serve deploy render-smoke wa-up llm-serve llm-preflight llm-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
+tf-check: ## AMD Token Factory alone: send real extraction cases (AMD_TOKENFACTORY_* in .env; docs/operations/amd-tokenfactory.md)
+	$(PY) scripts/ops/endpoint_check.py amd-tokenfactory
+
+.PHONY: help setup lock run up ui web a11y links web-dev serve deploy render-smoke wa-up llm-serve llm-preflight llm-check tf-check test lint fmt hygiene check seed demo generate train warm eval eval-live golden failures failures-llm sessions drill smoke mocks clean
 
 help: ## list targets
 	@grep -hE '^[a-z-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*## "}{printf "  %-10s %s\n",$$1,$$2}'

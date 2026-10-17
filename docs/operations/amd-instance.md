@@ -4,6 +4,8 @@ The steps to bring the AMD Developer Cloud GPU online for the extraction model, 
 
 ## Status (13 October 2026)
 
+- **16 October 2026:** the AMD ACT III hackathon does not need these credits. It uses the AMD Token Factory API; see [AMD Token Factory](amd-tokenfactory.md). This runbook stays for a GPU instance if credits arrive later.
+
 - **No AMD Developer Cloud credits have been received.** The credit request is not confirmed. Until credits arrive, no AMD GPU runs this project.
 - The AMD serving path is prepared: the preflight, ROCm launch, client template, health label and the hosted backup below. It has been tested only against a stand-in endpoint, not on AMD hardware.
 - The live demo answers from the hosted Groq API (or from rules if no key is set). Do not describe the demo as AMD-served until `/api/health` shows the self-hosted step answering and the committed evaluation report names the AMD model and hardware.

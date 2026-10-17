@@ -379,7 +379,9 @@ def main(argv=None) -> int:
     th = yaml.safe_load((ROOT / "config" / "eval.yaml").read_text())["live" if a.live else "offline"]
     report = {"mode": "live" if a.live else "offline", "versions": active_versions(),
               "config_hash": default_config().short_hash, "runtime_s": round(time.monotonic() - t0, 1),
-              "results": results, "llm_usage": _usage_delta(usage0, trace.summary()) if a.live else {}}
+              "results": results, "llm_usage": _usage_delta(usage0, trace.summary()) if a.live else {},
+              # endpoint:model per step, in order: names where `paths.llm` answers came from (e.g. AMD Token Factory)
+              "llm_chain": llm.chain_names if llm else []}
     for task, m in results.items():
         m["provenance"] = PROVENANCE[task]
     report["gate_failures"] = gate(report, th)

@@ -1,0 +1,451 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Wasel pitch</title>
+<style>
+@font-face { font-family:"Geist"; src:url(fonts/Geist-Regular.woff2) format("woff2"); font-weight:400 }
+@font-face { font-family:"Geist"; src:url(fonts/Geist-Medium.woff2) format("woff2"); font-weight:500 }
+@font-face { font-family:"Geist"; src:url(fonts/Geist-SemiBold.woff2) format("woff2"); font-weight:600 }
+@font-face { font-family:"Geist"; src:url(fonts/Geist-Bold.woff2) format("woff2"); font-weight:700 }
+@font-face { font-family:"Geist Mono"; src:url(fonts/GeistMono-Regular.woff2) format("woff2"); font-weight:400 }
+@font-face { font-family:"Geist Mono"; src:url(fonts/GeistMono-Medium.woff2) format("woff2"); font-weight:500 }
+
+:root {
+  --paper:#f6f3ec; --paper-2:#ece7da; --ink:#121826; --navy:#12386b; --navy-2:#3d6199;
+  --mute:#566072; --line:#d6d0c1; --mark:#ffd84d; --high:#c8261b; --high-bg:#fbe3df;
+  --low:#0f7b49; --low-bg:#dcf1e5; --med:#a85600; --white:#ffffff;
+  --ease:cubic-bezier(.16,1,.3,1);
+}
+* { box-sizing:border-box; margin:0; padding:0 }
+html { background:#0c111b }
+body { font-family:"Geist",system-ui,sans-serif; color:var(--ink); -webkit-font-smoothing:antialiased; font-feature-settings:"tnum" 1 }
+::selection { background:var(--mark); color:var(--ink) }
+
+/* ---------- slide frame ---------- */
+.slide { width:1920px; height:1080px; background:var(--paper); position:relative; overflow:hidden;
+  padding:104px 120px 120px; display:flex; flex-direction:column }
+.slide > footer { position:absolute; left:120px; right:120px; bottom:44px; display:flex; justify-content:space-between;
+  font-size:22px; color:var(--mute); letter-spacing:.01em }
+h1,h2 { font-weight:700; letter-spacing:-.035em; color:var(--navy); text-wrap:balance }
+h2 { font-size:92px; line-height:1.02; max-width:1500px }
+p { font-size:38px; line-height:1.38; text-wrap:pretty }
+.lede { font-size:40px; line-height:1.36; color:var(--ink); max-width:1000px }
+.mute { color:var(--mute) }
+.small { font-size:26px; line-height:1.4; color:var(--mute) }
+.mono { font-family:"Geist Mono",ui-monospace,monospace; font-weight:500; letter-spacing:-.01em }
+mark { background:linear-gradient(transparent 6%, var(--mark) 6%, var(--mark) 94%, transparent 94%); color:inherit; padding:0 .12em; margin:0 -.04em; border-radius:.1em; -webkit-box-decoration-break:clone; box-decoration-break:clone }
+.body { flex:1; display:flex; flex-direction:column; justify-content:center; padding-bottom:40px }
+
+/* risk pill, as drawn in the product */
+.pill { display:inline-flex; align-items:center; gap:.45em; font-weight:700; border-radius:999px; padding:.18em .7em .2em; font-size:40px; line-height:1.2; white-space:nowrap }
+.pill i { width:.5em; height:.5em; border-radius:50%; background:currentColor; display:block }
+.pill.high { background:var(--high); color:#fff } .pill.low { background:var(--low); color:#fff }
+.pill.big { font-size:76px }
+
+/* chat bubbles: content, not decoration */
+.bub { background:var(--white); border-radius:26px 26px 26px 8px; padding:20px 30px 22px; font-size:34px; line-height:1.35;
+  box-shadow:0 1px 0 rgba(18,24,38,.06), 0 10px 30px -14px rgba(18,24,38,.28); width:fit-content; max-width:100% }
+.bub.out { background:#d9f2df; border-radius:26px 26px 8px 26px; margin-left:auto }
+.bub small { display:block; font-size:22px; color:var(--mute); margin-top:6px; line-height:1.3 }
+.bub[dir=rtl] { font-family:"Noto Sans Arabic","Geist",sans-serif; border-radius:26px 26px 8px 26px; font-size:36px }
+
+/* screenshots */
+.shot { display:block; border-radius:18px; background:#fff;
+  box-shadow:0 2px 4px rgba(18,24,38,.10), 0 40px 90px -30px rgba(18,24,38,.45) }
+
+/* reasons rows (score explanation) */
+.reasons { display:flex; flex-direction:column; gap:26px }
+.reason .row { display:flex; justify-content:space-between; gap:24px; font-size:30px; line-height:1.3 }
+.reason b { font-weight:700; font-size:34px }
+.reason .bar { height:10px; border-radius:6px; background:var(--paper-2); margin-top:10px; overflow:hidden }
+.reason .bar span { display:block; height:100%; border-radius:6px }
+.up b { color:var(--high) } .up .bar span { background:var(--high) }
+.down b { color:var(--low) } .down .bar span { background:var(--low) }
+
+/* ---------- slide-specific ---------- */
+.s1 { background:var(--navy); color:#fff; padding-top:120px }
+.s1 h1 { font-size:132px; line-height:1; color:#fff; max-width:1500px }
+.s1 .lede { color:#cfdcf1; margin-top:48px; max-width:1180px }
+.s1 footer { color:#9fb4d6 }
+.s1 .logo { width:340px; background:#fff; border-radius:20px; padding:20px 30px }
+.s1 mark { color:var(--ink) }
+
+.trip { display:grid; grid-template-columns:repeat(4,1fr); gap:0; margin-top:96px; position:relative }
+.trip::before { content:""; position:absolute; left:0; right:0; top:27px; height:3px; background:var(--line) }
+.trip div { position:relative; padding-right:36px; font-size:40px; line-height:1.3; font-weight:500 }
+.trip div::before { content:""; display:block; width:56px; height:56px; border-radius:50%; background:var(--paper); border:3px solid var(--navy); margin-bottom:26px; position:relative }
+.trip div.bad::before { background:var(--high); border-color:var(--high) }
+.trip div.bad { color:var(--high) }
+.trip span { display:block; font-size:28px; font-weight:400; color:var(--mute); margin-top:8px }
+.big-num { font-size:210px; font-weight:700; letter-spacing:-.05em; line-height:.9; color:var(--high) }
+
+.mix { display:grid; grid-template-columns:1fr 1fr; gap:44px 70px; margin-top:20px; align-items:start }
+.mix .bub { font-size:42px } .mix .bub[dir=rtl] { font-size:44px } .mix .bub small { font-size:26px }
+.mix .bub:nth-child(2n) { margin-left:60px }
+.langtag { display:block; font-size:24px; font-weight:600; letter-spacing:.06em; text-transform:uppercase; color:var(--mute); margin-bottom:10px }
+
+.s4 .cols { display:grid; grid-template-columns:560px 1fr; gap:80px; align-items:center; flex:1; margin-top:-30px }
+.s4 ol { list-style:none; display:flex; flex-direction:column; gap:44px; margin-top:56px; counter-reset:n }
+.s4 li { font-size:36px; line-height:1.3; counter-increment:n; padding-left:68px; position:relative }
+.s4 li::before { content:counter(n); position:absolute; left:0; top:0; width:46px; height:46px; border-radius:50%; background:var(--navy); color:#fff; font-size:26px; font-weight:700; display:grid; place-items:center }
+
+.flow { display:grid; grid-template-columns:540px 70px 520px 70px 480px; align-items:start; margin-top:30px }
+.s5 .reason .bar { display:none } .s5 .reasons { gap:14px } .s5 .reason .row { font-size:32px } .s5 .reason b { font-size:36px }
+.flow h3 { font-size:28px; font-weight:600; color:var(--mute); margin-bottom:8px; letter-spacing:0 }
+.flow .col { display:flex; flex-direction:column; gap:16px }
+.flow .arrow { align-self:center; text-align:center; color:var(--navy-2); margin-top:100px }
+.flow .arrow svg { width:64px; height:24px }
+.delta { font-size:34px; font-weight:600; color:var(--low); margin-top:8px }
+.s5 .bub small { font-size:23px }
+.gloss { font-size:22px; color:var(--mute); line-height:1.3; margin-top:6px; font-style:italic }
+
+.s7 .diagram { margin-top:44px }
+.pipe { display:grid; grid-template-columns:repeat(5,1fr); gap:0; position:relative }
+.pipe .node { padding:0 28px 0 0; position:relative }
+.pipe .node h3 { font-size:54px; letter-spacing:-.02em; color:var(--navy); margin-bottom:14px }
+.pipe .node p { font-size:31px; line-height:1.35; color:var(--ink) }
+.pipe .who { display:inline-block; font-size:22px; font-weight:700; letter-spacing:.04em; text-transform:uppercase; padding:6px 14px; border-radius:8px; margin-bottom:22px }
+.who.ai { background:var(--paper-2); color:var(--ink) }
+.who.code { background:var(--navy); color:#fff }
+.pipe::before { content:""; position:absolute; left:0; right:40px; top:15px; height:3px; background:var(--navy) }
+.pipe .node:not(:last-child)::after { content:""; position:absolute; right:6px; top:6px; width:0; height:0; border-left:16px solid var(--navy); border-top:10px solid transparent; border-bottom:10px solid transparent }
+
+.s8 .two { display:grid; grid-template-columns:1fr 1fr; gap:110px; margin-top:34px }
+.s8 h3 { font-size:38px; font-weight:600; color:var(--ink); margin-bottom:26px; letter-spacing:-.01em; line-height:1.25 }
+.stat { display:grid; grid-template-columns:460px 1fr; align-items:baseline; gap:24px; padding:20px 0; border-top:1px solid var(--line) }
+.stat:last-of-type { border-bottom:1px solid var(--line) }
+.stat b { font-size:84px; white-space:nowrap; letter-spacing:-.03em; font-weight:700; color:var(--navy); line-height:1 }
+.stat.weak b { color:var(--high) }
+.stat span { font-size:38px; line-height:1.3; color:var(--ink) }
+
+.s9 .cols { display:grid; grid-template-columns:1050px 1fr; gap:100px; align-items:center; flex:1 }
+.s9 ul { list-style:none; display:flex; flex-direction:column; gap:22px }
+.s9 li { font-size:32px; line-height:1.3 }
+.s9 li b { font-weight:600 }
+
+.route { display:flex; flex-direction:column; margin-top:28px; max-width:1680px }
+.route .step { display:grid; grid-template-columns:70px 1fr auto; align-items:center; gap:24px; padding:20px 0; border-top:1px solid var(--line) }
+.route .step:last-child { border-bottom:1px solid var(--line) }
+.route .n { width:52px; height:52px; border-radius:50%; background:var(--navy); color:#fff; font-weight:700; font-size:28px; display:grid; place-items:center }
+.route .step.off .n { background:var(--paper-2); color:var(--mute) }
+.route h3 { font-size:38px; letter-spacing:-.015em }
+.route .note { font-size:25px; color:var(--mute); margin-top:2px }
+.chip { font-size:24px; font-weight:600; padding:8px 18px; border-radius:999px; white-space:nowrap }
+.chip.todo { background:var(--high-bg); color:#8c1d14 }
+.chip.live { background:var(--low-bg); color:#0a5a35 }
+.chip.opt { background:var(--paper-2); color:var(--mute) }
+
+.s11 .two { display:grid; grid-template-columns:1fr 1fr; gap:100px; margin-top:64px }
+.s11 h3 { font-size:42px; font-weight:700; color:var(--navy); margin-bottom:24px }
+.s11 ul { list-style:none; display:flex; flex-direction:column; gap:20px }
+.s11 li { font-size:38px; line-height:1.3; padding-left:46px; position:relative }
+.s11 li::before { content:""; position:absolute; left:0; top:.55em; width:16px; height:16px; border-radius:50%; background:var(--low) }
+.s11 .not li::before { background:var(--navy-2) }
+
+.s12 { background:var(--navy); color:#fff }
+.s12 h2 { color:#fff }
+.s12 .cols { display:grid; grid-template-columns:1fr 440px; gap:110px; flex:1; align-items:center }
+.s12 ol { list-style:none; display:flex; flex-direction:column; gap:30px; margin-top:44px }
+.s12 li { font-size:42px; line-height:1.25; font-weight:500; padding-left:84px; position:relative; max-width:1100px }
+.s12 li::before { counter-increment:k; content:counter(k); position:absolute; left:0; top:-2px; width:56px; height:56px; border-radius:50%; background:var(--mark); color:var(--ink); font-weight:700; font-size:32px; display:grid; place-items:center }
+.s12 ol { counter-reset:k }
+.s12 footer { color:#9fb4d6 }
+.qr { background:#fff; border-radius:24px; padding:34px; text-align:center }
+.qr svg { width:100%; height:auto; display:block }
+.qr p { font-size:30px; font-weight:600; color:var(--navy); margin-top:22px; line-height:1.2 }
+.links { margin-top:40px; font-size:30px; color:#cfdcf1; line-height:1.6 }
+.links b { color:#fff; font-weight:600 }
+
+/* ---------- screen viewer (not used when printing) ---------- */
+@media screen {
+  body { height:100vh; overflow:hidden; display:grid; place-items:center }
+  #stage { width:1920px; height:1080px; transform-origin:center center; position:relative }
+  .slide { position:absolute; inset:0; opacity:0; visibility:hidden; transition:opacity .35s var(--ease) }
+  .slide.on { opacity:1; visibility:visible }
+  #hud { position:fixed; right:18px; bottom:14px; color:#7d8aa3; font:500 14px/1 "Geist",sans-serif; letter-spacing:.04em }
+}
+@media print {
+  @page { size:1920px 1080px; margin:0 }
+  html,body { background:none }
+  #stage { transform:none !important; width:1920px; height:auto }
+  .slide { page-break-after:always; break-after:page }
+  .slide:last-child { page-break-after:auto }
+  #hud { display:none }
+}
+@media (prefers-reduced-motion:reduce) { .slide { transition:none } }
+</style>
+</head>
+<body>
+<div id="stage">
+
+<!-- 1 -->
+<section class="slide s1">
+  <img class="logo" src="assets/wasel-logo.png" alt="Wasel">
+  <div class="body">
+    <h1>Check the risky orders before the courier leaves.</h1>
+    <p class="lede">Wasel reads cash-on-delivery orders from chat, scores the chance the customer refuses, and drafts the one question that lowers it.</p>
+  </div>
+  <div style="position:absolute;right:120px;top:108px;display:flex;align-items:center;gap:36px"><span class="pill high" style="font-size:64px;box-shadow:0 0 0 6px rgba(255,255,255,.12)"><i></i>High 87</span><svg width="70" height="26" viewBox="0 0 64 24" fill="none" stroke="#9fb4d6" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h58M50 3l10 9-10 9"/></svg><span class="pill low" style="font-size:64px"><i></i>Low 16</span></div>
+  <footer><span>Z-Team · AMD Developer Hackathon ACT III · Reinvent Commerce</span><span>wasel.runs-on.dev</span></footer>
+</section>
+
+<!-- 2 -->
+<section class="slide">
+  <h2>A refused parcel is a wasted trip.</h2>
+  <div class="body">
+    <p class="lede" style="font-size:54px;max-width:1500px;line-height:1.28">One vendor guide puts refusals at <span class="mono" style="color:var(--high);font-size:1.05em">15 to 25 %</span> for Tunisian fashion orders. The seller pays for the courier either way.</p>
+    <div class="trip">
+      <div>Customer orders in chat<span>Darija, French, Arabic</span></div>
+      <div>Seller books a courier<span>The parcel is packed and paid for</span></div>
+      <div>Courier knocks<span>The address was "near the mosque"</span></div>
+      <div class="bad">Customer says no<span>The seller pays for the trip</span></div>
+    </div>
+  </div>
+  <footer><span>Industry-reported figure, Kolonell 2026. No independent national number exists.</span><span>2</span></footer>
+</section>
+
+<!-- 3 -->
+<section class="slide">
+  <h2>Customers write the way they talk.</h2>
+  <div class="body">
+    <div class="mix">
+      <div><span class="langtag">Arabizi</span><div class="bub">Douar Ouled Ali, <mark>9rib el jemaa</mark><small>Douar Ouled Ali, near the mosque</small></div></div>
+      <div><span class="langtag">Arabic script</span><div class="bub" dir="rtl">في نابل، <mark>قريب الجامع</mark></div></div>
+      <div><span class="langtag">French</span><div class="bub">je veux commander le jean slim. rue de Marseille, <mark>à côté de la poste</mark>, Sousse</div></div>
+      <div><span class="langtag">Mixed, in one message</span><div class="bub">ama <mark>ghali chwaya</mark>. <mark>mouch dima fi dar</mark><small>but it's a bit expensive. I'm not always home</small></div></div>
+    </div>
+    <p class="lede" style="margin-top:56px">Sellers read these by eye, one at a time. Wasel reads all of them and quotes the words that worry it.</p>
+  </div>
+  <footer><span>Messages from the demo data. Highlight marks the words Wasel flags.</span><span>3</span></footer>
+</section>
+
+<!-- 4 -->
+<section class="slide s4">
+  <h2>Wasel scores the order and shows why.</h2>
+  <div class="cols">
+    <div>
+      <ol>
+        <li>The customer's own words are highlighted.</li>
+        <li>Each reason carries its points.</li>
+        <li>The seller decides. Wasel drafts the question.</li>
+      </ol>
+    </div>
+    <img class="shot" src="assets/order.png" alt="Order 2601 scored High 87, with the customer's risky words highlighted and the reasons listed" style="width:1000px;justify-self:end;margin-top:0">
+  </div>
+  <footer><span>Order #2601, public demo, synthetic data.</span><span>4</span></footer>
+</section>
+
+<!-- 5 -->
+<section class="slide s5">
+  <h2 style="max-width:1700px">One question takes it from 87 to 16.</h2>
+  <div class="flow">
+    <div class="col">
+      <h3>Before</h3>
+      <div class="bub" style="font-size:32px;padding:16px 26px 18px">salam, nheb el casque bluetooth</div>
+      <div class="bub" style="font-size:32px;padding:16px 26px 18px">Douar Ouled Ali, <mark>9rib el jemaa</mark></div>
+      <div class="bub" style="font-size:32px;padding:16px 26px 18px">ama <mark>ghali chwaya</mark>. <mark>mouch dima fi dar</mark>, 3ayetli 9bal</div>
+      <div style="margin-top:10px"><span class="pill high big" style="font-size:64px"><i></i>High 87</span></div>
+      <div class="reasons" style="margin-top:22px">
+        <div class="reason up"><div class="row"><span>3 warning signs</span><b>+17</b></div><div class="bar"><span style="width:62%"></span></div></div>
+        <div class="reason up"><div class="row"><span>rural delivery zone</span><b>+13</b></div><div class="bar"><span style="width:48%"></span></div></div>
+        <div class="reason up"><div class="row"><span>vague address</span><b>+12</b></div><div class="bar"><span style="width:44%"></span></div></div>
+      </div>
+    </div>
+    <div class="arrow"><svg viewBox="0 0 64 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h58M50 3l10 9-10 9"/></svg></div>
+    <div class="col">
+      <h3>Wasel asks one question</h3>
+      <div class="bub out" style="font-size:30px;padding:18px 26px 20px">Bech n7adroulk livraison mta3 casque bluetooth, Sami, tnajjem tb3athli el 3onwen el kamel: esm el chera3 w numéro el dar?
+        <small>To prepare your delivery, could you send the full address: street name and house number?</small></div>
+      <h3 style="margin-top:20px">The customer answers</h3>
+      <div class="bub" style="font-size:30px;padding:18px 26px 20px">ey behi. Douar Ouled Ali, triq el jemaa, dar 14, el bab lazra9 9odem el pharmacie. ghodwa ba3d 17h nkoun fi dar
+        <small>OK. Street, house 14, blue door opposite the pharmacy. Tomorrow after 5 pm I'm home</small></div>
+    </div>
+    <div class="arrow"><svg viewBox="0 0 64 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h58M50 3l10 9-10 9"/></svg></div>
+    <div class="col">
+      <h3>Rescored</h3>
+      <div><span class="pill low big" style="font-size:64px"><i></i>Low 16</span></div>
+      <div class="delta">71 points lower. Ship it.</div>
+      <div class="reasons" style="margin-top:22px">
+        <div class="reason down"><div class="row"><span>full address given</span><b>−20</b></div><div class="bar"><span style="width:38%"></span></div></div>
+        <div class="reason up"><div class="row"><span>rural delivery zone</span><b style="color:var(--high)">+11</b></div><div class="bar"><span style="width:40%"></span></div></div>
+        <div class="reason up"><div class="row"><span>high order value (220 TND)</span><b style="color:var(--high)">+9</b></div><div class="bar"><span style="width:33%"></span></div></div>
+      </div>
+    </div>
+  </div>
+  <footer><span>Real order #2601 from the live demo. English lines are our own glosses.</span><span>5</span></footer>
+</section>
+
+<!-- 6 -->
+<section class="slide">
+  <h2>The riskiest orders come first.</h2>
+  <div style="display:grid;grid-template-columns:1fr 520px;gap:80px;align-items:center;flex:1">
+    <img class="shot" src="assets/queue.png" alt="The order queue sorted by risk with next step and reason for each order" style="width:1160px">
+    <div>
+      <p class="lede" style="font-size:36px">Each row ends in one next step.</p>
+      <div style="display:flex;flex-direction:column;gap:26px;margin-top:38px">
+        <div style="display:flex;gap:22px;align-items:center"><span class="pill high" style="font-size:30px"><i></i>High</span><span style="font-size:32px">Confirm, or ask for prepayment</span></div>
+        <div style="display:flex;gap:22px;align-items:center"><span class="pill" style="font-size:30px;background:#f3b34a;color:#3a2200"><i></i>Medium</span><span style="font-size:32px">One quick question</span></div>
+        <div style="display:flex;gap:22px;align-items:center"><span class="pill low" style="font-size:30px"><i></i>Low</span><span style="font-size:32px">Ship it</span></div>
+      </div>
+      <p class="small" style="margin-top:44px">A person sends every message unless the seller switches on automatic sending for clear-cut replies.</p>
+    </div>
+  </div>
+  <footer><span>Order queue, public demo, synthetic data.</span><span>6</span></footer>
+</section>
+
+<!-- 7 -->
+<section class="slide s7">
+  <h2>The model reads. Code scores.</h2>
+  <div class="body">
+    <div class="diagram">
+      <div class="pipe">
+        <div class="node"><span class="who ai">Language model</span><h3>Extract</h3><p>Fills a 12-field schema from the chat. Rules take over if no model answers.</p></div>
+        <div class="node"><span class="who code">Code</span><h3>Verify</h3><p>Every quote must appear in the original text, or it is dropped.</p></div>
+        <div class="node"><span class="who code">Code</span><h3>Score</h3><p>XGBoost with monotone limits, plus rules in <span class="mono" style="font-size:.92em">scoring.yaml</span>.</p></div>
+        <div class="node"><span class="who code">Code</span><h3>Draft</h3><p>Approved templates in the customer's language, checked three ways.</p></div>
+        <div class="node"><span class="who ai" style="background:var(--mark)">Seller</span><h3>Send</h3><p>A person approves what goes out.</p></div>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:100px;margin-top:84px">
+      <p style="font-size:38px">The language model never picks a number. That is how we can show the reason behind every score.</p>
+      <p style="font-size:38px">A customer who writes "ignore previous instructions" is flagged. The order is still scored, and the address stays unconfirmed.</p>
+    </div>
+  </div>
+  <footer><span>FastAPI · SQLite · XGBoost · Next.js · Groq gpt-oss · Gemini optional</span><span>7</span></footer>
+</section>
+
+<!-- 8 -->
+<section class="slide s8">
+  <h2>Tested on every change.</h2>
+  <div class="two" style="grid-template-columns:1fr;margin-top:50px">
+    <div>
+      <h3>Regression gate: 279 extraction, 165 outbound and 32 injection cases</h3>
+      <div class="stat"><b>96.1 %</b><span>of orders recognised</span></div>
+      <div class="stat"><b>97.1 %</b><span>of addresses within one level</span></div>
+      <div class="stat"><b>0</b><span>quotes missing from the source text</span></div>
+      <div class="stat"><b>165 / 165</b><span>unsafe drafts blocked or held</span></div>
+      <div class="stat"><b>32 / 32</b><span>injection attempts flagged</span></div>
+    </div>
+  </div>
+  <footer><span>Offline run, no keys. 737 tests. Full report: docs/evaluation.md</span><span>8</span></footer>
+</section>
+
+<!-- 9 -->
+<section class="slide s9">
+  <h2>A simulated 464 TND saved per 1,000 orders.</h2>
+  <div class="cols">
+    <svg viewBox="0 0 1050 640" width="1050" height="640" role="img" aria-label="Simulated savings per 1,000 orders: 251 TND if a confirmation question works on 15 percent of orders, 464 at 30 percent, 677 at 45 percent" style="font-family:Geist,sans-serif">
+      <line x1="30" y1="540" x2="1030" y2="540" stroke="#d6d0c1" stroke-width="3"/>
+      <rect x="90"  y="377" width="230" height="163" rx="10" fill="#9db4d8"/>
+      <rect x="410" y="238" width="230" height="302" rx="10" fill="#12386b"/>
+      <rect x="730" y="100" width="230" height="440" rx="10" fill="#9db4d8"/>
+      <text x="205" y="350" text-anchor="middle" font-size="58" font-weight="700" fill="#12386b">251</text>
+      <text x="525" y="208" text-anchor="middle" font-size="72" font-weight="700" fill="#12386b">464</text>
+      <text x="845" y="70" text-anchor="middle" font-size="58" font-weight="700" fill="#12386b">677</text>
+      <text x="205" y="592" text-anchor="middle" font-size="30" fill="#566072">15 %</text>
+      <text x="525" y="592" text-anchor="middle" font-size="30" fill="#121826" font-weight="600">30 %, our assumption</text>
+      <text x="845" y="592" text-anchor="middle" font-size="30" fill="#566072">45 %</text>
+      <text x="30" y="632" font-size="26" fill="#566072">Share of asked orders where a confirmation question prevents the refusal</text>
+    </svg>
+    <div>
+      <ul>
+        <li>TND saved per 1,000 orders, by how often a confirmation question prevents a refusal.</li>
+        <li><b>Refusals fall from 30.0 % to 23.6 %</b> on 2,001 held-out orders in the simulation.</li>
+        <li>A failed trip costs 8 TND. A prepayment request prevents 60 % of refusals and loses 10 % of good orders.</li>
+        <li>The refusal labels are simulated, not observed. A pilot with a real seller replaces them.</li>
+      </ul>
+    </div>
+  </div>
+  <footer><span>data/reports/impact.json. The app labels this figure "simulated" wherever it appears.</span><span>9</span></footer>
+</section>
+
+<!-- 10 -->
+<section class="slide">
+  <h2>AMD Token Factory comes first in the route.</h2>
+  <div class="route">
+    <div class="step"><span class="n">1</span><div><h3>AMD Token Factory</h3><div class="note">Tried first when its key, address and model are set</div></div><span class="chip opt">Key pending</span></div>
+    <div class="step"><span class="n">2</span><div><h3>Groq, gpt-oss-120b</h3><div class="note">Serves the live demo today</div></div><span class="chip live">Running</span></div>
+    <div class="step off"><span class="n">3</span><div><h3>Gemini</h3><div class="note">Off unless the seller enables it</div></div><span class="chip opt">Optional</span></div>
+    <div class="step"><span class="n">4</span><div><h3>Rules extractor</h3><div class="note">Needs no provider and no key</div></div><span class="chip live">Always on</span></div>
+  </div>
+  <div style="display:flex;justify-content:space-between;gap:80px;margin-top:30px">
+    <p style="font-size:31px;max-width:1000px">The route is built and covered by tests. Wasel keeps working with any provider missing, down to the rules extractor.</p>
+    <p style="font-size:31px;max-width:560px">When the key arrives: <span class="mono" style="font-size:.9em">make tf-check</span>, then <span class="mono" style="font-size:.9em">make eval-live</span>.</p>
+  </div>
+  <footer><span>docs/operations/amd-tokenfactory.md · docs/operations/amd-act3-facts.md</span><span>10</span></footer>
+</section>
+
+<!-- 11 -->
+<section class="slide s11">
+  <h2>What is built, and what comes next.</h2>
+  <div class="two">
+    <div>
+      <h3>Built</h3>
+      <ul>
+        <li>The pipeline from chat to score, draft and rescore</li>
+        <li>The signed WhatsApp webhook path</li>
+        <li>An offline gate that runs on every change</li>
+        <li>A live public demo you can open now</li>
+      </ul>
+    </div>
+    <div class="not">
+      <h3>Next</h3>
+      <ul>
+        <li>A pilot with one real seller</li>
+        <li>Refusal labels from real orders</li>
+        <li>Native review of every template</li>
+        <li>Token Factory evaluation on AMD</li>
+      </ul>
+    </div>
+  </div>
+  
+  <footer><span>The data is synthetic. The source is MIT licensed.</span><span>11</span></footer>
+</section>
+
+<!-- 12 -->
+<section class="slide s12">
+  <h2>Three things to remember.</h2>
+  <div class="cols">
+    <div>
+      <ol>
+        <li>The seller sees the refusal risk before the courier leaves.</li>
+        <li>The model reads the chat. Code checks every quote and sets the score.</li>
+        <li>Wasel keeps working when any one provider is missing.</li>
+      </ol>
+      <div class="links"><b>Live demo</b> wasel.runs-on.dev · open order #2601<br><b>Code</b> github.com/omarbounawarapy/wasel</div>
+    </div>
+    <div class="qr">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 25 25" shape-rendering="crispEdges" ><path class="qrline" stroke="#12386b" d="M0 0.5h7m2 0h1m1 0h1m3 0h1m2 0h7m-25 1h1m5 0h1m1 0h2m2 0h1m2 0h1m2 0h1m5 0h1m-25 1h1m1 0h3m1 0h1m2 0h1m5 0h1m2 0h1m1 0h3m1 0h1m-25 1h1m1 0h3m1 0h1m4 0h2m5 0h1m1 0h3m1 0h1m-25 1h1m1 0h3m1 0h1m1 0h1m1 0h1m2 0h3m2 0h1m1 0h3m1 0h1m-25 1h1m5 0h1m3 0h7m1 0h1m5 0h1m-25 1h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7m-15 1h1m1 0h5m-17 1h1m1 0h1m1 0h1m1 0h1m3 0h1m2 0h1m6 0h1m2 0h1m-22 1h1m1 0h2m1 0h1m1 0h1m2 0h1m3 0h3m5 0h1m-24 1h1m3 0h2m1 0h2m3 0h1m2 0h1m1 0h2m2 0h3m-25 1h2m2 0h2m2 0h1m1 0h1m1 0h3m8 0h1m-24 1h3m1 0h1m1 0h1m1 0h1m2 0h3m3 0h3m1 0h1m1 0h2m-22 1h2m2 0h1m2 0h2m4 0h1m1 0h1m2 0h1m2 0h1m-25 1h1m1 0h1m2 0h2m2 0h2m1 0h2m2 0h1m1 0h2m2 0h3m-24 1h3m1 0h1m2 0h1m2 0h1m1 0h1m2 0h1m1 0h1m1 0h1m2 0h1m-24 1h1m2 0h2m1 0h1m1 0h1m1 0h1m1 0h10m-14 1h4m3 0h2m3 0h2m1 0h2m-25 1h7m2 0h1m2 0h2m1 0h2m1 0h1m1 0h2m1 0h2m-25 1h1m5 0h1m2 0h1m2 0h2m1 0h2m3 0h2m-22 1h1m1 0h3m1 0h1m1 0h3m2 0h1m2 0h6m-22 1h1m1 0h3m1 0h1m2 0h2m1 0h2m1 0h1m3 0h4m-23 1h1m1 0h3m1 0h1m1 0h1m1 0h1m4 0h1m4 0h1m3 0h1m-25 1h1m5 0h1m2 0h1m1 0h3m1 0h2m3 0h2m1 0h1m-24 1h7m1 0h1m3 0h2m1 0h5m3 0h2"/></svg>
+      <p>Try order #2601</p>
+    </div>
+  </div>
+  <footer><span>Built by Z-Team</span><span>12</span></footer>
+</section>
+
+</div>
+<div id="hud"></div>
+<script>
+(function () {
+  var slides = [].slice.call(document.querySelectorAll('.slide')), i = 0, stage = document.getElementById('stage'), hud = document.getElementById('hud');
+  function fit() { var s = Math.min(innerWidth / 1920, innerHeight / 1080); stage.style.transform = 'scale(' + s + ')'; }
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach(function (s, k) { s.classList.toggle('on', k === i); });
+    hud.textContent = (i + 1) + ' / ' + slides.length;
+    try { history.replaceState(null, '', '#' + (i + 1)); } catch (e) {}
+  }
+  addEventListener('resize', fit);
+  addEventListener('keydown', function (e) {
+    if (e.key === 'ArrowRight' || e.key === 'PageDown' || e.key === ' ') { e.preventDefault(); show(i + 1); }
+    else if (e.key === 'ArrowLeft' || e.key === 'PageUp') { show(i - 1); }
+    else if (e.key === 'Home') show(0); else if (e.key === 'End') show(slides.length - 1);
+    else if (e.key === 'f') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen(); }
+  });
+  addEventListener('click', function (e) { show(e.clientX > innerWidth / 3 ? i + 1 : i - 1); });
+  fit(); show(parseInt(location.hash.slice(1), 10) - 1 || 0);
+})();
+</script>
+</body>
+</html>

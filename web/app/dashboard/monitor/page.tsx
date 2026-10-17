@@ -33,6 +33,7 @@ const lastAnswer = (llm: any): string => {
     if (llm.last_endpoint === "groq") return llm.serving_label
         ? `The last AI answer came from the hosted backup (Groq), not from ${host}.` : "The last AI answer came from the hosted Groq API.";
     if (llm.last_endpoint === "gemini") return "The last AI answer came from the Gemini backup.";
+    if (llm.last_endpoint === "amd-tokenfactory") return "The last AI answer came from AMD Token Factory.";
     if (llm.last_endpoint) return `The last AI answer came from ${llm.last_endpoint}.`;
     if (llm.last_path === "rules") return "The last assessment used rules only (no AI answer).";
     return "The last assessment reused an earlier AI answer (no new call).";

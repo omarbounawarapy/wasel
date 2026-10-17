@@ -18,7 +18,8 @@ ROLE_ROUTES = ("extract", "rewrite", "judge")   # a role without a route walks t
 KINDS = ("primary", "fallback_model", "fallback_provider")
 _ENDPOINT_KEYS = {"protocol", "provider", "base_url", "base_url_env", "key_env", "reasoning", "model_env",
                   "enabled_env", "enabled_default"}
-_STEP_KEYS = {"endpoint", "kind", "model", "timeout_s", "flag_env", "unless_active", "requires_env"}
+_STEP_KEYS = {"endpoint", "kind", "model", "timeout_s", "flag_env", "unless_active", "requires_active",
+              "requires_env"}
 
 
 @dataclass(frozen=True)
@@ -42,8 +43,9 @@ class StepSpec:
     model: str
     timeout_s: float
     flag_env: str | None
-    unless_active: str | None
+    unless_active: tuple[str, ...]    # skip the step when any of these endpoints is active
     requires_env: str | None
+    requires_active: tuple[str, ...] = ()   # skip the step unless every one of these endpoints is active
 
 
 @dataclass(frozen=True)
@@ -85,6 +87,11 @@ def parse_endpoints(raw: dict | None) -> dict[str, EndpointSpec]:
     return out
 
 
+def _names(raw: str | list | None) -> tuple[str, ...]:
+    """One endpoint id or a list of them."""
+    return (raw,) if isinstance(raw, str) else tuple(raw or ())
+
+
 def parse_route(role: str, raw: list | None, endpoints: dict[str, EndpointSpec]) -> list[StepSpec]:
     steps = []
     for i, s in enumerate(raw or []):
@@ -92,9 +99,12 @@ def parse_route(role: str, raw: list | None, endpoints: dict[str, EndpointSpec])
         if not isinstance(s, dict):
             raise LLMConfigError(f"config/llm.yaml {where}: expected a mapping")
         _unknown(where, s, _STEP_KEYS)
-        for field in ("endpoint", "unless_active"):
-            if s.get(field) is not None and s[field] not in endpoints:
-                raise LLMConfigError(f"config/llm.yaml {where}.{field}={s[field]!r}: no such endpoint")
+        unless, needs = (_names(s.get(f)) for f in ("unless_active", "requires_active"))
+        for field, ids in (("endpoint", (s.get("endpoint"),) if s.get("endpoint") is not None else ()),
+                           ("unless_active", unless), ("requires_active", needs)):
+            for eid in ids:
+                if eid not in endpoints:
+                    raise LLMConfigError(f"config/llm.yaml {where}.{field}={eid!r}: no such endpoint")
         if s.get("endpoint") is None:
             raise LLMConfigError(f"config/llm.yaml {where}: endpoint is required")
         if s.get("kind") not in KINDS:
@@ -106,7 +116,7 @@ def parse_route(role: str, raw: list | None, endpoints: dict[str, EndpointSpec])
         if timeout <= 0 or not s.get("model"):
             raise LLMConfigError(f"config/llm.yaml {where}: timeout_s must be above 0 and model is required")
         steps.append(StepSpec(s["endpoint"], s["kind"], str(s["model"]), timeout, s.get("flag_env"),
-                              s.get("unless_active"), s.get("requires_env")))
+                              unless, s.get("requires_env"), needs))
     return steps
 
 
@@ -152,7 +162,9 @@ def build_steps(cfg: LLMSettings, endpoints: dict[str, EndpointSpec], route: lis
         ep = resolved[s.endpoint]
         if ep is None:
             continue
-        if s.unless_active and resolved[s.unless_active] is not None:
+        if any(resolved[eid] is not None for eid in s.unless_active):
+            continue
+        if any(resolved[eid] is None for eid in s.requires_active):
             continue
         if s.requires_env and not cfg.lookup(s.requires_env):
             continue
@@ -192,7 +204,9 @@ def docs_tables(endpoints: dict[str, EndpointSpec], routes: dict[str, list[StepS
             if s.flag_env:
                 skip.append(f"`{s.flag_env}` is false")
             if s.unless_active:
-                skip.append(f"`{s.unless_active}` is active")
+                skip.append(" or ".join(f"`{eid}`" for eid in s.unless_active) + " is active")
+            if s.requires_active:
+                skip.append(" or ".join(f"`{eid}`" for eid in s.requires_active) + " is inactive")
             if s.requires_env:
                 skip.append(f"`{s.requires_env}` is unset")
             lines.append(f"| `{role}` | {i} | `{s.endpoint}` | `{s.kind}` | `{s.model}` | {s.timeout_s:g}s | "

@@ -7,7 +7,8 @@ from wasel.llm.routes import ADAPTERS, build_steps, parse_endpoints, parse_route
 from wasel.llm.settings import LLMConfigError, LLMSettings
 
 NAMES = ("GROQ_BASE_URL", "GROQ_API_KEY", "SELF_HOSTED_API_KEY", "GEMINI_API_KEY", "GEMINI_MODEL", "GEMINI_ENABLED",
-         "GROQ_FALLBACK_ENABLED", "AMD2_KEY", "AMD2_URL", "AMD2_ENABLED")
+         "GROQ_FALLBACK_ENABLED", "AMD2_KEY", "AMD2_URL", "AMD2_ENABLED", "AMD_TOKENFACTORY_API_KEY",
+         "AMD_TOKENFACTORY_BASE_URL", "AMD_TOKENFACTORY_MODEL")
 
 
 @pytest.fixture
@@ -29,9 +30,10 @@ def test_the_committed_config_parses_and_has_an_extract_route():
     reg = registry()
     eps = parse_endpoints(reg["endpoints"])
     route = parse_route("extract", reg["routes"]["extract"], eps)
-    assert set(eps) == {"groq", "self-hosted", "gemini"}
+    assert set(eps) == {"groq", "self-hosted", "amd-tokenfactory", "gemini"}
     assert eps["self-hosted"].reasoning == "self_hosted" and eps["groq"].reasoning == "hosted_groq"
-    assert [s.kind for s in route][:2] == ["primary", "fallback_model"]
+    assert [(s.endpoint, s.kind) for s in route][:3] == [
+        ("amd-tokenfactory", "primary"), ("self-hosted", "primary"), ("self-hosted", "fallback_model")]
 
 
 def test_a_new_endpoint_is_config_only(clean, monkeypatch):
@@ -151,3 +153,69 @@ def test_the_judge_route_is_the_one_that_runs(clean):
     for role in ("extract", "judge"):
         c.extract(task, "x", parse=lambda r: r, meter=None, sandbox_id=None, now=now, role=role)
     assert seen == ["extract", "judge"]
+
+
+def _committed_chain(monkeypatch):
+    from wasel.llm.client import build_client
+    monkeypatch.setitem(ADAPTERS, "openai-compatible", lambda ep, cfg: Fake(ep))
+    return build_client("live", replay_dirs=[]).chain_names
+
+
+def _token_factory(env, model="amd/some-model"):
+    env.setenv("AMD_TOKENFACTORY_API_KEY", "tf-key")
+    env.setenv("AMD_TOKENFACTORY_BASE_URL", "https://tokenfactory.test/v1")
+    if model:
+        env.setenv("AMD_TOKENFACTORY_MODEL", model)
+
+
+def test_token_factory_is_first_and_hosted_groq_becomes_its_backup(clean):
+    clean.setenv("GROQ_API_KEY", "groq-key")
+    _token_factory(clean)
+    assert _committed_chain(clean) == ["amd-tokenfactory:amd/some-model", "groq:openai/gpt-oss-120b"]
+
+
+def test_token_factory_alone_has_no_backup(clean):
+    _token_factory(clean)
+    assert _committed_chain(clean) == ["amd-tokenfactory:amd/some-model"]
+
+
+def test_token_factory_stays_off_until_a_model_is_named(clean):
+    clean.setenv("GROQ_API_KEY", "groq-key")
+    _token_factory(clean, model=None)
+    assert _committed_chain(clean) == ["groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"]
+
+
+def test_without_a_token_factory_key_the_app_runs_on_what_else_it_has(clean):
+    assert _committed_chain(clean) == []
+    clean.setenv("GROQ_API_KEY", "groq-key")
+    assert _committed_chain(clean) == ["groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"]
+
+
+def test_a_token_factory_key_alone_adds_no_step(clean):
+    clean.setenv("GROQ_API_KEY", "groq-key")
+    clean.setenv("AMD_TOKENFACTORY_API_KEY", "tf-key")
+    assert _committed_chain(clean) == ["groq:openai/gpt-oss-120b", "groq:openai/gpt-oss-20b"]
+
+
+def test_token_factory_with_a_self_hosted_host_keeps_one_hosted_backup(clean):
+    clean.setenv("GROQ_API_KEY", "groq-key")
+    clean.setenv("GROQ_BASE_URL", "http://10.0.0.5:8001/v1")
+    clean.setenv("SELF_HOSTED_API_KEY", "vllm-token")
+    clean.setenv("GROQ_FALLBACK_ENABLED", "false")
+    _token_factory(clean)
+    assert _committed_chain(clean) == ["amd-tokenfactory:amd/some-model", "self-hosted:openai/gpt-oss-120b",
+                                       "groq:openai/gpt-oss-120b"]
+
+
+def test_unless_active_takes_a_list_and_checks_every_name(clean):
+    eps = parse_endpoints({"a": {"protocol": "openai-compatible", "base_url": "http://a/v1", "key_env": "AMD2_KEY"},
+                           "b": {"protocol": "openai-compatible", "base_url": "http://b/v1", "key_env": "AMD2_URL"}})
+    with pytest.raises(LLMConfigError, match="no such endpoint"):
+        parse_route("extract", [{"endpoint": "a", "kind": "primary", "model": "m", "timeout_s": 1,
+                                 "unless_active": ["b", "nope"]}], eps)
+    route = parse_route("extract", [{"endpoint": "a", "kind": "primary", "model": "m", "timeout_s": 1,
+                                     "unless_active": ["b"]}], eps)
+    clean.setenv("AMD2_KEY", "k")
+    assert len(build_steps(LLMSettings.from_env("live"), eps, route)) == 1
+    clean.setenv("AMD2_URL", "k2")                                   # endpoint b is now active
+    assert build_steps(LLMSettings.from_env("live"), eps, route) == []

@@ -81,21 +81,24 @@ Which steps exist is decided by `config/llm.yaml` and the environment at start (
 |---|---|---|---|---|---|
 | `groq` | openai-compatible | `https://api.groq.com/openai/v1` | `GROQ_API_KEY` | hosted_groq | its key is set |
 | `self-hosted` | openai-compatible | `GROQ_BASE_URL` | `SELF_HOSTED_API_KEY`, `GROQ_API_KEY` | self_hosted | its key is set, `GROQ_BASE_URL` is set |
+| `amd-tokenfactory` | openai-compatible | `AMD_TOKENFACTORY_BASE_URL` | `AMD_TOKENFACTORY_API_KEY` | self_hosted | its key is set, `AMD_TOKENFACTORY_BASE_URL` is set, `AMD_TOKENFACTORY_MODEL` is set |
 | `gemini` | gemini | built in | `GEMINI_API_KEY` | none | its key is set, `GEMINI_MODEL` is set, `GEMINI_ENABLED` is true (off by default) |
 
 | Route | Step | Endpoint | Kind | Model | Timeout | Skipped when |
 |---|---|---|---|---|---|---|
-| `extract` | 1 | `self-hosted` | `primary` | `primary` | 6s | never |
-| `extract` | 2 | `self-hosted` | `fallback_model` | `fallback` | 5s | `GROQ_FALLBACK_ENABLED` is false |
-| `extract` | 3 | `groq` | `primary` | `primary` | 6s | `self-hosted` is active |
-| `extract` | 4 | `groq` | `fallback_model` | `fallback` | 5s | `GROQ_FALLBACK_ENABLED` is false, `self-hosted` is active |
-| `extract` | 5 | `groq` | `fallback_provider` | `primary` | 8s | `SELF_HOSTED_API_KEY` is unset |
-| `extract` | 6 | `gemini` | `fallback_provider` | `endpoint` | 8s | never |
+| `extract` | 1 | `amd-tokenfactory` | `primary` | `endpoint` | 10s | never |
+| `extract` | 2 | `self-hosted` | `primary` | `primary` | 6s | never |
+| `extract` | 3 | `self-hosted` | `fallback_model` | `fallback` | 5s | `GROQ_FALLBACK_ENABLED` is false |
+| `extract` | 4 | `groq` | `primary` | `primary` | 6s | `self-hosted` or `amd-tokenfactory` is active |
+| `extract` | 5 | `groq` | `fallback_model` | `fallback` | 5s | `GROQ_FALLBACK_ENABLED` is false, `self-hosted` or `amd-tokenfactory` is active |
+| `extract` | 6 | `groq` | `fallback_provider` | `primary` | 8s | `self-hosted` is active, `amd-tokenfactory` is inactive |
+| `extract` | 7 | `groq` | `fallback_provider` | `primary` | 8s | `SELF_HOSTED_API_KEY` is unset |
+| `extract` | 8 | `gemini` | `fallback_provider` | `endpoint` | 8s | never |
 <!-- END GENERATED: llm-endpoints -->
 
 The tables above are generated: run `python scripts/dev/gen_llm_docs.py` after editing `endpoints` or `routes`. A test fails when they drift from the config.
 
-- **Model names** come from `EXTRACT_MODEL` (else `routing.primary` in `llm.yaml`) for `primary`, and `FALLBACK_MODEL` (else `routing.fallback_model`) for `fallback`. `endpoint` means the model named by the endpoint's own `model_env` (Gemini).
+- **Model names** come from `EXTRACT_MODEL` (else `routing.primary` in `llm.yaml`) for `primary`, and `FALLBACK_MODEL` (else `routing.fallback_model`) for `fallback`. `endpoint` means the model named by the endpoint's own `model_env` (Gemini, AMD Token Factory).
 - **No key at all** yields an empty chain: every extraction goes straight to the rules extractor. That is the intended offline behaviour, not a misconfiguration.
 
 ### Add an endpoint

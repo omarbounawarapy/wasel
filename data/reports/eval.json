@@ -7,7 +7,7 @@
     "failure_label": "failure-label-v1"
   },
   "config_hash": "fd8791bb",
-  "runtime_s": 1.3,
+  "runtime_s": 1.5,
   "results": {
     "extraction": {
       "n": 279,
@@ -277,5 +277,6 @@
     }
   },
   "llm_usage": {},
+  "llm_chain": [],
   "gate_failures": []
 }
