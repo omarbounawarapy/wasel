@@ -36,11 +36,11 @@ Category: Reinvent Commerce (track), e-commerce, cash on delivery, risk scoring,
 
 **Cover image**
 
-`docs/assets/wide-cover.png` (1280 x 640, rendered from `docs/assets/wide-cover.svg`). Upload as is.
+`docs/assets/wide-cover-16x9.png` (1920 x 1080; the Rule Book asks for 16:9). Source: `docs/assets/wide-cover-16x9.svg`; the PNG is git-ignored, so re-export it from the SVG if it is missing.
 
 **Video presentation**
 
-`video/renders/wasel-reel.mp4` (48-second reel with voice-over, no third-party clip). `video/renders/wasel-usage-demo.mp4` shows a full use of the app if a longer clip is allowed.
+`video/renders/wasel-reel.mp4` (MP4) (48-second reel with voice-over, no third-party clip). `video/renders/wasel-usage-demo.mp4` shows a full use of the app if a longer clip is allowed.
 
 **Slide presentation**
 
@@ -66,4 +66,4 @@ The free tier sleeps and may take about a minute to wake. Open it 15 minutes bef
 
 - Slide 10 and the long description say the Token Factory key is pending. If it arrives first, run `make tf-check` and `make eval-live`, then update both.
 - Check the live demo shows order #2601 at High 87.
-- The repository is MIT licensed. Check the lablab Rule Book for anything else it asks of a submission.
+- The Rule Book (read 17 Oct) asks for: slides as PDF, video as MP4 or MOV, cover cropped to 16:9, a public repository, a demo platform and an application URL. Submissions close at the event deadline plus a 5-minute grace period; for a technical problem, contact the organizers before the deadline.
