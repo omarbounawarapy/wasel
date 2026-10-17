@@ -1,6 +1,6 @@
 # Team workflow
 
-The repository is public and MIT licensed (see [LICENSE](../../LICENSE)), and only the team changes it (see [TEAM.md](../../TEAM.md)). These rules are for team members; outside readers who find a problem should open an issue. Report security problems privately, as described in [SECURITY.md](../../SECURITY.md).
+The repository is public and MIT licensed (see [LICENSE](../../LICENSE)), and only the team changes it (see [TEAM.md](../../TEAM.md)). These are the working rules of the team; outside readers who find a problem are welcome to open an issue. Report security problems privately, as described in [SECURITY.md](../../SECURITY.md).
 
 ## Orientation
 

@@ -271,16 +271,8 @@ frontend/out/
 *.tsbuildinfo
 
 # Local tooling
-HANDOFF.md
 .claude/
 .DS_Store
 .idea/
 .vscode/
 
-# AI assistant context files
-CLAUDE.md
-AGENTS.md
-
-# Private working material (kept locally, not published)
-docs/design-explorations/
-docs/security/RED_TEAM_REPORT.md

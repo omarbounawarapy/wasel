@@ -77,7 +77,7 @@ The image starts uvicorn with `--proxy-headers --forwarded-allow-ips '*'`, so th
 
 `deploy/render/Dockerfile.dockerignore` is a Dockerfile-specific ignore file. If Render's builder does not honour it, the build fails on missing files or is slow; there is no root `.dockerignore`.
 
-## Website checks (launch checklist, #160 to #190)
+## Website checks
 
 What the site does for visitors, search engines and scanners, and how each is checked. `make check` does not need a browser; the rows marked CI run in `.github/workflows/ci.yml` or `links.yml`.
 

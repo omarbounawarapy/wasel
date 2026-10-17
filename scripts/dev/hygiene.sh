@@ -6,10 +6,9 @@ fail=0; say(){ printf 'hygiene: %b\n' "$*" >&2; fail=1; }
 bad=$(git ls-files . | grep -E '(^|/)\.env$|(^|/)\.dev\.vars$|\.db$|\.db-(wal|shm)$|\.sqlite3?$|(^|/)node_modules/|(^|/)web/dist/|(^|/)var/' || true)
 [ -n "$bad" ] && say "tracked files that must be ignored:\n$bad"
 
-# (docs/design-explorations holds mock pages with base64 fonts, which match the prefixes by chance)
 # key-shaped strings: known prefixes (Groq, Gemini, Meta, tunnel token, GitHub, AWS, Slack, Stripe, private keys)
 here=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
-git grep -nIE '(gsk_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|EAA[A-Za-z0-9]{50,}|eyJhIjoi[A-Za-z0-9+/=_-]{40,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|(sk|rk)_(live|test)_[A-Za-z0-9]{16,})' -- . ':!scripts/dev/hygiene.sh' ':!scripts/dev/hygiene.allow' ':!docs/design-explorations' \
+git grep -nIE '(gsk_[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,}|EAA[A-Za-z0-9]{50,}|eyJhIjoi[A-Za-z0-9+/=_-]{40,}|ghp_[A-Za-z0-9]{30,}|github_pat_[A-Za-z0-9_]{30,}|AKIA[0-9A-Z]{16}|-----BEGIN [A-Z ]*PRIVATE KEY-----|xox[abprs]-[A-Za-z0-9-]{10,}|(sk|rk)_(live|test)_[A-Za-z0-9]{16,})' -- . ':!scripts/dev/hygiene.sh' ':!scripts/dev/hygiene.allow' \
   && say "key-shaped string in a tracked file"
 
 # assignment shapes: a SECRET/TOKEN/KEY/PASSWORD name given a long value. .env.example and test fixtures are exempt;

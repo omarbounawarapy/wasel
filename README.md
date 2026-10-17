@@ -13,6 +13,8 @@ A refused cash-on-delivery parcel costs the seller a wasted trip; one vendor gui
 
 All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
 
+**Built for the AMD Developer Hackathon ACT III, track Reinvent Commerce.** [Overview for reviewers](docs/overview-for-reviewers.md) · [pitch slides](docs/submission/wasel-pitch.pdf) · [48-second reel](video/renders/wasel-reel.mp4) · [83-second usage walkthrough](video/renders/wasel-usage-demo.mp4). AMD Token Factory is first in the language-model route (built and unit-tested, key pending); the product also runs on Groq or on rules alone.
+
 ![Order #2601 scores High 87 with the risky phrases highlighted, the customer replies with a full address, and the order drops to Low 16](docs/assets/score-drop.gif)
 
 ## Try it in 30 seconds
@@ -119,6 +121,7 @@ make check      # hygiene + ruff + offline tests + evaluation gate; needs no key
 | [Data directory](docs/data.md) | every file under `data/`, what produces it, whether to edit it |
 | [Commands](docs/development/commands.md), [testing](docs/development/testing.md), [extending](docs/development/extending.md) | day-to-day development |
 | [Deployment](docs/operations/deployment.md), [Render](docs/operations/render.md), [self-hosted LLM](docs/operations/self-hosted-llm.md), [troubleshooting](docs/operations/troubleshooting.md) | running it for other people |
+| [Overview for reviewers](docs/overview-for-reviewers.md), [AMD Token Factory](docs/operations/amd-tokenfactory.md) | what to look at first, and how AMD is used |
 | [Team](TEAM.md), [Team workflow](docs/development/workflow.md), [Security](SECURITY.md), [Changelog](CHANGELOG.md) | roles, working rules, policy and history |
 
 The full index with reading order is in [docs/README.md](docs/README.md).

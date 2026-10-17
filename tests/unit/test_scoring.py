@@ -321,7 +321,7 @@ def test_adjustment_dataclass_roundtrip():
     assert json.loads(json.dumps(a.__dict__))["after"] == 48.0
 
 
-# ---------------------------------------------------------------- rules path: replies after the seller line (#45)
+# ---------------------------------------------------------------- rules path: replies after the seller line
 VAGUE = "nheb el casque bluetooth. Douar Ouled Ali, 9rib el jemaa"
 
 

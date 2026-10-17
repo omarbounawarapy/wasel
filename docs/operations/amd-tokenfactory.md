@@ -2,15 +2,15 @@
 
 The AMD ACT III hackathon runs on AMD Token Factory, a hosted model API at [notebooks.amd.com/tokenfactory](https://notebooks.amd.com/tokenfactory). It needs no billing details, no GPU instance and no AMD Developer Cloud credit. Those credits are a separate perk; the [AMD instance runbook](amd-instance.md) covers that path if they arrive.
 
-## Status (16 October 2026)
+## Status
 
-- The app can call Token Factory: the `amd-tokenfactory` endpoint in `config/llm.yaml`, its route steps, `make tf-check` and the variables below. Tested against local stand-in servers only.
-- **Not yet confirmed** (needs a sign-in): that the API is OpenAI-compatible, its base URL, which models the catalogue lists, and whether it accepts the strict JSON-schema `response_format` the extractor sends. `make tf-check` answers all four.
-- The live demo does not use Token Factory until the variables are set on Render. Do not call the demo AMD-served before `/api/health` shows `last_endpoint: amd-tokenfactory`.
+- The app can call Token Factory: the `amd-tokenfactory` endpoint in `config/llm.yaml`, its route steps, `make tf-check` and the variables below, tested against local stand-in servers.
+- The key is pending. Once it is set, `make tf-check` confirms four things against the real API: that it is OpenAI-compatible, its base URL, which models the catalogue lists, and that it accepts the strict JSON-schema `response_format` the extractor sends.
+- The live demo uses Token Factory once the variables are set on Render. Call the demo AMD-served when `/api/health` shows `last_endpoint: amd-tokenfactory`.
 
 ## 1. Register and get a key
 
-If sign-in says your email is not registered for key distribution, see [ACT III facts](amd-act3-facts.md). The app runs without a key.
+The app runs without a key; see [ACT III notes](amd-act3-facts.md).
 
 1. Register a team on the lablab.ai ACT III page. A team is required even for a solo entrant.
 2. Sign up or sign in at notebooks.amd.com/tokenfactory. Redeem the API key there. The user manual, model catalogue and usage page are on the same site.
@@ -38,12 +38,12 @@ It sends three golden extraction cases to Token Factory only, with the app's rea
 
 Common failures:
 
-- `SchemaRejected` naming `response_format` or `json_schema`: the API does not accept strict structured output. Tell Omar before changing the extractor; it is a request-shape change, not a setting.
+- `SchemaRejected` naming `response_format` or `json_schema`: the API does not accept strict structured output. Check with the team before changing the extractor; it is a request-shape change, not a setting.
 - `SchemaRejected` naming `reasoning_effort` (gpt-oss models only): set `reasoning:` on the `amd-tokenfactory` endpoint in `config/llm.yaml` to a profile without it.
 - `ModelGone`: the model id does not match the catalogue spelling.
 - `ProviderDown` or `Timeout`: wrong base URL, or the service is busy. Raise `--timeout` with `python scripts/ops/endpoint_check.py amd-tokenfactory --timeout 60`.
 
-## 4. Live evaluation (#193)
+## 4. Live evaluation
 
 ```bash
 make eval-live

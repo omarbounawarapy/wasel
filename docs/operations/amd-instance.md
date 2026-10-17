@@ -2,16 +2,14 @@
 
 The steps to bring the AMD Developer Cloud GPU online for the extraction model, check it, and point the app at it. Everything below is ready in the repository; the only unknowns are the ones that need the real instance (marked **verify**).
 
-## Status (13 October 2026)
+## Status
 
-- **16 October 2026:** the AMD ACT III hackathon does not need these credits. It uses the AMD Token Factory API; see [AMD Token Factory](amd-tokenfactory.md). This runbook stays for a GPU instance if credits arrive later.
+- This is an optional GPU path. The hackathon API path is [AMD Token Factory](amd-tokenfactory.md), which needs no instance and no credit.
+- The serving path is prepared (preflight, ROCm launch, client template, health label and the hosted backup below) and has been tested against a stand-in endpoint, not on AMD hardware.
+- The live demo answers from hosted Groq, or from rules when no key is set. Call the demo AMD-served only when `/api/health` shows the AMD step answering and the committed evaluation report names the AMD model and hardware.
+- With an AMD host in the chain, AMD answers first and hosted Groq second, so partial AMD use is visible in the health payload and the Monitor.
 
-- **No AMD Developer Cloud credits have been received.** The credit request is not confirmed. Until credits arrive, no AMD GPU runs this project.
-- The AMD serving path is prepared: the preflight, ROCm launch, client template, health label and the hosted backup below. It has been tested only against a stand-in endpoint, not on AMD hardware.
-- The live demo answers from the hosted Groq API (or from rules if no key is set). Do not describe the demo as AMD-served until `/api/health` shows the self-hosted step answering and the committed evaluation report names the AMD model and hardware.
-- When credits arrive, the same runbook applies. The chain is AMD first and hosted Groq second, so partial AMD use is measurable from the health payload and the Monitor.
-
-Background: [self-hosted LLM](self-hosted-llm.md) (the general setup) and issue [#191](https://github.com/omarbounawarapy/wasel/issues/191).
+Background: [self-hosted LLM](self-hosted-llm.md), the general setup.
 
 ## 0. Before you rent
 
@@ -69,7 +67,7 @@ curl -s localhost:8000/api/health | python3 -c 'import json,sys; print(json.load
 .venv/bin/python scripts/ops/extract_probe.py           # prints every mismatch and every case that fell to rules
 ```
 
-Commit the new `data/reports/eval_live.json` only after the report names the model and hardware (issue #193 tracks adding those fields). Do not change the gates to pass.
+Commit the new `data/reports/eval_live.json` only after the report names the model and hardware. Do not change the gates to pass.
 
 ## 6. Stop billing
 
@@ -93,4 +91,4 @@ A refused connection, a timeout or a 5xx on the primary moves the request to the
 
 - The live evaluation numbers in the repository were measured on a self-hosted 20b, not on AMD. Do not quote them as AMD results.
 - Per-request provenance is not stored: the database records `provider` (`groq`) and the path, not which endpoint answered. The health payload shows which endpoints are configured and whether a backup was used recently.
-- The Monitor page does not show the serving label yet; only the header tooltip does ([#192](https://github.com/omarbounawarapy/wasel/issues/192)).
+- The Monitor page does not show the serving label yet; only the header tooltip does .

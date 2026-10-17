@@ -36,7 +36,7 @@ Category: Reinvent Commerce (track), e-commerce, cash on delivery, risk scoring,
 
 **Cover image**
 
-`docs/assets/wide-cover.png` (1280 x 640). Upload as is.
+`docs/assets/wide-cover.png` (1280 x 640, rendered from `docs/assets/wide-cover.svg`). Upload as is.
 
 **Video presentation**
 
@@ -44,7 +44,7 @@ Category: Reinvent Commerce (track), e-commerce, cash on delivery, risk scoring,
 
 **Slide presentation**
 
-`docs/submission/wasel-pitch.pdf` (12 slides, 16:9). Source: `docs/submission/deck/index.html`; rebuild with `docs/submission/deck/build.sh`. Talk track and expected questions: `docs/submission/speaker-notes.md`.
+`docs/submission/wasel-pitch.pdf` (12 slides, 16:9). Source: `docs/submission/deck/index.html`; rebuild with `docs/submission/deck/build.sh`. Talk track and expected questions: `docs/internal/speaker-notes.md`.
 
 ## App hosting and repository
 
@@ -60,10 +60,10 @@ Render (free web service, one container serving the API and the built web UI), b
 
 https://wasel.runs-on.dev
 
-The free tier sleeps and may take about a minute to wake. Open it 15 minutes before judges arrive: [Render guide](operations/render.md).
+The free tier sleeps and may take about a minute to wake. Open it 15 minutes before judges arrive: [Render guide](../operations/render.md).
 
 ## Before submitting
 
 - Slide 10 and the long description say the Token Factory key is pending. If it arrives first, run `make tf-check` and `make eval-live`, then update both.
 - Check the live demo shows order #2601 at High 87.
-- The repository is MIT licensed. Check the lablab Rule Book (#196) for anything else it asks of a submission.
+- The repository is MIT licensed. Check the lablab Rule Book for anything else it asks of a submission.

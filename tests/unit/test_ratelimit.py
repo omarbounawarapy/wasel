@@ -1,4 +1,4 @@
-"""Per-address limits (#27): the address a request counts under, the windows and the LLM share."""
+"""Per-address limits: the address a request counts under, the windows and the LLM share."""
 from datetime import timedelta
 
 import pytest

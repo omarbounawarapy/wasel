@@ -1,4 +1,4 @@
-"""ChainClient's cache and breaker must survive concurrent callers (issue #24)."""
+"""ChainClient's cache and breaker must survive concurrent callers."""
 import sys
 import threading
 from datetime import UTC, datetime

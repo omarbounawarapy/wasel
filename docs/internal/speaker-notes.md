@@ -23,7 +23,7 @@ Three minutes, one speaker, twelve slides. Speak slower than feels natural and p
 
 **Is the data real?** No. Every order is synthetic and the risk model recovers a hand-written prior. The refusal range comes from one vendor guide. Slides 9 and 11 say this.
 
-**Why is the native holdout so low?** The rules were written against our own phrasing. Real wording is further away. The holdout is the honest measure and the next thing we fix (issue #199).
+**Why is the native holdout so low?** The rules were written against our own phrasing. Real wording is further away. The holdout is the honest measure and the next thing we fix.
 
 **What runs on AMD?** Nothing yet. The route and `make tf-check` are built and unit-tested; the key was not issued. If it arrives, run `make tf-check` and `make eval-live`, then say the model id and "AMD Token Factory" with the numbers.
 
@@ -33,4 +33,4 @@ Three minutes, one speaker, twelve slides. Speak slower than feels natural and p
 
 ## Rebuild
 
-`docs/submission/deck/build.sh` writes `docs/submission/wasel-pitch.pdf`. Open `deck/index.html` in a browser to present: arrow keys move, `f` goes full screen.
+`docs/submission/deck/build.sh` writes `docs/submission/wasel-pitch.pdf`. Open `docs/submission/deck/index.html` in a browser to present: arrow keys move, `f` goes full screen.

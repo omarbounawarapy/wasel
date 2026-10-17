@@ -311,7 +311,7 @@ def test_fewshots_parse_clean_and_survive_postprocess():
         assert p.address_level == e.address_level and p.confirmation == e.confirmation, fs["id"]
 
 
-# ---------------------------------------------------------------- rules extractor: whole-reply confirmation (#61)
+# ---------------------------------------------------------------- rules extractor: whole-reply confirmation
 REPLIES = [
     ("non ça ne me dérange pas, je prends", "ambiguous"), ("non non c'est bon je confirme", "ambiguous"),
     ("oui mais annulez la commande", "ambiguous"), ("ok non finalement", "ambiguous"),
@@ -337,7 +337,7 @@ def test_rules_confirmation_ack_with_address_or_product_is_confirmed(config):
     assert _confirmation("oui je serai là demain", lex, has_address=False) == "ambiguous"
 
 
-# ---------------------------------------------------------------- model confirmation label vs the reply (#29)
+# ---------------------------------------------------------------- model confirmation label vs the reply
 def _agree_lex():
     from wasel.scoring.config import default_config
     return default_config()["lexicons"]["agreement"]
@@ -376,7 +376,7 @@ def test_injection_lexicon_catches_more_imperatives(text):
     assert injection_hit_text(text, text, _lex())
 
 
-# ---------------------------------------------------------------- rules extractor: flags and confirmation (#63)
+# ---------------------------------------------------------------- rules extractor: flags and confirmation
 def _rules(config, texts, **kw):
     from wasel.extraction.rules_extractor import rules_extract
     w = build_window(make_input(texts, **kw))

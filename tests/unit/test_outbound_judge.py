@@ -326,7 +326,7 @@ def test_input_over_the_per_request_cap_is_refused_before_any_call():
     assert res.parsed is None and res.errors == ["input_too_large"] and "judge" not in b.users
 
 
-# ---------------------------------------------------------------- empty slots never reach a message (#62)
+# ---------------------------------------------------------------- empty slots never reach a message
 @pytest.mark.parametrize("tid", ["T_CONFIRM", "T_ADDRESS", "T_PREPAY", "T_ACK"])
 @pytest.mark.parametrize("lang", ["fr", "darija_arabic_script", "arabizi"])
 @pytest.mark.parametrize("name", ["Amira", None])

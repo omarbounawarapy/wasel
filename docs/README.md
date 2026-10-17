@@ -16,7 +16,7 @@ Wasel scores the refusal risk of cash-on-delivery orders written in chat, explai
 | I want to... | Read |
 |---|---|
 | Run it and see something | [Getting started](getting-started.md) |
-| Review the project quickly | [Submission overview](submission.md) |
+| Review the project quickly | [Overview for reviewers](overview-for-reviewers.md) |
 | Understand how a score is produced | [Order pipeline](architecture/order-pipeline.md), [scoring](subsystems/scoring.md), [extraction](subsystems/extraction.md) |
 | Understand the LLM's role and what happens when it fails | [LLM layer](subsystems/llm.md) |
 | Understand what gets sent to a customer, and who approves it | [Outbound drafts](subsystems/outbound.md) |
@@ -40,6 +40,7 @@ Wasel scores the refusal risk of cash-on-delivery orders written in chat, explai
 ```
 docs/
 ├── getting-started.md
+├── overview-for-reviewers.md  what to look at first, AMD usage, what is built
 ├── architecture/
 │   ├── overview.md            components, boundaries, modes, limitations
 │   ├── order-pipeline.md      message to score to draft, states
@@ -69,9 +70,15 @@ docs/
 ├── operations/
 │   ├── deployment.md          hosting, running, logs, updates, backups
 │   ├── render.md              free Render deployment of the public demo
+│   ├── amd-tokenfactory.md    AMD Token Factory: key, config, check, evaluation
+│   ├── amd-act3-facts.md      hackathon notes: getting a key, running without one
+│   ├── amd-instance.md        optional GPU instance with vLLM on ROCm
+│   ├── page-states.md         what each page shows in each state
 │   ├── self-hosted-llm.md
 │   └── troubleshooting.md
-└── assets/                    screenshots and social preview
+├── submission/                pitch deck source and PDF
+├── internal/                  form text and speaker notes for the team
+└── assets/                    screenshots, covers and social preview
 ```
 
 Documentation that lives next to code: [`web/README.md`](../web/README.md), [`dashboard/README.md`](../dashboard/README.md), [`examples/README.md`](../examples/README.md), and the docstrings in `src/wasel/`, which also appear as descriptions in the generated OpenAPI schema.

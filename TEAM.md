@@ -15,7 +15,7 @@ Wasel is built by Z-Team. The repository is public and MIT licensed (see [LICENS
 ## Decisions
 
 - The owner decides what ships. Anything that changes the live deployment (a push to `main`, `render.yaml`, environment variables, Render settings) is agreed with the owner first. Pushes to `main` deploy the demo automatically.
-- Access is granted by the owner. Do not share the team's private material (working notes, credentials, anything that is not synthetic) outside the team.
+- Access is granted by the owner. Never commit credentials or anything that is not synthetic.
 - Security problems go to the owner privately, as described in [SECURITY.md](SECURITY.md).
 
 ## Working together

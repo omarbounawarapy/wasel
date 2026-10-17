@@ -1,4 +1,4 @@
-"""The database holds customer messages and phone numbers: only its owner may read it (#40)."""
+"""The database holds customer messages and phone numbers: only its owner may read it."""
 import os
 import stat
 import sys

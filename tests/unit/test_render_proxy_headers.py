@@ -1,4 +1,4 @@
-"""Render's proxy is not loopback, so uvicorn must read X-Forwarded-Proto from it (issue #73). Offline: no Docker, no network.
+"""Render's proxy is not loopback, so uvicorn must read X-Forwarded-Proto from it. Offline: no Docker, no network.
 The redirect check runs the same proxy middleware uvicorn wraps the app in, with a non-loopback peer."""
 from __future__ import annotations
 

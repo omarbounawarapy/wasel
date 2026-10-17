@@ -1,4 +1,4 @@
-"""scripts/dev/loadenv.py: .env values reach a shell as data, never as code (#41)."""
+"""scripts/dev/loadenv.py: .env values reach a shell as data, never as code."""
 import subprocess
 import sys
 

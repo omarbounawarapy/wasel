@@ -990,7 +990,7 @@ def test_concurrent_mark_delivered_moves_the_order_and_counter_once(tmp_path):
         assert after == before + 1
 
 
-# ---------------------------------------------------------------- #64: guards that had no test
+# ---------------------------------------------------------------- guards that had no test
 def test_claim_is_compare_and_set_on_the_due_time(dev):
     from wasel.clock import utc_iso
     from wasel.worker import claim_due

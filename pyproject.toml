@@ -29,7 +29,7 @@ markers = ["live: needs real API keys; never in CI (set RUN_LIVE=1)"]
 line-length = 125
 target-version = "py311"
 src = ["src"]
-extend-exclude = ["web", ".venv", "var", "docs/design-explorations", "video"]   # exploration and video scripts are not product code
+extend-exclude = ["web", ".venv", "var", "video"]   # video scripts are not product code
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "DTZ"]   # DTZ catches naive datetimes

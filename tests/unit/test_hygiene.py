@@ -1,4 +1,4 @@
-"""scripts/dev/hygiene.sh fails on the secret shapes this project handles (#43)."""
+"""scripts/dev/hygiene.sh fails on the secret shapes this project handles."""
 import subprocess
 
 import pytest
