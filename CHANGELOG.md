@@ -4,6 +4,9 @@ Notable changes to this project. The format follows [Keep a Changelog](https://k
 
 ## [Unreleased]
 
+### Changed
+- Licence changed to MIT (was a source-available licence), so the repository is open source. The Geist fonts bundled with the pitch deck keep the SIL Open Font License.
+
 ### Added
 - Repository made public for review. README, TEAM and the workflow guide no longer call it a private demo; the licence is unchanged (viewing and GitHub forks allowed, other use needs permission).
 - Render free-plan hosting for the public demo (`render.yaml`, `deploy/render/Dockerfile`, [guide](docs/operations/render.md)), now linked from the README, the docs index and the deployment page, with a "Which target?" note: Render free for a public demo, `make serve` for a host you control, Cloudflare only with a paid plan.

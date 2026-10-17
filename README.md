@@ -2,14 +2,14 @@
 
 [![ci](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml/badge.svg)](https://github.com/omarbounawarapy/wasel/actions/workflows/ci.yml)
 ![python](https://img.shields.io/badge/python-3.11-3776AB?logo=python&logoColor=white)
-![license](https://img.shields.io/badge/license-source%20available-lightgrey)
+![license](https://img.shields.io/badge/license-MIT-blue)
 ![data](https://img.shields.io/badge/data-synthetic%20only-orange)
 
 Wasel scores the refusal risk of cash-on-delivery (COD) orders that customers place in chat, and helps a seller resolve the risky ones before a courier is sent.
 
 A refused cash-on-delivery parcel costs the seller a wasted trip; one vendor guide puts refusals at 15 to 25 % for Tunisian fashion orders (industry-reported, see [how the problem is sourced](#try-it-in-30-seconds)). Customers order in Tunisian Darija (Arabic script or Arabizi), French or a mix, often with an address like "near the mosque". Wasel reads the conversation, scores the order from 0 to 100, explains the score with the customer's own words, and drafts the one question that would reduce the risk (confirm, complete the address, or pay first). When the customer answers, the order is rescored and the app shows what changed.
 
-**Live demo: [wasel.runs-on.dev](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake). Wasel is built by Z-Team. The source is public so that it can be read and reviewed; it is not open source, see [LICENSE](LICENSE) for what is allowed and [TEAM.md](TEAM.md) for who works on it.
+**Live demo: [wasel.runs-on.dev](https://wasel.runs-on.dev)** (free tier, may take about a minute to wake). Wasel is built by Z-Team. The source is open under the MIT licence, see [LICENSE](LICENSE) and [TEAM.md](TEAM.md) for who works on it.
 
 All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
 
@@ -148,4 +148,4 @@ Questions, feedback or a data request about the demo: **contact@wasel.runs-on.de
 
 ## License
 
-Copyright © 2026 Z-Team. All rights reserved. The source is public for viewing but is not open source. Z-Team members may use and modify it; anyone may view it on GitHub and fork it there; any other use needs Z-Team's written permission. See [LICENSE](LICENSE) and [TEAM.md](TEAM.md).
+Copyright © 2026 Z-Team. Released under the [MIT licence](LICENSE). The demo's Geist fonts in `docs/submission/deck/fonts` keep their own SIL Open Font License.
