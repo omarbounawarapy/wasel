@@ -12,7 +12,7 @@ Wasel
 
 Wasel reads cash-on-delivery orders from chat, scores the refusal risk from 0 to 100, quotes the reasons, and drafts the one question that lowers the risk.
 
-**Long description** (2539 characters, 438 words)
+**Long description** (2637 characters, 451 words)
 
 Sellers in Tunisia take orders in chat and are paid in cash on delivery. When a customer refuses the parcel, the seller has paid for a wasted courier trip. One vendor guide puts refusals at 15 to 25 % for fashion orders; we found no independent national figure. Customers write in Darija (Arabic script or Arabizi), French or a mix, and give addresses like "near the mosque".
 
@@ -22,7 +22,7 @@ The language model never picks a number. It fills a 12-field schema, code checks
 
 Business value: in a simulation on 2,001 held-out orders, confirmation and prepayment questions cut refusals from 30.0 % to 23.6 %, worth 464 TND per 1,000 orders (251 to 677 depending on how often a question works). The labels are simulated and the assumptions are shown in the app. Tested on every change: 279 extraction cases (96.1 % of orders recognised, no quote missing from the source text), 165 outbound drafts, 32 injection attempts, and 737 tests that run without keys or network.
 
-AMD: the language-model call goes through a configurable route that tries AMD Token Factory first when its key, address and model are set, then hosted Groq, then Gemini, then rules. The route and its check (`make tf-check`) are built and unit-tested, and the Token Factory key is pending. The live demo runs on Groq and rules, and the product works without the key. Once the key is in, `make eval-live` measures it and the numbers go in the repository with the model id.
+AMD: the language-model call goes through a configurable route. AMD Token Factory (Gemma-4-31B-IT) answers first, then hosted Groq (gpt-oss-120b) as a fast backup, then Gemini if enabled, then rules. On 40 extraction cases `make eval-live` recognised 92.5 % of orders through Token Factory against 87.5 % through Groq (one run, synthetic data). Token Factory takes 7 to 13 s per call, so the route allows it 16 s before falling back, and the product still works with any provider missing. The hosted API does not report its hardware, so we make no claim about the GPU.
 
 The demo uses synthetic data. Next: a pilot with a real seller, real refusal labels and a native review of the Darija wording. Open source under the MIT licence.
 
@@ -64,6 +64,7 @@ The free tier sleeps and may take about a minute to wake. Open it 15 minutes bef
 
 ## Before submitting
 
-- Slide 10 and the long description say the Token Factory key is pending. If it arrives first, run `make tf-check` and `make eval-live`, then update both.
+- Slide 10 and the AMD paragraph describe Token Factory as the primary route. That is only true on the live demo once the three `AMD_TOKENFACTORY_*` variables are set on Render (dashboard, not render.yaml; steps in docs/operations/amd-tokenfactory.md section 5) and `/api/health` shows `last_endpoint: amd-tokenfactory` after one pasted order. If that has not happened by submission time, replace the AMD paragraph's first sentence with: "The route tries AMD Token Factory first when its key, address and model are set; the live demo currently runs on Groq and rules." and set slide 10 step 1 chip back to Optional.
+- Re-export `docs/submission/wasel-pitch.pdf` from the deck (`docs/submission/deck/build.sh`) after the slide 10 change.
 - Check the live demo shows order #2601 at High 87.
 - The Rule Book (read 17 Oct) asks for: slides as PDF, video as MP4 or MOV, cover cropped to 16:9, a public repository, a demo platform and an application URL. Submissions close at the event deadline plus a 5-minute grace period; for a technical problem, contact the organizers before the deadline.

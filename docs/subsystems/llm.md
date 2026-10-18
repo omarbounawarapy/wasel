@@ -42,7 +42,7 @@ flowchart TD
 Rules of the walk (`ChainClient._run`):
 
 - **No retries and no sleeps.** Each step is tried at most once per call.
-- **Deadline.** The whole chain has `LLM_DEADLINE_S` (20 s by default). A step whose timeout does not fit in the remaining time is skipped.
+- **Deadline.** The whole chain has `LLM_DEADLINE_S` (28 s by default, `routing.deadline_s` in `config/llm.yaml`; it must be longer than the AMD Token Factory step plus the Groq backup). A step whose timeout does not fit in the remaining time is skipped.
 - **Circuit breaker.** After a `ProviderDown` the provider is skipped for 60 seconds. The breaker is per provider, so it covers both Groq steps.
 - **Sibling skip.** A timeout or `ProviderDown` on the primary also skips the same-provider fallback model, since a slower or down provider will not answer the smaller model faster.
 - **Caps.** Before each step that would make a call, the client asks the usage meter. A refusal ends the chain at once with `cap` set. It is not an error.
@@ -86,7 +86,7 @@ Which steps exist is decided by `config/llm.yaml` and the environment at start (
 
 | Route | Step | Endpoint | Kind | Model | Timeout | Skipped when |
 |---|---|---|---|---|---|---|
-| `extract` | 1 | `amd-tokenfactory` | `primary` | `endpoint` | 10s | never |
+| `extract` | 1 | `amd-tokenfactory` | `primary` | `endpoint` | 16s | never |
 | `extract` | 2 | `self-hosted` | `primary` | `primary` | 6s | never |
 | `extract` | 3 | `self-hosted` | `fallback_model` | `fallback` | 5s | `GROQ_FALLBACK_ENABLED` is false |
 | `extract` | 4 | `groq` | `primary` | `primary` | 6s | `self-hosted` or `amd-tokenfactory` is active |

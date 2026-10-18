@@ -32,7 +32,7 @@ The language-model step (reading a chat into a 12-field schema) goes through a c
 
 - The route, `make tf-check` (sends real extraction cases to Token Factory alone) and the fallback chain are built and covered by unit tests, with and without the key.
 - `data/reports/eval_live.json` records the chain (`llm_chain`, each step as `endpoint:model`), so a live evaluation names the endpoint and model that answered.
-- The Token Factory key is pending, so the live demo currently runs on Groq and the rules path. The score never depends on the model alone: the model fills fields, code verifies the quotes, and an XGBoost model plus `config/scoring.yaml` sets the number.
+- Token Factory (Gemma-4-31B-IT) is the first step of the route and Groq gpt-oss-120b the fast backup. On 40 extraction cases `make eval-live` recognised 92.5 % of orders through Token Factory and 87.5 % through Groq (one run, synthetic data); Token Factory takes 7 to 13 s per call. The score never depends on the model alone: the model fills fields, code verifies the quotes, and an XGBoost model plus `config/scoring.yaml` sets the number.
 - An optional GPU path (vLLM on ROCm) is described in the [AMD instance runbook](operations/amd-instance.md).
 
 Steps and checks: [AMD Token Factory](operations/amd-tokenfactory.md). Organizer notice and the no-key behaviour: [ACT III notes](operations/amd-act3-facts.md).

@@ -5,7 +5,8 @@ The AMD ACT III hackathon runs on AMD Token Factory, a hosted model API at [note
 ## Status
 
 - The app can call Token Factory: the `amd-tokenfactory` endpoint in `config/llm.yaml`, its route steps, `make tf-check` and the variables below, tested against local stand-in servers.
-- The key is pending. Once it is set, `make tf-check` confirms four things against the real API: that it is OpenAI-compatible, its base URL, which models the catalogue lists, and that it accepts the strict JSON-schema `response_format` the extractor sends.
+- Tested with a real key (18 Oct 2026): base URL `https://developer.amd.com.cn/radeon/api/v1`, model `Gemma-4-31B-IT` (the catalogue has no gpt-oss). `make tf-check` passes 3 of 3 at 7 to 10 s per call, so the step timeout is 16 s. Other catalogue models tried: DeepSeek-V4-Flash and MiMo-V2.6-Flash 2 of 3, GLM-5.3-Flash and Qwen3.8-27B 1 of 3, Qwen3.8-Flash-Next 0 of 3.
+- With the key set, `make tf-check` confirms four things against the real API: that it is OpenAI-compatible, its base URL, which models the catalogue lists, and that it accepts the strict JSON-schema `response_format` the extractor sends.
 - The live demo uses Token Factory once the variables are set on Render. Call the demo AMD-served when `/api/health` shows `last_endpoint: amd-tokenfactory`.
 
 ## 1. Register and get a key

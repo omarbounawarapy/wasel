@@ -365,14 +365,14 @@ mark { background:linear-gradient(transparent 6%, var(--mark) 6%, var(--mark) 94
 <section class="slide">
   <h2>AMD Token Factory comes first in the route.</h2>
   <div class="route">
-    <div class="step"><span class="n">1</span><div><h3>AMD Token Factory</h3><div class="note">Tried first when its key, address and model are set</div></div><span class="chip opt">Key pending</span></div>
-    <div class="step"><span class="n">2</span><div><h3>Groq, gpt-oss-120b</h3><div class="note">Serves the live demo today</div></div><span class="chip live">Running</span></div>
+    <div class="step"><span class="n">1</span><div><h3>AMD Token Factory</h3><div class="note">Gemma-4-31B-IT, tried first. Answers in 7 to 13 s</div></div><span class="chip live">Primary</span></div>
+    <div class="step"><span class="n">2</span><div><h3>Groq, gpt-oss-120b</h3><div class="note">Fast backup when Token Factory is slow or down</div></div><span class="chip live">Backup</span></div>
     <div class="step off"><span class="n">3</span><div><h3>Gemini</h3><div class="note">Off unless the seller enables it</div></div><span class="chip opt">Optional</span></div>
     <div class="step"><span class="n">4</span><div><h3>Rules extractor</h3><div class="note">Needs no provider and no key</div></div><span class="chip live">Always on</span></div>
   </div>
   <div style="display:flex;justify-content:space-between;gap:80px;margin-top:30px">
     <p style="font-size:31px;max-width:1000px">The route is built and covered by tests. Wasel keeps working with any provider missing, down to the rules extractor.</p>
-    <p style="font-size:31px;max-width:560px">When the key arrives: <span class="mono" style="font-size:.9em">make tf-check</span>, then <span class="mono" style="font-size:.9em">make eval-live</span>.</p>
+    <p style="font-size:31px;max-width:560px">Measured with <span class="mono" style="font-size:.9em">make eval-live</span> on 40 cases: 92.5 % of orders recognised on Token Factory, 87.5 % on Groq.</p>
   </div>
   <footer><span>docs/operations/amd-tokenfactory.md · docs/operations/amd-act3-facts.md</span><span>10</span></footer>
 </section>

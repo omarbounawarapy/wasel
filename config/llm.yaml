@@ -36,7 +36,7 @@ roles:
 routing:                          # env EXTRACT_MODEL / FALLBACK_MODEL / GEMINI_MODEL still override
   primary: openai/gpt-oss-120b
   fallback_model: openai/gpt-oss-20b
-  deadline_s: 20
+  deadline_s: 28
   cache_size: 512                 # in-process LRU for rewrite/judge responses
 
 # Where requests go. An endpoint is one deployment; a route is the
@@ -79,7 +79,8 @@ endpoints:
 routes:
   extract:
     # AMD Token Factory first when its key, address and model are set; everything below is then its backup
-    - { endpoint: amd-tokenfactory, kind: primary, model: endpoint, timeout_s: 10 }
+    # 16 s: Gemma-4-31B-IT on Token Factory answers in 7-13 s; 16 + the 8 s Groq backup must fit in routing.deadline_s
+    - { endpoint: amd-tokenfactory, kind: primary, model: endpoint, timeout_s: 16 }
     - { endpoint: self-hosted, kind: primary, model: primary, timeout_s: 6 }
     - { endpoint: self-hosted, kind: fallback_model, model: fallback, timeout_s: 5, flag_env: GROQ_FALLBACK_ENABLED }
     - { endpoint: groq, kind: primary, model: primary, timeout_s: 6, unless_active: [self-hosted, amd-tokenfactory] }
