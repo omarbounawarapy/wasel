@@ -13,7 +13,7 @@ A refused cash-on-delivery parcel costs the seller a wasted trip; one vendor gui
 
 All data in this repository is synthetic. Wasel is a working prototype, not a production-validated risk model: see [limitations](docs/architecture/overview.md#limitations).
 
-**Built for the AMD Developer Hackathon ACT III, track Reinvent Commerce.** [Overview for reviewers](docs/overview-for-reviewers.md) · [pitch slides](docs/submission/wasel-pitch.pdf) · [48-second reel](video/renders/wasel-reel.mp4) · [83-second usage walkthrough](video/renders/wasel-usage-demo.mp4). AMD Token Factory is first in the language-model route (built and unit-tested, key pending); the product also runs on Groq or on rules alone.
+**Built for the AMD Developer Hackathon ACT III, track Reinvent Commerce.** [Overview for reviewers](docs/overview-for-reviewers.md) · [pitch slides](docs/submission/wasel-pitch.pdf) · [48-second reel](video/renders/wasel-reel.mp4) · [83-second usage walkthrough](video/renders/wasel-usage-demo.mp4). AMD Token Factory (Gemma-4-31B-IT) is first in the language-model route, with Groq as the fast backup; the product also runs on rules alone.
 
 ![Order #2601 scores High 87 with the risky phrases highlighted, the customer replies with a full address, and the order drops to Low 16](docs/assets/score-drop.gif)
 
