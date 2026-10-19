@@ -14,4 +14,4 @@ exclude = [
   '^https://wasel\.runs-on\.dev',            # the free Render demo sleeps; the keep-alive and smoke tests cover it
   '^https://github\.com/.*/(issues|pull)/new',
 ]
-exclude_path = ["node_modules", "web/dist", "video/node_modules", "deploy/cloudflare/node_modules", "web/node_modules"]
+exclude_path = ["node_modules", "video/node_modules", "deploy/cloudflare/node_modules", "web/node_modules"]
