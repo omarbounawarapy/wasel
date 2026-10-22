@@ -144,7 +144,7 @@ export default function QualityPage() {
         <Page>
             <PageHeader
                 title="Quality checks"
-                subtitle={`Before every release, Wasel is tested on ${totalCases ? `${totalCases.toLocaleString("en-US")} ` : ""}example cases. The offline checks must pass in CI before a change is deployed; the live AI run below is measured separately and can show checks below target.`} />
+                subtitle={`Tested on ${totalCases ? `${totalCases.toLocaleString("en-US")} ` : ""}example cases before every release. The live AI run is measured separately.`} />
 
             <p className="text-sm text-gray-700">
                 {llm?.serving_label

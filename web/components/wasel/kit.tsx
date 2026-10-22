@@ -1,14 +1,17 @@
 "use client";
 
 // Wasel UI kit: one card anatomy, one radius (rounded-2xl), one primary (brand navy), reused by every page.
+// Quiet by default: white cards with a hairline on warm paper, small uppercase labels, large light numbers;
+// colour is kept for meaning (risk, warnings, the one primary action).
 import { useEffect, useState, type ReactNode } from "react";
 import { ChevronDown, Info, X } from "lucide-react";
 
 // ---------------------------------------------------------------- shared labels
-export const TIER: Record<string, { label: string, cls: string, shape: string, meaning: string }> = {
-    high: { label: "High", cls: "bg-red-600 text-white", shape: "●", meaning: "Likely refused at the door. Confirm before shipping." },
-    medium: { label: "Medium", cls: "bg-amber-500 text-amber-950", shape: "◆", meaning: "Some doubt. A quick confirmation helps." },
-    low: { label: "Low", cls: "bg-emerald-700 text-white", shape: "▲", meaning: "Looks safe. Ship normally." },
+// Tinted, not filled: the hue and the shape carry the tier, the text stays readable in both themes.
+export const TIER: Record<string, { label: string, cls: string, dot: string, shape: string, meaning: string }> = {
+    high: { label: "High", cls: "bg-red-50 text-red-800 border border-red-200", dot: "text-red-600", shape: "●", meaning: "Likely refused at the door. Confirm before shipping." },
+    medium: { label: "Medium", cls: "bg-amber-50 text-amber-800 border border-amber-200", dot: "text-amber-600", shape: "◆", meaning: "Some doubt. A quick confirmation helps." },
+    low: { label: "Low", cls: "bg-emerald-50 text-emerald-800 border border-emerald-200", dot: "text-emerald-600", shape: "▲", meaning: "Looks safe. Ship normally." },
 };
 
 export const NEXT_STEP: Record<string, string> = {
@@ -49,52 +52,55 @@ export const tnd = (v?: number | null) =>
 
 // ---------------------------------------------------------------- page chrome
 export function Page({ children }: { children: ReactNode }) {
-    return <div className={`w-full max-w-7xl space-y-6`}>{children}</div>;
+    return <div className={`w-full max-w-7xl space-y-8`}>{children}</div>;
 }
 
 export function PageHeader({ title, subtitle, actions }: { title: string, subtitle: string, actions?: ReactNode }) {
     return (
-        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
             <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-brand-ink text-balance">{title}</h1>
-                <p className="text-sm text-gray-600 mt-1 max-w-prose">{subtitle}</p>
+                <h1 className="text-[28px] sm:text-[34px] leading-[1.1] font-semibold tracking-[-0.035em] text-brand-ink text-balance">{title}</h1>
+                <p className="text-[15px] text-gray-600 mt-2 max-w-prose text-pretty">{subtitle}</p>
             </div>
             {actions && <div className="flex items-center gap-2 shrink-0">{actions}</div>}
         </div>
     );
 }
 
-/** A dismissible "how this page works" strip: numbered steps in plain words. Remembered per page. */
+/** A "how this page works" strip: numbered steps in plain words. Closed by default, so the page leads with its data;
+ *  opening it is remembered per page. */
 export function Guide({ id, steps }: { id: string, steps: string[] }) {
     const key = `wasel_guide_${id}`;
-    const [open, setOpen] = useState(true);
+    const [open, setOpen] = useState(false);
     useEffect(() => {
-        try { if (localStorage.getItem(key) === "hidden") setOpen(false); } catch { /* storage blocked */ }
+        try { if (localStorage.getItem(key) === "open") setOpen(true); } catch { /* storage blocked */ }
     }, [key]);
-    const hide = () => { setOpen(false); try { localStorage.setItem(key, "hidden"); } catch { /* ignore */ } };
-    const show = () => { setOpen(true); try { localStorage.removeItem(key); } catch { /* ignore */ } };
+    const hide = () => { setOpen(false); try { localStorage.removeItem(key); } catch { /* ignore */ } };
+    const show = () => { setOpen(true); try { localStorage.setItem(key, "open"); } catch { /* ignore */ } };
 
     if (!open) {
         return (
-            <button type="button" onClick={show}
-                    className="inline-flex items-center gap-1.5 text-xs font-medium text-teal-ink hover:underline min-h-[44px]">
-                <Info className="w-3.5 h-3.5" /> How this page works
+            // 44 px hit area around a 32 px pill, tucked under the page title
+            <button type="button" onClick={show} className="group inline-flex items-center min-h-[44px] -mt-4">
+                <span className="inline-flex items-center gap-1.5 h-8 px-3 rounded-full border border-gray-200 bg-card text-xs font-medium text-gray-700 shadow-xs transition-colors group-hover:border-gray-300 group-hover:text-gray-900">
+                    <Info className="w-3.5 h-3.5" aria-hidden="true" /> How this page works
+                </span>
             </button>
         );
     }
     return (
-        <section aria-label="How this page works" className="rounded-2xl bg-teal-soft border border-teal/20 p-4">
-            <div className="flex items-start gap-3">
-                <ol className="flex-1 grid gap-3 sm:grid-cols-3">
+        <section aria-label="How this page works" className="rounded-2xl bg-card border border-border p-4 sm:p-5">
+            <div className="flex items-start gap-4">
+                <ol className="flex-1 grid gap-4 sm:grid-cols-3">
                     {steps.map((s, i) => (
-                        <li key={i} className="flex items-start gap-2.5 min-w-0">
-                            <span className="shrink-0 w-6 h-6 rounded-full bg-brand text-white text-xs font-bold flex items-center justify-center">{i + 1}</span>
-                            <span className="text-sm text-brand-ink leading-snug">{s}</span>
+                        <li key={i} className="flex items-start gap-3 min-w-0">
+                            <span className="shrink-0 w-6 h-6 rounded-full border border-gray-300 text-[11px] font-semibold tabular-nums text-gray-700 flex items-center justify-center">{i + 1}</span>
+                            <span className="text-sm text-gray-700 leading-snug">{s}</span>
                         </li>
                     ))}
                 </ol>
                 <button type="button" onClick={hide} aria-label="Hide this guide"
-                        className="shrink-0 -m-2 w-11 h-11 inline-flex items-center justify-center rounded-lg text-gray-600 hover:text-gray-900 hover:bg-white/70">
+                        className="shrink-0 -m-2 w-11 h-11 inline-flex items-center justify-center rounded-full text-gray-600 hover:text-gray-900 hover:bg-gray-100">
                     <X className="w-4 h-4" />
                 </button>
             </div>
@@ -107,16 +113,16 @@ export function Section({ title, hint, step, actions, children, className = "" }
     title: string, hint?: string, step?: number, actions?: ReactNode, children: ReactNode, className?: string
 }) {
     return (
-        <section className={`bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 min-w-0 ${className}`}>
-            <div className="flex items-start justify-between gap-3 mb-4">
+        <section className={`bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 min-w-0 ${className}`}>
+            <div className="flex items-start justify-between gap-3 mb-5">
                 <div className="min-w-0">
-                    <h2 className="text-base font-bold text-brand-ink flex items-center gap-2">
+                    <h2 className="text-[15px] font-semibold tracking-[-0.01em] text-brand-ink flex items-center gap-2.5">
                         {step !== undefined && (
-                            <span className="w-6 h-6 rounded-full bg-brand-soft text-brand text-xs font-bold flex items-center justify-center">{step}</span>
+                            <span className="shrink-0 w-6 h-6 rounded-full border border-gray-300 text-gray-700 text-[11px] font-semibold tabular-nums flex items-center justify-center">{step}</span>
                         )}
                         {title}
                     </h2>
-                    {hint && <p className="text-xs text-gray-600 mt-1">{hint}</p>}
+                    {hint && <p className="text-[13px] text-gray-600 mt-1 text-pretty">{hint}</p>}
                 </div>
                 {actions}
             </div>
@@ -125,8 +131,9 @@ export function Section({ title, hint, step, actions, children, className = "" }
     );
 }
 
-export function StatCard({ label, value, hint, tone = "default", onClick }: {
-    label: string, value: ReactNode, hint?: string, tone?: "default" | "brand" | "warn" | "good", onClick?: () => void
+/** A label and one large number. With `onClick` it is a toggle (a filter): `active` marks the one that is on. */
+export function StatCard({ label, value, hint, tone = "default", onClick, active }: {
+    label: string, value: ReactNode, hint?: string, tone?: "default" | "brand" | "warn" | "good", onClick?: () => void, active?: boolean
 }) {
     const toneCls = {
         default: "text-brand-ink",
@@ -136,11 +143,13 @@ export function StatCard({ label, value, hint, tone = "default", onClick }: {
     }[tone];
     const Tag = onClick ? "button" : "div";
     return (
-        <Tag type={onClick ? "button" : undefined} onClick={onClick}
-             className={`text-start bg-white rounded-2xl border border-gray-200/70 shadow-sm p-3 sm:p-5 min-w-0 ${onClick ? "hover:border-brand/40 hover:shadow focus-visible:outline-2 focus-visible:outline-brand transition" : ""}`}>
-            <p className="text-xs sm:text-sm font-medium text-gray-600 leading-snug">{label}</p>
-            <p className={`text-2xl sm:text-3xl font-bold tabular-nums mt-1 ${toneCls}`}>{value}</p>
-            {hint && <p className="hidden sm:block text-xs text-gray-600 mt-1">{hint}</p>}
+        <Tag type={onClick ? "button" : undefined} onClick={onClick} aria-pressed={onClick ? !!active : undefined}
+             className={`text-start bg-card rounded-2xl border p-4 sm:p-6 min-w-0 transition-[border-color,box-shadow] duration-300 ease-lux ${active
+                 ? "border-brand ring-1 ring-brand shadow-md" : "border-border shadow-sm"} ${onClick
+                 ? "hover:shadow-md focus-visible:outline-2 focus-visible:outline-brand" : ""}`}>
+            <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-gray-600 leading-snug">{label}</p>
+            <p className={`mt-3 sm:mt-4 text-[30px] sm:text-[40px] leading-none font-medium tracking-[-0.035em] tabular-nums ${toneCls}`}>{value}</p>
+            {hint && <p className="hidden sm:block text-[13px] text-gray-600 mt-2.5">{hint}</p>}
         </Tag>
     );
 }
@@ -149,7 +158,7 @@ export function StatCard({ label, value, hint, tone = "default", onClick }: {
 export function Details({ label = "Details", open, children }: { label?: string, open?: boolean, children: ReactNode }) {
     return (
         <details className="group mt-3" open={open}>
-            <summary className="inline-flex items-center gap-1 text-xs font-medium text-gray-600 hover:text-gray-900 cursor-pointer select-none list-none min-h-[44px]">
+            <summary className="inline-flex items-center gap-1 text-[13px] font-medium text-gray-600 hover:text-gray-900 cursor-pointer select-none list-none min-h-[44px]">
                 <ChevronDown className="w-3.5 h-3.5 transition-transform group-open:rotate-180" /> {label}
             </summary>
             <div className="mt-2 text-xs text-gray-600 space-y-1">{children}</div>
@@ -159,12 +168,12 @@ export function Details({ label = "Details", open, children }: { label?: string,
 
 export function Chip({ children, tone = "gray" }: { children: ReactNode, tone?: "gray" | "amber" | "blue" | "green" }) {
     const cls = {
-        gray: "border-gray-300 text-gray-600 bg-white",
-        amber: "border-amber-400 text-amber-800 bg-amber-50",
-        blue: "border-brand/30 text-brand bg-brand-soft",
-        green: "border-emerald-300 text-emerald-800 bg-emerald-50",
+        gray: "text-gray-700 bg-gray-100",
+        amber: "text-amber-800 bg-amber-50",
+        blue: "text-brand bg-brand-soft",
+        green: "text-emerald-800 bg-emerald-50",
     }[tone];
-    return <span className={`inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full border whitespace-nowrap ${cls}`}>{children}</span>;
+    return <span className={`inline-flex items-center gap-1 text-[11px] font-medium px-2 py-0.5 rounded-md whitespace-nowrap ${cls}`}>{children}</span>;
 }
 
 export function RiskBadge({ tier, score, size = "sm" }: { tier?: string | null, score?: number | null, size?: "sm" | "lg" }) {
@@ -174,8 +183,26 @@ export function RiskBadge({ tier, score, size = "sm" }: { tier?: string | null, 
     }
     return (
         <span aria-label={`${t.label} risk, ${score} out of 100`}
-              className={`inline-flex items-center gap-1.5 rounded-full font-bold whitespace-nowrap tabular-nums ${t.cls} ${size === "lg" ? "px-3.5 py-1.5 text-base" : "px-2.5 py-0.5 text-xs"}`}>
-            <span aria-hidden="true">{t.shape}</span>{t.label} {score}
+              className={`inline-flex items-center gap-1.5 rounded-full font-semibold whitespace-nowrap tabular-nums ${t.cls} ${size === "lg" ? "px-3.5 py-1.5 text-[15px]" : "px-2.5 py-0.5 text-xs"}`}>
+            <span aria-hidden="true" className={`${t.dot} text-[0.75em]`}>{t.shape}</span>{t.label} {score}
+        </span>
+    );
+}
+
+/** The score as a headline: one large number, its tier and change beside it. `label` replaces the tier name (translations). */
+export function ScoreFigure({ tier, score, delta, label }: { tier?: string | null, score?: number | null, delta?: number | null, label?: string }) {
+    const t = tier ? TIER[tier] : null;
+    if (!t || score === null || score === undefined) return <RiskBadge tier={tier} score={score} />;
+    return (
+        <span className="inline-flex items-end gap-3">
+            <span className="sr-only">{label ?? `${t.label} risk`}, {score} out of 100.</span>
+            <span aria-hidden="true" className="text-[56px] leading-[0.85] font-medium tracking-[-0.05em] tabular-nums text-brand-ink">{score}</span>
+            <span className="flex flex-col items-start gap-1.5 pb-0.5">
+                <Delta delta={delta} />
+                <span aria-hidden="true" className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap ${t.cls}`}>
+                    <span className={`${t.dot} text-[0.75em]`}>{t.shape}</span>{label ?? t.label}
+                </span>
+            </span>
         </span>
     );
 }
@@ -197,7 +224,7 @@ export function Delta({ delta }: { delta?: number | null }) {
     if (!delta) return null;
     const down = delta < 0;
     return (
-        <span className={`text-sm font-bold tabular-nums whitespace-nowrap ${down ? "text-emerald-700" : "text-red-600"}`}
+        <span className={`text-xs font-semibold tabular-nums whitespace-nowrap ${down ? "text-emerald-700" : "text-red-600"}`}
               aria-label={down ? `risk down ${-delta} points` : `risk up ${delta} points`}>
             {down ? "▼" : "▲"}{Math.abs(delta)}
         </span>
@@ -206,8 +233,8 @@ export function Delta({ delta }: { delta?: number | null }) {
 
 export function Empty({ title, children }: { title: string, children?: ReactNode }) {
     return (
-        <div className="text-center py-10 px-4">
-            <p className="font-semibold text-brand-ink">{title}</p>
+        <div className="text-center py-14 px-4">
+            <p className="text-[15px] font-semibold tracking-[-0.01em] text-brand-ink">{title}</p>
             {children && <div className="text-sm text-gray-600 mt-1 max-w-prose mx-auto">{children}</div>}
         </div>
     );
@@ -224,7 +251,7 @@ export function LoadError({ what, onRetry }: { what: string, onRetry?: () => voi
             <span>Could not load {what}. Check that the Wasel server is running, then try again.</span>
             {/* Without a page-specific retry, reloading repeats every request the page made */}
             <button type="button" onClick={onRetry ?? (() => window.location.reload())}
-                    className="min-h-[44px] px-4 rounded-xl bg-white border border-red-300 font-medium text-red-900 hover:bg-red-100">
+                    className="min-h-[44px] px-5 rounded-full bg-white border border-red-300 font-medium text-red-900 hover:bg-red-100">
                 Retry
             </button>
         </div>

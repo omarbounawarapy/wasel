@@ -46,10 +46,12 @@ const EN = {
   "landing.primary": "Add an order",
   "landing.secondary": "See the sample queue",
   "landing.note": "The demo runs on synthetic data. Nothing is sent to a real customer.",
-  "landing.how.title": "How it works",
-  "landing.how.1": "Paste the customer's message.",
-  "landing.how.2": "Wasel reads it and scores the risk from 0 to 100.",
-  "landing.how.3": "Send the drafted reply, then watch the score drop when the customer confirms.",
+  "landing.demo.label": "Example order",
+  "landing.demo.high": "High risk",
+  "landing.demo.low": "Low risk",
+  "landing.demo.confirm": "Confirm first",
+  "landing.demo.ship": "Ship it",
+  "landing.demo.after": "After one reply",
   "notfound.title": "This page doesn't exist",
   "notfound.body": "The link may be old, or the order may have been deleted.",
   "notfound.back": "Back to orders",
@@ -93,10 +95,12 @@ const FR: Record<Key, string> = {
   "landing.primary": "Ajouter une commande",
   "landing.secondary": "Voir la file d'exemple",
   "landing.note": "La démo utilise des données synthétiques. Rien n'est envoyé à un vrai client.",
-  "landing.how.title": "Comment ça marche",
-  "landing.how.1": "Collez le message du client.",
-  "landing.how.2": "Wasel le lit et calcule le risque de 0 à 100.",
-  "landing.how.3": "Envoyez la réponse rédigée, puis voyez le score baisser quand le client confirme.",
+  "landing.demo.label": "Exemple de commande",
+  "landing.demo.high": "Risque élevé",
+  "landing.demo.low": "Risque faible",
+  "landing.demo.confirm": "Confirmer d'abord",
+  "landing.demo.ship": "Expédier",
+  "landing.demo.after": "Après une réponse",
   "notfound.title": "Cette page n'existe pas",
   "notfound.body": "Le lien est peut-être ancien, ou la commande a été supprimée.",
   "notfound.back": "Retour aux commandes",
@@ -138,10 +142,12 @@ const AR: Record<Key, string> = {
   "landing.primary": "إضافة طلب",
   "landing.secondary": "عرض قائمة العيّنة",
   "landing.note": "العرض التجريبي يعمل ببيانات اصطناعية. لا يُرسل شيء إلى حريف حقيقي.",
-  "landing.how.title": "كيف يعمل",
-  "landing.how.1": "الصق رسالة الحريف.",
-  "landing.how.2": "يقرؤها واصل ويحسب الخطر من 0 إلى 100.",
-  "landing.how.3": "أرسل الردّ المكتوب، ثم شاهد الدرجة تنخفض عندما يؤكد الحريف.",
+  "landing.demo.label": "مثال على طلب",
+  "landing.demo.high": "خطر مرتفع",
+  "landing.demo.low": "خطر منخفض",
+  "landing.demo.confirm": "أكّد أولاً",
+  "landing.demo.ship": "اشحنه",
+  "landing.demo.after": "بعد ردّ واحد",
   "notfound.title": "هذه الصفحة غير موجودة",
   "notfound.body": "قد يكون الرابط قديماً أو تم حذف الطلب.",
   "notfound.back": "العودة إلى الطلبات",
@@ -184,11 +190,11 @@ export const useT = () => useContext(LangContext)
 export function LangSwitcher({ className = "" }: { className?: string }) {
   const { lang, setLang, t } = useT()
   return (
-    <div role="group" aria-label={t("lang.label")} className={`inline-flex rounded-xl border border-gray-300 bg-white p-0.5 ${className}`}>
+    <div role="group" aria-label={t("lang.label")} className={`inline-flex rounded-full border border-gray-200 bg-card p-0.5 shadow-xs ${className}`}>
       {LANGS.map(l => (
         <button key={l.code} type="button" lang={l.code} aria-pressed={lang === l.code} aria-label={l.name}
                 onClick={() => setLang(l.code)}
-                className={`min-h-[44px] min-w-[44px] px-2.5 rounded-[10px] text-xs font-semibold ${lang === l.code ? "bg-brand text-white" : "text-gray-700 hover:bg-gray-100"}`}>
+                className={`min-h-[44px] min-w-[44px] px-3 rounded-full text-xs font-semibold transition-colors ${lang === l.code ? "bg-brand text-white" : "text-gray-600 hover:text-gray-900"}`}>
           {l.label}
         </button>
       ))}

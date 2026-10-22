@@ -45,17 +45,17 @@ export function MobileFootbar() {
         {/* The one primary action, always in reach on the queue. Not shown on the Add an order page itself. */}
         {pathname === "/dashboard" && (
             <Link prefetch={false} href="/dashboard/paste"
-                  className="lg:hidden fixed bottom-[88px] end-3 start-3 sm:start-auto z-40 inline-flex items-center justify-center gap-2 px-5 min-h-[48px] rounded-2xl bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-lg">
+                  className="lg:hidden fixed bottom-[88px] end-3 start-3 sm:start-auto z-40 inline-flex items-center justify-center gap-2 px-6 min-h-[48px] rounded-full bg-brand hover:bg-brand-hover text-white text-sm font-semibold shadow-lg">
                 <ClipboardPaste className="w-5 h-5" aria-hidden="true" /> {t("cta.add")}
             </Link>
         )}
-        <nav aria-label={t("nav.main")} className="lg:hidden fixed bottom-3 start-3 end-3 z-50 bg-white rounded-2xl border border-gray-200 shadow-lg">
+        <nav aria-label={t("nav.main")} className="lg:hidden fixed bottom-3 start-3 end-3 z-50 bg-card rounded-[22px] border border-border shadow-lg">
             {open && (
                 <>
                     {/* Tap outside to close */}
                     <button type="button" aria-label="Close menu" onClick={() => setOpen(false)}
                             className="fixed inset-0 -z-10 cursor-default" />
-                    <ul className="absolute bottom-full end-0 mb-2 w-60 bg-white rounded-2xl border border-gray-200 shadow-lg p-1">
+                    <ul className="absolute bottom-full end-0 mb-2 w-60 bg-card rounded-2xl border border-border shadow-lg p-1">
                         {MORE_ITEMS.map(m => {
                             const active = pathname === m.path;
                             return (

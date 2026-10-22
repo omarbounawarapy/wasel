@@ -13,7 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { messageLang } from '@/lib/utils';
 import {
-    Page, Section, Details, Chip, ReadBy, RiskBadge, Delta, Empty, LoadError, TIER, NEXT_STEP, STATUS, whenLabel, tnd,
+    Page, Section, Details, Chip, ReadBy, RiskBadge, ScoreFigure, Delta, Empty, LoadError, TIER, NEXT_STEP, STATUS, whenLabel, tnd,
 } from '@/components/wasel/kit';
 
 // Server-built strings (reasons, flag labels) are shown verbatim.
@@ -456,8 +456,8 @@ function OrderDetailContent() {
                         <ArrowLeft className="w-4 h-4" /> All orders
                     </Link>
                     <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                        <h1 className="text-2xl font-bold text-brand-ink tabular-nums">{o.order_ref}</h1>
-                        <bdi className="text-lg text-gray-800 truncate">{customer.display_name || "Unnamed customer"}</bdi>
+                        <h1 className="text-[28px] sm:text-[34px] leading-[1.1] font-semibold tracking-[-0.035em] text-brand-ink tabular-nums">{o.order_ref}</h1>
+                        <bdi className="text-[22px] sm:text-[26px] leading-[1.1] tracking-[-0.025em] text-gray-600 truncate">{customer.display_name || "Unnamed customer"}</bdi>
                         {capabilities?.read_only && <Chip><Lock className="w-3 h-3" /> Example order</Chip>}
                         {!o.is_seeded && o.seed_key && <Chip tone="blue">Your copy</Chip>}
                     </div>
@@ -495,11 +495,11 @@ function OrderDetailContent() {
                     </div>
                     <div className="flex flex-wrap gap-2 shrink-0">
                         <Link prefetch={false} href="/dashboard/paste"
-                              className="inline-flex items-center justify-center px-4 min-h-[44px] rounded-xl bg-white border border-emerald-300 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
+                              className="inline-flex items-center justify-center px-5 min-h-[44px] rounded-full bg-white border border-emerald-300 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
                             Add another
                         </Link>
                         <Link prefetch={false} href="/dashboard"
-                              className="inline-flex items-center justify-center px-4 min-h-[44px] rounded-xl bg-white border border-emerald-300 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
+                              className="inline-flex items-center justify-center px-5 min-h-[44px] rounded-full bg-white border border-emerald-300 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
                             Back to the queue
                         </Link>
                     </div>
@@ -507,15 +507,14 @@ function OrderDetailContent() {
             )}
 
             {/* Verdict: the one thing to do now */}
-            <section aria-label="Verdict" className="bg-white rounded-2xl border border-gray-200/70 shadow-sm p-5 flex flex-col xl:flex-row xl:items-center gap-5">
-                <div className="flex items-center gap-4 shrink-0">
-                    <RiskBadge tier={o.score?.tier} score={o.score?.final_score} size="lg" />
-                    <Delta delta={o.score?.delta} />
-                    <ReadBy value={o.score?.read_by} />
+            <section aria-label="Verdict" className="bg-card rounded-2xl border border-border shadow-sm p-5 sm:p-6 flex flex-col xl:flex-row xl:items-center gap-6">
+                <div className="flex items-end gap-4 shrink-0">
+                    <ScoreFigure tier={o.score?.tier} score={o.score?.final_score} delta={o.score?.delta} />
+                    <span className="pb-0.5"><ReadBy value={o.score?.read_by} /></span>
                 </div>
-                <div className="flex-1 min-w-0">
-                    <p className="text-xs font-semibold uppercase tracking-wider text-gray-600">{STATUS[o.status]}</p>
-                    <p className="text-lg font-bold text-brand-ink">
+                <div className="flex-1 min-w-0 xl:border-s xl:border-border xl:ps-6">
+                    <p className="text-[11px] font-medium uppercase tracking-[0.06em] text-gray-600">{STATUS[o.status]}</p>
+                    <p className="mt-1 text-[19px] font-semibold tracking-[-0.015em] text-brand-ink">
                         {o.score ? NEXT_STEP[o.score.action] ?? o.score.action : "Nothing to score yet"}
                     </p>
                     <p className="text-sm text-gray-600 mt-0.5 max-w-prose">
