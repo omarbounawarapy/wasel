@@ -2,28 +2,29 @@
 @import "tw-animate-css";
 
 /* Wasel design tokens. Brand colours are sampled from the logo: navy box, ink wordmark, teal speed lines.
-   One primary (navy). The shadcn "accent" is a neutral hover grey; the brand teal is `teal`. */
+   One primary (navy). The shadcn "accent" is a neutral hover grey; the brand teal is `teal`.
+   The look is quiet on purpose: warm paper, white cards with hairline borders, ink type, colour only where it means something. */
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
+  --background: #f6f5f1;
+  --foreground: #0b1d33;
+  --card: #ffffff;
+  --card-foreground: #0b1d33;
+  --popover: #ffffff;
+  --popover-foreground: #0b1d33;
   --primary: #12386b;
   --primary-foreground: #ffffff;
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.5 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
+  --secondary: #f0eee9;
+  --secondary-foreground: #1b1a17;
+  --muted: #f0eee9;
+  --muted-foreground: #57534b;
+  --accent: #f0eee9;
+  --accent-foreground: #1b1a17;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.985 0 0);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: #e5e2db;
+  --input: #d2cec5;
   --ring: #12386b;
-  --radius: 0.625rem;
+  --radius: 0.75rem;
 }
 
 @theme inline {
@@ -56,9 +57,23 @@
   --color-teal-ink: #00777a;
   --color-teal-soft: #e3f6f5;
 
-  /* Surfaces: the page, and a visibly deeper sidebar */
-  --color-surface: #f4f6f9;
-  --color-surface-sidebar: #e6ecf4;
+  /* Surfaces: warm paper for the page, a shade deeper for the sidebar */
+  --color-surface: #f6f5f1;
+  --color-surface-sidebar: #efede7;
+
+  /* Warm neutrals instead of Tailwind's cool grey, so every page's text and hairlines sit on paper.
+     Text steps from 500 up keep at least 4.5:1 on white and on the paper surface. */
+  --color-gray-50: #f8f7f4;
+  --color-gray-100: #f0eee9;
+  --color-gray-200: #e5e2db;
+  --color-gray-300: #d2cec5;
+  --color-gray-400: #a9a49a;
+  --color-gray-500: #6b675e;
+  --color-gray-600: #57534b;
+  --color-gray-700: #43403a;
+  --color-gray-800: #2d2b27;
+  --color-gray-900: #1b1a17;
+  --color-gray-950: #0f0e0c;
 
   /* The chat transcript imitates WhatsApp on purpose */
   --color-wa-bg: #efeae2;
@@ -72,10 +87,13 @@
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --shadow-xs: 0 1px 2px 0 rgb(11 29 51 / 0.05);
-  --shadow-sm: 0 1px 3px 0 rgb(11 29 51 / 0.07), 0 1px 2px -1px rgb(11 29 51 / 0.07);
-  --shadow-md: 0 4px 6px -1px rgb(11 29 51 / 0.08), 0 2px 4px -2px rgb(11 29 51 / 0.06);
-  --shadow-lg: 0 10px 15px -3px rgb(11 29 51 / 0.1), 0 4px 6px -4px rgb(11 29 51 / 0.06);
+  /* Soft, long shadows: depth without edges */
+  --shadow-xs: 0 1px 2px 0 rgb(11 29 51 / 0.04);
+  --shadow-sm: 0 1px 2px 0 rgb(11 29 51 / 0.04), 0 10px 28px -18px rgb(11 29 51 / 0.2);
+  --shadow-md: 0 2px 4px 0 rgb(11 29 51 / 0.04), 0 18px 40px -24px rgb(11 29 51 / 0.3);
+  --shadow-lg: 0 2px 6px 0 rgb(11 29 51 / 0.05), 0 28px 60px -30px rgb(11 29 51 / 0.38);
+
+  --ease-lux: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @layer base {
@@ -88,7 +106,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
   }
 
   /* One visible keyboard focus ring for every control */
@@ -147,83 +165,88 @@
 :root { color-scheme: light dark; }
 
 @media (prefers-color-scheme: dark) {
+  /* Warm ink: the paper theme at night. Cards lift by a shade, hairlines stay hairlines. */
   :root {
-    --background: #0f141b;
-    --foreground: #e8edf3;
-    --card: #151b24;
-    --card-foreground: #e8edf3;
-    --popover: #151b24;
-    --popover-foreground: #e8edf3;
+    --background: #111214;
+    --foreground: #ecebe8;
+    --card: #18191c;
+    --card-foreground: #ecebe8;
+    --popover: #18191c;
+    --popover-foreground: #ecebe8;
     --primary: #2a62b0;
     --primary-foreground: #ffffff;
-    --secondary: #1b222d;
-    --secondary-foreground: #e8edf3;
-    --muted: #1b222d;
-    --muted-foreground: #a9b3c1;
-    --accent: #1b222d;
-    --accent-foreground: #e8edf3;
+    --secondary: #202125;
+    --secondary-foreground: #ecebe8;
+    --muted: #202125;
+    --muted-foreground: #a8a6a0;
+    --accent: #202125;
+    --accent-foreground: #ecebe8;
     --destructive: #f87171;
     --destructive-foreground: #1a0b0b;
-    --border: #2d3745;
-    --input: #3b4656;
+    --border: #2a2b30;
+    --input: #3d3e44;
     --ring: #7ba7e8;
     --color-brand: #2a62b0;
     --color-brand-hover: #3571c4;
-    --color-brand-ink: #e8edf3;
-    --color-brand-soft: #1a2a42;
+    --color-brand-ink: #ecebe8;
+    --color-brand-soft: #172338;
     --color-teal: #2bbdb9;
     --color-teal-ink: #5fd6cf;
-    --color-teal-soft: #0f2f2f;
-    --color-surface: #0f141b;
-    --color-surface-sidebar: #131a24;
-    --color-wa-bg: #1b2430;
+    --color-teal-soft: #0f2a2a;
+    --color-surface: #111214;
+    --color-surface-sidebar: #141518;
+    --color-wa-bg: #1b1d21;
     --color-wa-out: #164a3a;
   }
 
-  body { background-color: #0f141b; color: #e8edf3; }
+  body { background-color: #111214; color: #ecebe8; }
   :focus-visible { outline-color: #7ba7e8; }
   .skip-link { background: #2a62b0; }
   /* the wordmark is navy on transparent: give it a light plate on the dark theme */
-  .logo-plate { background-color: #fff; border-radius: 0.75rem; padding: 0.375rem 0.625rem; box-sizing: content-box; }
+  .logo-plate { background-color: #f6f5f1; border-radius: 0.75rem; padding: 0.375rem 0.625rem; box-sizing: content-box; }
   ::selection { background-color: #7ba7e8; color: #0b1d33; }
 
   /* Brand surfaces are inlined by `@theme inline`, so a variable override does not reach their utilities */
-  .bg-surface { background-color: #0f141b; }
-  .bg-surface-sidebar { background-color: #131a24; }
-  .bg-brand-soft { background-color: #1a2a42; }
-  .bg-teal-soft { background-color: #0f2f2f; }
+  .bg-surface { background-color: #111214; }
+  .bg-surface-sidebar { background-color: #141518; }
+  .bg-brand-soft { background-color: #172338; }
+  .bg-teal-soft { background-color: #0f2a2a; }
   .bg-brand { background-color: #1f4f94; }
   .bg-brand-hover, .hover\:bg-brand-hover:hover { background-color: #2a62b0; }
-  .bg-wa-bg { background-color: #1b2430; }
+  .bg-wa-bg { background-color: #1b1d21; }
   .bg-wa-out { background-color: #164a3a; }
   .border-teal\/20 { border-color: rgb(43 189 185 / 0.3); }
-  .bg-white { background-color: #151b24; }
-  .bg-white\/60, .bg-white\/70 { background-color: rgb(255 255 255 / 0.07); }
-  .bg-gray-50 { background-color: #1a212b; }
-  .bg-gray-100 { background-color: #212a36; }
-  .bg-gray-200 { background-color: #2b3441; }
-  .bg-gray-300 { background-color: #3a4554; }
-  .hover\:bg-gray-50:hover { background-color: #212a36; }
-  .hover\:bg-gray-100:hover { background-color: #2b3441; }
-  .hover\:bg-white\/60:hover { background-color: rgb(255 255 255 / 0.1); }
+  .bg-white { background-color: #18191c; }
+  .bg-white\/60, .bg-white\/70 { background-color: rgb(255 255 255 / 0.06); }
+  .bg-gray-50 { background-color: #1c1d20; }
+  .bg-gray-100 { background-color: #222327; }
+  .bg-gray-200 { background-color: #2b2c31; }
+  .bg-gray-300 { background-color: #3a3b41; }
+  .hover\:bg-gray-50:hover { background-color: #202125; }
+  .hover\:bg-gray-100:hover { background-color: #2b2c31; }
+  .hover\:bg-white\/60:hover { background-color: rgb(255 255 255 / 0.08); }
 
-  .text-gray-300 { color: #8b96a5; }
-  .text-gray-500 { color: #a4aebb; }
-  .text-gray-600 { color: #b3bcc8; }
-  .text-gray-700 { color: #c5ccd6; }
-  .text-gray-800 { color: #dbe1e8; }
-  .text-gray-900, .hover\:text-gray-900:hover { color: #eef1f5; }
+  .text-gray-300 { color: #8e8c86; }
+  .text-gray-500 { color: #a8a6a0; }
+  .text-gray-600 { color: #b8b6b0; }
+  .text-gray-700 { color: #cbc9c3; }
+  .text-gray-800 { color: #dddbd6; }
+  .text-gray-900, .hover\:text-gray-900:hover { color: #f0efec; }
   .text-brand { color: #8fb6ee; }
-  .text-brand-ink, .hover\:text-brand-ink:hover { color: #e8edf3; }
+  .text-brand-ink, .hover\:text-brand-ink:hover { color: #ecebe8; }
   .text-teal-ink { color: #5fd6cf; }
 
-  .border-gray-100, .divide-gray-100 > :not(:last-child) { border-color: #262f3b; }
-  .border-gray-200, .border-gray-200\/70 { border-color: #2d3745; }
-  .border-gray-300 { border-color: #46515f; }
-  .border-gray-500 { border-color: #7a8595; }
+  .border-gray-100, .divide-gray-100 > :not(:last-child) { border-color: #232428; }
+  .border-gray-200, .border-gray-200\/70 { border-color: #2a2b30; }
+  .border-gray-300 { border-color: #3d3e44; }
+  .border-gray-500 { border-color: #77767a; }
   .border-brand { border-color: #7ba7e8; }
+  .ring-brand { --tw-ring-color: #7ba7e8; }
   .border-brand\/15, .border-brand\/30 { border-color: rgb(123 167 232 / 0.3); }
   .border-brand\/40, .hover\:border-brand\/40:hover { border-color: rgb(123 167 232 / 0.5); }
+
+  /* Long shadows read as smudges on ink: keep only the contact shadow (rings set on the same element still apply) */
+  .shadow-sm, .shadow-md, .shadow-lg { --tw-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.4); }
 
   /* Tinted status rows and notices: dark tint, light text of the same hue */
   .bg-red-50 { background-color: #3a1818; }

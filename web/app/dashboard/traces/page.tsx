@@ -34,7 +34,7 @@ export default function TracesPage() {
         <Page>
             <PageHeader
                 title="AI call log"
-                subtitle="Every request Wasel made to an AI model: what it was for, which model answered and how long it took. Customer text is never stored here."
+                subtitle="Every AI request: what for, which model, how long. Customer text is never stored here."
                 actions={
                     <>
                         <label className="sr-only" htmlFor="role">Show</label>

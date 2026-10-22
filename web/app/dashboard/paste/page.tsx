@@ -93,7 +93,7 @@ export default function PasteOrderPage() {
         <Page>
             <PageHeader
                 title="Add an order"
-                subtitle="Paste a customer's message exactly as they wrote it, in Darija, Arabizi, Arabic or French. Wasel scores it in a few seconds." />
+                subtitle="Paste the message as the customer wrote it, in any language. Scored in seconds." />
 
             <Guide id="paste" steps={[
                 "Paste the message the customer sent you, or pick an example below.",

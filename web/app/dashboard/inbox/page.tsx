@@ -35,7 +35,7 @@ export default function InboxPage() {
         <Page>
             <PageHeader
                 title="WhatsApp messages"
-                subtitle="Messages your customers send to your WhatsApp business number land here within seconds, already scored." />
+                subtitle="Customer messages from your WhatsApp number, scored within seconds." />
 
             <Guide id="inbox" steps={[
                 "A customer writes to your WhatsApp business number.",

@@ -27,25 +27,44 @@ export default function ImpactPage() {
         <Page>
             <PageHeader
                 title="Money saved"
-                subtitle="How much wasted delivery cost Wasel avoids when you follow its advice. Shown as a simulated estimate." />
+                subtitle="Delivery cost avoided when you follow Wasel's advice." />
 
             {error ? <LoadError what="the money-saved report" onRetry={load} /> : loading ? <p className="text-gray-600">Loading…</p> : !data?.n_orders ? (
                 <Section title="No estimate yet"><Empty title="The impact report hasn't been generated on this server." /></Section>
             ) : (
                 <>
-                    <section className="rounded-2xl bg-brand text-white p-6 shadow-sm">
-                        <p className="text-sm font-medium text-white/80">Estimated wasted-trip cost avoided, per 1,000 orders</p>
-                        <p className="text-4xl font-bold tabular-nums mt-1">
-                            {range ? `${num(range[0])} to ${num(range[1])} TND` : `${num(data.tnd_saved_per_1000_orders)} TND`}
+                    <section aria-labelledby="saved-per-1000" className="rounded-[28px] bg-brand text-white p-6 sm:p-10 shadow-md">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                            <h2 id="saved-per-1000" className="text-[11px] font-medium uppercase tracking-[0.08em] text-white/80">Wasted-trip cost avoided, per 1,000 orders</h2>
+                            <span className="text-[11px] font-semibold uppercase tracking-[0.08em] bg-white/15 rounded-full px-2.5 py-1">Simulated</span>
+                        </div>
+                        <p className="mt-6 text-[44px] sm:text-[72px] leading-none font-medium tracking-[-0.045em] tabular-nums">
+                            {range ? `${num(range[0])}–${num(range[1])}` : num(data.tnd_saved_per_1000_orders)}
+                            <span className="ms-3 text-[0.35em] font-medium tracking-normal text-white/80">TND</span>
                         </p>
-                        <p className="text-sm text-white/85 mt-2 max-w-prose">
-                            {range ? `Best guess ${num(data.tnd_saved_per_1000_orders)} TND, depending on how many customers answer a confirmation. ` : ""}
-                            Measured on synthetic orders drawn from the same prior the model was trained on, so it must be re-measured on real orders.
+                        {/* The figures behind the headline, then the caveat that matters */}
+                        <dl className="mt-8 pt-6 border-t border-white/15 grid grid-cols-1 sm:grid-cols-3 gap-5 sm:gap-8">
+                            {range && (
+                                <div>
+                                    <dt className="text-[13px] text-white/80">Best guess</dt>
+                                    <dd className="mt-1 text-2xl font-medium tracking-[-0.02em] tabular-nums">{num(data.tnd_saved_per_1000_orders)} TND</dd>
+                                </div>
+                            )}
+                            <div>
+                                <dt className="text-[13px] text-white/80">Refused trips avoided</dt>
+                                <dd className="mt-1 text-2xl font-medium tracking-[-0.02em] tabular-nums">
+                                    {num(data.trips_avoided)}<span className="text-base text-white/80"> in {num(data.n_orders)} orders</span>
+                                </dd>
+                            </div>
+                            <div>
+                                <dt className="text-[13px] text-white/80">Saved in this run</dt>
+                                <dd className="mt-1 text-2xl font-medium tracking-[-0.02em] tabular-nums">{num(data.tnd_saved)} TND</dd>
+                            </div>
+                        </dl>
+                        <p className="mt-6 text-[13px] text-white/80 max-w-prose">
+                            {range ? "The range depends on how many customers answer a confirmation. " : ""}
+                            Measured on synthetic orders from the model&apos;s own training prior, with every recommendation followed. Real orders must confirm it.
                         </p>
-                        <p className="text-sm text-white/85 mt-2 max-w-prose">
-                            In this run: {num(data.tnd_saved)} TND on {num(data.n_orders)} orders ({num(data.trips_avoided)} refused deliveries avoided, if every recommendation is followed).
-                        </p>
-                        <p className="mt-3 inline-block text-xs font-bold uppercase tracking-wider bg-white/15 rounded-full px-2.5 py-1">Simulated</p>
                     </section>
 
                     <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-center gap-4">

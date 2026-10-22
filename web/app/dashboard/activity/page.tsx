@@ -62,7 +62,7 @@ export default function ActivityPage() {
         <Page>
             <PageHeader
                 title="Activity log"
-                subtitle="Everything Wasel did, newest first: messages received, scores, drafted replies and anything that needed attention." />
+                subtitle="Everything Wasel did, newest first." />
 
             {error && <LoadError what="the activity log" />}
 

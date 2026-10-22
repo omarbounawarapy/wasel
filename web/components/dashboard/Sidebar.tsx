@@ -54,24 +54,24 @@ export const Sidebar = () => {
 
     return (
         <aside className="w-[248px] flex flex-col h-full overflow-y-auto scrollbar-hide shrink-0">
-            <Link prefetch={false} href="/dashboard" className="px-5 pt-7 pb-6 block" aria-label={t("nav.home")}>
-                <Image priority src="/wasel-logo-compact.png" alt="Wasel" width={200} height={48} className="logo-plate w-[200px] h-auto" />
+            <Link prefetch={false} href="/dashboard" className="px-7 pt-8 pb-8 block" aria-label={t("nav.home")}>
+                <Image priority src="/wasel-logo-compact.png" alt="Wasel" width={200} height={48} className="logo-plate w-[136px] h-auto" />
             </Link>
 
-            <nav className="px-4 pb-6 space-y-6" aria-label={t("nav.main")}>
+            <nav className="px-4 pb-6 space-y-7" aria-label={t("nav.main")}>
                 {NAV_GROUPS.map(group => (
                     <div key={group.title}>
-                        <p className="px-3 mb-2 text-xs font-semibold text-gray-600 uppercase tracking-wider">{t(group.title)}</p>
-                        <ul className="flex flex-col gap-1">
+                        <p className="px-3 mb-2 text-[11px] font-medium text-gray-500 uppercase tracking-[0.08em]">{t(group.title)}</p>
+                        <ul className="flex flex-col gap-0.5">
                             {group.items.map(item => {
                                 const active = isActive(item.path);
                                 return (
                                     <li key={item.path}>
                                         <Link prefetch={false} href={item.path} aria-current={active ? "page" : undefined}
-                                              className={`flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-sm transition-colors focus-visible:outline-2 focus-visible:outline-brand ${active
-                                                  ? "bg-white text-brand font-semibold shadow-sm"
-                                                  : "text-gray-600 font-medium hover:text-brand-ink hover:bg-white/60"}`}>
-                                            <item.icon className="w-5 h-5 shrink-0" strokeWidth={active ? 2.4 : 2} />
+                                              className={`group flex items-center gap-3 px-3 min-h-[44px] rounded-xl text-[14px] transition-colors focus-visible:outline-2 focus-visible:outline-brand ${active
+                                                  ? "bg-card text-brand-ink font-semibold shadow-xs ring-1 ring-border"
+                                                  : "text-gray-700 font-medium hover:text-gray-900 hover:bg-white/60"}`}>
+                                            <item.icon className={`w-[18px] h-[18px] shrink-0 ${active ? "text-brand" : "text-gray-500 group-hover:text-gray-700"}`} strokeWidth={active ? 2.2 : 1.8} aria-hidden="true" />
                                             <span>{t(item.label)}</span>
                                         </Link>
                                     </li>
@@ -81,7 +81,7 @@ export const Sidebar = () => {
                     </div>
                 ))}
             </nav>
-            <div className="px-5 pb-6 mt-auto"><LangSwitcher /></div>
+            <div className="px-6 pb-7 mt-auto"><LangSwitcher /></div>
         </aside>
     );
 };
